@@ -1,28 +1,79 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
-type Todo {
+interface Node {
   id: ID!
-  text: String!
-  done: Boolean!
-  user: User!
+}
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
 }
 
-type User {
+type TeamConnection {
+  pageInfo: PageInfo!
+  edges: [TeamEdge!]!
+}
+type TeamEdge {
+  cursor: String!
+  node: Team!
+}
+
+type TeamMemberConnection {
+  pageInfo: PageInfo!
+  edges: [TeamMemberEdge!]!
+}
+type TeamMemberEdge {
+  cursor: String!
+  node: TeamMember!
+}
+
+type AppConnection {
+  pageInfo: PageInfo!
+  edges: [AppEdge!]!
+}
+type AppEdge {
+  cursor: String!
+  node: App!
+}
+
+type Team implements Node {
+  id: ID!
+  name: String!
+  members(first: Int, after: String): TeamMemberConnection!
+  apps(first: Int, after: String): AppConnection!
+  #  jobs: [Job!]!
+}
+
+type User implements Node {
+  id: ID!
+  name: String!
+  email: String!
+  teams(first: Int, after: String): TeamConnection!
+}
+
+type TeamMember implements Node {
+  id: ID!
+  name: String!
+  email: String!
+}
+
+type Env implements Node {
   id: ID!
   name: String!
 }
 
-type Query {
-  todos: [Todo!]!
-}
-
-input NewTodo {
-  text: String!
-  userId: String!
-}
-
-type Mutation {
-  createTodo(input: NewTodo!): Todo!
+type App implements Node {
+  id: ID!
+  name: String!
+  team: Team!
+  env: Env!
+  #  image: Image!
+  #  instances: [Instance!]!
+  #  autoScaling: AutoScaling!
+  #  ingresses: [Ingress!]!
+  #  networking: [Networking!]!
+  #  deploys: [Deploy!]!
+  #  manifest: Spec!
+  #  storage: [Storage!]!
+  #  auhtz: [Authz!]!
+  #  variables: [Variable!]!
 }
