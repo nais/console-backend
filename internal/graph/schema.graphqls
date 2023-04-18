@@ -1,19 +1,31 @@
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+scalar Cursor
+
 interface Node {
   id: ID!
 }
 type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
+  startCursor: Cursor
+  endCursor: Cursor
+}
+
+type Query {
+  node(id: ID!): Node
 }
 
 type TeamConnection {
   pageInfo: PageInfo!
   edges: [TeamEdge!]!
 }
+
 type TeamEdge {
-  cursor: String!
+  cursor: Cursor!
   node: Team!
 }
 
@@ -22,7 +34,7 @@ type TeamMemberConnection {
   edges: [TeamMemberEdge!]!
 }
 type TeamMemberEdge {
-  cursor: String!
+  cursor: Cursor!
   node: TeamMember!
 }
 
@@ -31,25 +43,17 @@ type AppConnection {
   edges: [AppEdge!]!
 }
 type AppEdge {
-  cursor: String!
+  cursor: Cursor!
   node: App!
 }
 
 type Team implements Node {
   id: ID!
   name: String!
-  members(first: Int, after: String): TeamMemberConnection!
-  apps(first: Int, after: String): AppConnection!
+  members(first: Int, after: Cursor): TeamMemberConnection!
+  apps(first: Int, after: Cursor): AppConnection!
   #  jobs: [Job!]!
 }
-
-type User implements Node {
-  id: ID!
-  name: String!
-  email: String!
-  teams(first: Int, after: String): TeamConnection!
-}
-
 type TeamMember implements Node {
   id: ID!
   name: String!
