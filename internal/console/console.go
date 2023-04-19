@@ -58,7 +58,7 @@ func GetTeams(ctx context.Context, email string) ([]TeamMembership, error) {
 	}{
 		Query: teamQuery,
 		Variables: map[string]string{
-			"email": "abdirahman.aspen@dev-nais.io",
+			"email": email,
 		},
 	}
 
@@ -112,7 +112,7 @@ func GetUser(ctx context.Context, email string) (*User, error) {
 	}{
 		Query: userQuery,
 		Variables: map[string]string{
-			"email": "abdirahman.aspen@dev-nais.io",
+			"email": email,
 		},
 	}
 

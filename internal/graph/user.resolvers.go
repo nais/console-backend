@@ -29,43 +29,62 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 
 // Teams is the resolver for the teams field.
 func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor) (*model.TeamConnection, error) {
+	if first == nil {
+		first = new(int)
+		*first = 10
+	}
+	if after == nil {
+		after = &model.Cursor{Offset: 0}
+	}
+
 	teams, err := console.GetTeams(ctx, obj.Email)
-	fmt.Printf("teams: %#v\n", teams)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
+	}
+	if *first > len(teams) {
+		*first = len(teams)
+	}
+
+	e := edges(teams, *first, after.Offset)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+
+	if len(e) > 0 {
+		startCursor = &e[0].Cursor
+		endCursor = &e[len(e)-1].Cursor
 	}
 
 	return &model.TeamConnection{
 		TotalCount: len(teams),
-		Edges: func() []*model.TeamEdge {
-			if after == nil {
-				after = &model.Cursor{Offset: 0}
-			}
-			if *first > len(teams) {
-				*first = len(teams)
-			}
-
-			var edges []*model.TeamEdge
-			for i := after.Offset; i < *first+after.Offset; i++ {
-				team := teams[i].Team
-				edges = append(edges, &model.TeamEdge{
-					Cursor: model.Cursor{Offset: i},
-					Node: &model.Team{
-						ID:          team.Slug,
-						Name:        team.Slug,
-						Description: &team.Purpose,
-					},
-				})
-			}
-			return edges
-		}(),
+		Edges:      e,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     len(teams) > *first+after.Offset,
 			HasPreviousPage: after.Offset > 0,
-			StartCursor:     &model.Cursor{Offset: 0},
-			EndCursor:       &model.Cursor{Offset: len(teams) - 1},
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
 		},
 	}, nil
+}
+
+func edges(teams []console.TeamMembership, first int, after int) []*model.TeamEdge {
+	edges := []*model.TeamEdge{}
+	limit := first + after
+	if limit > len(teams) {
+		limit = len(teams)
+	}
+	for i := after; i < limit; i++ {
+		team := teams[i].Team
+		edges = append(edges, &model.TeamEdge{
+			Cursor: model.Cursor{Offset: i + 1},
+			Node: &model.Team{
+				ID:          team.Slug,
+				Name:        team.Slug,
+				Description: &team.Purpose,
+			},
+		})
+	}
+	return edges
 }
 
 // User returns UserResolver implementation.
