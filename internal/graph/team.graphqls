@@ -1,0 +1,33 @@
+type TeamConnection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [TeamEdge!]!
+}
+
+type TeamEdge {
+  cursor: Cursor!
+  node: Team!
+}
+
+type TeamMemberConnection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [TeamMemberEdge!]!
+}
+type TeamMemberEdge {
+  cursor: Cursor!
+  node: TeamMember!
+}
+
+type Team implements Node {
+  id: ID!
+  name: String!
+  members(first: Int, after: Cursor): TeamMemberConnection!
+  apps(first: Int, after: Cursor): AppConnection!
+  #  jobs: [Job!]!
+}
+type TeamMember implements Node {
+  id: ID!
+  name: String!
+  email: String!
+}

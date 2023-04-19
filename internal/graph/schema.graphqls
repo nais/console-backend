@@ -19,65 +19,7 @@ type Query {
   node(id: ID!): Node
 }
 
-type TeamConnection {
-  pageInfo: PageInfo!
-  edges: [TeamEdge!]!
-}
-
-type TeamEdge {
-  cursor: Cursor!
-  node: Team!
-}
-
-type TeamMemberConnection {
-  pageInfo: PageInfo!
-  edges: [TeamMemberEdge!]!
-}
-type TeamMemberEdge {
-  cursor: Cursor!
-  node: TeamMember!
-}
-
-type AppConnection {
-  pageInfo: PageInfo!
-  edges: [AppEdge!]!
-}
-type AppEdge {
-  cursor: Cursor!
-  node: App!
-}
-
-type Team implements Node {
-  id: ID!
-  name: String!
-  members(first: Int, after: Cursor): TeamMemberConnection!
-  apps(first: Int, after: Cursor): AppConnection!
-  #  jobs: [Job!]!
-}
-type TeamMember implements Node {
-  id: ID!
-  name: String!
-  email: String!
-}
-
 type Env implements Node {
   id: ID!
   name: String!
-}
-
-type App implements Node {
-  id: ID!
-  name: String!
-  team: Team!
-  env: Env!
-  #  image: Image!
-  #  instances: [Instance!]!
-  #  autoScaling: AutoScaling!
-  #  ingresses: [Ingress!]!
-  #  networking: [Networking!]!
-  #  deploys: [Deploy!]!
-  #  manifest: Spec!
-  #  storage: [Storage!]!
-  #  auhtz: [Authz!]!
-  #  variables: [Variable!]!
 }

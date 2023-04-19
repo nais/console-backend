@@ -1,0 +1,26 @@
+type AppConnection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [AppEdge!]!
+}
+type AppEdge {
+  cursor: Cursor!
+  node: App!
+}
+
+type App implements Node {
+  id: ID!
+  name: String!
+  team: Team!
+  env: Env!
+  #  image: Image!
+  #  instances: [Instance!]!
+  #  autoScaling: AutoScaling!
+  #  ingresses: [Ingress!]!
+  #  networking: [Networking!]!
+  #  deploys: [Deploy!]!
+  #  manifest: Spec!
+  #  storage: [Storage!]!
+  #  auhtz: [Authz!]!
+  #  variables: [Variable!]!
+}
