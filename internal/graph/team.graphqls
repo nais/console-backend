@@ -32,3 +32,7 @@ type TeamMember implements Node {
   name: String!
   email: String!
 }
+
+extend type Query {
+  teams(first: Int, after: Cursor): TeamConnection!
+}

@@ -8,27 +8,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-// User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
-	email := auth.GetEmail(ctx)
-	user, err := console.GetUser(ctx, email)
-	if err != nil {
-		return nil, fmt.Errorf("getting user from Console: %w", err)
-	}
-	return &model.User{
-		ID:    user.ID.String(),
-		Name:  user.Name,
-		Email: email,
-	}, nil
-}
-
 // Teams is the resolver for the teams field.
-func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor) (*model.TeamConnection, error) {
+func (r *queryResolver) Teams(ctx context.Context, first *int, after *model.Cursor) (*model.TeamConnection, error) {
 	if first == nil {
 		first = new(int)
 		*first = 10
@@ -37,7 +22,7 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 		after = &model.Cursor{Offset: 0}
 	}
 
-	teams, err := console.GetTeamsForUser(ctx, obj.Email)
+	teams, err := console.GetTeams(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}
@@ -45,7 +30,7 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 		*first = len(teams)
 	}
 
-	e := edges(teams, *first, after.Offset)
+	e := teamEdges(teams, *first, after.Offset)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
@@ -67,25 +52,14 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 	}, nil
 }
 
-// User returns UserResolver implementation.
-func (r *Resolver) User() UserResolver { return &userResolver{r} }
-
-type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func edges(teams []console.TeamMembership, first int, after int) []*model.TeamEdge {
+func teamEdges(teams []console.Team, first int, after int) []*model.TeamEdge {
 	edges := []*model.TeamEdge{}
 	limit := first + after
 	if limit > len(teams) {
 		limit = len(teams)
 	}
 	for i := after; i < limit; i++ {
-		team := teams[i].Team
+		team := teams[i]
 		edges = append(edges, &model.TeamEdge{
 			Cursor: model.Cursor{Offset: i + 1},
 			Node: &model.Team{

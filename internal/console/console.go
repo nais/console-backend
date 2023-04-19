@@ -33,7 +33,13 @@ var (
 	Token                = "secret"
 )
 
-const teamQuery = `query userByEmail($email: String!) {
+const teamQuery = `query {
+	teams {
+	  slug
+	  purpose
+}}`
+
+const teamForUserQuery = `query userByEmail($email: String!) {
 	userByEmail(email: $email) {
 	  teams {
 		team {
@@ -51,7 +57,56 @@ const userQuery = `query GetUser($email: String!) {
 	}
 }`
 
-func GetTeams(ctx context.Context, email string) ([]TeamMembership, error) {
+func GetTeams(ctx context.Context) ([]Team, error) {
+	q := struct {
+		Query string `json:"query"`
+	}{
+		Query: teamQuery,
+	}
+	body, err := json.Marshal(q)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ConsoleQueryEndpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+Token)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		io.Copy(os.Stdout, resp.Body)
+		return nil, fmt.Errorf("console: %v", resp.Status)
+	}
+
+	respBody := struct {
+		Data struct {
+			Teams []Team `json:"teams"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return nil, err
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("console: %v", respBody.Errors)
+	}
+
+	return respBody.Data.Teams, nil
+}
+
+func GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
 	q := struct {
 		Query     string            `json:"query"`
 		Variables map[string]string `json:"variables"`
