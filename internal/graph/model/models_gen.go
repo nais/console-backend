@@ -18,8 +18,9 @@ func (App) IsNode()            {}
 func (this App) GetID() string { return this.ID }
 
 type AppConnection struct {
-	PageInfo *PageInfo  `json:"pageInfo"`
-	Edges    []*AppEdge `json:"edges"`
+	TotalCount int        `json:"totalCount"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
+	Edges      []*AppEdge `json:"edges"`
 }
 
 type AppEdge struct {
@@ -43,18 +44,20 @@ type PageInfo struct {
 }
 
 type Team struct {
-	ID      string                `json:"id"`
-	Name    string                `json:"name"`
-	Members *TeamMemberConnection `json:"members"`
-	Apps    *AppConnection        `json:"apps"`
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	Description *string               `json:"description,omitempty"`
+	Members     *TeamMemberConnection `json:"members"`
+	Apps        *AppConnection        `json:"apps"`
 }
 
 func (Team) IsNode()            {}
 func (this Team) GetID() string { return this.ID }
 
 type TeamConnection struct {
-	PageInfo *PageInfo   `json:"pageInfo"`
-	Edges    []*TeamEdge `json:"edges"`
+	TotalCount int         `json:"totalCount"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
+	Edges      []*TeamEdge `json:"edges"`
 }
 
 type TeamEdge struct {
@@ -72,8 +75,9 @@ func (TeamMember) IsNode()            {}
 func (this TeamMember) GetID() string { return this.ID }
 
 type TeamMemberConnection struct {
-	PageInfo *PageInfo         `json:"pageInfo"`
-	Edges    []*TeamMemberEdge `json:"edges"`
+	TotalCount int               `json:"totalCount"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	Edges      []*TeamMemberEdge `json:"edges"`
 }
 
 type TeamMemberEdge struct {

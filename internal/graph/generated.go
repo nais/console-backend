@@ -53,8 +53,9 @@ type ComplexityRoot struct {
 	}
 
 	AppConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	AppEdge struct {
@@ -80,15 +81,17 @@ type ComplexityRoot struct {
 	}
 
 	Team struct {
-		Apps    func(childComplexity int, first *int, after *model.Cursor) int
-		ID      func(childComplexity int) int
-		Members func(childComplexity int, first *int, after *model.Cursor) int
-		Name    func(childComplexity int) int
+		Apps        func(childComplexity int, first *int, after *model.Cursor) int
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Members     func(childComplexity int, first *int, after *model.Cursor) int
+		Name        func(childComplexity int) int
 	}
 
 	TeamConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	TeamEdge struct {
@@ -103,8 +106,9 @@ type ComplexityRoot struct {
 	}
 
 	TeamMemberConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	TeamMemberEdge struct {
@@ -184,6 +188,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppConnection.PageInfo(childComplexity), true
+
+	case "AppConnection.totalCount":
+		if e.complexity.AppConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.AppConnection.TotalCount(childComplexity), true
 
 	case "AppEdge.cursor":
 		if e.complexity.AppEdge.Cursor == nil {
@@ -272,6 +283,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Team.Apps(childComplexity, args["first"].(*int), args["after"].(*model.Cursor)), true
 
+	case "Team.description":
+		if e.complexity.Team.Description == nil {
+			break
+		}
+
+		return e.complexity.Team.Description(childComplexity), true
+
 	case "Team.id":
 		if e.complexity.Team.ID == nil {
 			break
@@ -311,6 +329,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TeamConnection.PageInfo(childComplexity), true
+
+	case "TeamConnection.totalCount":
+		if e.complexity.TeamConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.TeamConnection.TotalCount(childComplexity), true
 
 	case "TeamEdge.cursor":
 		if e.complexity.TeamEdge.Cursor == nil {
@@ -360,6 +385,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TeamMemberConnection.PageInfo(childComplexity), true
+
+	case "TeamMemberConnection.totalCount":
+		if e.complexity.TeamMemberConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.TeamMemberConnection.TotalCount(childComplexity), true
 
 	case "TeamMemberEdge.cursor":
 		if e.complexity.TeamMemberEdge.Cursor == nil {
@@ -459,7 +491,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-//go:embed "schema.graphqls" "user.graphqls"
+//go:embed "app.graphqls" "schema.graphqls" "team.graphqls" "user.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -471,7 +503,9 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "app.graphqls", Input: sourceData("app.graphqls"), BuiltIn: false},
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
+	{Name: "team.graphqls", Input: sourceData("team.graphqls"), BuiltIn: false},
 	{Name: "user.graphqls", Input: sourceData("user.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -751,6 +785,8 @@ func (ec *executionContext) fieldContext_App_team(ctx context.Context, field gra
 				return ec.fieldContext_Team_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Team_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Team_description(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
 			case "apps":
@@ -807,6 +843,50 @@ func (ec *executionContext) fieldContext_App_env(ctx context.Context, field grap
 				return ec.fieldContext_Env_name(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Env", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AppConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1595,6 +1675,47 @@ func (ec *executionContext) fieldContext_Team_name(ctx context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Team_description(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Team_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Team_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Team",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Team_members(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Team_members(ctx, field)
 	if err != nil {
@@ -1634,6 +1755,8 @@ func (ec *executionContext) fieldContext_Team_members(ctx context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_TeamMemberConnection_totalCount(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_TeamMemberConnection_pageInfo(ctx, field)
 			case "edges":
@@ -1695,6 +1818,8 @@ func (ec *executionContext) fieldContext_Team_apps(ctx context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_AppConnection_totalCount(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_AppConnection_pageInfo(ctx, field)
 			case "edges":
@@ -1713,6 +1838,50 @@ func (ec *executionContext) fieldContext_Team_apps(ctx context.Context, field gr
 	if fc.Args, err = ec.field_Team_apps_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TeamConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.TeamConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TeamConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TeamConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TeamConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -1908,6 +2077,8 @@ func (ec *executionContext) fieldContext_TeamEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_Team_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Team_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Team_description(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
 			case "apps":
@@ -2046,6 +2217,50 @@ func (ec *executionContext) fieldContext_TeamMember_email(ctx context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TeamMemberConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.TeamMemberConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TeamMemberConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TeamMemberConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TeamMemberConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2422,6 +2637,8 @@ func (ec *executionContext) fieldContext_User_teams(ctx context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_TeamConnection_totalCount(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_TeamConnection_pageInfo(ctx, field)
 			case "edges":
@@ -4225,6 +4442,20 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case model.App:
+		return ec._App(ctx, sel, &obj)
+	case *model.App:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._App(ctx, sel, obj)
+	case model.Env:
+		return ec._Env(ctx, sel, &obj)
+	case *model.Env:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Env(ctx, sel, obj)
 	case model.Team:
 		return ec._Team(ctx, sel, &obj)
 	case *model.Team:
@@ -4239,20 +4470,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._TeamMember(ctx, sel, obj)
-	case model.Env:
-		return ec._Env(ctx, sel, &obj)
-	case *model.Env:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Env(ctx, sel, obj)
-	case model.App:
-		return ec._App(ctx, sel, &obj)
-	case *model.App:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._App(ctx, sel, obj)
 	case model.User:
 		return ec._User(ctx, sel, &obj)
 	case *model.User:
@@ -4328,6 +4545,13 @@ func (ec *executionContext) _AppConnection(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AppConnection")
+		case "totalCount":
+
+			out.Values[i] = ec._AppConnection_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._AppConnection_pageInfo(ctx, field, obj)
@@ -4575,6 +4799,10 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "description":
+
+			out.Values[i] = ec._Team_description(ctx, field, obj)
+
 		case "members":
 
 			out.Values[i] = ec._Team_members(ctx, field, obj)
@@ -4610,6 +4838,13 @@ func (ec *executionContext) _TeamConnection(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TeamConnection")
+		case "totalCount":
+
+			out.Values[i] = ec._TeamConnection_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._TeamConnection_pageInfo(ctx, field, obj)
@@ -4722,6 +4957,13 @@ func (ec *executionContext) _TeamMemberConnection(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TeamMemberConnection")
+		case "totalCount":
+
+			out.Values[i] = ec._TeamMemberConnection_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._TeamMemberConnection_pageInfo(ctx, field, obj)
@@ -5278,6 +5520,21 @@ func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface
 
 func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

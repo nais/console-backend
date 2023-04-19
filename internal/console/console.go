@@ -13,9 +13,13 @@ import (
 )
 
 type User struct {
-	Name  string    `json:"name"`
-	ID    uuid.UUID `json:"id"`
-	Teams []Team    `json:"teams"`
+	Name  string           `json:"name"`
+	ID    uuid.UUID        `json:"id"`
+	Teams []TeamMembership `json:"teams"`
+}
+
+type TeamMembership struct {
+	Team Team `json:"team"`
 }
 
 type Team struct {
@@ -25,19 +29,20 @@ type Team struct {
 
 var (
 	HTTPClient           = http.DefaultClient
-	ConsoleQueryEndpoint = "http://console-backend/query"
-	Token                = ""
+	ConsoleQueryEndpoint = "http://localhost:3000/query"
+	Token                = "secret"
 )
 
-const teamQuery = `query userByEmail(email: $email) {
-    teams {
-      team {
-        slug
-        purpose
-      }
-    }
-  }
-}`
+const teamQuery = `query userByEmail($email: String!) {
+	userByEmail(email: $email) {
+	  teams {
+		team {
+		  slug
+		  purpose
+		}
+	  }
+	}
+  }`
 
 const userQuery = `query GetUser($email: String!) {
 	userByEmail(email: $email) {
@@ -46,14 +51,14 @@ const userQuery = `query GetUser($email: String!) {
 	}
 }`
 
-func GetTeams(ctx context.Context, email string) ([]Team, error) {
+func GetTeams(ctx context.Context, email string) ([]TeamMembership, error) {
 	q := struct {
 		Query     string            `json:"query"`
 		Variables map[string]string `json:"variables"`
 	}{
 		Query: teamQuery,
 		Variables: map[string]string{
-			"email": email,
+			"email": "abdirahman.aspen@dev-nais.io",
 		},
 	}
 
@@ -107,7 +112,7 @@ func GetUser(ctx context.Context, email string) (*User, error) {
 	}{
 		Query: userQuery,
 		Variables: map[string]string{
-			"email": email,
+			"email": "abdirahman.aspen@dev-nais.io",
 		},
 	}
 
