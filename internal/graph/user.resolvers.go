@@ -71,29 +71,3 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func edges(teams []console.TeamMembership, first int, after int) []*model.TeamEdge {
-	edges := []*model.TeamEdge{}
-	limit := first + after
-	if limit > len(teams) {
-		limit = len(teams)
-	}
-	for i := after; i < limit; i++ {
-		team := teams[i].Team
-		edges = append(edges, &model.TeamEdge{
-			Cursor: model.Cursor{Offset: i + 1},
-			Node: &model.Team{
-				ID:          team.Slug,
-				Name:        team.Slug,
-				Description: &team.Purpose,
-			},
-		})
-	}
-	return edges
-}
