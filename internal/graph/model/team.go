@@ -1,15 +1,21 @@
 package model
 
 type Team struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	//	Members     *TeamMemberConnection `json:"members"`
-	Apps *AppConnection `json:"apps"`
+	ID                  string               `json:"id"`
+	Name                string               `json:"name"`
+	Description         *string              `json:"description,omitempty"`
+	Apps                *AppConnection       `json:"apps"`
+	SlackChannel        string               `json:"slackChannel"`
+	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
 }
 
-func (Team) IsNode()            {}
-func (this Team) GetID() string { return this.ID }
+type SlackAlertsChannel struct {
+	Env  string `json:"env"`
+	Name string `json:"name"`
+}
+
+func (Team) IsNode()         {}
+func (t Team) GetID() string { return t.ID }
 
 type TeamConnection struct {
 	TotalCount int         `json:"totalCount"`
@@ -29,8 +35,8 @@ type TeamMember struct {
 	Role  string `json:"role"`
 }
 
-func (TeamMember) IsNode()            {}
-func (this TeamMember) GetID() string { return this.ID }
+func (TeamMember) IsNode()         {}
+func (t TeamMember) GetID() string { return t.ID }
 
 type TeamMemberConnection struct {
 	TotalCount int               `json:"totalCount"`

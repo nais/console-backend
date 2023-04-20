@@ -36,6 +36,21 @@ type Env struct {
 func (Env) IsNode()            {}
 func (this Env) GetID() string { return this.ID }
 
+type GithubRepository struct {
+	Name string `json:"name"`
+}
+
+type GithubRepositoryConnection struct {
+	TotalCount int                     `json:"totalCount"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	Edges      []*GithubRepositoryEdge `json:"edges"`
+}
+
+type GithubRepositoryEdge struct {
+	Cursor Cursor            `json:"cursor"`
+	Node   *GithubRepository `json:"node"`
+}
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`

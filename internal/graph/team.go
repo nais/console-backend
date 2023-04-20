@@ -45,3 +45,21 @@ func memberEdges(members []console.Member, first int, after int) []*model.TeamMe
 	}
 	return edges
 }
+
+func githubRepositoryEdges(repos []console.GitHubRepository, first int, after int) []*model.GithubRepositoryEdge {
+	edges := []*model.GithubRepositoryEdge{}
+	limit := first + after
+	if limit > len(repos) {
+		limit = len(repos)
+	}
+	for i := after; i < limit; i++ {
+		repo := repos[i]
+		edges = append(edges, &model.GithubRepositoryEdge{
+			Cursor: model.Cursor{Offset: i + 1},
+			Node: &model.GithubRepository{
+				Name: repo.Name,
+			},
+		})
+	}
+	return edges
+}

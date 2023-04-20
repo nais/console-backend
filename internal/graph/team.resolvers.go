@@ -59,8 +59,19 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 		return nil, fmt.Errorf("getting team from Console: %w", err)
 	}
 	return &model.Team{
-		ID:          team.Slug,
-		Name:        team.Slug,
+		ID:           team.Slug,
+		Name:         team.Slug,
+		SlackChannel: team.SlackChannel,
+		SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
+			ret := []model.SlackAlertsChannel{}
+			for _, v := range t {
+				ret = append(ret, model.SlackAlertsChannel{
+					Env:  v.Environment,
+					Name: v.ChannelName,
+				})
+			}
+			return ret
+		}(team.SlackAlertsChannels),
 		Description: &team.Purpose,
 	}, nil
 }
@@ -98,6 +109,46 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 		Edges:      e,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     len(members) > *first+after.Offset,
+			HasPreviousPage: after.Offset > 0,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
+
+// GithubRepositories is the resolver for the githubRepositories field.
+func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error) {
+	if first == nil {
+		first = new(int)
+		*first = 10
+	}
+	if after == nil {
+		after = &model.Cursor{Offset: 0}
+	}
+
+	repos, err := console.GetGithubRepositories(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting teams from Console: %w", err)
+	}
+	if *first > len(repos) {
+		*first = len(repos)
+	}
+
+	e := githubRepositoryEdges(repos, *first, after.Offset)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+
+	if len(e) > 0 {
+		startCursor = &e[0].Cursor
+		endCursor = &e[len(e)-1].Cursor
+	}
+
+	return &model.GithubRepositoryConnection{
+		TotalCount: len(repos),
+		Edges:      e,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     len(repos) > *first+after.Offset,
 			HasPreviousPage: after.Offset > 0,
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,

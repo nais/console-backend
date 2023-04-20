@@ -25,8 +25,31 @@ type Team implements Node {
   description: String
   members(first: Int, after: Cursor): TeamMemberConnection!
   apps(first: Int, after: Cursor): AppConnection!
-  #  jobs: [Job!]!
+  githubRepositories(first: Int, after: Cursor): GithubRepositoryConnection!
+  slackChannel: String
+  slackAlertsChannels: [SlackAlertsChannel!]
 }
+
+type GithubRepositoryConnection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [GithubRepositoryEdge!]!
+}
+
+type GithubRepositoryEdge {
+  cursor: Cursor!
+  node: GithubRepository!
+}
+
+type GithubRepository {
+  name: String!
+}
+
+type SlackAlertsChannel {
+  name: String!
+  env: String!
+}
+
 type TeamMember implements Node {
   id: ID!
   name: String!
