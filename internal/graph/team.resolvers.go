@@ -52,22 +52,60 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, after *model.Curs
 	}, nil
 }
 
-func teamEdges(teams []console.Team, first int, after int) []*model.TeamEdge {
-	edges := []*model.TeamEdge{}
-	limit := first + after
-	if limit > len(teams) {
-		limit = len(teams)
+// Team is the resolver for the team field.
+func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
+	team, err := console.GetTeam(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("getting team from Console: %w", err)
 	}
-	for i := after; i < limit; i++ {
-		team := teams[i]
-		edges = append(edges, &model.TeamEdge{
-			Cursor: model.Cursor{Offset: i + 1},
-			Node: &model.Team{
-				ID:          team.Slug,
-				Name:        team.Slug,
-				Description: &team.Purpose,
-			},
-		})
-	}
-	return edges
+	return &model.Team{
+		ID:          team.Slug,
+		Name:        team.Slug,
+		Description: &team.Purpose,
+	}, nil
 }
+
+// Members is the resolver for the members field.
+func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.TeamMemberConnection, error) {
+	if first == nil {
+		first = new(int)
+		*first = 10
+	}
+	if after == nil {
+		after = &model.Cursor{Offset: 0}
+	}
+
+	members, err := console.GetMembers(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting teams from Console: %w", err)
+	}
+	if *first > len(members) {
+		*first = len(members)
+	}
+
+	e := memberEdges(members, *first, after.Offset)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+
+	if len(e) > 0 {
+		startCursor = &e[0].Cursor
+		endCursor = &e[len(e)-1].Cursor
+	}
+
+	return &model.TeamMemberConnection{
+		TotalCount: len(members),
+		Edges:      e,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     len(members) > *first+after.Offset,
+			HasPreviousPage: after.Offset > 0,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
+
+// Team returns TeamResolver implementation.
+func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
+
+type teamResolver struct{ *Resolver }

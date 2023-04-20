@@ -23,8 +23,17 @@ type TeamMembership struct {
 }
 
 type Team struct {
-	Slug    string `json:"slug"`
-	Purpose string `json:"purpose"`
+	Slug    string   `json:"slug"`
+	Purpose string   `json:"purpose"`
+	Members []Member `json:"members"`
+}
+type Member struct {
+	Role string   `json:"role"`
+	User TeamUser `json:"user"`
+}
+type TeamUser struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 var (
@@ -33,11 +42,29 @@ var (
 	Token                = "secret"
 )
 
-const teamQuery = `query {
+const teamsQuery = `query {
 	teams {
 	  slug
 	  purpose
 }}`
+
+const teamQuery = `query team($slug: Slug!) {
+	team(slug: $slug) {
+	  slug
+	  purpose
+}}`
+
+const teamMembers = `query teamMembers($slug: Slug!) {
+	team(slug: $slug) {
+	  members {
+		role
+		user {
+		  email
+		  name
+		}
+	  }
+	}
+  }`
 
 const teamForUserQuery = `query userByEmail($email: String!) {
 	userByEmail(email: $email) {
@@ -57,11 +84,119 @@ const userQuery = `query GetUser($email: String!) {
 	}
 }`
 
+func GetTeam(ctx context.Context, name string) (*Team, error) {
+	q := struct {
+		Query     string            `json:"query"`
+		Variables map[string]string `json:"variables"`
+	}{
+		Query: teamQuery,
+		Variables: map[string]string{
+			"slug": name,
+		},
+	}
+
+	body, err := json.Marshal(q)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ConsoleQueryEndpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+Token)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		io.Copy(os.Stdout, resp.Body)
+		return nil, fmt.Errorf("console: %v", resp.Status)
+	}
+
+	respBody := struct {
+		Data struct {
+			Team *Team `json:"team"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return nil, err
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("console: %v", respBody.Errors)
+	}
+
+	return respBody.Data.Team, nil
+}
+
+func GetMembers(ctx context.Context, name string) ([]Member, error) {
+	q := struct {
+		Query     string            `json:"query"`
+		Variables map[string]string `json:"variables"`
+	}{
+		Query: teamMembers,
+		Variables: map[string]string{
+			"slug": name,
+		},
+	}
+
+	body, err := json.Marshal(q)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ConsoleQueryEndpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+Token)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		io.Copy(os.Stdout, resp.Body)
+		return nil, fmt.Errorf("console: %v", resp.Status)
+	}
+
+	respBody := struct {
+		Data struct {
+			Team *Team `json:"team"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return nil, err
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("console: %v", respBody.Errors)
+	}
+
+	return respBody.Data.Team.Members, nil
+}
+
 func GetTeams(ctx context.Context) ([]Team, error) {
 	q := struct {
 		Query string `json:"query"`
 	}{
-		Query: teamQuery,
+		Query: teamsQuery,
 	}
 	body, err := json.Marshal(q)
 	if err != nil {
@@ -111,7 +246,7 @@ func GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error
 		Query     string            `json:"query"`
 		Variables map[string]string `json:"variables"`
 	}{
-		Query: teamQuery,
+		Query: teamsQuery,
 		Variables: map[string]string{
 			"email": email,
 		},

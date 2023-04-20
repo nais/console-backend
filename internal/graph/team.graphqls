@@ -31,8 +31,10 @@ type TeamMember implements Node {
   id: ID!
   name: String!
   email: String!
+  role: String!
 }
 
 extend type Query {
   teams(first: Int, after: Cursor): TeamConnection!
+  team(name: String!): Team!
 }
