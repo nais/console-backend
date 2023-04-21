@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -20,6 +22,12 @@ func InsecureValidateMW(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		email := r.Header.Get("X-Goog-Authenticated-User-Email")
 		_, email, _ = strings.Cut(email, ":")
+		_, err := mail.ParseAddress(email)
+		if err != nil {
+			http.Error(w, "Invalid email address", http.StatusUnauthorized)
+			fmt.Println("parsing email:", err)
+			return
+		}
 
 		ctx := context.WithValue(r.Context(), contextEmail, email)
 		r = r.WithContext(ctx)
