@@ -158,7 +158,14 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 
 // Deployments is the resolver for the deployments field.
 func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.DeploymentConnection, error) {
-	panic("woot")
+	deploys, err := r.Hookd.GetDeploysForTeam(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting team deploys from Hookd: %w", err)
+	}
+
+	fmt.Println("deploys", deploys)
+
+	return nil, nil
 }
 
 // Team returns TeamResolver implementation.

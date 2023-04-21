@@ -51,7 +51,7 @@ type Resource struct {
 }
 
 func (c *Client) GetDeploysForTeam(ctx context.Context, team string) ([]Deploy, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET ", c.endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/api/v1/dashboard/deployments?team=%s", c.endpoint, team), nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
@@ -63,7 +63,7 @@ func (c *Client) GetDeploysForTeam(ctx context.Context, team string) ([]Deploy, 
 
 	var deploymentsResponse DeploymentsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&deploymentsResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decoding hookd response: %w", err)
 	}
 
 	return deploymentsResponse.Deployments, nil

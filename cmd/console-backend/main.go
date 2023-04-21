@@ -1,43 +1,50 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph"
+	"github.com/nais/console-backend/internal/hookd"
 )
 
-const (
-	defaultPort = "8080"
-	audience    = ""
-)
+type Config struct {
+	BindHost      string
+	Port          string
+	Audience      string
+	HookdEndpoint string
+	HookdPSK      string
+}
+
+var cfg = &Config{}
+
+func init() {
+	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
+	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
+	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
+	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd.local.nais.io"), "Hookd endpoint")
+	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
+}
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
+	flag.Parse()
 
-	// Add the IAP validation middleware.
-	// If the IAP audience is not set, we stop the server with a fatal error
-	// unless the insecure-skip-proxy flag is set.
-	iapMW := auth.ValidateIAPJWT(audience)
-	if audience == "" {
-		// if !cfg.InsecureSkipProxy {
-		// 	log.Fatal("IAP audience must be set")
-		// }
-		iapMW = auth.InsecureValidateMW
-	}
-
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Hookd: "foo"}}))
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Hookd: hookd.New(cfg.HookdPSK, cfg.HookdEndpoint)}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", iapMW(srv))
+	http.Handle("/query", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe("127.0.0.1:"+port, nil))
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
+	log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))
+}
+
+func envOrDefault(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
