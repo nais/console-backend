@@ -156,6 +156,11 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 	}, nil
 }
 
+// Deployments is the resolver for the deployments field.
+func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.DeploymentConnection, error) {
+	panic("woot")
+}
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 

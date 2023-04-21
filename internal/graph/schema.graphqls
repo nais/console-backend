@@ -3,8 +3,6 @@ directive @goField(
   name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-scalar Cursor
-
 interface Node {
   id: ID!
 }

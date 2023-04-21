@@ -1,0 +1,6 @@
+"""
+Time is a string in [RFC 3339](https://rfc-editor.org/rfc/rfc3339.html) format, with sub-second precision added if present.
+"""
+scalar Time
+
+scalar Cursor

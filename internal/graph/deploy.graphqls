@@ -1,0 +1,36 @@
+type DeploymentConnection {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [DeploymentEdge!]!
+}
+
+type DeploymentEdge {
+  cursor: Cursor!
+  node: Deployment!
+}
+
+type Deployment {
+  id: ID!
+  team: Team!
+  type: String!
+  resources: [DeploymentResource!]!
+  env: String!
+  statuses: [DeploymentStatus!]!
+  created: Time!
+}
+
+type DeploymentResource {
+  id: ID!
+  group: String!
+  kind: String!
+  name: String!
+  version: String!
+  namespace: String!
+}
+
+type DeploymentStatus {
+  id: ID!
+  status: String!
+  message: String
+  created: Time!
+}
