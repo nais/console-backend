@@ -48,13 +48,16 @@ type TeamUser struct {
 	Email string `json:"email"`
 }
 
-var (
-	HTTPClient           = http.DefaultClient
-	ConsoleQueryEndpoint = "http://localhost:3000/query"
-	Token                = "secret"
-)
+type Client struct {
+	endpoint   string
+	httpClient *http.Client
+}
 
-func GetTeam(ctx context.Context, name string) (*Team, error) {
+func New(token, endpoint string) *Client {
+	return &Client{endpoint: endpoint, httpClient: Transport{Token: token}.Client()}
+}
+
+func (c *Client) GetTeam(ctx context.Context, name string) (*Team, error) {
 	q := `query team($slug: Slug!) {
 	team(slug: $slug) {
 	  slug
@@ -80,55 +83,14 @@ func GetTeam(ctx context.Context, name string) (*Team, error) {
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := consoleQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
 		return nil, fmt.Errorf("querying console: %w", err)
 	}
 
 	return respBody.Data.Team, nil
 }
 
-func consoleQuery(ctx context.Context, query string, vars map[string]string, respBody interface{}) error {
-	q := struct {
-		Query     string            `json:"query"`
-		Variables map[string]string `json:"variables"`
-	}{
-		Query:     query,
-		Variables: vars,
-	}
-
-	body, err := json.Marshal(q)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ConsoleQueryEndpoint, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+Token)
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := HTTPClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		io.Copy(os.Stdout, resp.Body)
-		return fmt.Errorf("console: %v", resp.Status)
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func GetGithubRepositories(ctx context.Context, name string) ([]GitHubRepository, error) {
+func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitHubRepository, error) {
 	q := `
 	query githubRepositories($slug: Slug!) {
 	  team(slug: $slug) {
@@ -149,14 +111,14 @@ func GetGithubRepositories(ctx context.Context, name string) ([]GitHubRepository
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := consoleQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
 		return nil, err
 	}
 
 	return respBody.Data.Team.GitHubRepositories, nil
 }
 
-func GetMembers(ctx context.Context, name string) ([]Member, error) {
+func (c *Client) GetMembers(ctx context.Context, name string) ([]Member, error) {
 	q := `query teamMembers($slug: Slug!) {
 	team(slug: $slug) {
 	  members {
@@ -179,14 +141,14 @@ func GetMembers(ctx context.Context, name string) ([]Member, error) {
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := consoleQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
 		return nil, fmt.Errorf("querying console: %w", err)
 	}
 
 	return respBody.Data.Team.Members, nil
 }
 
-func GetTeams(ctx context.Context) ([]Team, error) {
+func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 	q := `query {
 	teams {
 	  slug
@@ -200,14 +162,14 @@ func GetTeams(ctx context.Context) ([]Team, error) {
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := consoleQuery(ctx, q, nil, &respBody); err != nil {
+	if err := c.consoleQuery(ctx, q, nil, &respBody); err != nil {
 		return nil, fmt.Errorf("querying console: %w", err)
 	}
 
 	return respBody.Data.Teams, nil
 }
 
-func GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
+func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
 	q := `query userByEmail($email: String!) {
 	userByEmail(email: $email) {
 	  teams {
@@ -229,14 +191,14 @@ func GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := consoleQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
 		return nil, fmt.Errorf("querying console: %w", err)
 	}
 
 	return respBody.Data.UserByEmail.Teams, nil
 }
 
-func GetUser(ctx context.Context, email string) (*User, error) {
+func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
 	q := `query GetUser($email: String!) {
 	userByEmail(email: $email) {
 		name
@@ -252,9 +214,49 @@ func GetUser(ctx context.Context, email string) (*User, error) {
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
-	if err := consoleQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
 		return nil, fmt.Errorf("querying console: %w", err)
+	}
+	if respBody.Data.UserByEmail == nil {
+		return nil, fmt.Errorf("user %s not found", email)
 	}
 
 	return respBody.Data.UserByEmail, nil
+}
+
+func (c *Client) consoleQuery(ctx context.Context, query string, vars map[string]string, respBody interface{}) error {
+	q := struct {
+		Query     string            `json:"query"`
+		Variables map[string]string `json:"variables"`
+	}{
+		Query:     query,
+		Variables: vars,
+	}
+
+	body, err := json.Marshal(q)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		io.Copy(os.Stdout, resp.Body)
+		return fmt.Errorf("console: %v", resp.Status)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -22,7 +22,7 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, after *model.Curs
 		after = &model.Cursor{Offset: 0}
 	}
 
-	teams, err := console.GetTeams(ctx)
+	teams, err := r.Console.GetTeams(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}
@@ -54,7 +54,7 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, after *model.Curs
 
 // Team is the resolver for the team field.
 func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
-	team, err := console.GetTeam(ctx, name)
+	team, err := r.Console.GetTeam(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("getting team from Console: %w", err)
 	}
@@ -86,7 +86,7 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 		after = &model.Cursor{Offset: 0}
 	}
 
-	members, err := console.GetMembers(ctx, obj.Name)
+	members, err := r.Console.GetMembers(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}
@@ -126,7 +126,7 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 		after = &model.Cursor{Offset: 0}
 	}
 
-	repos, err := console.GetGithubRepositories(ctx, obj.Name)
+	repos, err := r.Console.GetGithubRepositories(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}

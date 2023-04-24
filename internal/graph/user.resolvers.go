@@ -9,14 +9,16 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/auth"
-	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
-	email := auth.GetEmail(ctx)
-	user, err := console.GetUser(ctx, email)
+	email, err := auth.GetEmail(ctx)
+	if err != nil {
+		return nil, err
+	}
+	user, err := r.Console.GetUser(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("getting user from Console: %w", err)
 	}
@@ -37,7 +39,7 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 		after = &model.Cursor{Offset: 0}
 	}
 
-	teams, err := console.GetTeamsForUser(ctx, obj.Email)
+	teams, err := r.Console.GetTeamsForUser(ctx, obj.Email)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}

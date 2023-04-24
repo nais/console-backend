@@ -72,10 +72,10 @@ func validateJWTFromComputeEngine(aud string, validator valfunc) func(h http.Han
 	}
 }
 
-func GetEmail(ctx context.Context) string {
+func GetEmail(ctx context.Context) (string, error) {
 	email, ok := ctx.Value(contextEmail).(string)
 	if !ok || email == "" {
-		return "unauthorized"
+		return "", fmt.Errorf("no email in context")
 	}
-	return email
+	return email, nil
 }

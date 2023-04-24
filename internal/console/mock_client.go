@@ -5,8 +5,8 @@ import (
 	"net/http"
 )
 
-func UseMockClient() {
-	HTTPClient = &http.Client{
+func (c *Client) UseMockClient() {
+	c.httpClient = &http.Client{
 		Transport: &mockClient{},
 	}
 }
