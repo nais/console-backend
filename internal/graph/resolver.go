@@ -1,8 +1,9 @@
 package graph
 
 import (
-	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/console"
+	"github.com/nais/console-backend/internal/hookd"
+	"github.com/nais/console-backend/internal/k8s"
 )
 
 // This file will not be regenerated automatically.
@@ -12,4 +13,5 @@ import (
 type Resolver struct {
 	Hookd   *hookd.Client
 	Console *console.Client
+	K8s     *k8s.Client
 }

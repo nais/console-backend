@@ -1,16 +1,18 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/nais/console-backend/internal/auth"
+	"github.com/nais/console-backend/internal/console"
+	"github.com/nais/console-backend/internal/graph"
+	"github.com/nais/console-backend/internal/hookd"
+	"github.com/nais/console-backend/internal/k8s"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type Config struct {
@@ -41,51 +43,28 @@ func init() {
 
 func main() {
 	flag.Parse()
-	//_ := newLogger()
-	ctx := context.Background()
-	kcs := map[string]*kubernetes.Clientset{}
+	log := newLogger()
 
-	kubeConfig, err := clientcmd.LoadFromFile(cfg.Kubeconfig)
+	k8s, err := k8s.New(cfg.Kubeconfig)
 	if err != nil {
-		panic(err.Error())
-	}
-	for contextName, context := range kubeConfig.Contexts {
-		contextSpec := &api.Context{Cluster: context.Cluster, AuthInfo: context.AuthInfo}
-		restConfig, err := clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{Context: *contextSpec}).ClientConfig()
-		if err != nil {
-			panic(err.Error())
-		}
-		clientset, err := kubernetes.NewForConfig(restConfig)
-		if err != nil {
-			panic(err.Error())
-		}
-		kcs[contextName] = clientset
+		log.Fatal(err)
 	}
 
-	for k := range kcs {
-		ns, err := kcs[k].CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-		if err != nil {
-			panic(err.Error())
-		}
-		fmt.Println(k, len(ns.Items))
+	graphConfig := graph.Config{
+		Resolvers: &graph.Resolver{
+			Hookd:   hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
+			Console: console.New(cfg.ConsoleToken, cfg.ConsoleEndpoint),
+			K8s:     k8s,
+		},
 	}
 
-	/*
-	   	graphConfig := graph.Config{
-	   		Resolvers: &graph.Resolver{
-	   			Hookd:   hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
-	   			Console: console.New(cfg.ConsoleToken, cfg.ConsoleEndpoint),
-	   		},
-	   	}
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
 
-	   srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", auth.InsecureValidateMW(srv))
 
-	   http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	   http.Handle("/query", auth.InsecureValidateMW(srv))
-
-	   log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
-	   log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))
-	*/
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
+	log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))
 }
 
 func envOrDefault(key, fallback string) string {
