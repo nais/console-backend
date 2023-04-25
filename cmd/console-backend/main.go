@@ -1,57 +1,78 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"log"
-	"net/http"
+	"fmt"
 	"os"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/nais/console-backend/internal/auth"
-	"github.com/nais/console-backend/internal/console"
-	"github.com/nais/console-backend/internal/graph"
-	"github.com/nais/console-backend/internal/hookd"
+	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Config struct {
-	BindHost        string
-	Port            string
 	Audience        string
-	HookdEndpoint   string
-	HookdPSK        string
+	BindHost        string
 	ConsoleEndpoint string
 	ConsoleToken    string
+	HookdEndpoint   string
+	HookdPSK        string
+	Kubeconfig      string
+	LogLevel        string
+	Port            string
 }
 
 var cfg = &Config{}
 
 func init() {
-	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
-	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
 	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
-	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd.local.nais.io"), "Hookd endpoint")
-	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
+	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
 	flag.StringVar(&cfg.ConsoleEndpoint, "console-endpoint", envOrDefault("CONSOLE_ENDPOINT", "http://console.local.nais.io/query"), "Console endpoint")
 	flag.StringVar(&cfg.ConsoleToken, "console-token", envOrDefault("CONSOLE_TOKEN", "secret"), "Console Token")
+	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd.local.nais.io"), "Hookd endpoint")
+	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
+	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
+	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
+	flag.StringVar(&cfg.Kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "kubeconfigpath")
 }
 
 func main() {
 	flag.Parse()
-	graphConfig := graph.Config{
-		Resolvers: &graph.Resolver{
-			Hookd:   hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
-			Console: console.New(cfg.ConsoleToken, cfg.ConsoleEndpoint),
-		},
+	log := newLogger()
+	ctx := context.Background()
+
+	log.WithField("path", cfg.Kubeconfig).Debug("reading kubeconfig")
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", cfg.Kubeconfig)
+	if err != nil {
+		panic(err.Error())
+	}
+	kubeConfig.
+		log.Debug("starting k8s client")
+	k8sClient, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		log.WithError(err).Fatal("setting up k8s client")
 	}
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
+	ns, err := k8sClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	fmt.Println(ns)
+	/*
+	   	graphConfig := graph.Config{
+	   		Resolvers: &graph.Resolver{
+	   			Hookd:   hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
+	   			Console: console.New(cfg.ConsoleToken, cfg.ConsoleEndpoint),
+	   		},
+	   	}
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", auth.InsecureValidateMW(srv))
+	   srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
-	log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))
+	   http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	   http.Handle("/query", auth.InsecureValidateMW(srv))
+
+	   log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
+	   log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))
+	*/
 }
 
 func envOrDefault(key, fallback string) string {
@@ -59,4 +80,16 @@ func envOrDefault(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func newLogger() *logrus.Logger {
+	log := logrus.StandardLogger()
+	log.SetFormatter(&logrus.JSONFormatter{})
+
+	l, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetLevel(l)
+	return log
 }
