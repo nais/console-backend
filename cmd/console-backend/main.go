@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
+	flag "github.com/spf13/pflag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type Config struct {
@@ -35,28 +36,40 @@ func init() {
 	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
 	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
 	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
-	flag.StringVar(&cfg.Kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "kubeconfigpath")
+	flag.StringVar(&cfg.Kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "kubeconfig")
 }
 
 func main() {
 	flag.Parse()
-	log := newLogger()
+	//_ := newLogger()
 	ctx := context.Background()
+	kcs := map[string]*kubernetes.Clientset{}
 
-	log.WithField("path", cfg.Kubeconfig).Debug("reading kubeconfig")
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", cfg.Kubeconfig)
+	kubeConfig, err := clientcmd.LoadFromFile(cfg.Kubeconfig)
 	if err != nil {
 		panic(err.Error())
 	}
-	kubeConfig.
-		log.Debug("starting k8s client")
-	k8sClient, err := kubernetes.NewForConfig(kubeConfig)
-	if err != nil {
-		log.WithError(err).Fatal("setting up k8s client")
+	for contextName, context := range kubeConfig.Contexts {
+		contextSpec := &api.Context{Cluster: context.Cluster, AuthInfo: context.AuthInfo}
+		restConfig, err := clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{Context: *contextSpec}).ClientConfig()
+		if err != nil {
+			panic(err.Error())
+		}
+		clientset, err := kubernetes.NewForConfig(restConfig)
+		if err != nil {
+			panic(err.Error())
+		}
+		kcs[contextName] = clientset
 	}
 
-	ns, err := k8sClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-	fmt.Println(ns)
+	for k := range kcs {
+		ns, err := kcs[k].CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			panic(err.Error())
+		}
+		fmt.Println(k, len(ns.Items))
+	}
+
 	/*
 	   	graphConfig := graph.Config{
 	   		Resolvers: &graph.Resolver{
