@@ -30,6 +30,12 @@ type GithubRepositoryEdge struct {
 	Node   *GithubRepository `json:"node"`
 }
 
+type Instance struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Status string `json:"status"`
+}
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`

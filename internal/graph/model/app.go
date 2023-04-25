@@ -1,9 +1,12 @@
 package model
 
 type App struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Env  *Env   `json:"env"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Env     *Env   `json:"env"`
+	GQLVars struct {
+		Team string
+	} `json:"-"`
 }
 
 func (App) IsNode()         {}

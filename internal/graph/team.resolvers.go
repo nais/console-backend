@@ -119,15 +119,48 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 
 // Apps is the resolver for the apps field.
 func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.AppConnection, error) {
+	if first == nil {
+		first = new(int)
+		*first = 10
+	}
+	if after == nil {
+		after = &model.Cursor{Offset: 0}
+	}
+
 	apps, err := r.K8s.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
-	// fmt.Println("apps", apps)
-	for _, app := range apps {
-		fmt.Println("app", app)
+
+	if *first > len(apps) {
+		*first = len(apps)
 	}
-	return nil, nil
+
+	a := appEdges(apps, obj.Name, *first, after.Offset)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+
+	if len(a) > 0 {
+		startCursor = &a[0].Cursor
+		endCursor = &a[len(a)-1].Cursor
+	}
+
+	return &model.AppConnection{
+		TotalCount: len(apps),
+		Edges:      a,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     len(apps) > *first+after.Offset,
+			HasPreviousPage: after.Offset > 0,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
+
+func (r *teamResolver) Instances(ctx context.Context) (*model.Instance, error) {
+
+	return &model.Instance{}, nil
 }
 
 // GithubRepositories is the resolver for the githubRepositories field.

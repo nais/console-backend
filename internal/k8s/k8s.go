@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
@@ -16,10 +17,12 @@ import (
 
 type Client struct {
 	DynamicClients map[string]*dynamic.DynamicClient
+	ClientSets     map[string]*kubernetes.Clientset
 }
 
 func New(kubeconfig string) (*Client, error) {
-	kcs := map[string]*dynamic.DynamicClient{}
+	dcs := map[string]*dynamic.DynamicClient{}
+	kcs := map[string]*kubernetes.Clientset{}
 
 	kubeConfig, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
@@ -32,14 +35,19 @@ func New(kubeconfig string) (*Client, error) {
 		if err != nil {
 			return nil, fmt.Errorf("create client config: %w", err)
 		}
-		clientset, err := dynamic.NewForConfig(restConfig)
+		dynamicClient, err := dynamic.NewForConfig(restConfig)
+		if err != nil {
+			return nil, fmt.Errorf("create dynamic client: %w", err)
+		}
+		clientSet, err := kubernetes.NewForConfig(restConfig)
 		if err != nil {
 			return nil, fmt.Errorf("create clientset: %w", err)
 		}
-		kcs[contextName] = clientset
+		dcs[contextName] = dynamicClient
+		kcs[contextName] = clientSet
 	}
 
-	return &Client{DynamicClients: kcs}, nil
+	return &Client{DynamicClients: dcs, ClientSets: kcs}, nil
 }
 
 func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
@@ -59,6 +67,25 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 				},
 			})
 		}
+	}
+	return ret, nil
+}
+
+func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*model.Instance, error) {
+	ret := []*model.Instance{}
+
+	pods, err := c.ClientSets[env].CoreV1().Pods(team).List(ctx, v1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=%s", name),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listing pods: %w", err)
+	}
+	for _, pod := range pods.Items {
+		ret = append(ret, &model.Instance{
+			ID:     string(pod.GetUID()),
+			Name:   pod.GetName(),
+			Status: string(pod.Status.Phase),
+		})
 	}
 	return ret, nil
 }

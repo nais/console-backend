@@ -8,18 +8,24 @@ type AppEdge {
   node: App!
 }
 
+type Instance implements Node {
+  id: ID!
+  name: String!
+  status: String!
+}
+
 type App implements Node {
   id: ID!
   name: String!
   env: Env!
-  #  image: Image!
-  #  instances: [Instance!]!
-  #  autoScaling: AutoScaling!
-  #  ingresses: [Ingress!]!
-  #  networking: [Networking!]!
-  #  deploys: [Deploy!]!
-  #  manifest: Spec!
-  #  storage: [Storage!]!
+  instances: [Instance!]!
   #  auhtz: [Authz!]!
+  #  autoScaling: AutoScaling!
+  #  deploys: [Deploy!]!
+  #  image: Image!
+  #  ingresses: [Ingress!]!
+  #  manifest: Spec!
+  #  networking: [Networking!]!
+  #  storage: [Storage!]!
   #  variables: [Variable!]!
 }

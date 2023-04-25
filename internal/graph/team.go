@@ -25,6 +25,29 @@ func teamEdges(teams []console.Team, first int, after int) []*model.TeamEdge {
 	return edges
 }
 
+func appEdges(apps []*model.App, team string, first int, after int) []*model.AppEdge {
+	edges := []*model.AppEdge{}
+	limit := first + after
+	if limit > len(apps) {
+		limit = len(apps)
+	}
+	for i := after; i < limit; i++ {
+		app := apps[i]
+		edges = append(edges, &model.AppEdge{
+			Cursor: model.Cursor{Offset: i + 1},
+			Node: &model.App{
+				ID:   app.ID,
+				Name: app.Name,
+				Env:  app.Env,
+				GQLVars: struct{ Team string }{
+					Team: team,
+				},
+			},
+		})
+	}
+	return edges
+}
+
 func memberEdges(members []console.Member, first int, after int) []*model.TeamMemberEdge {
 	edges := []*model.TeamMemberEdge{}
 	limit := first + after
