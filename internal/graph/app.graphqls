@@ -11,7 +11,6 @@ type AppEdge {
 type App implements Node {
   id: ID!
   name: String!
-  team: Team!
   env: Env!
   #  image: Image!
   #  instances: [Instance!]!

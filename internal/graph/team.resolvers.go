@@ -58,6 +58,7 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 	if err != nil {
 		return nil, fmt.Errorf("getting team from Console: %w", err)
 	}
+
 	return &model.Team{
 		ID:           team.Slug,
 		Name:         team.Slug,
@@ -114,6 +115,19 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 			EndCursor:       endCursor,
 		},
 	}, nil
+}
+
+// Apps is the resolver for the apps field.
+func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.AppConnection, error) {
+	apps, err := r.K8s.Apps(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
+	}
+	// fmt.Println("apps", apps)
+	for _, app := range apps {
+		fmt.Println("app", app)
+	}
+	return nil, nil
 }
 
 // GithubRepositories is the resolver for the githubRepositories field.

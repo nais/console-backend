@@ -1,0 +1,21 @@
+package model
+
+type App struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Env  *Env   `json:"env"`
+}
+
+func (App) IsNode()         {}
+func (a App) GetID() string { return a.ID }
+
+type AppConnection struct {
+	TotalCount int        `json:"totalCount"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
+	Edges      []*AppEdge `json:"edges"`
+}
+
+type AppEdge struct {
+	Cursor Cursor `json:"cursor"`
+	Node   *App   `json:"node"`
+}

@@ -51,7 +51,6 @@ type ComplexityRoot struct {
 		Env  func(childComplexity int) int
 		ID   func(childComplexity int) int
 		Name func(childComplexity int) int
-		Team func(childComplexity int) int
 	}
 
 	AppConnection struct {
@@ -198,7 +197,7 @@ type QueryResolver interface {
 }
 type TeamResolver interface {
 	Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.TeamMemberConnection, error)
-
+	Apps(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.AppConnection, error)
 	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error)
 
 	Deployments(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
@@ -242,13 +241,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Name(childComplexity), true
-
-	case "App.team":
-		if e.complexity.App.Team == nil {
-			break
-		}
-
-		return e.complexity.App.Team(childComplexity), true
 
 	case "AppConnection.edges":
 		if e.complexity.AppConnection.Edges == nil {
@@ -1185,70 +1177,6 @@ func (ec *executionContext) fieldContext_App_name(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _App_team(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_App_team(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Team, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Team)
-	fc.Result = res
-	return ec.marshalNTeam2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeam(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_App_team(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "App",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Team_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Team_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Team_description(ctx, field)
-			case "members":
-				return ec.fieldContext_Team_members(ctx, field)
-			case "apps":
-				return ec.fieldContext_Team_apps(ctx, field)
-			case "githubRepositories":
-				return ec.fieldContext_Team_githubRepositories(ctx, field)
-			case "slackChannel":
-				return ec.fieldContext_Team_slackChannel(ctx, field)
-			case "slackAlertsChannels":
-				return ec.fieldContext_Team_slackAlertsChannels(ctx, field)
-			case "deployments":
-				return ec.fieldContext_Team_deployments(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _App_env(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_App_env(ctx, field)
 	if err != nil {
@@ -1534,8 +1462,6 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_id(ctx, field)
 			case "name":
 				return ec.fieldContext_App_name(ctx, field)
-			case "team":
-				return ec.fieldContext_App_team(ctx, field)
 			case "env":
 				return ec.fieldContext_App_env(ctx, field)
 			}
@@ -3795,7 +3721,7 @@ func (ec *executionContext) _Team_apps(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Apps, nil
+		return ec.resolvers.Team().Apps(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3816,8 +3742,8 @@ func (ec *executionContext) fieldContext_Team_apps(ctx context.Context, field gr
 	fc = &graphql.FieldContext{
 		Object:     "Team",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "totalCount":
@@ -6780,13 +6706,6 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "team":
-
-			out.Values[i] = ec._App_team(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "env":
 
 			out.Values[i] = ec._App_env(ctx, field, obj)
@@ -7536,12 +7455,25 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "apps":
+			field := field
 
-			out.Values[i] = ec._Team_apps(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Team_apps(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "githubRepositories":
 			field := field
 
@@ -8192,6 +8124,10 @@ func (ec *executionContext) marshalNApp2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbacke
 		return graphql.Null
 	}
 	return ec._App(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAppConnection2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppConnection(ctx context.Context, sel ast.SelectionSet, v model.AppConnection) graphql.Marshaler {
+	return ec._AppConnection(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNAppConnection2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppConnection(ctx context.Context, sel ast.SelectionSet, v *model.AppConnection) graphql.Marshaler {

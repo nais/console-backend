@@ -4,7 +4,6 @@ type Team struct {
 	ID                  string               `json:"id"`
 	Name                string               `json:"name"`
 	Description         *string              `json:"description,omitempty"`
-	Apps                *AppConnection       `json:"apps"`
 	SlackChannel        string               `json:"slackChannel"`
 	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
 }

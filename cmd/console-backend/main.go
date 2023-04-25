@@ -6,7 +6,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
@@ -33,7 +32,7 @@ func init() {
 	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
 	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
 	flag.StringVar(&cfg.ConsoleEndpoint, "console-endpoint", envOrDefault("CONSOLE_ENDPOINT", "http://console.local.nais.io/query"), "Console endpoint")
-	flag.StringVar(&cfg.ConsoleToken, "console-token", envOrDefault("CONSOLE_TOKEN", "secret"), "Console Token")
+	flag.StringVar(&cfg.ConsoleToken, "console-token", envOrDefault("CONSOLE_TOKEN", "secret-console-api-key"), "Console Token")
 	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd.local.nais.io"), "Hookd endpoint")
 	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
 	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
@@ -61,7 +60,8 @@ func main() {
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", auth.InsecureValidateMW(srv))
+	// http.Handle("/query", auth.InsecureValidateMW(srv))
+	http.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
 	log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))

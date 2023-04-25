@@ -7,27 +7,6 @@ type Node interface {
 	GetID() string
 }
 
-type App struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Team *Team  `json:"team"`
-	Env  *Env   `json:"env"`
-}
-
-func (App) IsNode()            {}
-func (this App) GetID() string { return this.ID }
-
-type AppConnection struct {
-	TotalCount int        `json:"totalCount"`
-	PageInfo   *PageInfo  `json:"pageInfo"`
-	Edges      []*AppEdge `json:"edges"`
-}
-
-type AppEdge struct {
-	Cursor Cursor `json:"cursor"`
-	Node   *App   `json:"node"`
-}
-
 type Env struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
