@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -43,11 +44,14 @@ func init() {
 func main() {
 	flag.Parse()
 	log := newLogger()
+	ctx := context.Background()
 
-	k8s, err := k8s.New(cfg.Kubeconfig)
+	k8s, err := k8s.New(cfg.Kubeconfig, log.WithField("client", "k8s"))
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	k8s.Run(ctx)
 
 	graphConfig := graph.Config{
 		Resolvers: &graph.Resolver{

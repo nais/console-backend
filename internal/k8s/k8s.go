@@ -3,11 +3,14 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/client-go/informers"
+	corev1inf "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -16,13 +19,16 @@ import (
 // nais_io_v1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 
 type Client struct {
-	DynamicClients map[string]*dynamic.DynamicClient
-	ClientSets     map[string]*kubernetes.Clientset
+	informers map[string]*Informers
+	log       *logrus.Entry
+}
+type Informers struct {
+	AppInformer informers.GenericInformer
+	PodInformer corev1inf.PodInformer
 }
 
-func New(kubeconfig string) (*Client, error) {
-	dcs := map[string]*dynamic.DynamicClient{}
-	kcs := map[string]*kubernetes.Clientset{}
+func New(kubeconfig string, log *logrus.Entry) (*Client, error) {
+	infs := map[string]*Informers{}
 
 	kubeConfig, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
@@ -30,57 +36,73 @@ func New(kubeconfig string) (*Client, error) {
 	}
 
 	for contextName, context := range kubeConfig.Contexts {
+		infs[contextName] = &Informers{}
 		contextSpec := &api.Context{Cluster: context.Cluster, AuthInfo: context.AuthInfo}
 		restConfig, err := clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{Context: *contextSpec}).ClientConfig()
 		if err != nil {
 			return nil, fmt.Errorf("create client config: %w", err)
 		}
-		dynamicClient, err := dynamic.NewForConfig(restConfig)
-		if err != nil {
-			return nil, fmt.Errorf("create dynamic client: %w", err)
-		}
+
 		clientSet, err := kubernetes.NewForConfig(restConfig)
 		if err != nil {
 			return nil, fmt.Errorf("create clientset: %w", err)
 		}
-		dcs[contextName] = dynamicClient
-		kcs[contextName] = clientSet
+
+		log.Debug("creating informers")
+		inf := informers.NewSharedInformerFactory(clientSet, 4*time.Hour)
+
+		infs[contextName].PodInformer = inf.Core().V1().Pods()
 	}
 
-	return &Client{DynamicClients: dcs, ClientSets: kcs}, nil
+	return &Client{
+		informers: infs,
+		log:       log,
+	}, nil
 }
 
-func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
-	ret := []*model.App{}
-	applicationGVK := schema.GroupVersion{Group: "nais.io", Version: "v1alpha1"}
-
-	for env, client := range c.DynamicClients {
-		apps, err := client.Resource(applicationGVK.WithResource("applications")).Namespace(team).List(ctx, v1.ListOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("listing applications: %w", err)
-		}
-		for _, app := range apps.Items {
-			ret = append(ret, &model.App{
-				Name: app.GetName(),
-				Env: &model.Env{
-					Name: env,
-				},
-			})
-		}
+func (c *Client) Run(ctx context.Context) {
+	for env, inf := range c.informers {
+		c.log.Info("starting informers for ", env)
+		go inf.PodInformer.Informer().Run(ctx.Done())
 	}
-	return ret, nil
 }
 
+/*
+	func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
+		ret := []*model.App{}
+		applicationGVK := schema.GroupVersion{Group: "nais.io", Version: "v1alpha1"}
+
+		for env, client := range c.DynamicClients {
+			apps, err := client.Resource(applicationGVK.WithResource("applications")).Namespace(team).List(ctx, v1.ListOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("listing applications: %w", err)
+			}
+			for _, app := range apps.Items {
+				ret = append(ret, &model.App{
+					Name: app.GetName(),
+					Env: &model.Env{
+						Name: env,
+					},
+				})
+			}
+		}
+		return ret, nil
+	}
+*/
 func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*model.Instance, error) {
 	ret := []*model.Instance{}
+	req, err := labels.NewRequirement("app", selection.Equals, []string{name})
+	if err != nil {
+		return nil, fmt.Errorf("creating label selector: %w", err)
+	}
 
-	pods, err := c.ClientSets[env].CoreV1().Pods(team).List(ctx, v1.ListOptions{
-		LabelSelector: fmt.Sprintf("app=%s", name),
-	})
+	selector := labels.NewSelector().Add(*req)
+	pods, err := c.informers[env].PodInformer.Lister().Pods(team).List(selector)
 	if err != nil {
 		return nil, fmt.Errorf("listing pods: %w", err)
 	}
-	for _, pod := range pods.Items {
+
+	for _, pod := range pods {
 		ret = append(ret, &model.Instance{
 			ID:     string(pod.GetUID()),
 			Name:   pod.GetName(),
