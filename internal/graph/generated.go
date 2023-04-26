@@ -51,6 +51,7 @@ type ComplexityRoot struct {
 	App struct {
 		Env       func(childComplexity int) int
 		ID        func(childComplexity int) int
+		Image     func(childComplexity int) int
 		Instances func(childComplexity int) int
 		Name      func(childComplexity int) int
 	}
@@ -245,6 +246,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.ID(childComplexity), true
+
+	case "App.image":
+		if e.complexity.App.Image == nil {
+			break
+		}
+
+		return e.complexity.App.Image(childComplexity), true
 
 	case "App.instances":
 		if e.complexity.App.Instances == nil {
@@ -1216,6 +1224,50 @@ func (ec *executionContext) fieldContext_App_name(ctx context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _App_image(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_image(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Image, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _App_env(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_App_env(ctx, field)
 	if err != nil {
@@ -1553,6 +1605,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_id(ctx, field)
 			case "name":
 				return ec.fieldContext_App_name(ctx, field)
+			case "image":
+				return ec.fieldContext_App_image(ctx, field)
 			case "env":
 				return ec.fieldContext_App_env(ctx, field)
 			case "instances":
@@ -6863,6 +6917,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case model.Instance:
+		return ec._Instance(ctx, sel, &obj)
+	case *model.Instance:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Instance(ctx, sel, obj)
 	case model.App:
 		return ec._App(ctx, sel, &obj)
 	case *model.App:
@@ -6927,6 +6988,13 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 		case "name":
 
 			out.Values[i] = ec._App_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "image":
+
+			out.Values[i] = ec._App_image(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -7442,7 +7510,7 @@ func (ec *executionContext) _GithubRepositoryEdge(ctx context.Context, sel ast.S
 	return out
 }
 
-var instanceImplementors = []string{"Instance"}
+var instanceImplementors = []string{"Instance", "Node"}
 
 func (ec *executionContext) _Instance(ctx context.Context, sel ast.SelectionSet, obj *model.Instance) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, instanceImplementors)

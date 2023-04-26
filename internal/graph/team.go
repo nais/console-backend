@@ -33,16 +33,13 @@ func appEdges(apps []*model.App, team string, first int, after int) []*model.App
 	}
 	for i := after; i < limit; i++ {
 		app := apps[i]
+		app.GQLVars = struct{ Team string }{
+			Team: team,
+		}
+
 		edges = append(edges, &model.AppEdge{
 			Cursor: model.Cursor{Offset: i + 1},
-			Node: &model.App{
-				ID:   app.ID,
-				Name: app.Name,
-				Env:  app.Env,
-				GQLVars: struct{ Team string }{
-					Team: team,
-				},
-			},
+			Node:   app,
 		})
 	}
 	return edges

@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/dynamic"
@@ -84,22 +85,21 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 	ret := []*model.App{}
 
 	for env, infs := range c.informers {
-		obj, err := infs.AppInformer.Lister().ByNamespace(team).List(labels.Everything())
+		objs, err := infs.AppInformer.Lister().ByNamespace(team).List(labels.Everything())
 		if err != nil {
 			return nil, fmt.Errorf("listing applications: %w", err)
 		}
-		for _, app := range obj {
-			application := app.(*unstructured.Unstructured)
-			ret = append(ret, &model.App{
-				Name: application.GetName(),
-				Env: &model.Env{
-					Name: env,
-				},
-			})
+		for _, obj := range objs {
+			app, err := toApp(obj, env)
+			if err != nil {
+				return nil, fmt.Errorf("converting to app: %w", err)
+			}
+			ret = append(ret, app)
 		}
 	}
 	return ret, nil
 }
+
 func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*model.Instance, error) {
 	ret := []*model.Instance{}
 	req, err := labels.NewRequirement("app", selection.Equals, []string{name})
@@ -120,5 +120,19 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 			Status: string(pod.Status.Phase),
 		})
 	}
+	return ret, nil
+}
+
+func toApp(obj runtime.Object, env string) (*model.App, error) {
+	u := obj.(*unstructured.Unstructured)
+	ret := &model.App{}
+	ret.Name = u.GetName()
+	ret.Env = &model.Env{Name: env}
+	image, _, err := unstructured.NestedString(u.Object, "spec", "image")
+	if err != nil {
+		return nil, fmt.Errorf("getting image: %w", err)
+	}
+	ret.Image = image
+
 	return ret, nil
 }

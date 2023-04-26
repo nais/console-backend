@@ -36,6 +36,9 @@ type Instance struct {
 	Status string `json:"status"`
 }
 
+func (Instance) IsNode()            {}
+func (this Instance) GetID() string { return this.ID }
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`

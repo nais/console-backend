@@ -17,12 +17,12 @@ type Instance implements Node {
 type App implements Node {
   id: ID!
   name: String!
+  image: String!
   env: Env!
   instances: [Instance!]!
   #  auhtz: [Authz!]!
   #  autoScaling: AutoScaling!
   #  deploys: [Deploy!]!
-  #  image: Image!
   #  ingresses: [Ingress!]!
   #  manifest: Spec!
   #  networking: [Networking!]!

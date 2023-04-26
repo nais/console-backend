@@ -3,6 +3,7 @@ package model
 type App struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
+	Image   string `json:"image"`
 	Env     *Env   `json:"env"`
 	GQLVars struct {
 		Team string
