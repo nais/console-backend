@@ -119,8 +119,7 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 
 // Apps is the resolver for the apps field.
 func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.AppConnection, error) {
-	panic("not implemented")
-	/*if first == nil {
+	if first == nil {
 		first = new(int)
 		*first = 10
 	}
@@ -132,6 +131,8 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, af
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
+
+	fmt.Printf("apps: %#v\n", apps)
 
 	if *first > len(apps) {
 		*first = len(apps)
@@ -157,7 +158,6 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, af
 			EndCursor:       endCursor,
 		},
 	}, nil
-	*/
 }
 
 func (r *teamResolver) Instances(ctx context.Context) (*model.Instance, error) {

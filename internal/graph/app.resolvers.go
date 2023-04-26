@@ -6,21 +6,19 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
 // Instances is the resolver for the instances field.
 func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error) {
-	panic("not implemented")
-	/*
 	instances, err := r.K8s.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting instances from Kubernetes: %w", err)
 	}
 
 	return instances, nil
-	*/
 }
 
 // App returns AppResolver implementation.
