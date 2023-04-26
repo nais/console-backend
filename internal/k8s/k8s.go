@@ -25,6 +25,7 @@ type Client struct {
 	informers map[string]*Informers
 	log       *logrus.Entry
 }
+
 type Informers struct {
 	AppInformer informers.GenericInformer
 	PodInformer corev1inf.PodInformer

@@ -4,48 +4,30 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/mail"
 	"strings"
 	"time"
 
 	"google.golang.org/api/idtoken"
 )
 
-type (
-	contextKey int
-	valfunc    func(ctx context.Context, idToken string, audience string) (*idtoken.Payload, error)
-)
+type contextKey int
 
 const contextEmail contextKey = 1
 
-func InsecureValidateMW(h http.Handler) http.Handler {
+func StaticUser(user string, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		email := r.Header.Get("X-Goog-Authenticated-User-Email")
-		_, email, _ = strings.Cut(email, ":")
-		_, err := mail.ParseAddress(email)
-		if err != nil {
-			http.Error(w, "Invalid email address", http.StatusUnauthorized)
-			fmt.Println("parsing email:", err)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), contextEmail, email)
+		ctx := context.WithValue(r.Context(), contextEmail, user)
 		r = r.WithContext(ctx)
-
 		h.ServeHTTP(w, r)
 	})
 }
 
 func ValidateIAPJWT(aud string) func(h http.Handler) http.Handler {
-	return validateJWTFromComputeEngine(aud, idtoken.Validate)
-}
-
-func validateJWTFromComputeEngine(aud string, validator valfunc) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			iapJWT := r.Header.Get("X-Goog-IAP-JWT-Assertion")
 
-			payload, err := validator(r.Context(), iapJWT, aud)
+			payload, err := idtoken.Validate(r.Context(), iapJWT, aud)
 			if err != nil {
 				http.Error(w, "Invalid JWT token", http.StatusUnauthorized)
 				return

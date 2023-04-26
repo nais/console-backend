@@ -20,7 +20,7 @@ func TestInsecureValidateMW(t *testing.T) {
 	rec := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("X-Goog-Authenticated-User-Email", "accounts.google.com:example@gmail.com")
-	InsecureValidateMW(http.HandlerFunc(th)).ServeHTTP(rec, r)
+	StaticUser(http.HandlerFunc(th)).ServeHTTP(rec, r)
 	if got := rec.Body.String(); got != "example@gmail.com" {
 		t.Errorf("InsecureValidateMW() = %v, want %v", got, "example@gmail.com")
 	}
