@@ -125,8 +125,12 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 func toApp(obj runtime.Object, env string) (*model.App, error) {
 	u := obj.(*unstructured.Unstructured)
 	ret := &model.App{}
+	ret.ID = "app_" + env + "_" + u.GetNamespace() + "_" + u.GetName()
 	ret.Name = u.GetName()
-	ret.Env = &model.Env{Name: env}
+	ret.Env = &model.Env{
+		Name: env,
+		ID:   "env_" + env,
+	}
 	image, _, err := unstructured.NestedString(u.Object, "spec", "image")
 	if err != nil {
 		return nil, fmt.Errorf("getting image: %w", err)
