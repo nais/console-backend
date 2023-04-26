@@ -21,8 +21,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
-// nais_io_v1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
-
 type Client struct {
 	informers map[string]*Informers
 	log       *logrus.Entry
