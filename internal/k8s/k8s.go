@@ -132,16 +132,17 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 		Name: env,
 		ID:   "env_" + env,
 	}
+
 	image, _, err := unstructured.NestedString(u.Object, "spec", "image")
 	if err != nil {
 		return nil, fmt.Errorf("getting image: %w", err)
 	}
 	ret.Image = image
+
 	accessPolicy, _, err := unstructured.NestedMap(u.Object, "spec", "accessPolicy")
 	if err != nil {
 		return nil, fmt.Errorf("getting accessPolicy: %w", err)
 	}
-
 	apJsonString, err := json.Marshal(accessPolicy)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling accessPolicy: %w", err)
@@ -151,7 +152,6 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling accessPolicy: %w", err)
 	}
-
 	ret.AccessPolicy = a
 
 	resources, _, err := unstructured.NestedMap(u.Object, "spec", "resources")
@@ -167,7 +167,6 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling resources: %w", err)
 	}
-
 	ret.Resources = r
 
 	return ret, nil

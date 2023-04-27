@@ -14,8 +14,13 @@ type Instance implements Node {
   status: String!
 }
 
+type Port {
+  port: Int!
+}
+
 type External {
   host: String!
+  ports: [Port!]!
 }
 
 type Rule {

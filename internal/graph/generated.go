@@ -40,6 +40,7 @@ type Config struct {
 type ResolverRoot interface {
 	AccessPolicy() AccessPolicyResolver
 	App() AppResolver
+	External() ExternalResolver
 	Query() QueryResolver
 	Team() TeamResolver
 	User() UserResolver
@@ -118,7 +119,8 @@ type ComplexityRoot struct {
 	}
 
 	External struct {
-		Host func(childComplexity int) int
+		Host  func(childComplexity int) int
+		Ports func(childComplexity int) int
 	}
 
 	GithubRepository struct {
@@ -161,6 +163,10 @@ type ComplexityRoot struct {
 		HasNextPage     func(childComplexity int) int
 		HasPreviousPage func(childComplexity int) int
 		StartCursor     func(childComplexity int) int
+	}
+
+	Port struct {
+		Port func(childComplexity int) int
 	}
 
 	Query struct {
@@ -245,6 +251,9 @@ type AccessPolicyResolver interface {
 }
 type AppResolver interface {
 	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
+}
+type ExternalResolver interface {
+	Ports(ctx context.Context, obj *model.External) ([]*model.Port, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -551,6 +560,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.External.Host(childComplexity), true
 
+	case "External.ports":
+		if e.complexity.External.Ports == nil {
+			break
+		}
+
+		return e.complexity.External.Ports(childComplexity), true
+
 	case "GithubRepository.name":
 		if e.complexity.GithubRepository.Name == nil {
 			break
@@ -676,6 +692,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "Port.port":
+		if e.complexity.Port.Port == nil {
+			break
+		}
+
+		return e.complexity.Port.Port(childComplexity), true
 
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
@@ -3150,6 +3173,54 @@ func (ec *executionContext) fieldContext_External_host(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _External_ports(ctx context.Context, field graphql.CollectedField, obj *model.External) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_External_ports(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.External().Ports(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Port)
+	fc.Result = res
+	return ec.marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_External_ports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "External",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "port":
+				return ec.fieldContext_Port_port(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Port", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GithubRepository_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubRepository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GithubRepository_name(ctx, field)
 	if err != nil {
@@ -3795,6 +3866,8 @@ func (ec *executionContext) fieldContext_Outbound_external(ctx context.Context, 
 			switch field.Name {
 			case "host":
 				return ec.fieldContext_External_host(ctx, field)
+			case "ports":
+				return ec.fieldContext_External_ports(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type External", field.Name)
 		},
@@ -3967,6 +4040,50 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Cursor does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Port_port(ctx context.Context, field graphql.CollectedField, obj *model.Port) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Port_port(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Port, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Port_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Port",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8410,8 +8527,28 @@ func (ec *executionContext) _External(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._External_host(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "ports":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._External_ports(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8700,6 +8837,34 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var portImplementors = []string{"Port"}
+
+func (ec *executionContext) _Port(ctx context.Context, sel ast.SelectionSet, obj *model.Port) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, portImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Port")
+		case "port":
+
+			out.Values[i] = ec._Port_port(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10257,6 +10422,60 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Port) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx context.Context, sel ast.SelectionSet, v *model.Port) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Port(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRequests2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx context.Context, sel ast.SelectionSet, v *model.Requests) graphql.Marshaler {

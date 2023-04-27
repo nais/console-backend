@@ -6,8 +6,10 @@ type AccessPolicyRule struct {
 }
 
 type External struct {
-	Host string `json:"host"`
-	Port int    `json:"port"`
+	Host  string `json:"host"`
+	Ports []struct {
+		Port int `json:"port"`
+	} `json:"ports"`
 }
 
 type Limits struct {

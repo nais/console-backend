@@ -35,9 +35,10 @@ func (r *accessPolicyResolver) Outbound(ctx context.Context, obj *model.AccessPo
 	}
 
 	for _, host := range obj.Outbound.External {
-		r := model.External{}
-		r.Host = host.Host
-		ret.External = append(ret.External, &r)
+		e := model.External{}
+		e.Host = host.Host
+		e.Ports = append(e.Ports, host.Ports...)
+		ret.External = append(ret.External, &e)
 	}
 
 	return ret, nil
@@ -53,11 +54,26 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 	return instances, nil
 }
 
+// Ports is the resolver for the ports field.
+func (r *externalResolver) Ports(ctx context.Context, obj *model.External) ([]*model.Port, error) {
+	ret := []*model.Port{}
+	for _, port := range obj.Ports {
+		p := model.Port{}
+		p.Port = port.Port
+		ret = append(ret, &p)
+	}
+	return ret, nil
+}
+
 // AccessPolicy returns AccessPolicyResolver implementation.
 func (r *Resolver) AccessPolicy() AccessPolicyResolver { return &accessPolicyResolver{r} }
 
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
+// External returns ExternalResolver implementation.
+func (r *Resolver) External() ExternalResolver { return &externalResolver{r} }
+
 type accessPolicyResolver struct{ *Resolver }
 type appResolver struct{ *Resolver }
+type externalResolver struct{ *Resolver }

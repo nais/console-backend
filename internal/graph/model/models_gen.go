@@ -55,6 +55,10 @@ type PageInfo struct {
 	EndCursor       *Cursor `json:"endCursor,omitempty"`
 }
 
+type Port struct {
+	Port int `json:"port"`
+}
+
 type Rule struct {
 	Application string `json:"application"`
 	Namespace   string `json:"namespace"`
