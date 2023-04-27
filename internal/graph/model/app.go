@@ -7,9 +7,25 @@ type AccessPolicyRule struct {
 
 type External struct {
 	Host  string `json:"host"`
-	Ports []struct {
-		Port int `json:"port"`
-	} `json:"ports"`
+	Ports []Port `json:"ports"`
+}
+
+type Outbound struct {
+	Rules    []*Rule     `json:"rules"`
+	External []*External `json:"external"`
+}
+
+type Inbound struct {
+	Rules []*Rule `json:"rules"`
+}
+
+type Port struct {
+	Port int `json:"port"`
+}
+
+type Rule struct {
+	Application string `json:"application"`
+	Namespace   string `json:"namespace"`
 }
 
 type Limits struct {

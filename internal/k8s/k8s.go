@@ -174,7 +174,6 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 		return nil, fmt.Errorf("getting ingresses: %w", err)
 	}
 
-	fmt.Println(ingresses)
 	iJsonString, err := json.Marshal(ingresses)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling ingresses: %w", err)

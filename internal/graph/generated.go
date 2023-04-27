@@ -40,7 +40,6 @@ type Config struct {
 type ResolverRoot interface {
 	AccessPolicy() AccessPolicyResolver
 	App() AppResolver
-	External() ExternalResolver
 	Query() QueryResolver
 	Team() TeamResolver
 	User() UserResolver
@@ -251,11 +250,7 @@ type AccessPolicyResolver interface {
 	Outbound(ctx context.Context, obj *model.AccessPolicy) (*model.Outbound, error)
 }
 type AppResolver interface {
-	Ingresses(ctx context.Context, obj *model.App) ([]string, error)
 	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
-}
-type ExternalResolver interface {
-	Ports(ctx context.Context, obj *model.External) ([]*model.Port, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -1619,7 +1614,7 @@ func (ec *executionContext) _App_ingresses(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.App().Ingresses(rctx, obj)
+		return obj.Ingresses, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1640,8 +1635,8 @@ func (ec *executionContext) fieldContext_App_ingresses(ctx context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -3242,7 +3237,7 @@ func (ec *executionContext) _External_ports(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.External().Ports(rctx, obj)
+		return obj.Ports, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3254,17 +3249,17 @@ func (ec *executionContext) _External_ports(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Port)
+	res := resTmp.([]model.Port)
 	fc.Result = res
-	return ec.marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx, field.Selections, res)
+	return ec.marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_External_ports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "External",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "port":
@@ -8155,25 +8150,12 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "ingresses":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._App_ingresses(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._App_ingresses(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "instances":
 			field := field
 
@@ -8602,28 +8584,15 @@ func (ec *executionContext) _External(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._External_host(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "ports":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._External_ports(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._External_ports(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10499,7 +10468,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Port) graphql.Marshaler {
+func (ec *executionContext) marshalNPort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx context.Context, sel ast.SelectionSet, v model.Port) graphql.Marshaler {
+	return ec._Port(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Port) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -10523,7 +10496,7 @@ func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx, sel, v[i])
+			ret[i] = ec.marshalNPort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -10541,16 +10514,6 @@ func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx context.Context, sel ast.SelectionSet, v *model.Port) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Port(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRequests2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx context.Context, sel ast.SelectionSet, v *model.Requests) graphql.Marshaler {

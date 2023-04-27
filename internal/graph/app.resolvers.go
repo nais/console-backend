@@ -44,13 +44,6 @@ func (r *accessPolicyResolver) Outbound(ctx context.Context, obj *model.AccessPo
 	return ret, nil
 }
 
-// Ingresses is the resolver for the ingresses field.
-func (r *appResolver) Ingresses(ctx context.Context, obj *model.App) ([]string, error) {
-	ret := []string{}
-	ret = append(ret, obj.Ingresses...)
-	return ret, nil
-}
-
 // Instances is the resolver for the instances field.
 func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error) {
 	instances, err := r.K8s.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
@@ -61,26 +54,11 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 	return instances, nil
 }
 
-// Ports is the resolver for the ports field.
-func (r *externalResolver) Ports(ctx context.Context, obj *model.External) ([]*model.Port, error) {
-	ret := []*model.Port{}
-	for _, port := range obj.Ports {
-		p := model.Port{}
-		p.Port = port.Port
-		ret = append(ret, &p)
-	}
-	return ret, nil
-}
-
 // AccessPolicy returns AccessPolicyResolver implementation.
 func (r *Resolver) AccessPolicy() AccessPolicyResolver { return &accessPolicyResolver{r} }
 
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
-// External returns ExternalResolver implementation.
-func (r *Resolver) External() ExternalResolver { return &externalResolver{r} }
-
 type accessPolicyResolver struct{ *Resolver }
 type appResolver struct{ *Resolver }
-type externalResolver struct{ *Resolver }
