@@ -7,20 +7,12 @@ type AccessPolicyRule struct {
 
 type External struct {
 	Host string `json:"host"`
-}
-
-type Inbound struct {
-	Rules []*Rule `json:"rules"`
+	Port int    `json:"port"`
 }
 
 type Limits struct {
 	CPU    string `json:"cpu"`
 	Memory string `json:"memory"`
-}
-
-type Outbound struct {
-	Rules    []*Rule     `json:"rules"`
-	External []*External `json:"external"`
 }
 
 type AccessPolicy struct {
@@ -67,9 +59,4 @@ type Requests struct {
 type Resources struct {
 	Limits   *Limits   `json:"limits"`
 	Requests *Requests `json:"requests"`
-}
-
-type Rule struct {
-	Application string `json:"application"`
-	Namespace   string `json:"namespace"`
 }
