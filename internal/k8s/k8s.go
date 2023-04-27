@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -136,6 +137,17 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 		return nil, fmt.Errorf("getting image: %w", err)
 	}
 	ret.Image = image
+	accessPolicy, _, err := unstructured.NestedMap(u.Object, "spec", "accessPolicy")
+	if err != nil {
+		return nil, fmt.Errorf("getting accessPolicy: %w", err)
+	}
+
+	jsonString, _ := json.Marshal(accessPolicy)
+	fmt.Printf("%s\n", jsonString)
+	a := model.AccessPolicy{}
+	json.Unmarshal(jsonString, &a)
+
+	ret.AccessPolicy = a
 
 	return ret, nil
 }

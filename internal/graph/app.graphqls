@@ -14,12 +14,36 @@ type Instance implements Node {
   status: String!
 }
 
+type External {
+  host: String!
+}
+
+type Rule {
+  application: String!
+  namespace: String!
+}
+
+type Inbound {
+  rules: [Rule!]!
+}
+
+type Outbound {
+  rules: [Rule!]!
+  external: [External!]!
+}
+
+type AccessPolicy {
+  inbound: Inbound!
+  outbound: Outbound!
+}
+
 type App implements Node {
   id: ID!
   name: String!
   image: String!
   env: Env!
   instances: [Instance!]!
+  accessPolicy: AccessPolicy!
   #  auhtz: [Authz!]!
   #  autoScaling: AutoScaling!
   #  deploys: [Deploy!]!

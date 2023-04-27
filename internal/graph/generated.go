@@ -38,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	AccessPolicy() AccessPolicyResolver
 	App() AppResolver
 	Query() QueryResolver
 	Team() TeamResolver
@@ -48,12 +49,18 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AccessPolicy struct {
+		Inbound  func(childComplexity int) int
+		Outbound func(childComplexity int) int
+	}
+
 	App struct {
-		Env       func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Image     func(childComplexity int) int
-		Instances func(childComplexity int) int
-		Name      func(childComplexity int) int
+		AccessPolicy func(childComplexity int) int
+		Env          func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Image        func(childComplexity int) int
+		Instances    func(childComplexity int) int
+		Name         func(childComplexity int) int
 	}
 
 	AppConnection struct {
@@ -109,6 +116,10 @@ type ComplexityRoot struct {
 		Name func(childComplexity int) int
 	}
 
+	External struct {
+		Host func(childComplexity int) int
+	}
+
 	GithubRepository struct {
 		Name func(childComplexity int) int
 	}
@@ -124,10 +135,19 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Inbound struct {
+		Rules func(childComplexity int) int
+	}
+
 	Instance struct {
 		ID     func(childComplexity int) int
 		Name   func(childComplexity int) int
 		Status func(childComplexity int) int
+	}
+
+	Outbound struct {
+		External func(childComplexity int) int
+		Rules    func(childComplexity int) int
 	}
 
 	PageInfo struct {
@@ -142,6 +162,11 @@ type ComplexityRoot struct {
 		Team  func(childComplexity int, name string) int
 		Teams func(childComplexity int, first *int, after *model.Cursor) int
 		User  func(childComplexity int) int
+	}
+
+	Rule struct {
+		Application func(childComplexity int) int
+		Namespace   func(childComplexity int) int
 	}
 
 	SlackAlertsChannel struct {
@@ -198,6 +223,10 @@ type ComplexityRoot struct {
 	}
 }
 
+type AccessPolicyResolver interface {
+	Inbound(ctx context.Context, obj *model.AccessPolicy) (*model.Inbound, error)
+	Outbound(ctx context.Context, obj *model.AccessPolicy) (*model.Outbound, error)
+}
 type AppResolver interface {
 	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
 }
@@ -232,6 +261,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AccessPolicy.inbound":
+		if e.complexity.AccessPolicy.Inbound == nil {
+			break
+		}
+
+		return e.complexity.AccessPolicy.Inbound(childComplexity), true
+
+	case "AccessPolicy.outbound":
+		if e.complexity.AccessPolicy.Outbound == nil {
+			break
+		}
+
+		return e.complexity.AccessPolicy.Outbound(childComplexity), true
+
+	case "App.accessPolicy":
+		if e.complexity.App.AccessPolicy == nil {
+			break
+		}
+
+		return e.complexity.App.AccessPolicy(childComplexity), true
 
 	case "App.env":
 		if e.complexity.App.Env == nil {
@@ -471,6 +521,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Env.Name(childComplexity), true
 
+	case "External.host":
+		if e.complexity.External.Host == nil {
+			break
+		}
+
+		return e.complexity.External.Host(childComplexity), true
+
 	case "GithubRepository.name":
 		if e.complexity.GithubRepository.Name == nil {
 			break
@@ -513,6 +570,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GithubRepositoryEdge.Node(childComplexity), true
 
+	case "Inbound.rules":
+		if e.complexity.Inbound.Rules == nil {
+			break
+		}
+
+		return e.complexity.Inbound.Rules(childComplexity), true
+
 	case "Instance.id":
 		if e.complexity.Instance.ID == nil {
 			break
@@ -533,6 +597,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Instance.Status(childComplexity), true
+
+	case "Outbound.external":
+		if e.complexity.Outbound.External == nil {
+			break
+		}
+
+		return e.complexity.Outbound.External(childComplexity), true
+
+	case "Outbound.rules":
+		if e.complexity.Outbound.Rules == nil {
+			break
+		}
+
+		return e.complexity.Outbound.Rules(childComplexity), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -604,6 +682,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.User(childComplexity), true
+
+	case "Rule.application":
+		if e.complexity.Rule.Application == nil {
+			break
+		}
+
+		return e.complexity.Rule.Application(childComplexity), true
+
+	case "Rule.namespace":
+		if e.complexity.Rule.Namespace == nil {
+			break
+		}
+
+		return e.complexity.Rule.Namespace(childComplexity), true
 
 	case "SlackAlertsChannel.env":
 		if e.complexity.SlackAlertsChannel.Env == nil {
@@ -1136,6 +1228,104 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _AccessPolicy_inbound(ctx context.Context, field graphql.CollectedField, obj *model.AccessPolicy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AccessPolicy_inbound(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.AccessPolicy().Inbound(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Inbound)
+	fc.Result = res
+	return ec.marshalNInbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInbound(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AccessPolicy_inbound(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessPolicy",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "rules":
+				return ec.fieldContext_Inbound_rules(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Inbound", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccessPolicy_outbound(ctx context.Context, field graphql.CollectedField, obj *model.AccessPolicy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AccessPolicy_outbound(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.AccessPolicy().Outbound(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Outbound)
+	fc.Result = res
+	return ec.marshalNOutbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AccessPolicy_outbound(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccessPolicy",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "rules":
+				return ec.fieldContext_Outbound_rules(ctx, field)
+			case "external":
+				return ec.fieldContext_Outbound_external(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Outbound", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _App_id(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_App_id(ctx, field)
 	if err != nil {
@@ -1365,6 +1555,56 @@ func (ec *executionContext) fieldContext_App_instances(ctx context.Context, fiel
 				return ec.fieldContext_Instance_status(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Instance", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _App_accessPolicy(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_accessPolicy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccessPolicy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.AccessPolicy)
+	fc.Result = res
+	return ec.marshalNAccessPolicy2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAccessPolicy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_accessPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "inbound":
+				return ec.fieldContext_AccessPolicy_inbound(ctx, field)
+			case "outbound":
+				return ec.fieldContext_AccessPolicy_outbound(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AccessPolicy", field.Name)
 		},
 	}
 	return fc, nil
@@ -1611,6 +1851,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_env(ctx, field)
 			case "instances":
 				return ec.fieldContext_App_instances(ctx, field)
+			case "accessPolicy":
+				return ec.fieldContext_App_accessPolicy(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -2747,6 +2989,50 @@ func (ec *executionContext) fieldContext_Env_name(ctx context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _External_host(ctx context.Context, field graphql.CollectedField, obj *model.External) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_External_host(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Host, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_External_host(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "External",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GithubRepository_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubRepository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GithubRepository_name(ctx, field)
 	if err != nil {
@@ -3031,6 +3317,56 @@ func (ec *executionContext) fieldContext_GithubRepositoryEdge_node(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Inbound_rules(ctx context.Context, field graphql.CollectedField, obj *model.Inbound) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Inbound_rules(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rules, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Rule)
+	fc.Result = res
+	return ec.marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Inbound_rules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Inbound",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "application":
+				return ec.fieldContext_Rule_application(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Rule_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Instance_id(ctx context.Context, field graphql.CollectedField, obj *model.Instance) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Instance_id(ctx, field)
 	if err != nil {
@@ -3158,6 +3494,104 @@ func (ec *executionContext) fieldContext_Instance_status(ctx context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Outbound_rules(ctx context.Context, field graphql.CollectedField, obj *model.Outbound) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Outbound_rules(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rules, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Rule)
+	fc.Result = res
+	return ec.marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Outbound_rules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Outbound",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "application":
+				return ec.fieldContext_Rule_application(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Rule_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Outbound_external(ctx context.Context, field graphql.CollectedField, obj *model.Outbound) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Outbound_external(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.External, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.External)
+	fc.Result = res
+	return ec.marshalNExternal2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternalᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Outbound_external(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Outbound",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "host":
+				return ec.fieldContext_External_host(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type External", field.Name)
 		},
 	}
 	return fc, nil
@@ -3701,6 +4135,94 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Rule_application(ctx context.Context, field graphql.CollectedField, obj *model.Rule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Rule_application(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Application, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Rule_application(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Rule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Rule_namespace(ctx context.Context, field graphql.CollectedField, obj *model.Rule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Rule_namespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Rule_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Rule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6968,6 +7490,67 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 
 // region    **************************** object.gotpl ****************************
 
+var accessPolicyImplementors = []string{"AccessPolicy"}
+
+func (ec *executionContext) _AccessPolicy(ctx context.Context, sel ast.SelectionSet, obj *model.AccessPolicy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accessPolicyImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccessPolicy")
+		case "inbound":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessPolicy_inbound(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "outbound":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccessPolicy_outbound(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var appImplementors = []string{"App", "Node"}
 
 func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj *model.App) graphql.Marshaler {
@@ -7026,6 +7609,13 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 				return innerFunc(ctx)
 
 			})
+		case "accessPolicy":
+
+			out.Values[i] = ec._App_accessPolicy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7405,6 +7995,34 @@ func (ec *executionContext) _Env(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
+var externalImplementors = []string{"External"}
+
+func (ec *executionContext) _External(ctx context.Context, sel ast.SelectionSet, obj *model.External) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, externalImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("External")
+		case "host":
+
+			out.Values[i] = ec._External_host(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var githubRepositoryImplementors = []string{"GithubRepository"}
 
 func (ec *executionContext) _GithubRepository(ctx context.Context, sel ast.SelectionSet, obj *model.GithubRepository) graphql.Marshaler {
@@ -7510,6 +8128,34 @@ func (ec *executionContext) _GithubRepositoryEdge(ctx context.Context, sel ast.S
 	return out
 }
 
+var inboundImplementors = []string{"Inbound"}
+
+func (ec *executionContext) _Inbound(ctx context.Context, sel ast.SelectionSet, obj *model.Inbound) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inboundImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Inbound")
+		case "rules":
+
+			out.Values[i] = ec._Inbound_rules(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var instanceImplementors = []string{"Instance", "Node"}
 
 func (ec *executionContext) _Instance(ctx context.Context, sel ast.SelectionSet, obj *model.Instance) graphql.Marshaler {
@@ -7537,6 +8183,41 @@ func (ec *executionContext) _Instance(ctx context.Context, sel ast.SelectionSet,
 		case "status":
 
 			out.Values[i] = ec._Instance_status(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var outboundImplementors = []string{"Outbound"}
+
+func (ec *executionContext) _Outbound(ctx context.Context, sel ast.SelectionSet, obj *model.Outbound) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, outboundImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Outbound")
+		case "rules":
+
+			out.Values[i] = ec._Outbound_rules(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "external":
+
+			out.Values[i] = ec._Outbound_external(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -7715,6 +8396,41 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				return ec._Query___schema(ctx, field)
 			})
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var ruleImplementors = []string{"Rule"}
+
+func (ec *executionContext) _Rule(ctx context.Context, sel ast.SelectionSet, obj *model.Rule) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ruleImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Rule")
+		case "application":
+
+			out.Values[i] = ec._Rule_application(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "namespace":
+
+			out.Values[i] = ec._Rule_namespace(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8471,6 +9187,10 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAccessPolicy2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAccessPolicy(ctx context.Context, sel ast.SelectionSet, v model.AccessPolicy) graphql.Marshaler {
+	return ec._AccessPolicy(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNApp2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐApp(ctx context.Context, sel ast.SelectionSet, v *model.App) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8770,6 +9490,60 @@ func (ec *executionContext) marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbacke
 	return ec._Env(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNExternal2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.External) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNExternal2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternal(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNExternal2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternal(ctx context.Context, sel ast.SelectionSet, v *model.External) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._External(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNGithubRepository2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepository(ctx context.Context, sel ast.SelectionSet, v *model.GithubRepository) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8863,6 +9637,20 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) marshalNInbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInbound(ctx context.Context, sel ast.SelectionSet, v model.Inbound) graphql.Marshaler {
+	return ec._Inbound(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInbound(ctx context.Context, sel ast.SelectionSet, v *model.Inbound) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Inbound(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNInstance2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Instance) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -8932,6 +9720,20 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNOutbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v model.Outbound) graphql.Marshaler {
+	return ec._Outbound(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOutbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v *model.Outbound) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Outbound(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8940,6 +9742,60 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Rule) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRule2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRule2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx context.Context, sel ast.SelectionSet, v *model.Rule) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Rule(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx context.Context, sel ast.SelectionSet, v model.SlackAlertsChannel) graphql.Marshaler {
