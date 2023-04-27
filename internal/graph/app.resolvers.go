@@ -44,6 +44,13 @@ func (r *accessPolicyResolver) Outbound(ctx context.Context, obj *model.AccessPo
 	return ret, nil
 }
 
+// Ingresses is the resolver for the ingresses field.
+func (r *appResolver) Ingresses(ctx context.Context, obj *model.App) ([]string, error) {
+	ret := []string{}
+	ret = append(ret, obj.Ingresses...)
+	return ret, nil
+}
+
 // Instances is the resolver for the instances field.
 func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error) {
 	instances, err := r.K8s.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)

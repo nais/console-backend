@@ -33,6 +33,7 @@ type App struct {
 	Image        string       `json:"image"`
 	Env          *Env         `json:"env"`
 	AccessPolicy AccessPolicy `json:"accessPolicy"`
+	Ingresses    []string     `json:"ingresses"`
 	Resources    Resources    `json:"resources"`
 	GQLVars      struct {
 		Team string

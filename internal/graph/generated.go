@@ -60,6 +60,7 @@ type ComplexityRoot struct {
 		Env          func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Image        func(childComplexity int) int
+		Ingresses    func(childComplexity int) int
 		Instances    func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Resources    func(childComplexity int) int
@@ -250,6 +251,7 @@ type AccessPolicyResolver interface {
 	Outbound(ctx context.Context, obj *model.AccessPolicy) (*model.Outbound, error)
 }
 type AppResolver interface {
+	Ingresses(ctx context.Context, obj *model.App) ([]string, error)
 	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
 }
 type ExternalResolver interface {
@@ -328,6 +330,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Image(childComplexity), true
+
+	case "App.ingresses":
+		if e.complexity.App.Ingresses == nil {
+			break
+		}
+
+		return e.complexity.App.Ingresses(childComplexity), true
 
 	case "App.instances":
 		if e.complexity.App.Instances == nil {
@@ -1596,6 +1605,50 @@ func (ec *executionContext) fieldContext_App_env(ctx context.Context, field grap
 	return fc, nil
 }
 
+func (ec *executionContext) _App_ingresses(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_ingresses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().Ingresses(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_ingresses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _App_instances(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_App_instances(ctx, field)
 	if err != nil {
@@ -1987,6 +2040,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_image(ctx, field)
 			case "env":
 				return ec.fieldContext_App_env(ctx, field)
+			case "ingresses":
+				return ec.fieldContext_App_ingresses(ctx, field)
 			case "instances":
 				return ec.fieldContext_App_instances(ctx, field)
 			case "accessPolicy":
@@ -8099,6 +8154,26 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "ingresses":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_ingresses(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "instances":
 			field := field
 
@@ -10563,6 +10638,38 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNTeam2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeam(ctx context.Context, sel ast.SelectionSet, v model.Team) graphql.Marshaler {

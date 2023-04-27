@@ -62,13 +62,13 @@ type App implements Node {
   name: String!
   image: String!
   env: Env!
+  ingresses: [String!]!
   instances: [Instance!]!
   accessPolicy: AccessPolicy!
   resources: Resources!
   #  auhtz: [Authz!]!
   #  autoScaling: AutoScaling!
   #  deploys: [Deploy!]!
-  #  ingresses: [Ingress!]!
   #  manifest: Spec!
   #  networking: [Networking!]!
   #  storage: [Storage!]!

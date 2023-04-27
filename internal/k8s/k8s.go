@@ -169,5 +169,22 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 	ret.Resources = r
 
+	ingresses, _, err := unstructured.NestedSlice(u.Object, "spec", "ingresses")
+	if err != nil {
+		return nil, fmt.Errorf("getting ingresses: %w", err)
+	}
+
+	fmt.Println(ingresses)
+	iJsonString, err := json.Marshal(ingresses)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling ingresses: %w", err)
+	}
+	i := []string{}
+	err = json.Unmarshal(iJsonString, &i)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling ingresses: %w", err)
+	}
+	ret.Ingresses = i
+
 	return ret, nil
 }
