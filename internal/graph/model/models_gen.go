@@ -30,9 +30,6 @@ type GithubRepositoryEdge struct {
 	Node   *GithubRepository `json:"node"`
 }
 
-type Inbound struct {
-	Rules []*Rule `json:"rules"`
-}
 
 type Instance struct {
 	ID     string `json:"id"`
@@ -43,10 +40,7 @@ type Instance struct {
 func (Instance) IsNode()            {}
 func (this Instance) GetID() string { return this.ID }
 
-type Outbound struct {
-	Rules    []*Rule     `json:"rules"`
-	External []*External `json:"external"`
-}
+
 
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
@@ -55,7 +49,3 @@ type PageInfo struct {
 	EndCursor       *Cursor `json:"endCursor,omitempty"`
 }
 
-type Rule struct {
-	Application string `json:"application"`
-	Namespace   string `json:"namespace"`
-}

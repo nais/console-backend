@@ -9,6 +9,20 @@ type External struct {
 	Host string `json:"host"`
 }
 
+type Inbound struct {
+	Rules []*Rule `json:"rules"`
+}
+
+type Limits struct {
+	CPU    string `json:"cpu"`
+	Memory string `json:"memory"`
+}
+
+type Outbound struct {
+	Rules    []*Rule     `json:"rules"`
+	External []*External `json:"external"`
+}
+
 type AccessPolicy struct {
 	Inbound struct {
 		Rules []AccessPolicyRule `json:"rules"`
@@ -25,6 +39,7 @@ type App struct {
 	Image        string       `json:"image"`
 	Env          *Env         `json:"env"`
 	AccessPolicy AccessPolicy `json:"accessPolicy"`
+	Resources    Resources    `json:"resources"`
 	GQLVars      struct {
 		Team string
 	} `json:"-"`
@@ -42,4 +57,19 @@ type AppConnection struct {
 type AppEdge struct {
 	Cursor Cursor `json:"cursor"`
 	Node   *App   `json:"node"`
+}
+
+type Requests struct {
+	CPU    string `json:"cpu"`
+	Memory string `json:"memory"`
+}
+
+type Resources struct {
+	Limits   *Limits   `json:"limits"`
+	Requests *Requests `json:"requests"`
+}
+
+type Rule struct {
+	Application string `json:"application"`
+	Namespace   string `json:"namespace"`
 }

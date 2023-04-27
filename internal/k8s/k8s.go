@@ -142,12 +142,33 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 		return nil, fmt.Errorf("getting accessPolicy: %w", err)
 	}
 
-	jsonString, _ := json.Marshal(accessPolicy)
-	fmt.Printf("%s\n", jsonString)
+	apJsonString, err := json.Marshal(accessPolicy)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling accessPolicy: %w", err)
+	}
 	a := model.AccessPolicy{}
-	json.Unmarshal(jsonString, &a)
+	err = json.Unmarshal(apJsonString, &a)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling accessPolicy: %w", err)
+	}
 
 	ret.AccessPolicy = a
+
+	resources, _, err := unstructured.NestedMap(u.Object, "spec", "resources")
+	if err != nil {
+		return nil, fmt.Errorf("getting resources: %w", err)
+	}
+	rJsonString, err := json.Marshal(resources)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling resources: %w", err)
+	}
+	r := model.Resources{}
+	err = json.Unmarshal(rJsonString, &r)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling resources: %w", err)
+	}
+
+	ret.Resources = r
 
 	return ret, nil
 }

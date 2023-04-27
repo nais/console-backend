@@ -37,6 +37,21 @@ type AccessPolicy {
   outbound: Outbound!
 }
 
+type Limits {
+  cpu: String!
+  memory: String!
+}
+
+type Requests {
+  cpu: String!
+  memory: String!
+}
+
+type Resources {
+  limits: Limits!
+  requests: Requests!
+}
+
 type App implements Node {
   id: ID!
   name: String!
@@ -44,6 +59,7 @@ type App implements Node {
   env: Env!
   instances: [Instance!]!
   accessPolicy: AccessPolicy!
+  resources: Resources!
   #  auhtz: [Authz!]!
   #  autoScaling: AutoScaling!
   #  deploys: [Deploy!]!

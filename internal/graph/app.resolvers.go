@@ -53,6 +53,20 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 	return instances, nil
 }
 
+// Resources is the resolver for the resources field.
+func (r *appResolver) Resources(ctx context.Context, obj *model.App) (*model.Resources, error) {
+	return &model.Resources{
+		Limits: &model.Limits{
+			CPU:    obj.Resources.Limits.CPU,
+			Memory: obj.Resources.Limits.Memory,
+		},
+		Requests: &model.Requests{
+			CPU:    obj.Resources.Requests.CPU,
+			Memory: obj.Resources.Requests.Memory,
+		},
+	}, nil
+}
+
 // AccessPolicy returns AccessPolicyResolver implementation.
 func (r *Resolver) AccessPolicy() AccessPolicyResolver { return &accessPolicyResolver{r} }
 
