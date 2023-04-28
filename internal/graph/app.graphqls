@@ -66,9 +66,9 @@ type App implements Node {
   instances: [Instance!]!
   accessPolicy: AccessPolicy!
   resources: Resources!
+  deploys(first: Int, after: Cursor): DeploymentConnection!
   #  auhtz: [Authz!]!
   #  autoScaling: AutoScaling!
-  #  deploys: [Deploy!]!
   #  manifest: Spec!
   #  networking: [Networking!]!
   #  storage: [Storage!]!

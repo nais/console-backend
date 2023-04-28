@@ -54,11 +54,51 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 	return instances, nil
 }
 
+// Deploys is the resolver for the deploys field.
+func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, after *model.Cursor) (*model.DeploymentConnection, error) {
+	if first == nil {
+		first = new(int)
+		*first = 10
+	}
+	if after == nil {
+		after = &model.Cursor{Offset: 0}
+	}
+	deps, err := r.Hookd.GetDeploysForApp(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
+	}
+
+	if *first > len(deps) {
+		*first = len(deps)
+	}
+
+	e := deploymentEdges(deps, *first, after.Offset)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+
+	if len(e) > 0 {
+		startCursor = &e[0].Cursor
+		endCursor = &e[len(e)-1].Cursor
+	}
+
+	return &model.DeploymentConnection{
+		Edges: e,
+		PageInfo: &model.PageInfo{
+			StartCursor: startCursor,
+			EndCursor:   endCursor,
+			HasNextPage: len(deps) > *first+after.Offset,
+		},
+	}, nil
+}
+
 // AccessPolicy returns AccessPolicyResolver implementation.
 func (r *Resolver) AccessPolicy() AccessPolicyResolver { return &accessPolicyResolver{r} }
 
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
-type accessPolicyResolver struct{ *Resolver }
-type appResolver struct{ *Resolver }
+type (
+	accessPolicyResolver struct{ *Resolver }
+	appResolver          struct{ *Resolver }
+)

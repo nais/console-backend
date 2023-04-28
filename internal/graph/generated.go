@@ -56,6 +56,7 @@ type ComplexityRoot struct {
 
 	App struct {
 		AccessPolicy func(childComplexity int) int
+		Deploys      func(childComplexity int, first *int, after *model.Cursor) int
 		Env          func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Image        func(childComplexity int) int
@@ -251,6 +252,8 @@ type AccessPolicyResolver interface {
 }
 type AppResolver interface {
 	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
+
+	Deploys(ctx context.Context, obj *model.App, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -304,6 +307,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.AccessPolicy(childComplexity), true
+
+	case "App.deploys":
+		if e.complexity.App.Deploys == nil {
+			break
+		}
+
+		args, err := ec.field_App_deploys_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.App.Deploys(childComplexity, args["first"].(*int), args["after"].(*model.Cursor)), true
 
 	case "App.env":
 		if e.complexity.App.Env == nil {
@@ -1093,6 +1108,30 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_App_deploys_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *model.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1796,6 +1835,69 @@ func (ec *executionContext) fieldContext_App_resources(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _App_deploys(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_deploys(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().Deploys(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DeploymentConnection)
+	fc.Result = res
+	return ec.marshalNDeploymentConnection2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_deploys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_DeploymentConnection_totalCount(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DeploymentConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_DeploymentConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeploymentConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_App_deploys_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AppConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppConnection_totalCount(ctx, field)
 	if err != nil {
@@ -2043,6 +2145,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_accessPolicy(ctx, field)
 			case "resources":
 				return ec.fieldContext_App_resources(ctx, field)
+			case "deploys":
+				return ec.fieldContext_App_deploys(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -8190,6 +8294,26 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "deploys":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_deploys(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
