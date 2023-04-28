@@ -92,13 +92,20 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	}, nil
 }
 
+// App is the resolver for the app field.
+func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
+	app, err := r.K8s.App(ctx, name, team, env)
+	if err != nil {
+		return nil, fmt.Errorf("getting app from Kubernetes: %w", err)
+	}
+	return app, nil
+}
+
 // AccessPolicy returns AccessPolicyResolver implementation.
 func (r *Resolver) AccessPolicy() AccessPolicyResolver { return &accessPolicyResolver{r} }
 
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
-type (
-	accessPolicyResolver struct{ *Resolver }
-	appResolver          struct{ *Resolver }
-)
+type accessPolicyResolver struct{ *Resolver }
+type appResolver struct{ *Resolver }

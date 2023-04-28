@@ -81,6 +81,14 @@ func (c *Client) Run(ctx context.Context) {
 	}
 }
 
+func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
+	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
+	if err != nil {
+		return nil, fmt.Errorf("getting application: %w", err)
+	}
+	return toApp(obj, env)
+}
+
 func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 	ret := []*model.App{}
 
@@ -184,6 +192,15 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 		return nil, fmt.Errorf("unmarshalling ingresses: %w", err)
 	}
 	ret.Ingresses = i
+
+	rolloutCompleteTime, ok, err := unstructured.NestedInt64(u.Object, "status", "rolloutCompleteTime")
+	if err != nil {
+		return nil, fmt.Errorf("getting rolloutCompleteTime: %w", err)
+	}
+
+	if ok {
+		ret.LastDeployed = time.Unix(0, rolloutCompleteTime)
+	}
 
 	return ret, nil
 }

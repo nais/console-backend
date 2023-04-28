@@ -67,10 +67,15 @@ type App implements Node {
   accessPolicy: AccessPolicy!
   resources: Resources!
   deploys(first: Int, after: Cursor): DeploymentConnection!
-  #  auhtz: [Authz!]!
+  lastDeployed: Time
+  #  authz: [Authz!]!
   #  autoScaling: AutoScaling!
   #  manifest: Spec!
   #  networking: [Networking!]!
   #  storage: [Storage!]!
   #  variables: [Variable!]!
+}
+
+extend type Query {
+  app(name: String!, team: String!, env: String!): App!
 }

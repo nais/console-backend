@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type AccessPolicyRule struct {
 	Application string `json:"application"`
 	Namespace   string `json:"namespace"`
@@ -51,6 +53,7 @@ type App struct {
 	AccessPolicy AccessPolicy `json:"accessPolicy"`
 	Ingresses    []string     `json:"ingresses"`
 	Resources    Resources    `json:"resources"`
+	LastDeployed time.Time    `json:"lastDeployed"`
 	GQLVars      struct {
 		Team string
 	} `json:"-"`
