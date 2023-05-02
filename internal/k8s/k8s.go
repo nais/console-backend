@@ -167,47 +167,28 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getting accessPolicy: %w", err)
 	}
-	apJsonString, err := json.Marshal(accessPolicy)
-	if err != nil {
-		return nil, fmt.Errorf("marshalling accessPolicy: %w", err)
+	ap := model.AccessPolicy{}
+	if err := convert(accessPolicy, &ap); err != nil {
+		return nil, fmt.Errorf("converting accessPolicy: %w", err)
 	}
-	a := model.AccessPolicy{}
-	err = json.Unmarshal(apJsonString, &a)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling accessPolicy: %w", err)
-	}
-	ret.AccessPolicy = a
+	ret.AccessPolicy = ap
 
 	resources, _, err := unstructured.NestedMap(u.Object, "spec", "resources")
 	if err != nil {
 		return nil, fmt.Errorf("getting resources: %w", err)
 	}
-	rJsonString, err := json.Marshal(resources)
-	if err != nil {
-		return nil, fmt.Errorf("marshalling resources: %w", err)
-	}
 	r := model.Resources{}
-	err = json.Unmarshal(rJsonString, &r)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling resources: %w", err)
+	if err := convert(resources, &r); err != nil {
+		return nil, fmt.Errorf("converting resources: %w", err)
 	}
 	ret.Resources = r
 
-	ingresses, _, err := unstructured.NestedSlice(u.Object, "spec", "ingresses")
+	ingresses, _, err := unstructured.NestedStringSlice(u.Object, "spec", "ingresses")
 	if err != nil {
 		return nil, fmt.Errorf("getting ingresses: %w", err)
 	}
 
-	iJsonString, err := json.Marshal(ingresses)
-	if err != nil {
-		return nil, fmt.Errorf("marshalling ingresses: %w", err)
-	}
-	i := []string{}
-	err = json.Unmarshal(iJsonString, &i)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshalling ingresses: %w", err)
-	}
-	ret.Ingresses = i
+	ret.Ingresses = ingresses
 
 	rolloutCompleteTime, ok, err := unstructured.NestedInt64(u.Object, "status", "rolloutCompleteTime")
 	if err != nil {
@@ -219,4 +200,17 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 
 	return ret, nil
+}
+
+// convert takes a map[string]any / json, and converts it to the target struct
+func convert(m map[string]any, target any) error {
+	j, err := json.Marshal(m)
+	if err != nil {
+		return fmt.Errorf("marshalling struct: %w", err)
+	}
+	err = json.Unmarshal(j, &target)
+	if err != nil {
+		return fmt.Errorf("unmarshalling json: %w", err)
+	}
+	return nil
 }
