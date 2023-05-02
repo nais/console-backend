@@ -56,13 +56,13 @@ type ComplexityRoot struct {
 
 	App struct {
 		AccessPolicy func(childComplexity int) int
+		Deployed     func(childComplexity int) int
 		Deploys      func(childComplexity int, first *int, after *model.Cursor) int
 		Env          func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Image        func(childComplexity int) int
 		Ingresses    func(childComplexity int) int
 		Instances    func(childComplexity int) int
-		LastDeployed func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Resources    func(childComplexity int) int
 	}
@@ -145,9 +145,12 @@ type ComplexityRoot struct {
 	}
 
 	Instance struct {
-		ID     func(childComplexity int) int
-		Name   func(childComplexity int) int
-		Status func(childComplexity int) int
+		Created  func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Image    func(childComplexity int) int
+		Name     func(childComplexity int) int
+		Restarts func(childComplexity int) int
+		Status   func(childComplexity int) int
 	}
 
 	Limits struct {
@@ -311,6 +314,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.AccessPolicy(childComplexity), true
 
+	case "App.deployed":
+		if e.complexity.App.Deployed == nil {
+			break
+		}
+
+		return e.complexity.App.Deployed(childComplexity), true
+
 	case "App.deploys":
 		if e.complexity.App.Deploys == nil {
 			break
@@ -357,13 +367,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Instances(childComplexity), true
-
-	case "App.lastDeployed":
-		if e.complexity.App.LastDeployed == nil {
-			break
-		}
-
-		return e.complexity.App.LastDeployed(childComplexity), true
 
 	case "App.name":
 		if e.complexity.App.Name == nil {
@@ -645,6 +648,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Inbound.Rules(childComplexity), true
 
+	case "Instance.created":
+		if e.complexity.Instance.Created == nil {
+			break
+		}
+
+		return e.complexity.Instance.Created(childComplexity), true
+
 	case "Instance.id":
 		if e.complexity.Instance.ID == nil {
 			break
@@ -652,12 +662,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Instance.ID(childComplexity), true
 
+	case "Instance.image":
+		if e.complexity.Instance.Image == nil {
+			break
+		}
+
+		return e.complexity.Instance.Image(childComplexity), true
+
 	case "Instance.name":
 		if e.complexity.Instance.Name == nil {
 			break
 		}
 
 		return e.complexity.Instance.Name(childComplexity), true
+
+	case "Instance.restarts":
+		if e.complexity.Instance.Restarts == nil {
+			break
+		}
+
+		return e.complexity.Instance.Restarts(childComplexity), true
 
 	case "Instance.status":
 		if e.complexity.Instance.Status == nil {
@@ -1644,6 +1668,47 @@ func (ec *executionContext) fieldContext_App_image(ctx context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _App_deployed(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_deployed(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Deployed, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_deployed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _App_env(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_App_env(ctx, field)
 	if err != nil {
@@ -1783,6 +1848,12 @@ func (ec *executionContext) fieldContext_App_instances(ctx context.Context, fiel
 				return ec.fieldContext_Instance_name(ctx, field)
 			case "status":
 				return ec.fieldContext_Instance_status(ctx, field)
+			case "image":
+				return ec.fieldContext_Instance_image(ctx, field)
+			case "restarts":
+				return ec.fieldContext_Instance_restarts(ctx, field)
+			case "created":
+				return ec.fieldContext_Instance_created(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Instance", field.Name)
 		},
@@ -1949,47 +2020,6 @@ func (ec *executionContext) fieldContext_App_deploys(ctx context.Context, field 
 	if fc.Args, err = ec.field_App_deploys_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _App_lastDeployed(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_App_lastDeployed(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastDeployed, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_App_lastDeployed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "App",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
 	}
 	return fc, nil
 }
@@ -2231,6 +2261,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_name(ctx, field)
 			case "image":
 				return ec.fieldContext_App_image(ctx, field)
+			case "deployed":
+				return ec.fieldContext_App_deployed(ctx, field)
 			case "env":
 				return ec.fieldContext_App_env(ctx, field)
 			case "ingresses":
@@ -2243,8 +2275,6 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_resources(ctx, field)
 			case "deploys":
 				return ec.fieldContext_App_deploys(ctx, field)
-			case "lastDeployed":
-				return ec.fieldContext_App_lastDeployed(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -3939,6 +3969,138 @@ func (ec *executionContext) fieldContext_Instance_status(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Instance_image(ctx context.Context, field graphql.CollectedField, obj *model.Instance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Instance_image(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Image, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Instance_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Instance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Instance_restarts(ctx context.Context, field graphql.CollectedField, obj *model.Instance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Instance_restarts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Restarts, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Instance_restarts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Instance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Instance_created(ctx context.Context, field graphql.CollectedField, obj *model.Instance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Instance_created(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Created, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Instance_created(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Instance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Limits_cpu(ctx context.Context, field graphql.CollectedField, obj *model.Limits) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Limits_cpu(ctx, field)
 	if err != nil {
@@ -4438,6 +4600,8 @@ func (ec *executionContext) fieldContext_Query_app(ctx context.Context, field gr
 				return ec.fieldContext_App_name(ctx, field)
 			case "image":
 				return ec.fieldContext_App_image(ctx, field)
+			case "deployed":
+				return ec.fieldContext_App_deployed(ctx, field)
 			case "env":
 				return ec.fieldContext_App_env(ctx, field)
 			case "ingresses":
@@ -4450,8 +4614,6 @@ func (ec *executionContext) fieldContext_Query_app(ctx context.Context, field gr
 				return ec.fieldContext_App_resources(ctx, field)
 			case "deploys":
 				return ec.fieldContext_App_deploys(ctx, field)
-			case "lastDeployed":
-				return ec.fieldContext_App_lastDeployed(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -8421,6 +8583,10 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "deployed":
+
+			out.Values[i] = ec._App_deployed(ctx, field, obj)
+
 		case "env":
 
 			out.Values[i] = ec._App_env(ctx, field, obj)
@@ -8489,10 +8655,6 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 				return innerFunc(ctx)
 
 			})
-		case "lastDeployed":
-
-			out.Values[i] = ec._App_lastDeployed(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9067,6 +9229,27 @@ func (ec *executionContext) _Instance(ctx context.Context, sel ast.SelectionSet,
 		case "status":
 
 			out.Values[i] = ec._Instance_status(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "image":
+
+			out.Values[i] = ec._Instance_image(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "restarts":
+
+			out.Values[i] = ec._Instance_restarts(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "created":
+
+			out.Values[i] = ec._Instance_created(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

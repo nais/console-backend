@@ -122,10 +122,26 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 	}
 
 	for _, pod := range pods {
+		restarts := 0
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.Name == name {
+				restarts = int(cs.RestartCount)
+			}
+		}
+
+		image := "unknown"
+		for _, c := range pod.Spec.Containers {
+			if c.Name == name {
+				image = c.Image
+			}
+		}
 		ret = append(ret, &model.Instance{
-			ID:     string(pod.GetUID()),
-			Name:   pod.GetName(),
-			Status: string(pod.Status.Phase),
+			ID:       string(pod.GetUID()),
+			Name:     pod.GetName(),
+			Status:   string(pod.Status.Phase),
+			Restarts: restarts,
+			Image:    image,
+			Created:  pod.GetCreationTimestamp().Time,
 		})
 	}
 	return ret, nil
@@ -199,7 +215,7 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 
 	if ok {
-		ret.LastDeployed = time.Unix(0, rolloutCompleteTime)
+		ret.Deployed = time.Unix(0, rolloutCompleteTime)
 	}
 
 	return ret, nil

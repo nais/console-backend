@@ -12,6 +12,9 @@ type Instance implements Node {
   id: ID!
   name: String!
   status: String!
+  image: String!
+  restarts: Int!
+  created: Time!
 }
 
 type Port {
@@ -61,13 +64,14 @@ type App implements Node {
   id: ID!
   name: String!
   image: String!
+  deployed: Time
   env: Env!
   ingresses: [String!]!
   instances: [Instance!]!
   accessPolicy: AccessPolicy!
   resources: Resources!
   deploys(first: Int, after: Cursor): DeploymentConnection!
-  lastDeployed: Time
+
   #  authz: [Authz!]!
   #  autoScaling: AutoScaling!
   #  manifest: Spec!

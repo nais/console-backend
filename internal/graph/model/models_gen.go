@@ -2,6 +2,10 @@
 
 package model
 
+import (
+	"time"
+)
+
 type Node interface {
 	IsNode()
 	GetID() string
@@ -31,9 +35,12 @@ type GithubRepositoryEdge struct {
 }
 
 type Instance struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+	ID       string    `json:"id"`
+	Name     string    `json:"name"`
+	Status   string    `json:"status"`
+	Image    string    `json:"image"`
+	Restarts int       `json:"restarts"`
+	Created  time.Time `json:"created"`
 }
 
 func (Instance) IsNode()            {}
