@@ -14,12 +14,11 @@ import (
 // Inbound is the resolver for the inbound field.
 func (r *accessPolicyResolver) Inbound(ctx context.Context, obj *model.AccessPolicy) (*model.Inbound, error) {
 	ret := &model.Inbound{}
-	rules := []*model.Rule{}
 	for _, rule := range obj.Inbound.Rules {
 		r := model.Rule{}
 		r.Application = rule.Application
 		r.Namespace = rule.Namespace
-		ret.Rules = append(rules, &r)
+		ret.Rules = append(ret.Rules, &r)
 	}
 	return ret, nil
 }
