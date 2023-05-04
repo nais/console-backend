@@ -11,6 +11,13 @@ type Node interface {
 	GetID() string
 }
 
+type AutoScaling struct {
+	DisableAutoScaling     bool `json:"disableAutoScaling"`
+	CPUThresholdPercentage int  `json:"cpuThresholdPercentage"`
+	Max                    int  `json:"max"`
+	Min                    int  `json:"min"`
+}
+
 type Env struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`

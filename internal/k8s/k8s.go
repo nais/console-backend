@@ -183,6 +183,18 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 	ret.Resources = r
 
+	replicas, _, err := unstructured.NestedMap(u.Object, "spec", "replicas")
+	if err != nil {
+		return nil, fmt.Errorf("getting replicas: %w", err)
+	}
+
+	reps := model.Replicas{}
+	if err := convert(replicas, &reps); err != nil {
+		return nil, fmt.Errorf("converting replicas: %w", err)
+	}
+
+	ret.Replicas = reps
+
 	ingresses, _, err := unstructured.NestedStringSlice(u.Object, "spec", "ingresses")
 	if err != nil {
 		return nil, fmt.Errorf("getting ingresses: %w", err)

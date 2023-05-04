@@ -56,6 +56,7 @@ type ComplexityRoot struct {
 
 	App struct {
 		AccessPolicy func(childComplexity int) int
+		AutoScaling  func(childComplexity int) int
 		Deployed     func(childComplexity int) int
 		Deploys      func(childComplexity int, first *int, after *model.Cursor) int
 		Env          func(childComplexity int) int
@@ -76,6 +77,13 @@ type ComplexityRoot struct {
 	AppEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	AutoScaling struct {
+		CPUThresholdPercentage func(childComplexity int) int
+		DisableAutoScaling     func(childComplexity int) int
+		Max                    func(childComplexity int) int
+		Min                    func(childComplexity int) int
 	}
 
 	Deployment struct {
@@ -259,6 +267,7 @@ type AppResolver interface {
 	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
 
 	Deploys(ctx context.Context, obj *model.App, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
+	AutoScaling(ctx context.Context, obj *model.App) (*model.AutoScaling, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -313,6 +322,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.AccessPolicy(childComplexity), true
+
+	case "App.autoScaling":
+		if e.complexity.App.AutoScaling == nil {
+			break
+		}
+
+		return e.complexity.App.AutoScaling(childComplexity), true
 
 	case "App.deployed":
 		if e.complexity.App.Deployed == nil {
@@ -416,6 +432,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppEdge.Node(childComplexity), true
+
+	case "AutoScaling.cpuThresholdPercentage":
+		if e.complexity.AutoScaling.CPUThresholdPercentage == nil {
+			break
+		}
+
+		return e.complexity.AutoScaling.CPUThresholdPercentage(childComplexity), true
+
+	case "AutoScaling.disableAutoScaling":
+		if e.complexity.AutoScaling.DisableAutoScaling == nil {
+			break
+		}
+
+		return e.complexity.AutoScaling.DisableAutoScaling(childComplexity), true
+
+	case "AutoScaling.max":
+		if e.complexity.AutoScaling.Max == nil {
+			break
+		}
+
+		return e.complexity.AutoScaling.Max(childComplexity), true
+
+	case "AutoScaling.min":
+		if e.complexity.AutoScaling.Min == nil {
+			break
+		}
+
+		return e.complexity.AutoScaling.Min(childComplexity), true
 
 	case "Deployment.created":
 		if e.complexity.Deployment.Created == nil {
@@ -2024,6 +2068,60 @@ func (ec *executionContext) fieldContext_App_deploys(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _App_autoScaling(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_autoScaling(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().AutoScaling(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AutoScaling)
+	fc.Result = res
+	return ec.marshalNAutoScaling2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAutoScaling(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_autoScaling(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "disableAutoScaling":
+				return ec.fieldContext_AutoScaling_disableAutoScaling(ctx, field)
+			case "cpuThresholdPercentage":
+				return ec.fieldContext_AutoScaling_cpuThresholdPercentage(ctx, field)
+			case "max":
+				return ec.fieldContext_AutoScaling_max(ctx, field)
+			case "min":
+				return ec.fieldContext_AutoScaling_min(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AutoScaling", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AppConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppConnection_totalCount(ctx, field)
 	if err != nil {
@@ -2275,8 +2373,186 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_resources(ctx, field)
 			case "deploys":
 				return ec.fieldContext_App_deploys(ctx, field)
+			case "autoScaling":
+				return ec.fieldContext_App_autoScaling(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutoScaling_disableAutoScaling(ctx context.Context, field graphql.CollectedField, obj *model.AutoScaling) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutoScaling_disableAutoScaling(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisableAutoScaling, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutoScaling_disableAutoScaling(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutoScaling",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutoScaling_cpuThresholdPercentage(ctx context.Context, field graphql.CollectedField, obj *model.AutoScaling) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutoScaling_cpuThresholdPercentage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CPUThresholdPercentage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutoScaling_cpuThresholdPercentage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutoScaling",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutoScaling_max(ctx context.Context, field graphql.CollectedField, obj *model.AutoScaling) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutoScaling_max(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutoScaling_max(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutoScaling",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutoScaling_min(ctx context.Context, field graphql.CollectedField, obj *model.AutoScaling) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutoScaling_min(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Min, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutoScaling_min(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutoScaling",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4614,6 +4890,8 @@ func (ec *executionContext) fieldContext_Query_app(ctx context.Context, field gr
 				return ec.fieldContext_App_resources(ctx, field)
 			case "deploys":
 				return ec.fieldContext_App_deploys(ctx, field)
+			case "autoScaling":
+				return ec.fieldContext_App_autoScaling(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -8655,6 +8933,26 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 				return innerFunc(ctx)
 
 			})
+		case "autoScaling":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_autoScaling(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8728,6 +9026,55 @@ func (ec *executionContext) _AppEdge(ctx context.Context, sel ast.SelectionSet, 
 		case "node":
 
 			out.Values[i] = ec._AppEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var autoScalingImplementors = []string{"AutoScaling"}
+
+func (ec *executionContext) _AutoScaling(ctx context.Context, sel ast.SelectionSet, obj *model.AutoScaling) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, autoScalingImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AutoScaling")
+		case "disableAutoScaling":
+
+			out.Values[i] = ec._AutoScaling_disableAutoScaling(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "cpuThresholdPercentage":
+
+			out.Values[i] = ec._AutoScaling_cpuThresholdPercentage(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "max":
+
+			out.Values[i] = ec._AutoScaling_max(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "min":
+
+			out.Values[i] = ec._AutoScaling_min(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -10494,6 +10841,20 @@ func (ec *executionContext) marshalNAppEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 		return graphql.Null
 	}
 	return ec._AppEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAutoScaling2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAutoScaling(ctx context.Context, sel ast.SelectionSet, v model.AutoScaling) graphql.Marshaler {
+	return ec._AutoScaling(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAutoScaling2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAutoScaling(ctx context.Context, sel ast.SelectionSet, v *model.AutoScaling) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AutoScaling(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

@@ -11,6 +11,19 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+// AutoScaling is the resolver for the autoScaling field.
+func (r *appResolver) AutoScaling(ctx context.Context, obj *model.App) (*model.AutoScaling, error) {
+	fmt.Printf("AutoScaling: %v\n", obj.Replicas)
+	ret := &model.AutoScaling{}
+	ret.CPUThresholdPercentage = obj.Replicas.CPUThresholdPercentage
+	ret.DisableAutoScaling = obj.Replicas.DisableAutoScaling
+	ret.Max = obj.Replicas.MaxReplicas
+	ret.Min = obj.Replicas.MinReplicas
+
+	return ret, nil
+
+}
+
 // Inbound is the resolver for the inbound field.
 func (r *accessPolicyResolver) Inbound(ctx context.Context, obj *model.AccessPolicy) (*model.Inbound, error) {
 	ret := &model.Inbound{}

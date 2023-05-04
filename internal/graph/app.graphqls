@@ -60,6 +60,13 @@ type Resources {
   requests: Requests!
 }
 
+type AutoScaling {
+  disableAutoScaling: Boolean!
+  cpuThresholdPercentage: Int!
+  max: Int!
+  min: Int!
+}
+
 type App implements Node {
   id: ID!
   name: String!
@@ -71,6 +78,7 @@ type App implements Node {
   accessPolicy: AccessPolicy!
   resources: Resources!
   deploys(first: Int, after: Cursor): DeploymentConnection!
+  autoScaling: AutoScaling!
 
   #  authz: [Authz!]!
   #  autoScaling: AutoScaling!
