@@ -217,7 +217,7 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 		}
 	}
 
-	if app.Status.RolloutCompleteTime != 0 {
+	if app.Status.RolloutCompleteTime > 0 {
 		ret.Deployed = time.Unix(0, app.Status.RolloutCompleteTime)
 	}
 
