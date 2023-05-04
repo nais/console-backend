@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -63,8 +63,8 @@ func New(kubeconfig string, log *logrus.Entry) (*Client, error) {
 		inf := informers.NewSharedInformerFactory(clientSet, 4*time.Hour)
 
 		infs[contextName].PodInformer = inf.Core().V1().Pods()
-		applicationGVK := schema.GroupVersion{Group: "nais.io", Version: "v1alpha1"}
-		infs[contextName].AppInformer = dinf.ForResource(applicationGVK.WithResource("applications"))
+
+		infs[contextName].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
 	}
 
 	return &Client{
@@ -149,19 +149,20 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 
 func toApp(obj runtime.Object, env string) (*model.App, error) {
 	u := obj.(*unstructured.Unstructured)
+	app := &naisv1alpha1.Application{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, app); err != nil {
+		return nil, fmt.Errorf("converting to application: %w", err)
+	}
+
 	ret := &model.App{}
 	ret.ID = "app_" + env + "_" + u.GetNamespace() + "_" + u.GetName()
-	ret.Name = u.GetName()
+	ret.Name = app.GetName()
 	ret.Env = &model.Env{
 		Name: env,
 		ID:   "env_" + env,
 	}
 
-	image, _, err := unstructured.NestedString(u.Object, "spec", "image")
-	if err != nil {
-		return nil, fmt.Errorf("getting image: %w", err)
-	}
-	ret.Image = image
+	ret.Image = app.Spec.Image
 
 	accessPolicy, _, err := unstructured.NestedMap(u.Object, "spec", "accessPolicy")
 	if err != nil {
