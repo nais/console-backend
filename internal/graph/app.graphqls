@@ -128,7 +128,7 @@ type Bucket implements Storage {
   name: String!
   publicAccessPrevention: Boolean!
   retentionPeriodDays: Int!
-  uniformBucketLevelAccess: Boolean!  
+  uniformBucketLevelAccess: Boolean!
 }
 
 type BigQueryDataset implements Storage {
@@ -136,6 +136,11 @@ type BigQueryDataset implements Storage {
   description: String!
   name: String!
   permission: String!
+}
+
+type Variable {
+  name: String!
+  value: String!
 }
 
 type App implements Node {
@@ -151,11 +156,11 @@ type App implements Node {
   deploys(first: Int, after: Cursor): DeploymentConnection!
   autoScaling: AutoScaling!
   storage: [Storage!]!
+  variables: [Variable!]!
   #  authz: [Authz!]!
   #  manifest: Spec!
   #  networking: [Networking!]!
   #  storage: [Storage!]!
-  #  variables: [Variable!]!
 }
 
 extend type Query {

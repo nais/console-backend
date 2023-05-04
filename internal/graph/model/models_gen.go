@@ -140,3 +140,8 @@ type SQLInstance struct {
 
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
+
+type Variable struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}

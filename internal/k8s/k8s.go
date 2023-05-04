@@ -217,6 +217,14 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 		}
 	}
 
+	for _, v := range app.Spec.Env {
+		m := model.Variable{
+			Name:  v.Name,
+			Value: v.Value,
+		}
+		ret.Variables = append(ret.Variables, m)
+	}
+
 	if app.Status.RolloutCompleteTime > 0 {
 		ret.Deployed = time.Unix(0, app.Status.RolloutCompleteTime)
 	}
