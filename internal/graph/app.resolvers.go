@@ -11,18 +11,6 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-// AutoScaling is the resolver for the autoScaling field.
-func (r *appResolver) AutoScaling(ctx context.Context, obj *model.App) (*model.AutoScaling, error) {
-	ret := &model.AutoScaling{}
-	ret.CPUThresholdPercentage = obj.Replicas.CPUThresholdPercentage
-	ret.DisableAutoScaling = obj.Replicas.DisableAutoScaling
-	ret.Max = obj.Replicas.MaxReplicas
-	ret.Min = obj.Replicas.MinReplicas
-
-	return ret, nil
-
-}
-
 // Inbound is the resolver for the inbound field.
 func (r *accessPolicyResolver) Inbound(ctx context.Context, obj *model.AccessPolicy) (*model.Inbound, error) {
 	ret := &model.Inbound{}
@@ -103,6 +91,17 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	}, nil
 }
 
+// AutoScaling is the resolver for the autoScaling field.
+func (r *appResolver) AutoScaling(ctx context.Context, obj *model.App) (*model.AutoScaling, error) {
+	ret := &model.AutoScaling{}
+	ret.CPUThresholdPercentage = obj.Replicas.CPUThresholdPercentage
+	ret.DisableAutoScaling = obj.Replicas.DisableAutoScaling
+	ret.Max = obj.Replicas.MaxReplicas
+	ret.Min = obj.Replicas.MinReplicas
+
+	return ret, nil
+}
+
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
 	app, err := r.K8s.App(ctx, name, team, env)
@@ -120,3 +119,13 @@ func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
 type accessPolicyResolver struct{ *Resolver }
 type appResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *appResolver) Storage(ctx context.Context, obj *model.App) ([]model.Storage, error) {
+	panic(fmt.Errorf("not implemented: Storage - storage"))
+}

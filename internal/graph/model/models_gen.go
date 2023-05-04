@@ -11,11 +11,47 @@ type Node interface {
 	GetID() string
 }
 
+type Storage interface {
+	IsStorage()
+	GetName() string
+}
+
 type AutoScaling struct {
 	DisableAutoScaling     bool `json:"disableAutoScaling"`
 	CPUThresholdPercentage int  `json:"cpuThresholdPercentage"`
 	Max                    int  `json:"max"`
 	Min                    int  `json:"min"`
+}
+
+type BigQueryDataset struct {
+	CascadingDelete bool   `json:"cascadingDelete"`
+	Description     string `json:"description"`
+	Name            string `json:"name"`
+	Permission      string `json:"permission"`
+}
+
+func (BigQueryDataset) IsStorage()           {}
+func (this BigQueryDataset) GetName() string { return this.Name }
+
+type Bucket struct {
+	CascadingDelete          bool   `json:"cascadingDelete"`
+	Name                     string `json:"name"`
+	PublicAccessPrevention   bool   `json:"publicAccessPrevention"`
+	RetentionPeriodDays      int    `json:"retentionPeriodDays"`
+	UniformBucketLevelAccess bool   `json:"uniformBucketLevelAccess"`
+}
+
+func (Bucket) IsStorage()           {}
+func (this Bucket) GetName() string { return this.Name }
+
+type Database struct {
+	EnvVarPrefix string          `json:"envVarPrefix"`
+	Name         string          `json:"name"`
+	Users        []*DatabaseUser `json:"users"`
+}
+
+type DatabaseUser struct {
+	Name string `json:"name"`
 }
 
 type Env struct {
@@ -25,6 +61,11 @@ type Env struct {
 
 func (Env) IsNode()            {}
 func (this Env) GetID() string { return this.ID }
+
+type Flag struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
 
 type GithubRepository struct {
 	Name string `json:"name"`
@@ -41,6 +82,13 @@ type GithubRepositoryEdge struct {
 	Node   *GithubRepository `json:"node"`
 }
 
+type Insights struct {
+	Enabled               bool `json:"enabled"`
+	QueryStringLength     int  `json:"queryStringLength"`
+	RecordApplicationTags bool `json:"recordApplicationTags"`
+	RecordClientAddress   bool `json:"recordClientAddress"`
+}
+
 type Instance struct {
 	ID       string    `json:"id"`
 	Name     string    `json:"name"`
@@ -53,9 +101,42 @@ type Instance struct {
 func (Instance) IsNode()            {}
 func (this Instance) GetID() string { return this.ID }
 
+type Maintenance struct {
+	Day  int `json:"day"`
+	Hour int `json:"hour"`
+}
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`
 	StartCursor     *Cursor `json:"startCursor,omitempty"`
 	EndCursor       *Cursor `json:"endCursor,omitempty"`
 }
+
+type Resource struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+}
+
+type SQLInstance struct {
+	AutoBackupHour      int          `json:"autoBackupHour"`
+	CascadingDelete     bool         `json:"cascadingDelete"`
+	Collation           string       `json:"collation"`
+	Databases           []*Database  `json:"databases"`
+	DiskAutoresize      bool         `json:"diskAutoresize"`
+	DiskSize            int          `json:"diskSize"`
+	DiskType            string       `json:"diskType"`
+	Flags               []*Flag      `json:"flags"`
+	HighAvailability    bool         `json:"highAvailability"`
+	Insights            *Insights    `json:"insights"`
+	Maintenance         *Maintenance `json:"maintenance"`
+	Name                string       `json:"name"`
+	PointInTimeRecovery bool         `json:"pointInTimeRecovery"`
+	RetainedBackups     int          `json:"retainedBackups"`
+	Tier                string       `json:"tier"`
+	Type                string       `json:"type"`
+}
+
+func (SQLInstance) IsStorage()           {}
+func (this SQLInstance) GetName() string { return this.Name }
