@@ -196,6 +196,46 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 
 	ret.Replicas = reps
 
+	storage, _, err := unstructured.NestedMap(u.Object, "spec", "gcp")
+	if err != nil {
+		return nil, fmt.Errorf("getting storage: %w", err)
+	}
+
+	for k, v := range storage {
+		fmt.Println(k)
+		switch k {
+		case "buckets":
+			for _, b := range v.([]interface{}) {
+				bucket := model.Bucket{}
+				if err := convert(b.(map[string]any), &bucket); err != nil {
+					return nil, fmt.Errorf("converting buckets: %w", err)
+				}
+				ret.Storage = append(ret.Storage, bucket)
+			}
+		case "sqlInstances":
+			for _, s := range v.([]interface{}) {
+				sqlInstance := model.SQLInstance{}
+				if err := convert(s.(map[string]any), &sqlInstance); err != nil {
+					return nil, fmt.Errorf("converting sqlInstance: %w", err)
+				}
+				if sqlInstance.Name == "" {
+					sqlInstance.Name = u.GetName()
+				}
+				ret.Storage = append(ret.Storage, sqlInstance)
+			}
+		case "bigqueryDatasets":
+			for _, b := range v.([]interface{}) {
+				bigqueryDataset := model.BigQueryDataset{}
+				if err := convert(b.(map[string]any), &bigqueryDataset); err != nil {
+					return nil, fmt.Errorf("converting bigqueryDatasets: %w", err)
+				}
+				ret.Storage = append(ret.Storage, bigqueryDataset)
+			}
+		default:
+			return nil, fmt.Errorf("unknown storage type: %s", k)
+		}
+	}
+
 	ingresses, _, err := unstructured.NestedStringSlice(u.Object, "spec", "ingresses")
 	if err != nil {
 		return nil, fmt.Errorf("getting ingresses: %w", err)

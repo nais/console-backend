@@ -62,6 +62,7 @@ type App struct {
 	Resources    Resources    `json:"resources"`
 	Deployed     time.Time    `json:"deployed"`
 	Replicas     Replicas     `json:"replicas"`
+	Storage      []Storage    `json:"storage"`
 	GQLVars      struct {
 		Team string
 	} `json:"-"`
