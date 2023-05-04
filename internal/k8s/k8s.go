@@ -155,7 +155,7 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 
 	ret := &model.App{}
-	ret.ID = "app_" + env + "_" + u.GetNamespace() + "_" + u.GetName()
+	ret.ID = "app_" + env + "_" + app.GetNamespace() + "_" + app.GetName()
 	ret.Name = app.GetName()
 	ret.Env = &model.Env{
 		Name: env,
@@ -164,99 +164,68 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 
 	ret.Image = app.Spec.Image
 
-	accessPolicy, _, err := unstructured.NestedMap(u.Object, "spec", "accessPolicy")
-	if err != nil {
-		return nil, fmt.Errorf("getting accessPolicy: %w", err)
+	ingresses := []string{}
+	if err := convert(app.Spec.Ingresses, &ingresses); err != nil {
+		return nil, fmt.Errorf("converting ingresses: %w", err)
 	}
+	ret.Ingresses = ingresses
+
 	ap := model.AccessPolicy{}
-	if err := convert(accessPolicy, &ap); err != nil {
+	if err := convert(app.Spec.AccessPolicy, &ap); err != nil {
 		return nil, fmt.Errorf("converting accessPolicy: %w", err)
 	}
 	ret.AccessPolicy = ap
 
-	resources, _, err := unstructured.NestedMap(u.Object, "spec", "resources")
-	if err != nil {
-		return nil, fmt.Errorf("getting resources: %w", err)
-	}
 	r := model.Resources{}
-	if err := convert(resources, &r); err != nil {
+	if err := convert(app.Spec.Resources, &r); err != nil {
 		return nil, fmt.Errorf("converting resources: %w", err)
 	}
 	ret.Resources = r
 
-	replicas, _, err := unstructured.NestedMap(u.Object, "spec", "replicas")
-	if err != nil {
-		return nil, fmt.Errorf("getting replicas: %w", err)
-	}
-
 	reps := model.Replicas{}
-	if err := convert(replicas, &reps); err != nil {
+	if err := convert(app.Spec.Replicas, &reps); err != nil {
 		return nil, fmt.Errorf("converting replicas: %w", err)
 	}
 
 	ret.Replicas = reps
 
-	storage, _, err := unstructured.NestedMap(u.Object, "spec", "gcp")
-	if err != nil {
-		return nil, fmt.Errorf("getting storage: %w", err)
-	}
+	if app.Spec.GCP != nil {
+		for _, v := range app.Spec.GCP.Buckets {
+			bucket := model.Bucket{}
+			if err := convert(v, &bucket); err != nil {
+				return nil, fmt.Errorf("converting buckets: %w", err)
+			}
+			ret.Storage = append(ret.Storage, bucket)
+		}
+		for _, v := range app.Spec.GCP.SqlInstances {
+			sqlInstance := model.SQLInstance{}
+			if err := convert(v, &sqlInstance); err != nil {
+				return nil, fmt.Errorf("converting sqlInstance: %w", err)
+			}
+			if sqlInstance.Name == "" {
+				sqlInstance.Name = u.GetName()
+			}
+			ret.Storage = append(ret.Storage, sqlInstance)
+		}
 
-	for k, v := range storage {
-		fmt.Println(k)
-		switch k {
-		case "buckets":
-			for _, b := range v.([]interface{}) {
-				bucket := model.Bucket{}
-				if err := convert(b.(map[string]any), &bucket); err != nil {
-					return nil, fmt.Errorf("converting buckets: %w", err)
-				}
-				ret.Storage = append(ret.Storage, bucket)
+		for _, v := range app.Spec.GCP.BigQueryDatasets {
+			bqDataset := model.BigQueryDataset{}
+			if err := convert(v, &bqDataset); err != nil {
+				return nil, fmt.Errorf("converting bigQueryDataset: %w", err)
 			}
-		case "sqlInstances":
-			for _, s := range v.([]interface{}) {
-				sqlInstance := model.SQLInstance{}
-				if err := convert(s.(map[string]any), &sqlInstance); err != nil {
-					return nil, fmt.Errorf("converting sqlInstance: %w", err)
-				}
-				if sqlInstance.Name == "" {
-					sqlInstance.Name = u.GetName()
-				}
-				ret.Storage = append(ret.Storage, sqlInstance)
-			}
-		case "bigqueryDatasets":
-			for _, b := range v.([]interface{}) {
-				bigqueryDataset := model.BigQueryDataset{}
-				if err := convert(b.(map[string]any), &bigqueryDataset); err != nil {
-					return nil, fmt.Errorf("converting bigqueryDatasets: %w", err)
-				}
-				ret.Storage = append(ret.Storage, bigqueryDataset)
-			}
-		default:
-			return nil, fmt.Errorf("unknown storage type: %s", k)
+			ret.Storage = append(ret.Storage, bqDataset)
 		}
 	}
 
-	ingresses, _, err := unstructured.NestedStringSlice(u.Object, "spec", "ingresses")
-	if err != nil {
-		return nil, fmt.Errorf("getting ingresses: %w", err)
-	}
-
-	ret.Ingresses = ingresses
-
-	rolloutCompleteTime, ok, err := unstructured.NestedInt64(u.Object, "status", "rolloutCompleteTime")
-	if err != nil {
-		return nil, fmt.Errorf("getting rolloutCompleteTime: %w", err)
-	}
-
-	if ok {
-		ret.Deployed = time.Unix(0, rolloutCompleteTime)
+	if app.Status.RolloutCompleteTime != 0 {
+		ret.Deployed = time.Unix(0, app.Status.RolloutCompleteTime)
 	}
 
 	return ret, nil
 }
 
 // convert takes a map[string]any / json, and converts it to the target struct
-func convert(m map[string]any, target any) error {
+func convert(m any, target any) error {
 	j, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("marshalling struct: %w", err)
