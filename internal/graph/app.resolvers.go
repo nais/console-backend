@@ -13,7 +13,6 @@ import (
 
 // AutoScaling is the resolver for the autoScaling field.
 func (r *appResolver) AutoScaling(ctx context.Context, obj *model.App) (*model.AutoScaling, error) {
-	fmt.Printf("AutoScaling: %v\n", obj.Replicas)
 	ret := &model.AutoScaling{}
 	ret.CPUThresholdPercentage = obj.Replicas.CPUThresholdPercentage
 	ret.DisableAutoScaling = obj.Replicas.DisableAutoScaling
