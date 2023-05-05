@@ -3,55 +3,10 @@ type AppConnection {
   pageInfo: PageInfo!
   edges: [AppEdge!]!
 }
+
 type AppEdge {
   cursor: Cursor!
   node: App!
-}
-
-type Instance implements Node {
-  id: ID!
-  name: String!
-  status: String!
-  image: String!
-  restarts: Int!
-  created: Time!
-}
-
-type Limits {
-  cpu: String!
-  memory: String!
-}
-
-type Requests {
-  cpu: String!
-  memory: String!
-}
-
-type Resources {
-  limits: Limits!
-  requests: Requests!
-}
-
-type AutoScaling {
-  disabled: Boolean!
-  """
-  CPU threshold in percent
-  """
-  cpuThreshold: Int!
-  max: Int!
-  min: Int!
-}
-
-union Authz = AzureAD | IDPorten | Maskinporten | TokenX
-type Resource {
-  apiVersion: String!
-  kind: String!
-  name: String!
-}
-
-type Variable {
-  name: String!
-  value: String!
 }
 
 type App implements Node {
@@ -71,7 +26,6 @@ type App implements Node {
   authz: [Authz!]!
   #  manifest: Spec!
   #  networking: [Networking!]!
-  #  storage: [Storage!]!
 }
 
 extend type Query {

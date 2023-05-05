@@ -1,7 +1,3 @@
-interface Storage {
-  name: String!
-}
-
 type Flag {
   name: String!
   value: String!
@@ -46,35 +42,4 @@ type SqlInstance implements Storage {
   retainedBackups: Int!
   tier: String!
   type: String!
-}
-
-type Bucket implements Storage {
-  cascadingDelete: Boolean!
-  name: String!
-  publicAccessPrevention: Boolean!
-  retentionPeriodDays: Int!
-  uniformBucketLevelAccess: Boolean!
-}
-
-type BigQueryDataset implements Storage {
-  cascadingDelete: Boolean!
-  description: String!
-  name: String!
-  permission: String!
-}
-
-type OpenSearch implements Storage {
-  """
-  The opensearch instance name
-  """
-  name: String!
-  access: String!
-}
-
-type Kafka implements Storage {
-  """
-  The kafka pool name
-  """
-  name: String!
-  streams: Boolean!
 }

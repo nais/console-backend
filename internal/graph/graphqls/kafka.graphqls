@@ -1,0 +1,7 @@
+type Kafka implements Storage {
+  """
+  The kafka pool name
+  """
+  name: String!
+  streams: Boolean!
+}

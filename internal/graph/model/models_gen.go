@@ -207,12 +207,6 @@ type PageInfo struct {
 	EndCursor       *Cursor `json:"endCursor,omitempty"`
 }
 
-type Resource struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-}
-
 type Scope struct {
 	Consumes []*Consume `json:"consumes"`
 	Exposes  []*Expose  `json:"exposes"`

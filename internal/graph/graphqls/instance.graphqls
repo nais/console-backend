@@ -1,0 +1,8 @@
+type Instance implements Node {
+  id: ID!
+  name: String!
+  status: String!
+  image: String!
+  restarts: Int!
+  created: Time!
+}

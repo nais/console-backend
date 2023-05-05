@@ -314,12 +314,6 @@ type ComplexityRoot struct {
 		Memory func(childComplexity int) int
 	}
 
-	Resource struct {
-		APIVersion func(childComplexity int) int
-		Kind       func(childComplexity int) int
-		Name       func(childComplexity int) int
-	}
-
 	Resources struct {
 		Limits   func(childComplexity int) int
 		Requests func(childComplexity int) int
@@ -1466,27 +1460,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Requests.Memory(childComplexity), true
 
-	case "Resource.apiVersion":
-		if e.complexity.Resource.APIVersion == nil {
-			break
-		}
-
-		return e.complexity.Resource.APIVersion(childComplexity), true
-
-	case "Resource.kind":
-		if e.complexity.Resource.Kind == nil {
-			break
-		}
-
-		return e.complexity.Resource.Kind(childComplexity), true
-
-	case "Resource.name":
-		if e.complexity.Resource.Name == nil {
-			break
-		}
-
-		return e.complexity.Resource.Name(childComplexity), true
-
 	case "Resources.limits":
 		if e.complexity.Resources.Limits == nil {
 			break
@@ -1962,7 +1935,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-//go:embed "accesspolicy.graphqls" "app.graphqls" "azuread.graphqls" "deploy.graphqls" "idporten.graphqls" "maskinporten.graphqls" "scalars.graphqls" "schema.graphqls" "storage.graphqls" "team.graphqls" "tokenx.graphqls" "user.graphqls"
+//go:embed "graphqls/accesspolicy.graphqls" "graphqls/app.graphqls" "graphqls/authz.graphqls" "graphqls/autoscaling.graphqls" "graphqls/azuread.graphqls" "graphqls/bigquerydataset.graphqls" "graphqls/bucket.graphqls" "graphqls/deploy.graphqls" "graphqls/idporten.graphqls" "graphqls/instance.graphqls" "graphqls/kafka.graphqls" "graphqls/maskinporten.graphqls" "graphqls/opensearch.graphqls" "graphqls/resources.graphqls" "graphqls/scalars.graphqls" "graphqls/schema.graphqls" "graphqls/sqlinstance.graphqls" "graphqls/storage.graphqls" "graphqls/team.graphqls" "graphqls/tokenx.graphqls" "graphqls/user.graphqls" "graphqls/variable.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -1974,18 +1947,28 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
-	{Name: "accesspolicy.graphqls", Input: sourceData("accesspolicy.graphqls"), BuiltIn: false},
-	{Name: "app.graphqls", Input: sourceData("app.graphqls"), BuiltIn: false},
-	{Name: "azuread.graphqls", Input: sourceData("azuread.graphqls"), BuiltIn: false},
-	{Name: "deploy.graphqls", Input: sourceData("deploy.graphqls"), BuiltIn: false},
-	{Name: "idporten.graphqls", Input: sourceData("idporten.graphqls"), BuiltIn: false},
-	{Name: "maskinporten.graphqls", Input: sourceData("maskinporten.graphqls"), BuiltIn: false},
-	{Name: "scalars.graphqls", Input: sourceData("scalars.graphqls"), BuiltIn: false},
-	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
-	{Name: "storage.graphqls", Input: sourceData("storage.graphqls"), BuiltIn: false},
-	{Name: "team.graphqls", Input: sourceData("team.graphqls"), BuiltIn: false},
-	{Name: "tokenx.graphqls", Input: sourceData("tokenx.graphqls"), BuiltIn: false},
-	{Name: "user.graphqls", Input: sourceData("user.graphqls"), BuiltIn: false},
+	{Name: "graphqls/accesspolicy.graphqls", Input: sourceData("graphqls/accesspolicy.graphqls"), BuiltIn: false},
+	{Name: "graphqls/app.graphqls", Input: sourceData("graphqls/app.graphqls"), BuiltIn: false},
+	{Name: "graphqls/authz.graphqls", Input: sourceData("graphqls/authz.graphqls"), BuiltIn: false},
+	{Name: "graphqls/autoscaling.graphqls", Input: sourceData("graphqls/autoscaling.graphqls"), BuiltIn: false},
+	{Name: "graphqls/azuread.graphqls", Input: sourceData("graphqls/azuread.graphqls"), BuiltIn: false},
+	{Name: "graphqls/bigquerydataset.graphqls", Input: sourceData("graphqls/bigquerydataset.graphqls"), BuiltIn: false},
+	{Name: "graphqls/bucket.graphqls", Input: sourceData("graphqls/bucket.graphqls"), BuiltIn: false},
+	{Name: "graphqls/deploy.graphqls", Input: sourceData("graphqls/deploy.graphqls"), BuiltIn: false},
+	{Name: "graphqls/idporten.graphqls", Input: sourceData("graphqls/idporten.graphqls"), BuiltIn: false},
+	{Name: "graphqls/instance.graphqls", Input: sourceData("graphqls/instance.graphqls"), BuiltIn: false},
+	{Name: "graphqls/kafka.graphqls", Input: sourceData("graphqls/kafka.graphqls"), BuiltIn: false},
+	{Name: "graphqls/maskinporten.graphqls", Input: sourceData("graphqls/maskinporten.graphqls"), BuiltIn: false},
+	{Name: "graphqls/opensearch.graphqls", Input: sourceData("graphqls/opensearch.graphqls"), BuiltIn: false},
+	{Name: "graphqls/resources.graphqls", Input: sourceData("graphqls/resources.graphqls"), BuiltIn: false},
+	{Name: "graphqls/scalars.graphqls", Input: sourceData("graphqls/scalars.graphqls"), BuiltIn: false},
+	{Name: "graphqls/schema.graphqls", Input: sourceData("graphqls/schema.graphqls"), BuiltIn: false},
+	{Name: "graphqls/sqlinstance.graphqls", Input: sourceData("graphqls/sqlinstance.graphqls"), BuiltIn: false},
+	{Name: "graphqls/storage.graphqls", Input: sourceData("graphqls/storage.graphqls"), BuiltIn: false},
+	{Name: "graphqls/team.graphqls", Input: sourceData("graphqls/team.graphqls"), BuiltIn: false},
+	{Name: "graphqls/tokenx.graphqls", Input: sourceData("graphqls/tokenx.graphqls"), BuiltIn: false},
+	{Name: "graphqls/user.graphqls", Input: sourceData("graphqls/user.graphqls"), BuiltIn: false},
+	{Name: "graphqls/variable.graphqls", Input: sourceData("graphqls/variable.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -8919,138 +8902,6 @@ func (ec *executionContext) fieldContext_Requests_memory(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Resource_apiVersion(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Resource_apiVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.APIVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Resource_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Resource",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Resource_kind(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Resource_kind(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Kind, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Resource_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Resource",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Resource_name(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Resource_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Resource_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Resource",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Resources_limits(ctx context.Context, field graphql.CollectedField, obj *model.Resources) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Resources_limits(ctx, field)
 	if err != nil {
@@ -13597,13 +13448,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.Instance:
-		return ec._Instance(ctx, sel, &obj)
-	case *model.Instance:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Instance(ctx, sel, obj)
 	case model.App:
 		return ec._App(ctx, sel, &obj)
 	case *model.App:
@@ -13611,6 +13455,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._App(ctx, sel, obj)
+	case model.Instance:
+		return ec._Instance(ctx, sel, &obj)
+	case *model.Instance:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Instance(ctx, sel, obj)
 	case model.Env:
 		return ec._Env(ctx, sel, &obj)
 	case *model.Env:
@@ -13648,20 +13499,6 @@ func (ec *executionContext) _Storage(ctx context.Context, sel ast.SelectionSet, 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.SQLInstance:
-		return ec._SqlInstance(ctx, sel, &obj)
-	case *model.SQLInstance:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SqlInstance(ctx, sel, obj)
-	case model.Bucket:
-		return ec._Bucket(ctx, sel, &obj)
-	case *model.Bucket:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Bucket(ctx, sel, obj)
 	case model.BigQueryDataset:
 		return ec._BigQueryDataset(ctx, sel, &obj)
 	case *model.BigQueryDataset:
@@ -13669,13 +13506,13 @@ func (ec *executionContext) _Storage(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._BigQueryDataset(ctx, sel, obj)
-	case model.OpenSearch:
-		return ec._OpenSearch(ctx, sel, &obj)
-	case *model.OpenSearch:
+	case model.Bucket:
+		return ec._Bucket(ctx, sel, &obj)
+	case *model.Bucket:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._OpenSearch(ctx, sel, obj)
+		return ec._Bucket(ctx, sel, obj)
 	case model.Kafka:
 		return ec._Kafka(ctx, sel, &obj)
 	case *model.Kafka:
@@ -13683,6 +13520,20 @@ func (ec *executionContext) _Storage(ctx context.Context, sel ast.SelectionSet, 
 			return graphql.Null
 		}
 		return ec._Kafka(ctx, sel, obj)
+	case model.OpenSearch:
+		return ec._OpenSearch(ctx, sel, &obj)
+	case *model.OpenSearch:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._OpenSearch(ctx, sel, obj)
+	case model.SQLInstance:
+		return ec._SqlInstance(ctx, sel, &obj)
+	case *model.SQLInstance:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SqlInstance(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -15600,48 +15451,6 @@ func (ec *executionContext) _Requests(ctx context.Context, sel ast.SelectionSet,
 		case "memory":
 
 			out.Values[i] = ec._Requests_memory(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var resourceImplementors = []string{"Resource"}
-
-func (ec *executionContext) _Resource(ctx context.Context, sel ast.SelectionSet, obj *model.Resource) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, resourceImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Resource")
-		case "apiVersion":
-
-			out.Values[i] = ec._Resource_apiVersion(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "kind":
-
-			out.Values[i] = ec._Resource_kind(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "name":
-
-			out.Values[i] = ec._Resource_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
