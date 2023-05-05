@@ -216,6 +216,13 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 			ret.Storage = append(ret.Storage, bqDataset)
 		}
 	}
+	if app.Spec.Azure != nil && app.Spec.Azure.Application != nil && app.Spec.Azure.Application.Enabled {
+		azureAd := model.AzureAd{}
+		if err := convert(app.Spec.Azure, &azureAd); err != nil {
+			return nil, fmt.Errorf("converting azureAd: %w", err)
+		}
+		ret.Authz = append(ret.Authz, azureAd)
+	}
 
 	for _, v := range app.Spec.Env {
 		m := model.Variable{

@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type Authz interface {
+	IsAuthz()
+}
+
 type Node interface {
 	IsNode()
 	GetID() string
@@ -21,6 +25,22 @@ type AutoScaling struct {
 	CPUThresholdPercentage int  `json:"cpuThresholdPercentage"`
 	Max                    int  `json:"max"`
 	Min                    int  `json:"min"`
+}
+
+type AzureAd struct {
+	Application *AzureApplication `json:"application,omitempty"`
+	Sidecar     *Sidecar          `json:"sidecar,omitempty"`
+}
+
+func (AzureAd) IsAuthz() {}
+
+type AzureApplication struct {
+	AllowAllUsers         bool     `json:"allowAllUsers"`
+	Claims                *Claims  `json:"claims"`
+	Enabled               bool     `json:"enabled"`
+	ReplyURLs             []string `json:"replyURLs"`
+	SinglePageApplication bool     `json:"singlePageApplication"`
+	Tenant                string   `json:"tenant"`
 }
 
 type BigQueryDataset struct {
@@ -43,6 +63,11 @@ type Bucket struct {
 
 func (Bucket) IsStorage()           {}
 func (this Bucket) GetName() string { return this.Name }
+
+type Claims struct {
+	Extra  []string `json:"extra"`
+	Groups []*Group `json:"groups"`
+}
 
 type Database struct {
 	EnvVarPrefix string          `json:"envVarPrefix"`
@@ -82,6 +107,10 @@ type GithubRepositoryEdge struct {
 	Node   *GithubRepository `json:"node"`
 }
 
+type Group struct {
+	ID string `json:"id"`
+}
+
 type Insights struct {
 	Enabled               bool `json:"enabled"`
 	QueryStringLength     int  `json:"queryStringLength"`
@@ -117,6 +146,13 @@ type Resource struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 	Name       string `json:"name"`
+}
+
+type Sidecar struct {
+	AutoLogin            bool       `json:"autoLogin"`
+	AutoLoginIgnorePaths []string   `json:"autoLoginIgnorePaths"`
+	Enabled              bool       `json:"enabled"`
+	Resources            *Resources `json:"resources"`
 }
 
 type SQLInstance struct {

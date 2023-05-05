@@ -67,6 +67,37 @@ type AutoScaling {
   min: Int!
 }
 
+union Authz = AzureAD #| IDPorten | Maskinporten | TokenX
+type AzureAD {
+  application: AzureApplication
+  sidecar: Sidecar
+}
+
+type AzureApplication {
+  allowAllUsers: Boolean!
+  claims: Claims!
+  enabled: Boolean!
+  replyURLs: [String!]!
+  singlePageApplication: Boolean!
+  tenant: String!
+}
+
+type Claims {
+  extra: [String!]!
+  groups: [Group!]!
+}
+
+type Group {
+  id: String!
+}
+
+type Sidecar {
+  autoLogin: Boolean!
+  autoLoginIgnorePaths: [String!]!
+  enabled: Boolean!
+  resources: Resources!
+}
+
 interface Storage {
   name: String!
 }
@@ -157,7 +188,7 @@ type App implements Node {
   autoScaling: AutoScaling!
   storage: [Storage!]!
   variables: [Variable!]!
-  #  authz: [Authz!]!
+  authz: [Authz!]!
   #  manifest: Spec!
   #  networking: [Networking!]!
   #  storage: [Storage!]!

@@ -56,6 +56,7 @@ type ComplexityRoot struct {
 
 	App struct {
 		AccessPolicy func(childComplexity int) int
+		Authz        func(childComplexity int) int
 		AutoScaling  func(childComplexity int) int
 		Deployed     func(childComplexity int) int
 		Deploys      func(childComplexity int, first *int, after *model.Cursor) int
@@ -88,6 +89,20 @@ type ComplexityRoot struct {
 		Min                    func(childComplexity int) int
 	}
 
+	AzureAD struct {
+		Application func(childComplexity int) int
+		Sidecar     func(childComplexity int) int
+	}
+
+	AzureApplication struct {
+		AllowAllUsers         func(childComplexity int) int
+		Claims                func(childComplexity int) int
+		Enabled               func(childComplexity int) int
+		ReplyURLs             func(childComplexity int) int
+		SinglePageApplication func(childComplexity int) int
+		Tenant                func(childComplexity int) int
+	}
+
 	BigQueryDataset struct {
 		CascadingDelete func(childComplexity int) int
 		Description     func(childComplexity int) int
@@ -101,6 +116,11 @@ type ComplexityRoot struct {
 		PublicAccessPrevention   func(childComplexity int) int
 		RetentionPeriodDays      func(childComplexity int) int
 		UniformBucketLevelAccess func(childComplexity int) int
+	}
+
+	Claims struct {
+		Extra  func(childComplexity int) int
+		Groups func(childComplexity int) int
 	}
 
 	Database struct {
@@ -180,6 +200,10 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	Group struct {
+		ID func(childComplexity int) int
+	}
+
 	Inbound struct {
 		Rules func(childComplexity int) int
 	}
@@ -253,6 +277,13 @@ type ComplexityRoot struct {
 	Rule struct {
 		Application func(childComplexity int) int
 		Namespace   func(childComplexity int) int
+	}
+
+	Sidecar struct {
+		AutoLogin            func(childComplexity int) int
+		AutoLoginIgnorePaths func(childComplexity int) int
+		Enabled              func(childComplexity int) int
+		Resources            func(childComplexity int) int
 	}
 
 	SlackAlertsChannel struct {
@@ -396,6 +427,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.AccessPolicy(childComplexity), true
+
+	case "App.authz":
+		if e.complexity.App.Authz == nil {
+			break
+		}
+
+		return e.complexity.App.Authz(childComplexity), true
 
 	case "App.autoScaling":
 		if e.complexity.App.AutoScaling == nil {
@@ -549,6 +587,62 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AutoScaling.Min(childComplexity), true
 
+	case "AzureAD.application":
+		if e.complexity.AzureAD.Application == nil {
+			break
+		}
+
+		return e.complexity.AzureAD.Application(childComplexity), true
+
+	case "AzureAD.sidecar":
+		if e.complexity.AzureAD.Sidecar == nil {
+			break
+		}
+
+		return e.complexity.AzureAD.Sidecar(childComplexity), true
+
+	case "AzureApplication.allowAllUsers":
+		if e.complexity.AzureApplication.AllowAllUsers == nil {
+			break
+		}
+
+		return e.complexity.AzureApplication.AllowAllUsers(childComplexity), true
+
+	case "AzureApplication.claims":
+		if e.complexity.AzureApplication.Claims == nil {
+			break
+		}
+
+		return e.complexity.AzureApplication.Claims(childComplexity), true
+
+	case "AzureApplication.enabled":
+		if e.complexity.AzureApplication.Enabled == nil {
+			break
+		}
+
+		return e.complexity.AzureApplication.Enabled(childComplexity), true
+
+	case "AzureApplication.replyURLs":
+		if e.complexity.AzureApplication.ReplyURLs == nil {
+			break
+		}
+
+		return e.complexity.AzureApplication.ReplyURLs(childComplexity), true
+
+	case "AzureApplication.singlePageApplication":
+		if e.complexity.AzureApplication.SinglePageApplication == nil {
+			break
+		}
+
+		return e.complexity.AzureApplication.SinglePageApplication(childComplexity), true
+
+	case "AzureApplication.tenant":
+		if e.complexity.AzureApplication.Tenant == nil {
+			break
+		}
+
+		return e.complexity.AzureApplication.Tenant(childComplexity), true
+
 	case "BigQueryDataset.cascadingDelete":
 		if e.complexity.BigQueryDataset.CascadingDelete == nil {
 			break
@@ -611,6 +705,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Bucket.UniformBucketLevelAccess(childComplexity), true
+
+	case "Claims.extra":
+		if e.complexity.Claims.Extra == nil {
+			break
+		}
+
+		return e.complexity.Claims.Extra(childComplexity), true
+
+	case "Claims.groups":
+		if e.complexity.Claims.Groups == nil {
+			break
+		}
+
+		return e.complexity.Claims.Groups(childComplexity), true
 
 	case "Database.envVarPrefix":
 		if e.complexity.Database.EnvVarPrefix == nil {
@@ -877,6 +985,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GithubRepositoryEdge.Node(childComplexity), true
+
+	case "Group.id":
+		if e.complexity.Group.ID == nil {
+			break
+		}
+
+		return e.complexity.Group.ID(childComplexity), true
 
 	case "Inbound.rules":
 		if e.complexity.Inbound.Rules == nil {
@@ -1149,6 +1264,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Rule.Namespace(childComplexity), true
+
+	case "Sidecar.autoLogin":
+		if e.complexity.Sidecar.AutoLogin == nil {
+			break
+		}
+
+		return e.complexity.Sidecar.AutoLogin(childComplexity), true
+
+	case "Sidecar.autoLoginIgnorePaths":
+		if e.complexity.Sidecar.AutoLoginIgnorePaths == nil {
+			break
+		}
+
+		return e.complexity.Sidecar.AutoLoginIgnorePaths(childComplexity), true
+
+	case "Sidecar.enabled":
+		if e.complexity.Sidecar.Enabled == nil {
+			break
+		}
+
+		return e.complexity.Sidecar.Enabled(childComplexity), true
+
+	case "Sidecar.resources":
+		if e.complexity.Sidecar.Resources == nil {
+			break
+		}
+
+		return e.complexity.Sidecar.Resources(childComplexity), true
 
 	case "SlackAlertsChannel.env":
 		if e.complexity.SlackAlertsChannel.Env == nil {
@@ -2598,6 +2741,50 @@ func (ec *executionContext) fieldContext_App_variables(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _App_authz(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_authz(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Authz, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.Authz)
+	fc.Result = res
+	return ec.marshalNAuthz2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAuthzᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_authz(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Authz does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AppConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppConnection_totalCount(ctx, field)
 	if err != nil {
@@ -2855,6 +3042,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_storage(ctx, field)
 			case "variables":
 				return ec.fieldContext_App_variables(ctx, field)
+			case "authz":
+				return ec.fieldContext_App_authz(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -3033,6 +3222,382 @@ func (ec *executionContext) fieldContext_AutoScaling_min(ctx context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureAD_application(ctx context.Context, field graphql.CollectedField, obj *model.AzureAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureAD_application(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Application, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AzureApplication)
+	fc.Result = res
+	return ec.marshalOAzureApplication2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAzureApplication(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureAD_application(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "allowAllUsers":
+				return ec.fieldContext_AzureApplication_allowAllUsers(ctx, field)
+			case "claims":
+				return ec.fieldContext_AzureApplication_claims(ctx, field)
+			case "enabled":
+				return ec.fieldContext_AzureApplication_enabled(ctx, field)
+			case "replyURLs":
+				return ec.fieldContext_AzureApplication_replyURLs(ctx, field)
+			case "singlePageApplication":
+				return ec.fieldContext_AzureApplication_singlePageApplication(ctx, field)
+			case "tenant":
+				return ec.fieldContext_AzureApplication_tenant(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AzureApplication", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureAD_sidecar(ctx context.Context, field graphql.CollectedField, obj *model.AzureAd) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureAD_sidecar(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sidecar, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sidecar)
+	fc.Result = res
+	return ec.marshalOSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSidecar(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureAD_sidecar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureAD",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "autoLogin":
+				return ec.fieldContext_Sidecar_autoLogin(ctx, field)
+			case "autoLoginIgnorePaths":
+				return ec.fieldContext_Sidecar_autoLoginIgnorePaths(ctx, field)
+			case "enabled":
+				return ec.fieldContext_Sidecar_enabled(ctx, field)
+			case "resources":
+				return ec.fieldContext_Sidecar_resources(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sidecar", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureApplication_allowAllUsers(ctx context.Context, field graphql.CollectedField, obj *model.AzureApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureApplication_allowAllUsers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AllowAllUsers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureApplication_allowAllUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureApplication_claims(ctx context.Context, field graphql.CollectedField, obj *model.AzureApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureApplication_claims(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Claims, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Claims)
+	fc.Result = res
+	return ec.marshalNClaims2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐClaims(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureApplication_claims(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "extra":
+				return ec.fieldContext_Claims_extra(ctx, field)
+			case "groups":
+				return ec.fieldContext_Claims_groups(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Claims", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureApplication_enabled(ctx context.Context, field graphql.CollectedField, obj *model.AzureApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureApplication_enabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureApplication_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureApplication_replyURLs(ctx context.Context, field graphql.CollectedField, obj *model.AzureApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureApplication_replyURLs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReplyURLs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureApplication_replyURLs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureApplication_singlePageApplication(ctx context.Context, field graphql.CollectedField, obj *model.AzureApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureApplication_singlePageApplication(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SinglePageApplication, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureApplication_singlePageApplication(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AzureApplication_tenant(ctx context.Context, field graphql.CollectedField, obj *model.AzureApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AzureApplication_tenant(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tenant, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AzureApplication_tenant(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AzureApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3429,6 +3994,98 @@ func (ec *executionContext) fieldContext_Bucket_uniformBucketLevelAccess(ctx con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Claims_extra(ctx context.Context, field graphql.CollectedField, obj *model.Claims) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Claims_extra(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Extra, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Claims_extra(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Claims",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Claims_groups(ctx context.Context, field graphql.CollectedField, obj *model.Claims) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Claims_groups(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Groups, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Group)
+	fc.Result = res
+	return ec.marshalNGroup2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroupᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Claims_groups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Claims",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Group_id(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Group", field.Name)
 		},
 	}
 	return fc, nil
@@ -5207,6 +5864,50 @@ func (ec *executionContext) fieldContext_GithubRepositoryEdge_node(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Group_id(ctx context.Context, field graphql.CollectedField, obj *model.Group) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Group_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Group_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Group",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Inbound_rules(ctx context.Context, field graphql.CollectedField, obj *model.Inbound) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Inbound_rules(ctx, field)
 	if err != nil {
@@ -6304,6 +7005,8 @@ func (ec *executionContext) fieldContext_Query_app(ctx context.Context, field gr
 				return ec.fieldContext_App_storage(ctx, field)
 			case "variables":
 				return ec.fieldContext_App_variables(ctx, field)
+			case "authz":
+				return ec.fieldContext_App_authz(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -7046,6 +7749,188 @@ func (ec *executionContext) fieldContext_Rule_namespace(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sidecar_autoLogin(ctx context.Context, field graphql.CollectedField, obj *model.Sidecar) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sidecar_autoLogin(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AutoLogin, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sidecar_autoLogin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sidecar",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sidecar_autoLoginIgnorePaths(ctx context.Context, field graphql.CollectedField, obj *model.Sidecar) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sidecar_autoLoginIgnorePaths(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AutoLoginIgnorePaths, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sidecar_autoLoginIgnorePaths(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sidecar",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sidecar_enabled(ctx context.Context, field graphql.CollectedField, obj *model.Sidecar) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sidecar_enabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sidecar_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sidecar",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sidecar_resources(ctx context.Context, field graphql.CollectedField, obj *model.Sidecar) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sidecar_resources(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Resources, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Resources)
+	fc.Result = res
+	return ec.marshalNResources2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sidecar_resources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sidecar",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "limits":
+				return ec.fieldContext_Resources_limits(ctx, field)
+			case "requests":
+				return ec.fieldContext_Resources_requests(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Resources", field.Name)
 		},
 	}
 	return fc, nil
@@ -11080,6 +11965,22 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _Authz(ctx context.Context, sel ast.SelectionSet, obj model.Authz) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.AzureAd:
+		return ec._AzureAD(ctx, sel, &obj)
+	case *model.AzureAd:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AzureAD(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj model.Node) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -11363,6 +12264,13 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "authz":
+
+			out.Values[i] = ec._App_authz(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11500,6 +12408,98 @@ func (ec *executionContext) _AutoScaling(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var azureADImplementors = []string{"AzureAD", "Authz"}
+
+func (ec *executionContext) _AzureAD(ctx context.Context, sel ast.SelectionSet, obj *model.AzureAd) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, azureADImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AzureAD")
+		case "application":
+
+			out.Values[i] = ec._AzureAD_application(ctx, field, obj)
+
+		case "sidecar":
+
+			out.Values[i] = ec._AzureAD_sidecar(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var azureApplicationImplementors = []string{"AzureApplication"}
+
+func (ec *executionContext) _AzureApplication(ctx context.Context, sel ast.SelectionSet, obj *model.AzureApplication) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, azureApplicationImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AzureApplication")
+		case "allowAllUsers":
+
+			out.Values[i] = ec._AzureApplication_allowAllUsers(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "claims":
+
+			out.Values[i] = ec._AzureApplication_claims(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "enabled":
+
+			out.Values[i] = ec._AzureApplication_enabled(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "replyURLs":
+
+			out.Values[i] = ec._AzureApplication_replyURLs(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "singlePageApplication":
+
+			out.Values[i] = ec._AzureApplication_singlePageApplication(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "tenant":
+
+			out.Values[i] = ec._AzureApplication_tenant(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var bigQueryDatasetImplementors = []string{"BigQueryDataset", "Storage"}
 
 func (ec *executionContext) _BigQueryDataset(ctx context.Context, sel ast.SelectionSet, obj *model.BigQueryDataset) graphql.Marshaler {
@@ -11590,6 +12590,41 @@ func (ec *executionContext) _Bucket(ctx context.Context, sel ast.SelectionSet, o
 		case "uniformBucketLevelAccess":
 
 			out.Values[i] = ec._Bucket_uniformBucketLevelAccess(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var claimsImplementors = []string{"Claims"}
+
+func (ec *executionContext) _Claims(ctx context.Context, sel ast.SelectionSet, obj *model.Claims) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, claimsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Claims")
+		case "extra":
+
+			out.Values[i] = ec._Claims_extra(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "groups":
+
+			out.Values[i] = ec._Claims_groups(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -12126,6 +13161,34 @@ func (ec *executionContext) _GithubRepositoryEdge(ctx context.Context, sel ast.S
 		case "node":
 
 			out.Values[i] = ec._GithubRepositoryEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var groupImplementors = []string{"Group"}
+
+func (ec *executionContext) _Group(ctx context.Context, sel ast.SelectionSet, obj *model.Group) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, groupImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Group")
+		case "id":
+
+			out.Values[i] = ec._Group_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -12743,6 +13806,55 @@ func (ec *executionContext) _Rule(ctx context.Context, sel ast.SelectionSet, obj
 		case "namespace":
 
 			out.Values[i] = ec._Rule_namespace(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var sidecarImplementors = []string{"Sidecar"}
+
+func (ec *executionContext) _Sidecar(ctx context.Context, sel ast.SelectionSet, obj *model.Sidecar) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sidecarImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Sidecar")
+		case "autoLogin":
+
+			out.Values[i] = ec._Sidecar_autoLogin(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "autoLoginIgnorePaths":
+
+			out.Values[i] = ec._Sidecar_autoLoginIgnorePaths(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "enabled":
+
+			out.Values[i] = ec._Sidecar_enabled(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "resources":
+
+			out.Values[i] = ec._Sidecar_resources(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -13757,6 +14869,60 @@ func (ec *executionContext) marshalNAppEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 	return ec._AppEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNAuthz2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAuthz(ctx context.Context, sel ast.SelectionSet, v model.Authz) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Authz(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAuthz2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAuthzᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Authz) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAuthz2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAuthz(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNAutoScaling2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAutoScaling(ctx context.Context, sel ast.SelectionSet, v model.AutoScaling) graphql.Marshaler {
 	return ec._AutoScaling(ctx, sel, &v)
 }
@@ -13784,6 +14950,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNClaims2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐClaims(ctx context.Context, sel ast.SelectionSet, v *model.Claims) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Claims(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, v interface{}) (model.Cursor, error) {
@@ -14286,6 +15462,60 @@ func (ec *executionContext) marshalNGithubRepositoryEdge2ᚖgithubᚗcomᚋnais�
 	return ec._GithubRepositoryEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNGroup2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroupᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Group) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGroup2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroup(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGroup2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v *model.Group) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Group(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -14498,6 +15728,16 @@ func (ec *executionContext) marshalNRequests2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 
 func (ec *executionContext) marshalNResources2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx context.Context, sel ast.SelectionSet, v model.Resources) graphql.Marshaler {
 	return ec._Resources(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNResources2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx context.Context, sel ast.SelectionSet, v *model.Resources) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Resources(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Rule) graphql.Marshaler {
@@ -15149,6 +16389,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAzureApplication2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAzureApplication(ctx context.Context, sel ast.SelectionSet, v *model.AzureApplication) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AzureApplication(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -15212,6 +16459,13 @@ func (ec *executionContext) marshalONode2githubᚗcomᚋnaisᚋconsoleᚑbackend
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSidecar(ctx context.Context, sel ast.SelectionSet, v *model.Sidecar) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Sidecar(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SlackAlertsChannel) graphql.Marshaler {

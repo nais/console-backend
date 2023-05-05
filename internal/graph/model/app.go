@@ -64,6 +64,7 @@ type App struct {
 	Replicas     Replicas     `json:"replicas"`
 	Storage      []Storage    `json:"storage"`
 	Variables    []Variable   `json:"variables"`
+	Authz        []Authz      `json:"authz"`
 	GQLVars      struct {
 		Team string
 	} `json:"-"`
