@@ -17,34 +17,6 @@ type Instance implements Node {
   created: Time!
 }
 
-type Port {
-  port: Int!
-}
-
-type External {
-  host: String!
-  ports: [Port!]!
-}
-
-type Rule {
-  application: String!
-  namespace: String!
-}
-
-type Inbound {
-  rules: [Rule!]!
-}
-
-type Outbound {
-  rules: [Rule!]!
-  external: [External!]!
-}
-
-type AccessPolicy {
-  inbound: Inbound!
-  outbound: Outbound!
-}
-
 type Limits {
   cpu: String!
   memory: String!
@@ -61,112 +33,20 @@ type Resources {
 }
 
 type AutoScaling {
-  disableAutoScaling: Boolean!
-  cpuThresholdPercentage: Int!
+  disabled: Boolean!
+  """
+  CPU threshold in percent
+  """
+  cpuThreshold: Int!
   max: Int!
   min: Int!
 }
 
-union Authz = AzureAD #| IDPorten | Maskinporten | TokenX
-type AzureAD {
-  application: AzureApplication
-  sidecar: Sidecar
-}
-
-type AzureApplication {
-  allowAllUsers: Boolean!
-  claims: Claims!
-  enabled: Boolean!
-  replyURLs: [String!]!
-  singlePageApplication: Boolean!
-  tenant: String!
-}
-
-type Claims {
-  extra: [String!]!
-  groups: [Group!]!
-}
-
-type Group {
-  id: String!
-}
-
-type Sidecar {
-  autoLogin: Boolean!
-  autoLoginIgnorePaths: [String!]!
-  enabled: Boolean!
-  resources: Resources!
-}
-
-interface Storage {
-  name: String!
-}
-
-type Flag {
-  name: String!
-  value: String!
-}
-
-type Insights {
-  enabled: Boolean!
-  queryStringLength: Int!
-  recordApplicationTags: Boolean!
-  recordClientAddress: Boolean!
-}
-
-type Maintenance {
-  day: Int!
-  hour: Int!
-}
-
-type Database {
-  envVarPrefix: String!
-  name: String!
-  users: [DatabaseUser!]!
-}
-
-type DatabaseUser {
-  name: String!
-}
-
-type SqlInstance implements Storage {
-  autoBackupHour: Int!
-  cascadingDelete: Boolean!
-  collation: String!
-  databases: [Database!]!
-  diskAutoresize: Boolean!
-  diskSize: Int!
-  diskType: String!
-  flags: [Flag!]!
-  highAvailability: Boolean!
-  insights: Insights!
-  maintenance: Maintenance!
-  name: String!
-  pointInTimeRecovery: Boolean!
-  retainedBackups: Int!
-  tier: String!
-  type: String!
-}
-
+union Authz = AzureAD | IDPorten | Maskinporten | TokenX
 type Resource {
   apiVersion: String!
   kind: String!
   name: String!
-}
-
-type Bucket implements Storage {
-  cascadingDelete: Boolean!
-  name: String!
-  publicAccessPrevention: Boolean!
-  retentionPeriodDays: Int!
-  uniformBucketLevelAccess: Boolean!
-}
-
-type BigQueryDataset implements Storage {
-  cascadingDelete: Boolean!
-  description: String!
-  name: String!
-  permission: String!
 }
 
 type Variable {

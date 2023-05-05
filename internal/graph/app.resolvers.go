@@ -11,38 +11,6 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-// Inbound is the resolver for the inbound field.
-func (r *accessPolicyResolver) Inbound(ctx context.Context, obj *model.AccessPolicy) (*model.Inbound, error) {
-	ret := &model.Inbound{}
-	for _, rule := range obj.Inbound.Rules {
-		r := model.Rule{}
-		r.Application = rule.Application
-		r.Namespace = rule.Namespace
-		ret.Rules = append(ret.Rules, &r)
-	}
-	return ret, nil
-}
-
-// Outbound is the resolver for the outbound field.
-func (r *accessPolicyResolver) Outbound(ctx context.Context, obj *model.AccessPolicy) (*model.Outbound, error) {
-	ret := &model.Outbound{}
-	for _, rule := range obj.Outbound.Rules {
-		r := model.Rule{}
-		r.Application = rule.Application
-		r.Namespace = rule.Namespace
-		ret.Rules = append(ret.Rules, &r)
-	}
-
-	for _, host := range obj.Outbound.External {
-		e := model.External{}
-		e.Host = host.Host
-		e.Ports = append(e.Ports, host.Ports...)
-		ret.External = append(ret.External, &e)
-	}
-
-	return ret, nil
-}
-
 // Instances is the resolver for the instances field.
 func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error) {
 	instances, err := r.K8s.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
@@ -91,17 +59,6 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	}, nil
 }
 
-// AutoScaling is the resolver for the autoScaling field.
-func (r *appResolver) AutoScaling(ctx context.Context, obj *model.App) (*model.AutoScaling, error) {
-	ret := &model.AutoScaling{}
-	ret.CPUThresholdPercentage = obj.Replicas.CPUThresholdPercentage
-	ret.DisableAutoScaling = obj.Replicas.DisableAutoScaling
-	ret.Max = obj.Replicas.MaxReplicas
-	ret.Min = obj.Replicas.MinReplicas
-
-	return ret, nil
-}
-
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
 	app, err := r.K8s.App(ctx, name, team, env)
@@ -111,11 +68,7 @@ func (r *queryResolver) App(ctx context.Context, name string, team string, env s
 	return app, nil
 }
 
-// AccessPolicy returns AccessPolicyResolver implementation.
-func (r *Resolver) AccessPolicy() AccessPolicyResolver { return &accessPolicyResolver{r} }
-
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
-type accessPolicyResolver struct{ *Resolver }
 type appResolver struct{ *Resolver }

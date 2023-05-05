@@ -1,0 +1,27 @@
+type Port {
+  port: Int!
+}
+
+type External {
+  host: String!
+  ports: [Port!]!
+}
+
+type Rule {
+  application: String!
+  namespace: String!
+}
+
+type Inbound {
+  rules: [Rule!]!
+}
+
+type Outbound {
+  rules: [Rule!]!
+  external: [External!]!
+}
+
+type AccessPolicy {
+  inbound: Inbound!
+  outbound: Outbound!
+}

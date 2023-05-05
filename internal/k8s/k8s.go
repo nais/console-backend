@@ -170,6 +170,13 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 	ret.Ingresses = ingresses
 
+	ret.AutoScaling = model.AutoScaling{
+		Min:          *app.Spec.Replicas.Min,
+		Max:          *app.Spec.Replicas.Max,
+		Disabled:     app.Spec.Replicas.DisableAutoScaling,
+		CPUThreshold: app.Spec.Replicas.CpuThresholdPercentage,
+	}
+
 	ap := model.AccessPolicy{}
 	if err := convert(app.Spec.AccessPolicy, &ap); err != nil {
 		return nil, fmt.Errorf("converting accessPolicy: %w", err)
@@ -216,13 +223,13 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 			ret.Storage = append(ret.Storage, bqDataset)
 		}
 	}
-	if app.Spec.Azure != nil && app.Spec.Azure.Application != nil && app.Spec.Azure.Application.Enabled {
-		azureAd := model.AzureAd{}
-		if err := convert(app.Spec.Azure, &azureAd); err != nil {
-			return nil, fmt.Errorf("converting azureAd: %w", err)
-		}
-		ret.Authz = append(ret.Authz, azureAd)
+
+	authz, err := appAuthz(app)
+	if err != nil {
+		return nil, fmt.Errorf("getting authz: %w", err)
 	}
+
+	ret.Authz = authz
 
 	for _, v := range app.Spec.Env {
 		m := model.Variable{
@@ -250,4 +257,47 @@ func convert(m any, target any) error {
 		return fmt.Errorf("unmarshalling json: %w", err)
 	}
 	return nil
+}
+
+func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
+	ret := []model.Authz{}
+	if app.Spec.Azure != nil {
+		isApp := app.Spec.Azure.Application != nil && app.Spec.Azure.Application.Enabled
+		isSidecar := app.Spec.Azure.Sidecar != nil && app.Spec.Azure.Sidecar.Enabled
+		if isApp || isSidecar {
+			azureAd := model.AzureAd{}
+			if err := convert(app.Spec.Azure, &azureAd); err != nil {
+				return nil, fmt.Errorf("converting azureAd: %w", err)
+			}
+			ret = append(ret, azureAd)
+		}
+	}
+
+	if app.Spec.IDPorten != nil && app.Spec.IDPorten.Enabled {
+		idPorten := model.IDPorten{}
+		if err := convert(app.Spec.IDPorten, &idPorten); err != nil {
+			return nil, fmt.Errorf("converting idPorten: %w", err)
+		}
+		ret = append(ret, idPorten)
+	}
+
+	if app.Spec.Maskinporten != nil && app.Spec.Maskinporten.Enabled {
+		maskinporten := model.Maskinporten{}
+		if err := convert(app.Spec.Maskinporten, &maskinporten); err != nil {
+			return nil, fmt.Errorf("converting maskinporten: %w", err)
+		}
+		ret = append(ret, maskinporten)
+	}
+
+	fmt.Printf("tokenx: %#v\n", app.Spec.TokenX)
+	if app.Spec.TokenX != nil && app.Spec.TokenX.Enabled {
+
+		tokenX := model.TokenX{}
+		if err := convert(app.Spec.TokenX, &tokenX); err != nil {
+			return nil, fmt.Errorf("converting tokenX: %w", err)
+		}
+		ret = append(ret, tokenX)
+	}
+
+	return ret, nil
 }

@@ -36,13 +36,8 @@ type Limits struct {
 }
 
 type AccessPolicy struct {
-	Inbound struct {
-		Rules []AccessPolicyRule `json:"rules"`
-	} `json:"inbound"`
-	Outbound struct {
-		External []External         `json:"external"`
-		Rules    []AccessPolicyRule `json:"rules"`
-	} `json:"outbound"`
+	Inbound  Inbound  `json:"inbound"`
+	Outbound Outbound `json:"outbound"`
 }
 
 type Replicas struct {
@@ -58,13 +53,14 @@ type App struct {
 	Image        string       `json:"image"`
 	Env          *Env         `json:"env"`
 	AccessPolicy AccessPolicy `json:"accessPolicy"`
-	Ingresses    []string     `json:"ingresses"`
-	Resources    Resources    `json:"resources"`
+	Authz        []Authz      `json:"authz"`
+	AutoScaling  AutoScaling  `json:"autoScaling"`
 	Deployed     time.Time    `json:"deployed"`
+	Ingresses    []string     `json:"ingresses"`
 	Replicas     Replicas     `json:"replicas"`
+	Resources    Resources    `json:"resources"`
 	Storage      []Storage    `json:"storage"`
 	Variables    []Variable   `json:"variables"`
-	Authz        []Authz      `json:"authz"`
 	GQLVars      struct {
 		Team string
 	} `json:"-"`

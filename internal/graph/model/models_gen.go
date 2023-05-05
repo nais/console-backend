@@ -21,10 +21,11 @@ type Storage interface {
 }
 
 type AutoScaling struct {
-	DisableAutoScaling     bool `json:"disableAutoScaling"`
-	CPUThresholdPercentage int  `json:"cpuThresholdPercentage"`
-	Max                    int  `json:"max"`
-	Min                    int  `json:"min"`
+	Disabled bool `json:"disabled"`
+	// CPU threshold in percent
+	CPUThreshold int `json:"cpuThreshold"`
+	Max          int `json:"max"`
+	Min          int `json:"min"`
 }
 
 type AzureAd struct {
@@ -37,7 +38,6 @@ func (AzureAd) IsAuthz() {}
 type AzureApplication struct {
 	AllowAllUsers         bool     `json:"allowAllUsers"`
 	Claims                *Claims  `json:"claims"`
-	Enabled               bool     `json:"enabled"`
 	ReplyURLs             []string `json:"replyURLs"`
 	SinglePageApplication bool     `json:"singlePageApplication"`
 	Tenant                string   `json:"tenant"`
@@ -69,6 +69,15 @@ type Claims struct {
 	Groups []*Group `json:"groups"`
 }
 
+type Consume struct {
+	Name string `json:"name"`
+}
+
+type Consumer struct {
+	Name  string `json:"name"`
+	Orgno string `json:"orgno"`
+}
+
 type Database struct {
 	EnvVarPrefix string          `json:"envVarPrefix"`
 	Name         string          `json:"name"`
@@ -86,6 +95,15 @@ type Env struct {
 
 func (Env) IsNode()            {}
 func (this Env) GetID() string { return this.ID }
+
+type Expose struct {
+	AllowedIntegrations []string    `json:"allowedIntegrations"`
+	AtMaxAge            int         `json:"atMaxAge"`
+	Consumers           []*Consumer `json:"consumers"`
+	Enabled             bool        `json:"enabled"`
+	Name                string      `json:"name"`
+	Product             string      `json:"product"`
+}
 
 type Flag struct {
 	Name  string `json:"name"`
@@ -109,6 +127,29 @@ type GithubRepositoryEdge struct {
 
 type Group struct {
 	ID string `json:"id"`
+}
+
+type IDPorten struct {
+	AccessTokenLifetime    *int             `json:"accessTokenLifetime,omitempty"`
+	ClientURI              *string          `json:"clientURI,omitempty"`
+	FrontchannelLogoutPath *string          `json:"frontchannelLogoutPath,omitempty"`
+	IntegrationType        *string          `json:"integrationType,omitempty"`
+	PostLogoutRedirectURIs []*string        `json:"postLogoutRedirectURIs,omitempty"`
+	RedirectPath           *string          `json:"redirectPath,omitempty"`
+	Scopes                 []*string        `json:"scopes,omitempty"`
+	SessionLifetime        *int             `json:"sessionLifetime,omitempty"`
+	Sidecar                *IDPortenSidecar `json:"sidecar,omitempty"`
+}
+
+func (IDPorten) IsAuthz() {}
+
+type IDPortenSidecar struct {
+	AutoLogin            *bool      `json:"autoLogin,omitempty"`
+	AutoLoginIgnorePaths []*string  `json:"autoLoginIgnorePaths,omitempty"`
+	Enabled              *bool      `json:"enabled,omitempty"`
+	Level                *string    `json:"level,omitempty"`
+	Locale               *string    `json:"locale,omitempty"`
+	Resources            *Resources `json:"resources,omitempty"`
 }
 
 type Insights struct {
@@ -135,6 +176,12 @@ type Maintenance struct {
 	Hour int `json:"hour"`
 }
 
+type Maskinporten struct {
+	Scopes []*Scope `json:"scopes"`
+}
+
+func (Maskinporten) IsAuthz() {}
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`
@@ -148,10 +195,14 @@ type Resource struct {
 	Name       string `json:"name"`
 }
 
+type Scope struct {
+	Consumes []*Consume `json:"consumes"`
+	Exposes  []*Expose  `json:"exposes"`
+}
+
 type Sidecar struct {
 	AutoLogin            bool       `json:"autoLogin"`
 	AutoLoginIgnorePaths []string   `json:"autoLoginIgnorePaths"`
-	Enabled              bool       `json:"enabled"`
 	Resources            *Resources `json:"resources"`
 }
 
@@ -176,6 +227,12 @@ type SQLInstance struct {
 
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
+
+type TokenX struct {
+	MountSecretsAsFilesOnly bool `json:"mountSecretsAsFilesOnly"`
+}
+
+func (TokenX) IsAuthz() {}
 
 type Variable struct {
 	Name  string `json:"name"`

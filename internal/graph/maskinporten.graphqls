@@ -1,0 +1,26 @@
+type Consume {
+  name: String!
+}
+
+type Consumer {
+  name: String!
+  orgno: String!
+}
+
+type Expose {
+  allowedIntegrations: [String!]!
+  atMaxAge: Int!
+  consumers: [Consumer!]!
+  enabled: Boolean!
+  name: String!
+  product: String!
+}
+
+type Scope {
+  consumes: [Consume!]!
+  exposes: [Expose!]!
+}
+
+type Maskinporten {
+  scopes: [Scope!]!
+}

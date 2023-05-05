@@ -1,0 +1,3 @@
+type TokenX {
+  mountSecretsAsFilesOnly: Boolean!
+}
