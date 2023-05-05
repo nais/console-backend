@@ -62,3 +62,19 @@ type BigQueryDataset implements Storage {
   name: String!
   permission: String!
 }
+
+type OpenSearch implements Storage {
+  """
+  The opensearch instance name
+  """
+  name: String!
+  access: String!
+}
+
+type Kafka implements Storage {
+  """
+  The kafka pool name
+  """
+  name: String!
+  streams: Boolean!
+}

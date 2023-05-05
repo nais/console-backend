@@ -196,33 +196,12 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 
 	ret.Replicas = reps
 
-	if app.Spec.GCP != nil {
-		for _, v := range app.Spec.GCP.Buckets {
-			bucket := model.Bucket{}
-			if err := convert(v, &bucket); err != nil {
-				return nil, fmt.Errorf("converting buckets: %w", err)
-			}
-			ret.Storage = append(ret.Storage, bucket)
-		}
-		for _, v := range app.Spec.GCP.SqlInstances {
-			sqlInstance := model.SQLInstance{}
-			if err := convert(v, &sqlInstance); err != nil {
-				return nil, fmt.Errorf("converting sqlInstance: %w", err)
-			}
-			if sqlInstance.Name == "" {
-				sqlInstance.Name = u.GetName()
-			}
-			ret.Storage = append(ret.Storage, sqlInstance)
-		}
-
-		for _, v := range app.Spec.GCP.BigQueryDatasets {
-			bqDataset := model.BigQueryDataset{}
-			if err := convert(v, &bqDataset); err != nil {
-				return nil, fmt.Errorf("converting bigQueryDataset: %w", err)
-			}
-			ret.Storage = append(ret.Storage, bqDataset)
-		}
+	storage, err := appStorage(app)
+	if err != nil {
+		return nil, fmt.Errorf("getting storage: %w", err)
 	}
+
+	ret.Storage = storage
 
 	authz, err := appAuthz(app)
 	if err != nil {
@@ -259,6 +238,55 @@ func convert(m any, target any) error {
 	return nil
 }
 
+func appStorage(app *naisv1alpha1.Application) ([]model.Storage, error) {
+	ret := []model.Storage{}
+
+	if app.Spec.GCP != nil {
+		for _, v := range app.Spec.GCP.Buckets {
+			bucket := model.Bucket{}
+			if err := convert(v, &bucket); err != nil {
+				return nil, fmt.Errorf("converting buckets: %w", err)
+			}
+			ret = append(ret, bucket)
+		}
+		for _, v := range app.Spec.GCP.SqlInstances {
+			sqlInstance := model.SQLInstance{}
+			if err := convert(v, &sqlInstance); err != nil {
+				return nil, fmt.Errorf("converting sqlInstance: %w", err)
+			}
+			if sqlInstance.Name == "" {
+				sqlInstance.Name = app.Name
+			}
+			ret = append(ret, sqlInstance)
+		}
+
+		for _, v := range app.Spec.GCP.BigQueryDatasets {
+			bqDataset := model.BigQueryDataset{}
+			if err := convert(v, &bqDataset); err != nil {
+				return nil, fmt.Errorf("converting bigQueryDataset: %w", err)
+			}
+			ret = append(ret, bqDataset)
+		}
+	}
+
+	if app.Spec.OpenSearch != nil {
+		os := model.OpenSearch{
+			Name:   app.Spec.OpenSearch.Instance,
+			Access: app.Spec.OpenSearch.Access,
+		}
+		ret = append(ret, os)
+	}
+
+	if app.Spec.Kafka != nil {
+		kafka := model.Kafka{
+			Name:    app.Spec.Kafka.Pool,
+			Streams: app.Spec.Kafka.Streams,
+		}
+		ret = append(ret, kafka)
+	}
+	return ret, nil
+}
+
 func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
 	ret := []model.Authz{}
 	if app.Spec.Azure != nil {
@@ -289,9 +317,7 @@ func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
 		ret = append(ret, maskinporten)
 	}
 
-	fmt.Printf("tokenx: %#v\n", app.Spec.TokenX)
 	if app.Spec.TokenX != nil && app.Spec.TokenX.Enabled {
-
 		tokenX := model.TokenX{}
 		if err := convert(app.Spec.TokenX, &tokenX); err != nil {
 			return nil, fmt.Errorf("converting tokenX: %w", err)

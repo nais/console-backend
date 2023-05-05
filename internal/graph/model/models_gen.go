@@ -171,6 +171,15 @@ type Instance struct {
 func (Instance) IsNode()            {}
 func (this Instance) GetID() string { return this.ID }
 
+type Kafka struct {
+	// The kafka pool name
+	Name    string `json:"name"`
+	Streams bool   `json:"streams"`
+}
+
+func (Kafka) IsStorage()           {}
+func (this Kafka) GetName() string { return this.Name }
+
 type Maintenance struct {
 	Day  int `json:"day"`
 	Hour int `json:"hour"`
@@ -181,6 +190,15 @@ type Maskinporten struct {
 }
 
 func (Maskinporten) IsAuthz() {}
+
+type OpenSearch struct {
+	// The opensearch instance name
+	Name   string `json:"name"`
+	Access string `json:"access"`
+}
+
+func (OpenSearch) IsStorage()           {}
+func (this OpenSearch) GetName() string { return this.Name }
 
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
