@@ -427,7 +427,7 @@ type AppResolver interface {
 
 	Deploys(ctx context.Context, obj *model.App, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
 
-	Manifest(ctx context.Context, obj *model.App) (*model.Manifest, error)
+	Manifest(ctx context.Context, obj *model.App) (string, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -3085,9 +3085,9 @@ func (ec *executionContext) _App_manifest(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Manifest)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNManifest2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐManifest(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_App_manifest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3097,11 +3097,7 @@ func (ec *executionContext) fieldContext_App_manifest(ctx context.Context, field
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "data":
-				return ec.fieldContext_Manifest_data(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Manifest", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17720,20 +17716,6 @@ func (ec *executionContext) marshalNMaintenance2ᚖgithubᚗcomᚋnaisᚋconsole
 		return graphql.Null
 	}
 	return ec._Maintenance(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNManifest2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐManifest(ctx context.Context, sel ast.SelectionSet, v model.Manifest) graphql.Marshaler {
-	return ec._Manifest(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNManifest2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐManifest(ctx context.Context, sel ast.SelectionSet, v *model.Manifest) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Manifest(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNOutbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v model.Outbound) graphql.Marshaler {

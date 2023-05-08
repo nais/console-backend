@@ -9,10 +9,6 @@ type AppEdge {
   node: App!
 }
 
-type Manifest {
-  data: String!
-}
-
 type App implements Node {
   id: ID!
   name: String!
@@ -28,7 +24,7 @@ type App implements Node {
   storage: [Storage!]!
   variables: [Variable!]!
   authz: [Authz!]!
-  manifest: Manifest!
+  manifest: String!
   #  networking: [Networking!]!
 }
 
