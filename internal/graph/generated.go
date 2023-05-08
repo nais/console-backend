@@ -64,6 +64,7 @@ type ComplexityRoot struct {
 		Image        func(childComplexity int) int
 		Ingresses    func(childComplexity int) int
 		Instances    func(childComplexity int) int
+		Manifest     func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Resources    func(childComplexity int) int
 		Storage      func(childComplexity int) int
@@ -276,6 +277,10 @@ type ComplexityRoot struct {
 		Hour func(childComplexity int) int
 	}
 
+	Manifest struct {
+		Data func(childComplexity int) int
+	}
+
 	Maskinporten struct {
 		Scopes func(childComplexity int) int
 	}
@@ -421,6 +426,8 @@ type AppResolver interface {
 	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
 
 	Deploys(ctx context.Context, obj *model.App, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
+
+	Manifest(ctx context.Context, obj *model.App) (*model.Manifest, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (model.Node, error)
@@ -543,6 +550,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Instances(childComplexity), true
+
+	case "App.manifest":
+		if e.complexity.App.Manifest == nil {
+			break
+		}
+
+		return e.complexity.App.Manifest(childComplexity), true
 
 	case "App.name":
 		if e.complexity.App.Name == nil {
@@ -1320,6 +1334,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Maintenance.Hour(childComplexity), true
+
+	case "Manifest.data":
+		if e.complexity.Manifest.Data == nil {
+			break
+		}
+
+		return e.complexity.Manifest.Data(childComplexity), true
 
 	case "Maskinporten.scopes":
 		if e.complexity.Maskinporten.Scopes == nil {
@@ -3038,6 +3059,54 @@ func (ec *executionContext) fieldContext_App_authz(ctx context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _App_manifest(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_manifest(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().Manifest(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Manifest)
+	fc.Result = res
+	return ec.marshalNManifest2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐManifest(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_manifest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_Manifest_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Manifest", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AppConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppConnection_totalCount(ctx, field)
 	if err != nil {
@@ -3297,6 +3366,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_variables(ctx, field)
 			case "authz":
 				return ec.fieldContext_App_authz(ctx, field)
+			case "manifest":
+				return ec.fieldContext_App_manifest(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -7904,6 +7975,50 @@ func (ec *executionContext) fieldContext_Maintenance_hour(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Manifest_data(ctx context.Context, field graphql.CollectedField, obj *model.Manifest) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Manifest_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Manifest_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Manifest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Maskinporten_scopes(ctx context.Context, field graphql.CollectedField, obj *model.Maskinporten) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Maskinporten_scopes(ctx, field)
 	if err != nil {
@@ -8475,6 +8590,8 @@ func (ec *executionContext) fieldContext_Query_app(ctx context.Context, field gr
 				return ec.fieldContext_App_variables(ctx, field)
 			case "authz":
 				return ec.fieldContext_App_authz(ctx, field)
+			case "manifest":
+				return ec.fieldContext_App_manifest(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -13709,6 +13826,26 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "manifest":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_manifest(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15093,6 +15230,34 @@ func (ec *executionContext) _Maintenance(ctx context.Context, sel ast.SelectionS
 		case "hour":
 
 			out.Values[i] = ec._Maintenance_hour(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var manifestImplementors = []string{"Manifest"}
+
+func (ec *executionContext) _Manifest(ctx context.Context, sel ast.SelectionSet, obj *model.Manifest) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, manifestImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Manifest")
+		case "data":
+
+			out.Values[i] = ec._Manifest_data(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -17555,6 +17720,20 @@ func (ec *executionContext) marshalNMaintenance2ᚖgithubᚗcomᚋnaisᚋconsole
 		return graphql.Null
 	}
 	return ec._Maintenance(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNManifest2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐManifest(ctx context.Context, sel ast.SelectionSet, v model.Manifest) graphql.Marshaler {
+	return ec._Manifest(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNManifest2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐManifest(ctx context.Context, sel ast.SelectionSet, v *model.Manifest) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Manifest(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNOutbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v model.Outbound) graphql.Marshaler {

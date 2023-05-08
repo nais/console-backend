@@ -59,12 +59,33 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	}, nil
 }
 
+// Manifest is the resolver for the manifest field.
+func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (*model.Manifest, error) {
+	app, err := r.K8s.Manifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting app from Kubernetes: %w", err)
+	}
+
+	/*yamlData, err := yaml.Marshal(&app)
+	if err != nil {
+		return "", fmt.Errorf("marshaling app to yaml: %w", err)
+	}
+
+	return string(yamlData), nil
+	*/
+	return &model.Manifest{
+		Data: app,
+	}, nil
+}
+
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
+
 	app, err := r.K8s.App(ctx, name, team, env)
 	if err != nil {
 		return nil, fmt.Errorf("getting app from Kubernetes: %w", err)
 	}
+	app.GQLVars.Team = team
 	return app, nil
 }
 

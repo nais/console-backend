@@ -9,6 +9,7 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -82,11 +83,42 @@ func (c *Client) Run(ctx context.Context) {
 }
 
 func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
+	fmt.Println("App", name, team, env)
+
 	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
 	if err != nil {
 		return nil, fmt.Errorf("getting application: %w", err)
 	}
 	return toApp(obj, env)
+}
+
+func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, error) {
+	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
+	if err != nil {
+		return "", fmt.Errorf("getting application: %w", err)
+	}
+	u := obj.(*unstructured.Unstructured)
+
+	x := map[string]any{}
+
+	spec, _, err := unstructured.NestedMap(u.Object, "spec")
+	if err != nil {
+		return "", fmt.Errorf("getting application spec: %w", err)
+	}
+
+	x["spec"] = spec
+	x["apiVersion"] = u.GetAPIVersion()
+	x["kind"] = u.GetKind()
+	metadata := map[string]any{"labels": u.GetLabels()}
+	metadata["name"] = u.GetName()
+	metadata["namespace"] = u.GetNamespace()
+	x["metadata"] = metadata
+	b, err := yaml.Marshal(x)
+	if err != nil {
+		return "", fmt.Errorf("marshalling manifest: %w", err)
+	}
+
+	return string(b), nil
 }
 
 func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
