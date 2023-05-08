@@ -66,13 +66,6 @@ func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (*model.Mani
 		return nil, fmt.Errorf("getting app from Kubernetes: %w", err)
 	}
 
-	/*yamlData, err := yaml.Marshal(&app)
-	if err != nil {
-		return "", fmt.Errorf("marshaling app to yaml: %w", err)
-	}
-
-	return string(yamlData), nil
-	*/
 	return &model.Manifest{
 		Data: app,
 	}, nil

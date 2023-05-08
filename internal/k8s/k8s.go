@@ -83,8 +83,6 @@ func (c *Client) Run(ctx context.Context) {
 }
 
 func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
-	fmt.Println("App", name, team, env)
-
 	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
 	if err != nil {
 		return nil, fmt.Errorf("getting application: %w", err)
