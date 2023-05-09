@@ -185,10 +185,6 @@ type Maintenance struct {
 	Hour int `json:"hour"`
 }
 
-type Manifest struct {
-	Data string `json:"data"`
-}
-
 type Maskinporten struct {
 	Scopes []*Scope `json:"scopes"`
 }

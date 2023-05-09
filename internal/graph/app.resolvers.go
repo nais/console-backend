@@ -30,7 +30,7 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	if after == nil {
 		after = &model.Cursor{Offset: 0}
 	}
-	deps, err := r.Hookd.GetDeploysForApp(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
+	deps, err := r.Hookd.DeploymentsByApp(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
@@ -39,7 +39,7 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 		*first = len(deps)
 	}
 
-	e := deploymentEdges(deps, *first, after.Offset)
+	e := deployEdges(deps, *first, after.Offset)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor

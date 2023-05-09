@@ -34,3 +34,7 @@ type DeploymentStatus {
   message: String
   created: Time!
 }
+
+extend type Query {
+  deployments(first: Int, after: Cursor): DeploymentConnection!
+}
