@@ -20,7 +20,7 @@ func deployEdges(deploys []hookd.Deploy, first int, after int) []*model.Deployme
 				Statuses:   mapStatuses(deploy.Statuses),
 				Resources:  mapResources(deploy.Resources),
 				Type:       "Application",
-				Team:       &model.Team{Name: deploy.DeploymentInfo.Team},
+				Team:       &model.Team{Name: deploy.DeploymentInfo.Team, ID: deploy.DeploymentInfo.Team},
 				Env:        deploy.DeploymentInfo.Cluster,
 				Created:    deploy.DeploymentInfo.Created,
 				Repository: deploy.DeploymentInfo.GithubRepository,
