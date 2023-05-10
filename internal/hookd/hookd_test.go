@@ -7,7 +7,8 @@ import (
 
 func TestGetDeploysForTeam(t *testing.T) {
 	c := New("secret-frontend-psk", "http://hookd.local.nais.io")
-	deploys, err := c.GetDeploysForTeam(context.Background(), "b")
+	teamName := "b"
+	deploys, err := c.Deployments(context.Background(), &teamName, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

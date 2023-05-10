@@ -142,13 +142,14 @@ type ComplexityRoot struct {
 	}
 
 	Deployment struct {
-		Created   func(childComplexity int) int
-		Env       func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Resources func(childComplexity int) int
-		Statuses  func(childComplexity int) int
-		Team      func(childComplexity int) int
-		Type      func(childComplexity int) int
+		Created    func(childComplexity int) int
+		Env        func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Repository func(childComplexity int) int
+		Resources  func(childComplexity int) int
+		Statuses   func(childComplexity int) int
+		Team       func(childComplexity int) int
+		Type       func(childComplexity int) int
 	}
 
 	DeploymentConnection struct {
@@ -842,6 +843,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Deployment.ID(childComplexity), true
+
+	case "Deployment.repository":
+		if e.complexity.Deployment.Repository == nil {
+			break
+		}
+
+		return e.complexity.Deployment.Repository(childComplexity), true
 
 	case "Deployment.resources":
 		if e.complexity.Deployment.Resources == nil {
@@ -5054,6 +5062,47 @@ func (ec *executionContext) fieldContext_Deployment_created(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Deployment_repository(ctx context.Context, field graphql.CollectedField, obj *model.Deployment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Deployment_repository(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Repository, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Deployment_repository(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Deployment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeploymentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeploymentConnection_totalCount(ctx, field)
 	if err != nil {
@@ -5299,6 +5348,8 @@ func (ec *executionContext) fieldContext_DeploymentEdge_node(ctx context.Context
 				return ec.fieldContext_Deployment_statuses(ctx, field)
 			case "created":
 				return ec.fieldContext_Deployment_created(ctx, field)
+			case "repository":
+				return ec.fieldContext_Deployment_repository(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Deployment", field.Name)
 		},
@@ -14442,6 +14493,10 @@ func (ec *executionContext) _Deployment(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "repository":
+
+			out.Values[i] = ec._Deployment_repository(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

@@ -30,10 +30,11 @@ type Deploy struct {
 }
 
 type DeploymentInfo struct {
-	ID      string    `json:"id"`
-	Team    string    `json:"team"`
-	Cluster string    `json:"cluster"`
-	Created time.Time `json:"created"`
+	ID               string    `json:"id"`
+	Team             string    `json:"team"`
+	Cluster          string    `json:"cluster"`
+	Created          time.Time `json:"created"`
+	GithubRepository string    `json:"githubRepository"`
 }
 
 type Status struct {

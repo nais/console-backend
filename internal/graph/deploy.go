@@ -16,13 +16,14 @@ func deployEdges(deploys []hookd.Deploy, first int, after int) []*model.Deployme
 		edges = append(edges, &model.DeploymentEdge{
 			Cursor: model.Cursor{Offset: i + 1},
 			Node: &model.Deployment{
-				ID:        deploy.DeploymentInfo.ID,
-				Statuses:  mapStatuses(deploy.Statuses),
-				Resources: mapResources(deploy.Resources),
-				Type:      "Application",
-				Team:      &model.Team{Name: deploy.DeploymentInfo.Team},
-				Env:       deploy.DeploymentInfo.Cluster,
-				Created:   deploy.DeploymentInfo.Created,
+				ID:         deploy.DeploymentInfo.ID,
+				Statuses:   mapStatuses(deploy.Statuses),
+				Resources:  mapResources(deploy.Resources),
+				Type:       "Application",
+				Team:       &model.Team{Name: deploy.DeploymentInfo.Team},
+				Env:        deploy.DeploymentInfo.Cluster,
+				Created:    deploy.DeploymentInfo.Created,
+				Repository: deploy.DeploymentInfo.GithubRepository,
 			},
 		})
 	}

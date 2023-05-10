@@ -17,6 +17,7 @@ type Deployment {
   env: String!
   statuses: [DeploymentStatus!]!
   created: Time!
+  repository: String
 }
 
 type DeploymentResource {
