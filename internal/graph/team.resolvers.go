@@ -239,6 +239,19 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 	}, nil
 }
 
+// DeployKey is the resolver for the deployKey field.
+func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error) {
+	key, err := r.Hookd.DeployKey(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting deploy key from Hookd: %w", err)
+	}
+	return &model.DeploymentKey{
+		Key:     key.Key,
+		Created: key.Created,
+		Expires: key.Expires,
+	}, nil
+}
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 

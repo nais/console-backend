@@ -29,6 +29,13 @@ type Team implements Node {
   slackChannel: String
   slackAlertsChannels: [SlackAlertsChannel!]
   deployments(first: Int, after: Cursor): DeploymentConnection!
+  deployKey: DeploymentKey!
+}
+
+type DeploymentKey {
+  key: String!
+  created: Time!
+  expires: Time!
 }
 
 type GithubRepositoryConnection {

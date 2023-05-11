@@ -88,6 +88,12 @@ type DatabaseUser struct {
 	Name string `json:"name"`
 }
 
+type DeploymentKey struct {
+	Key     string    `json:"key"`
+	Created time.Time `json:"created"`
+	Expires time.Time `json:"expires"`
+}
+
 type Env struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
