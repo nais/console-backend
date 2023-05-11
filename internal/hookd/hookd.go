@@ -117,6 +117,26 @@ type DeployKey struct {
 	Created time.Time `json:"created"`
 }
 
+func (c *Client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, error) {
+	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create request for deploy key API: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("deploy key API returned %s", resp.Status)
+	}
+
+	return c.DeployKey(ctx, team)
+}
+
 func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error) {
 	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)

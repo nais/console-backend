@@ -12,6 +12,19 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+// ChangeDeployKey is the resolver for the changeDeployKey field.
+func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
+	new, err := r.Hookd.ChangeDeployKey(ctx, team)
+	if err != nil {
+		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
+	}
+	return &model.DeploymentKey{
+		Key:     new.Key,
+		Created: new.Created,
+		Expires: new.Expires,
+	}, nil
+}
+
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context, first *int, after *model.Cursor) (*model.TeamConnection, error) {
 	if first == nil {
@@ -256,7 +269,13 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 	}, nil
 }
 
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)

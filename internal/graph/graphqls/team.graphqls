@@ -69,3 +69,7 @@ extend type Query {
   teams(first: Int, after: Cursor): TeamConnection!
   team(name: String!): Team!
 }
+
+type Mutation {
+  changeDeployKey(team: String!): DeploymentKey!
+}
