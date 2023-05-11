@@ -59,6 +59,10 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 		return nil, fmt.Errorf("getting team from Console: %w", err)
 	}
 
+	if team == nil {
+		return nil, fmt.Errorf("team %q not found", name)
+	}
+
 	return &model.Team{
 		ID:           team.Slug,
 		Name:         team.Slug,
