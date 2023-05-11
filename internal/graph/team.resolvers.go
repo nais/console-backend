@@ -13,7 +13,7 @@ import (
 )
 
 // Teams is the resolver for the teams field.
-func (r *queryResolver) Teams(ctx context.Context, first *int, after *model.Cursor) (*model.TeamConnection, error) {
+func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error) {
 	if first == nil {
 		first = new(int)
 		*first = 10
@@ -30,7 +30,7 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, after *model.Curs
 		*first = len(teams)
 	}
 
-	e := teamEdges(teams, *first, after.Offset)
+	e := teamEdges(teams, *first, *last, before, after.Offset)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
@@ -60,7 +60,7 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 	}
 
 	return &model.Team{
-		ID:           team.Slug,
+		ID:           model.Ident{ID: team.Slug, Type: "team"},
 		Name:         team.Slug,
 		SlackChannel: team.SlackChannel,
 		SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
@@ -118,40 +118,37 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 }
 
 // Apps is the resolver for the apps field.
-func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.AppConnection, error) {
-	if first == nil {
-		first = new(int)
-		*first = 10
-	}
-	if after == nil {
-		after = &model.Cursor{Offset: 0}
-	}
+func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.AppConnection, error) {
+	pagination := model.NewPagination(first, last, after, before)
 
 	apps, err := r.K8s.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
-	if *first > len(apps) {
-		*first = len(apps)
-	}
-
-	a := appEdges(apps, obj.Name, *first, after.Offset)
+	a := appEdges(apps, obj.Name, pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
-
 	if len(a) > 0 {
 		startCursor = &a[0].Cursor
 		endCursor = &a[len(a)-1].Cursor
+	}
+
+	hasNext := len(apps) > pagination.First()+pagination.After().Offset
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
 	}
 
 	return &model.AppConnection{
 		TotalCount: len(apps),
 		Edges:      a,
 		PageInfo: &model.PageInfo{
-			HasNextPage:     len(apps) > *first+after.Offset,
-			HasPreviousPage: after.Offset > 0,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 		},

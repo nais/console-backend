@@ -12,8 +12,17 @@ import (
 )
 
 // Node is the resolver for the node field.
-func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
-	panic(fmt.Errorf("not implemented: Node - node"))
+func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, error) {
+	fmt.Println("this be ID", id)
+	switch id.Type {
+	case "user":
+		u, err := r.Console.GetUserByID(ctx, id.ID)
+		if err != nil {
+			return nil, fmt.Errorf("getting user from Console: %w", err)
+		}
+		return u, nil
+	}
+	return nil, fmt.Errorf("unknown type %q", id.Type)
 }
 
 // Query returns QueryResolver implementation.

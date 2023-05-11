@@ -12,7 +12,7 @@ type Authz interface {
 
 type Node interface {
 	IsNode()
-	GetID() string
+	GetID() Ident
 }
 
 type Storage interface {
@@ -89,12 +89,12 @@ type DatabaseUser struct {
 }
 
 type Env struct {
-	ID   string `json:"id"`
+	ID   Ident  `json:"id"`
 	Name string `json:"name"`
 }
 
-func (Env) IsNode()            {}
-func (this Env) GetID() string { return this.ID }
+func (Env) IsNode()           {}
+func (this Env) GetID() Ident { return this.ID }
 
 type Expose struct {
 	AllowedIntegrations []string    `json:"allowedIntegrations"`
@@ -160,7 +160,7 @@ type Insights struct {
 }
 
 type Instance struct {
-	ID       string    `json:"id"`
+	ID       Ident     `json:"id"`
 	Name     string    `json:"name"`
 	Status   string    `json:"status"`
 	Image    string    `json:"image"`
@@ -168,8 +168,8 @@ type Instance struct {
 	Created  time.Time `json:"created"`
 }
 
-func (Instance) IsNode()            {}
-func (this Instance) GetID() string { return this.ID }
+func (Instance) IsNode()           {}
+func (this Instance) GetID() Ident { return this.ID }
 
 type Kafka struct {
 	// The kafka pool name

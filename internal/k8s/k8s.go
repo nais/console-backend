@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -135,6 +136,9 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 			ret = append(ret, app)
 		}
 	}
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Name < ret[j].Name
+	})
 	return ret, nil
 }
 
@@ -166,7 +170,7 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 			}
 		}
 		ret = append(ret, &model.Instance{
-			ID:       string(pod.GetUID()),
+			ID:       model.Ident{ID: string(pod.GetUID()), Type: "pod"},
 			Name:     pod.GetName(),
 			Status:   string(pod.Status.Phase),
 			Restarts: restarts,
@@ -185,11 +189,11 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 
 	ret := &model.App{}
-	ret.ID = "app_" + env + "_" + app.GetNamespace() + "_" + app.GetName()
+	ret.ID = model.Ident{ID: "app_" + env + "_" + app.GetNamespace() + "_" + app.GetName(), Type: "app"}
 	ret.Name = app.GetName()
 	ret.Env = &model.Env{
 		Name: env,
-		ID:   "env_" + env,
+		ID:   model.Ident{ID: env, Type: "env"},
 	}
 
 	ret.Image = app.Spec.Image

@@ -24,7 +24,7 @@ type Team implements Node {
   name: String!
   description: String
   members(first: Int, after: Cursor): TeamMemberConnection!
-  apps(first: Int, after: Cursor): AppConnection!
+  apps(first: Int, last: Int, after: Cursor, before: Cursor): AppConnection!
   githubRepositories(first: Int, after: Cursor): GithubRepositoryConnection!
   slackChannel: String
   slackAlertsChannels: [SlackAlertsChannel!]
@@ -59,6 +59,6 @@ type TeamMember implements Node {
 }
 
 extend type Query {
-  teams(first: Int, after: Cursor): TeamConnection!
+  teams(first: Int, last: Int, after: Cursor, before: Cursor): TeamConnection!
   team(name: String!): Team!
 }
