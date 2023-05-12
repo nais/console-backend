@@ -16,7 +16,7 @@ func edges(teams []console.TeamMembership, first int, after int) []*model.TeamEd
 		edges = append(edges, &model.TeamEdge{
 			Cursor: model.Cursor{Offset: i + 1},
 			Node: &model.Team{
-				ID:          team.Slug,
+				ID:          model.Ident{ID: team.Slug, Type: "team"},
 				Name:        team.Slug,
 				Description: &team.Purpose,
 			},

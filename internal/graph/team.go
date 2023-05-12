@@ -1,46 +1,88 @@
 package graph
 
 import (
+	"fmt"
+
 	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-func teamEdges(teams []console.Team, first int, after int) []*model.TeamEdge {
+func teamEdges(teams []console.Team, first, last int, before *model.Cursor, after int) []*model.TeamEdge {
 	edges := []*model.TeamEdge{}
 	limit := first + after
 	if limit > len(teams) {
 		limit = len(teams)
 	}
-	for i := after; i < limit; i++ {
-		team := teams[i]
-		edges = append(edges, &model.TeamEdge{
-			Cursor: model.Cursor{Offset: i + 1},
-			Node: &model.Team{
-				ID:          team.Slug,
-				Name:        team.Slug,
-				Description: &team.Purpose,
-			},
-		})
+	if before != nil {
+		fmt.Print("before and last")
+		limit = last + before.Offset
+		for i := before.Offset; i < limit; i-- {
+			team := teams[i]
+			edges = append(edges, &model.TeamEdge{
+				Cursor: model.Cursor{Offset: i - 1},
+				Node: &model.Team{
+					ID:          model.Ident{ID: team.Slug, Type: "team"},
+					Name:        team.Slug,
+					Description: &team.Purpose,
+				},
+			})
+		}
+	} else {
+		for i := after; i < limit; i++ {
+			team := teams[i]
+			edges = append(edges, &model.TeamEdge{
+				Cursor: model.Cursor{Offset: i + 1},
+				Node: &model.Team{
+					ID:          model.Ident{ID: team.Slug, Type: "team"},
+					Name:        team.Slug,
+					Description: &team.Purpose,
+				},
+			})
+		}
 	}
 	return edges
 }
 
-func appEdges(apps []*model.App, team string, first int, after int) []*model.AppEdge {
+func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppEdge {
+	fmt.Printf("first: %#v, last: %#v, before: %#v, after: %#v\n", p.First(), p.Last(), p.Before(), p.After())
 	edges := []*model.AppEdge{}
-	limit := first + after
+	limit := p.First() + p.After().Offset + 1
 	if limit > len(apps) {
 		limit = len(apps)
 	}
-	for i := after; i < limit; i++ {
-		app := apps[i]
-		app.GQLVars = struct{ Team string }{
-			Team: team,
+
+	if p.Before() != nil {
+		limit = p.Before().Offset
+
+		i := p.Before().Offset - p.Last()
+		if i < 0 {
+			i = 0
 		}
 
-		edges = append(edges, &model.AppEdge{
-			Cursor: model.Cursor{Offset: i + 1},
-			Node:   app,
-		})
+		for ; i < limit; i++ {
+			app := apps[i]
+			app.GQLVars = struct{ Team string }{
+				Team: team,
+			}
+
+			edges = append(edges, &model.AppEdge{
+				Cursor: model.Cursor{Offset: i},
+				Node:   app,
+			})
+		}
+		return edges
+	} else {
+		for i := p.After().Offset + 1; i < limit; i++ {
+			app := apps[i]
+			app.GQLVars = struct{ Team string }{
+				Team: team,
+			}
+
+			edges = append(edges, &model.AppEdge{
+				Cursor: model.Cursor{Offset: i},
+				Node:   app,
+			})
+		}
 	}
 	return edges
 }
@@ -56,7 +98,7 @@ func memberEdges(members []console.Member, first int, after int) []*model.TeamMe
 		edges = append(edges, &model.TeamMemberEdge{
 			Cursor: model.Cursor{Offset: i + 1},
 			Node: &model.TeamMember{
-				ID:    member.User.Email,
+				ID:    model.Ident{ID: member.User.Email, Type: "user"},
 				Email: member.User.Email,
 				Name:  member.User.Name,
 				Role:  member.Role,

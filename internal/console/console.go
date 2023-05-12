@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"github.com/nais/console-backend/internal/graph/model"
 )
 
 type User struct {
@@ -196,6 +197,35 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 	}
 
 	return respBody.Data.UserByEmail.Teams, nil
+}
+
+func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+	q := `query GetUser($id: UUID!) {
+	user(id: $id) {
+		name
+		email
+	}
+}`
+	vars := map[string]string{"id": id}
+	respBody := struct {
+		Data struct {
+			UserByID *struct{ Name, Email string } `json:"user"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
+		return nil, fmt.Errorf("querying console: %w", err)
+	}
+	if respBody.Data.UserByID == nil {
+		return nil, fmt.Errorf("user %s not found", id)
+	}
+	user := &model.User{
+		ID:    model.Ident{ID: id, Type: "user"},
+		Name:  respBody.Data.UserByID.Name,
+		Email: respBody.Data.UserByID.Email,
+	}
+
+	return user, nil
 }
 
 func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {

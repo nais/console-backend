@@ -48,7 +48,7 @@ type Replicas struct {
 }
 
 type App struct {
-	ID           string       `json:"id"`
+	ID           Ident        `json:"id"`
 	Name         string       `json:"name"`
 	Image        string       `json:"image"`
 	Env          *Env         `json:"env"`
@@ -66,8 +66,8 @@ type App struct {
 	} `json:"-"`
 }
 
-func (App) IsNode()         {}
-func (a App) GetID() string { return a.ID }
+func (App) IsNode()        {}
+func (a App) GetID() Ident { return a.ID }
 
 type AppConnection struct {
 	TotalCount int        `json:"totalCount"`
