@@ -1,5 +1,12 @@
 package model
 
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *Cursor `json:"startCursor,omitempty"`
+	EndCursor       *Cursor `json:"endCursor,omitempty"`
+}
+
 type Pagination struct {
 	first  *int
 	last   *int

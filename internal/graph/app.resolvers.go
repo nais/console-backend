@@ -52,9 +52,10 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	return &model.DeploymentConnection{
 		Edges: e,
 		PageInfo: &model.PageInfo{
-			StartCursor: startCursor,
-			EndCursor:   endCursor,
-			HasNextPage: len(deps) > *first+after.Offset,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+			HasNextPage:     len(deps) > *first+after.Offset,
+			HasPreviousPage: startCursor.Offset > 0,
 		},
 	}, nil
 }

@@ -206,13 +206,6 @@ type OpenSearch struct {
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
-type PageInfo struct {
-	HasNextPage     bool    `json:"hasNextPage"`
-	HasPreviousPage bool    `json:"hasPreviousPage"`
-	StartCursor     *Cursor `json:"startCursor,omitempty"`
-	EndCursor       *Cursor `json:"endCursor,omitempty"`
-}
-
 type Scope struct {
 	Consumes []*Consume `json:"consumes"`
 	Exposes  []*Expose  `json:"exposes"`

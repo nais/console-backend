@@ -11,6 +11,8 @@ type PageInfo {
   hasPreviousPage: Boolean!
   startCursor: Cursor
   endCursor: Cursor
+  from: Int!
+  to: Int!
 }
 
 type Query {

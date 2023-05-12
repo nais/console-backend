@@ -11,6 +11,22 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+// From is the resolver for the from field.
+func (r *pageInfoResolver) From(ctx context.Context, obj *model.PageInfo) (int, error) {
+	if obj.StartCursor == nil {
+		return 0, nil
+	}
+	return obj.StartCursor.Offset + 1, nil
+}
+
+// To is the resolver for the to field.
+func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, error) {
+	if obj.EndCursor == nil {
+		return 0, nil
+	}
+	return obj.EndCursor.Offset + 1, nil
+}
+
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, error) {
 	fmt.Println("this be ID", id)
@@ -25,7 +41,11 @@ func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, e
 	return nil, fmt.Errorf("unknown type %q", id.Type)
 }
 
+// PageInfo returns PageInfoResolver implementation.
+func (r *Resolver) PageInfo() PageInfoResolver { return &pageInfoResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+type pageInfoResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
