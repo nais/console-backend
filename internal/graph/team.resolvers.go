@@ -141,7 +141,7 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
-	pagination := model.NewPagination(first, last, after, before, len(apps))
+	pagination := model.NewPagination(first, last, after, before)
 	a := appEdges(apps, obj.Name, pagination)
 
 	var startCursor *model.Cursor

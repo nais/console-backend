@@ -45,37 +45,19 @@ func teamEdges(teams []console.Team, first, last int, before *model.Cursor, afte
 
 func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppEdge {
 	edges := []*model.AppEdge{}
-	if p.Before() != nil {
-		i := p.Before().Offset - p.Last()
-		if i < 0 {
-			i = 0
-		}
+	start, end := p.ForSlice(len(apps))
 
-		for ; i < p.Limit(); i++ {
-			app := apps[i]
-			app.GQLVars = struct{ Team string }{
-				Team: team,
-			}
-
-			edges = append(edges, &model.AppEdge{
-				Cursor: model.Cursor{Offset: i},
-				Node:   app,
-			})
-		}
-		return edges
-	}
-
-	for i := p.After().Offset + 1; i < p.Limit(); i++ {
-		app := apps[i]
+	for i, app := range apps[start:end] {
 		app.GQLVars = struct{ Team string }{
 			Team: team,
 		}
 
 		edges = append(edges, &model.AppEdge{
-			Cursor: model.Cursor{Offset: i},
+			Cursor: model.Cursor{Offset: start + i},
 			Node:   app,
 		})
 	}
+
 	return edges
 }
 
