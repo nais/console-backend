@@ -383,7 +383,7 @@ type ComplexityRoot struct {
 		Description         func(childComplexity int) int
 		GithubRepositories  func(childComplexity int, first *int, after *model.Cursor) int
 		ID                  func(childComplexity int) int
-		Members             func(childComplexity int, first *int, after *model.Cursor) int
+		Members             func(childComplexity int, first *int, after *model.Cursor, last *int, before *model.Cursor) int
 		Name                func(childComplexity int) int
 		SlackAlertsChannels func(childComplexity int) int
 		SlackChannel        func(childComplexity int) int
@@ -426,7 +426,7 @@ type ComplexityRoot struct {
 		Email func(childComplexity int) int
 		ID    func(childComplexity int) int
 		Name  func(childComplexity int) int
-		Teams func(childComplexity int, first *int, after *model.Cursor) int
+		Teams func(childComplexity int, first *int, after *model.Cursor, last *int, before *model.Cursor) int
 	}
 
 	Variable struct {
@@ -458,7 +458,7 @@ type QueryResolver interface {
 	User(ctx context.Context) (*model.User, error)
 }
 type TeamResolver interface {
-	Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.TeamMemberConnection, error)
+	Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamMemberConnection, error)
 	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.AppConnection, error)
 	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error)
 
@@ -466,7 +466,7 @@ type TeamResolver interface {
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
 }
 type UserResolver interface {
-	Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor) (*model.TeamConnection, error)
+	Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error)
 }
 
 type executableSchema struct {
@@ -1818,7 +1818,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Members(childComplexity, args["first"].(*int), args["after"].(*model.Cursor)), true
+		return e.complexity.Team.Members(childComplexity, args["first"].(*int), args["after"].(*model.Cursor), args["last"].(*int), args["before"].(*model.Cursor)), true
 
 	case "Team.name":
 		if e.complexity.Team.Name == nil {
@@ -1977,7 +1977,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.User.Teams(childComplexity, args["first"].(*int), args["after"].(*model.Cursor)), true
+		return e.complexity.User.Teams(childComplexity, args["first"].(*int), args["after"].(*model.Cursor), args["last"].(*int), args["before"].(*model.Cursor)), true
 
 	case "Variable.name":
 		if e.complexity.Variable.Name == nil {
@@ -2394,6 +2394,24 @@ func (ec *executionContext) field_Team_members_args(ctx context.Context, rawArgs
 		}
 	}
 	args["after"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *model.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -2418,6 +2436,24 @@ func (ec *executionContext) field_User_teams_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["after"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *model.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -10951,7 +10987,7 @@ func (ec *executionContext) _Team_members(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Members(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor))
+		return ec.resolvers.Team().Members(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["last"].(*int), fc.Args["before"].(*model.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12207,7 +12243,7 @@ func (ec *executionContext) _User_teams(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Teams(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor))
+		return ec.resolvers.User().Teams(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["last"].(*int), fc.Args["before"].(*model.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

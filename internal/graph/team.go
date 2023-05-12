@@ -61,24 +61,23 @@ func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppE
 	return edges
 }
 
-func memberEdges(members []console.Member, first int, after int) []*model.TeamMemberEdge {
+func memberEdges(members []console.Member, p *model.Pagination) []*model.TeamMemberEdge {
 	edges := []*model.TeamMemberEdge{}
-	limit := first + after
-	if limit > len(members) {
-		limit = len(members)
-	}
-	for i := after; i < limit; i++ {
-		member := members[i]
+
+	start, end := p.ForSlice(len(members))
+
+	for i, member := range members[start:end] {
 		edges = append(edges, &model.TeamMemberEdge{
-			Cursor: model.Cursor{Offset: i + 1},
+			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.TeamMember{
 				ID:    model.Ident{ID: member.User.Email, Type: "user"},
-				Email: member.User.Email,
 				Name:  member.User.Name,
+				Email: member.User.Email,
 				Role:  member.Role,
 			},
 		})
 	}
+
 	return edges
 }
 

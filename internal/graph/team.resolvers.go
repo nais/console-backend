@@ -95,39 +95,36 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 }
 
 // Members is the resolver for the members field.
-func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.TeamMemberConnection, error) {
-	if first == nil {
-		first = new(int)
-		*first = 10
-	}
-	if after == nil {
-		after = &model.Cursor{Offset: 0}
-	}
-
+func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamMemberConnection, error) {
 	members, err := r.Console.GetMembers(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}
-	if *first > len(members) {
-		*first = len(members)
-	}
 
-	e := memberEdges(members, *first, after.Offset)
+	pagination := model.NewPagination(first, last, after, before)
+	e := memberEdges(members, pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
-
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
+	}
+
+	hasNext := len(members) > pagination.First()+pagination.After().Offset
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
 	}
 
 	return &model.TeamMemberConnection{
 		TotalCount: len(members),
 		Edges:      e,
 		PageInfo: &model.PageInfo{
-			HasNextPage:     len(members) > *first+after.Offset,
-			HasPreviousPage: after.Offset > 0,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 		},
@@ -271,5 +268,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)

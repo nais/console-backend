@@ -23,7 +23,12 @@ type Team implements Node {
   id: ID!
   name: String!
   description: String
-  members(first: Int, after: Cursor): TeamMemberConnection!
+  members(
+    first: Int
+    after: Cursor
+    last: Int
+    before: Cursor
+  ): TeamMemberConnection!
   apps(first: Int, last: Int, after: Cursor, before: Cursor): AppConnection!
   githubRepositories(first: Int, after: Cursor): GithubRepositoryConnection!
   slackChannel: String

@@ -30,39 +30,36 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 }
 
 // Teams is the resolver for the teams field.
-func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor) (*model.TeamConnection, error) {
-	if first == nil {
-		first = new(int)
-		*first = 10
-	}
-	if after == nil {
-		after = &model.Cursor{Offset: 0}
-	}
-
+func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error) {
 	teams, err := r.Console.GetTeamsForUser(ctx, obj.Email)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}
-	if *first > len(teams) {
-		*first = len(teams)
-	}
 
-	e := edges(teams, *first, after.Offset)
+	pagination := model.NewPagination(first, last, after, before)
+	e := edges(teams, pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
-
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
+	}
+
+	hasNext := len(teams) > pagination.First()+pagination.After().Offset
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
 	}
 
 	return &model.TeamConnection{
 		TotalCount: len(teams),
 		Edges:      e,
 		PageInfo: &model.PageInfo{
-			HasNextPage:     len(teams) > *first+after.Offset,
-			HasPreviousPage: after.Offset > 0,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 		},

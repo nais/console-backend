@@ -2,7 +2,7 @@ type User implements Node {
   id: ID!
   name: String!
   email: String!
-  teams(first: Int, after: Cursor): TeamConnection!
+  teams(first: Int, after: Cursor, last: Int, before: Cursor): TeamConnection!
 }
 
 extend type Query {
