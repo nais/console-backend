@@ -12,6 +12,19 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+// ChangeDeployKey is the resolver for the changeDeployKey field.
+func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
+	new, err := r.Hookd.ChangeDeployKey(ctx, team)
+	if err != nil {
+		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
+	}
+	return &model.DeploymentKey{
+		Key:     new.Key,
+		Created: new.Created,
+		Expires: new.Expires,
+	}, nil
+}
+
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error) {
 	if first == nil {
@@ -57,6 +70,10 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 	team, err := r.Console.GetTeam(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("getting team from Console: %w", err)
+	}
+
+	if team == nil {
+		return nil, fmt.Errorf("team %q not found", name)
 	}
 
 	return &model.Team{
@@ -236,7 +253,24 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 	}, nil
 }
 
+// DeployKey is the resolver for the deployKey field.
+func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error) {
+	key, err := r.Hookd.DeployKey(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting deploy key from Hookd: %w", err)
+	}
+	return &model.DeploymentKey{
+		Key:     key.Key,
+		Created: key.Created,
+		Expires: key.Expires,
+	}, nil
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }

@@ -29,6 +29,13 @@ type Team implements Node {
   slackChannel: String
   slackAlertsChannels: [SlackAlertsChannel!]
   deployments(first: Int, after: Cursor): DeploymentConnection!
+  deployKey: DeploymentKey!
+}
+
+type DeploymentKey {
+  key: String!
+  created: Time!
+  expires: Time!
 }
 
 type GithubRepositoryConnection {
@@ -61,4 +68,8 @@ type TeamMember implements Node {
 extend type Query {
   teams(first: Int, last: Int, after: Cursor, before: Cursor): TeamConnection!
   team(name: String!): Team!
+}
+
+type Mutation {
+  changeDeployKey(team: String!): DeploymentKey!
 }
