@@ -1,20 +1,34 @@
 package model
 
 type Pagination struct {
-	first  *int
-	last   *int
-	after  *Cursor
-	before *Cursor
+	first      *int
+	last       *int
+	after      *Cursor
+	before     *Cursor
+	totalCount int
 }
 
-func NewPagination(first, last *int, after, before *Cursor) *Pagination {
+func NewPagination(first, last *int, after, before *Cursor, totalCount int) *Pagination {
 	p := &Pagination{
-		first:  first,
-		last:   last,
-		after:  after,
-		before: before,
+		first:      first,
+		last:       last,
+		after:      after,
+		before:     before,
+		totalCount: totalCount,
 	}
 	return p
+}
+
+func (p *Pagination) Limit() int {
+	if p.before != nil {
+		return p.before.Offset
+	}
+
+	if p.Limit() > p.totalCount {
+		return p.totalCount
+	}
+
+	return p.First() + p.After().Offset + 1
 }
 
 func (p *Pagination) First() int {

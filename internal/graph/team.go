@@ -44,22 +44,14 @@ func teamEdges(teams []console.Team, first, last int, before *model.Cursor, afte
 }
 
 func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppEdge {
-	fmt.Printf("first: %#v, last: %#v, before: %#v, after: %#v\n", p.First(), p.Last(), p.Before(), p.After())
 	edges := []*model.AppEdge{}
-	limit := p.First() + p.After().Offset + 1
-	if limit > len(apps) {
-		limit = len(apps)
-	}
-
 	if p.Before() != nil {
-		limit = p.Before().Offset
-
 		i := p.Before().Offset - p.Last()
 		if i < 0 {
 			i = 0
 		}
 
-		for ; i < limit; i++ {
+		for ; i < p.Limit(); i++ {
 			app := apps[i]
 			app.GQLVars = struct{ Team string }{
 				Team: team,
@@ -71,18 +63,18 @@ func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppE
 			})
 		}
 		return edges
-	} else {
-		for i := p.After().Offset + 1; i < limit; i++ {
-			app := apps[i]
-			app.GQLVars = struct{ Team string }{
-				Team: team,
-			}
+	}
 
-			edges = append(edges, &model.AppEdge{
-				Cursor: model.Cursor{Offset: i},
-				Node:   app,
-			})
+	for i := p.After().Offset + 1; i < p.Limit(); i++ {
+		app := apps[i]
+		app.GQLVars = struct{ Team string }{
+			Team: team,
 		}
+
+		edges = append(edges, &model.AppEdge{
+			Cursor: model.Cursor{Offset: i},
+			Node:   app,
+		})
 	}
 	return edges
 }

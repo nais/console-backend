@@ -136,13 +136,12 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 
 // Apps is the resolver for the apps field.
 func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.AppConnection, error) {
-	pagination := model.NewPagination(first, last, after, before)
-
 	apps, err := r.K8s.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
+	pagination := model.NewPagination(first, last, after, before, len(apps))
 	a := appEdges(apps, obj.Name, pagination)
 
 	var startCursor *model.Cursor
@@ -272,5 +271,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)
