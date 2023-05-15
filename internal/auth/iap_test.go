@@ -93,7 +93,7 @@ func TestGetEmail(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			if got := GetEmail(tt.ctx); got != tt.want {
+			if got, _ := GetEmail(tt.ctx); got != tt.want {
 				t.Errorf("GetEmail() = %v, want %v", got, tt.want)
 			}
 		})

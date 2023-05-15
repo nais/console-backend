@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
 )
@@ -251,10 +252,33 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 
 // DeployKey is the resolver for the deployKey field.
 func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error) {
+	email, err := auth.GetEmail(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting email from context: %w", err)
+	}
+
+	teams, err := r.Console.GetTeamsForUser(ctx, email)
+	if err != nil {
+		return nil, fmt.Errorf("getting teams from Console: %w", err)
+	}
+
+	var isMember bool
+	for _, t := range teams {
+		if t.Team.Slug == obj.Name {
+			isMember = true
+			break
+		}
+	}
+
+	if !isMember {
+		return nil, fmt.Errorf("user is not a member of team %s", obj.Name)
+	}
+
 	key, err := r.Hookd.DeployKey(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting deploy key from Hookd: %w", err)
 	}
+
 	return &model.DeploymentKey{
 		Key:     key.Key,
 		Created: key.Created,
@@ -268,7 +292,5 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	teamResolver     struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type teamResolver struct{ *Resolver }
