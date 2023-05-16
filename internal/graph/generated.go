@@ -43,7 +43,6 @@ type ResolverRoot interface {
 	PageInfo() PageInfoResolver
 	Query() QueryResolver
 	Team() TeamResolver
-	TeamMember() TeamMemberResolver
 	User() UserResolver
 }
 
@@ -465,9 +464,6 @@ type TeamResolver interface {
 
 	Deployments(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
-}
-type TeamMemberResolver interface {
-	Role(ctx context.Context, obj *model.TeamMember) (model.TeamRole, error)
 }
 type UserResolver interface {
 	Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error)
@@ -11777,7 +11773,7 @@ func (ec *executionContext) _TeamMember_role(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.TeamMember().Role(rctx, obj)
+		return obj.Role, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11798,8 +11794,8 @@ func (ec *executionContext) fieldContext_TeamMember_role(ctx context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "TeamMember",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TeamRole does not have child fields")
 		},
@@ -16942,42 +16938,29 @@ func (ec *executionContext) _TeamMember(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._TeamMember_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "name":
 
 			out.Values[i] = ec._TeamMember_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "email":
 
 			out.Values[i] = ec._TeamMember_email(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "role":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._TeamMember_role(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._TeamMember_role(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

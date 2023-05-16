@@ -73,7 +73,7 @@ func memberEdges(members []console.Member, p *model.Pagination) []*model.TeamMem
 				ID:    model.Ident{ID: member.User.Email, Type: "user"},
 				Name:  member.User.Name,
 				Email: member.User.Email,
-				Role:  member.Role,
+				Role:  model.TeamRole(member.Role),
 			},
 		})
 	}

@@ -28,10 +28,10 @@ type TeamEdge struct {
 }
 
 type TeamMember struct {
-	ID    Ident  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Role  string `json:"role"`
+	ID    Ident    `json:"id"`
+	Name  string   `json:"name"`
+	Email string   `json:"email"`
+	Role  TeamRole `json:"role"`
 }
 
 func (TeamMember) IsNode()        {}
