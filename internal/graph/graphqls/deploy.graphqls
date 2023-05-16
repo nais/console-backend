@@ -12,7 +12,6 @@ type DeploymentEdge {
 type Deployment {
   id: ID!
   team: Team!
-  type: String!
   resources: [DeploymentResource!]!
   env: String!
   statuses: [DeploymentStatus!]!

@@ -19,7 +19,6 @@ func deployEdges(deploys []hookd.Deploy, first int, after int) []*model.Deployme
 				ID:         deploy.DeploymentInfo.ID,
 				Statuses:   mapStatuses(deploy.Statuses),
 				Resources:  mapResources(deploy.Resources),
-				Type:       "Application",
 				Team:       &model.Team{Name: deploy.DeploymentInfo.Team, ID: model.Ident{ID: deploy.DeploymentInfo.Team, Type: "team"}},
 				Env:        deploy.DeploymentInfo.Cluster,
 				Created:    deploy.DeploymentInfo.Created,
