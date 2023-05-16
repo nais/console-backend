@@ -286,11 +286,20 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 	}, nil
 }
 
+// Role is the resolver for the role field.
+func (r *teamMemberResolver) Role(ctx context.Context, obj *model.TeamMember) (model.TeamRole, error) {
+	panic(fmt.Errorf("not implemented: Role - role"))
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
+// TeamMember returns TeamMemberResolver implementation.
+func (r *Resolver) TeamMember() TeamMemberResolver { return &teamMemberResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
+type teamMemberResolver struct{ *Resolver }

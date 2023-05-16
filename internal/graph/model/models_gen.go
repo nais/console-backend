@@ -3,6 +3,9 @@
 package model
 
 import (
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 )
 
@@ -248,4 +251,47 @@ func (TokenX) IsAuthz() {}
 type Variable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type TeamRole string
+
+const (
+	// Regular member, read only access.
+	TeamRoleMember TeamRole = "MEMBER"
+	// Team owner, full access to the team.
+	TeamRoleOwner TeamRole = "OWNER"
+)
+
+var AllTeamRole = []TeamRole{
+	TeamRoleMember,
+	TeamRoleOwner,
+}
+
+func (e TeamRole) IsValid() bool {
+	switch e {
+	case TeamRoleMember, TeamRoleOwner:
+		return true
+	}
+	return false
+}
+
+func (e TeamRole) String() string {
+	return string(e)
+}
+
+func (e *TeamRole) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TeamRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TeamRole", str)
+	}
+	return nil
+}
+
+func (e TeamRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

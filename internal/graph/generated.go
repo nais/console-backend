@@ -43,6 +43,7 @@ type ResolverRoot interface {
 	PageInfo() PageInfoResolver
 	Query() QueryResolver
 	Team() TeamResolver
+	TeamMember() TeamMemberResolver
 	User() UserResolver
 }
 
@@ -464,6 +465,9 @@ type TeamResolver interface {
 
 	Deployments(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
+}
+type TeamMemberResolver interface {
+	Role(ctx context.Context, obj *model.TeamMember) (model.TeamRole, error)
 }
 type UserResolver interface {
 	Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error)
@@ -11183,14 +11187,11 @@ func (ec *executionContext) _Team_slackChannel(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_slackChannel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11227,14 +11228,11 @@ func (ec *executionContext) _Team_slackAlertsChannels(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]model.SlackAlertsChannel)
 	fc.Result = res
-	return ec.marshalNSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalOSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_slackAlertsChannels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11340,11 +11338,14 @@ func (ec *executionContext) _Team_deployKey(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.DeploymentKey)
 	fc.Result = res
-	return ec.marshalODeploymentKey2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentKey(ctx, field.Selections, res)
+	return ec.marshalNDeploymentKey2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_deployKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11776,7 +11777,7 @@ func (ec *executionContext) _TeamMember_role(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Role, nil
+		return ec.resolvers.TeamMember().Role(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11788,19 +11789,19 @@ func (ec *executionContext) _TeamMember_role(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.TeamRole)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNTeamRole2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamMember_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TeamMember",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type TeamRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -16794,16 +16795,10 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._Team_slackChannel(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "slackAlertsChannels":
 
 			out.Values[i] = ec._Team_slackAlertsChannels(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "deployments":
 			field := field
 
@@ -16834,6 +16829,9 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Team_deployKey(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -16944,29 +16942,42 @@ func (ec *executionContext) _TeamMember(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._TeamMember_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 
 			out.Values[i] = ec._TeamMember_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "email":
 
 			out.Values[i] = ec._TeamMember_email(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "role":
+			field := field
 
-			out.Values[i] = ec._TeamMember_role(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TeamMember_role(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18723,50 +18734,6 @@ func (ec *executionContext) marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋcon
 	return ec._SlackAlertsChannel(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SlackAlertsChannel) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNStorage2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐStorage(ctx context.Context, sel ast.SelectionSet, v model.Storage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -19026,6 +18993,16 @@ func (ec *executionContext) marshalNTeamMemberEdge2ᚖgithubᚗcomᚋnaisᚋcons
 		return graphql.Null
 	}
 	return ec._TeamMemberEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTeamRole2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamRole(ctx context.Context, v interface{}) (model.TeamRole, error) {
+	var res model.TeamRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTeamRole2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamRole(ctx context.Context, sel ast.SelectionSet, v model.TeamRole) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
@@ -19407,13 +19384,6 @@ func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 	return v
 }
 
-func (ec *executionContext) marshalODeploymentKey2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentKey(ctx context.Context, sel ast.SelectionSet, v *model.DeploymentKey) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._DeploymentKey(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOIDPortenSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIDPortenSidecar(ctx context.Context, sel ast.SelectionSet, v *model.IDPortenSidecar) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -19456,6 +19426,53 @@ func (ec *executionContext) marshalOSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 		return graphql.Null
 	}
 	return ec._Sidecar(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SlackAlertsChannel) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

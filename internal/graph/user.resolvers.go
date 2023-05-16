@@ -23,9 +23,10 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 		return nil, fmt.Errorf("getting user from Console: %w", err)
 	}
 	return &model.User{
-		ID:    model.Ident{ID: user.ID.String(), Type: "user"},
-		Name:  user.Name,
-		Email: email,
+		ID:          model.Ident{ID: user.ID.String(), Type: "user"},
+		Name:        user.Name,
+		Email:       email,
+		TenantAdmin: false,
 	}, nil
 }
 

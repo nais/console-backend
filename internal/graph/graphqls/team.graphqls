@@ -31,10 +31,10 @@ type Team implements Node {
   ): TeamMemberConnection!
   apps(first: Int, last: Int, after: Cursor, before: Cursor): AppConnection!
   githubRepositories(first: Int, after: Cursor): GithubRepositoryConnection!
-  slackChannel: String!
-  slackAlertsChannels: [SlackAlertsChannel!]!
+  slackChannel: String
+  slackAlertsChannels: [SlackAlertsChannel!]
   deployments(first: Int, after: Cursor): DeploymentConnection!
-  deployKey: DeploymentKey
+  deployKey: DeploymentKey!
 }
 
 type DeploymentKey {
@@ -67,7 +67,7 @@ type TeamMember implements Node {
   id: ID!
   name: String!
   email: String!
-  role: String!
+  role: TeamRole!
 }
 
 extend type Query {
@@ -77,4 +77,11 @@ extend type Query {
 
 type Mutation {
   changeDeployKey(team: String!): DeploymentKey!
+}
+enum TeamRole {
+  "Regular member, read only access."
+  MEMBER
+
+  "Team owner, full access to the team."
+  OWNER
 }

@@ -1,9 +1,10 @@
 package model
 
 type User struct {
-	ID    Ident  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID          Ident  `json:"id"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	TenantAdmin bool   `json:"tenantAdmin"`
 }
 
 func (User) IsNode()        {}
