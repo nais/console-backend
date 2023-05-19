@@ -59,6 +59,7 @@ func memberEdges(members []console.Member, p *model.Pagination) []*model.TeamMem
 	start, end := p.ForSlice(len(members))
 
 	for i, member := range members[start:end] {
+		member := member
 		edges = append(edges, &model.TeamMemberEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.TeamMember{

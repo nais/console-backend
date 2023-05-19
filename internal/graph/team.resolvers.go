@@ -44,7 +44,7 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 		endCursor = &e[len(e)-1].Cursor
 	}
 
-	hasNext := len(teams) > pagination.First()+pagination.After().Offset
+	hasNext := len(teams) > pagination.First()+pagination.After().Offset+1
 	hasPrevious := pagination.After().Offset > 0
 
 	if pagination.Before() != nil && startCursor != nil {
@@ -110,7 +110,7 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 		endCursor = &e[len(e)-1].Cursor
 	}
 
-	hasNext := len(members) > pagination.First()+pagination.After().Offset
+	hasNext := len(members) > pagination.First()+pagination.After().Offset+1
 	hasPrevious := pagination.After().Offset > 0
 
 	if pagination.Before() != nil && startCursor != nil {
@@ -291,5 +291,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)

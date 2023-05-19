@@ -36,13 +36,16 @@ func (p *Pagination) ForSlice(length int) (start, end int) {
 
 	if start > length {
 		start = length
-	} else if start < 0 {
+	}
+
+	if start < 0 {
 		start = 0
 	}
 
 	if end < 0 {
 		end = 0
-	} else if end > length {
+	}
+	if end > length {
 		end = length + 1
 	}
 	return start, end
