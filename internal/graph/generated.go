@@ -167,6 +167,7 @@ type ComplexityRoot struct {
 	DeploymentKey struct {
 		Created func(childComplexity int) int
 		Expires func(childComplexity int) int
+		ID      func(childComplexity int) int
 		Key     func(childComplexity int) int
 	}
 
@@ -942,6 +943,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DeploymentKey.Expires(childComplexity), true
+
+	case "DeploymentKey.id":
+		if e.complexity.DeploymentKey.ID == nil {
+			break
+		}
+
+		return e.complexity.DeploymentKey.ID(childComplexity), true
 
 	case "DeploymentKey.key":
 		if e.complexity.DeploymentKey.Key == nil {
@@ -5492,6 +5500,50 @@ func (ec *executionContext) fieldContext_DeploymentEdge_node(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _DeploymentKey_id(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentKey) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeploymentKey_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Ident)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeploymentKey_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeploymentKey",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeploymentKey_key(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentKey) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeploymentKey_key(ctx, field)
 	if err != nil {
@@ -8409,6 +8461,8 @@ func (ec *executionContext) fieldContext_Mutation_changeDeployKey(ctx context.Co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_DeploymentKey_id(ctx, field)
 			case "key":
 				return ec.fieldContext_DeploymentKey_key(ctx, field)
 			case "created":
@@ -11298,6 +11352,8 @@ func (ec *executionContext) fieldContext_Team_deployKey(ctx context.Context, fie
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_DeploymentKey_id(ctx, field)
 			case "key":
 				return ec.fieldContext_DeploymentKey_key(ctx, field)
 			case "created":
@@ -14172,6 +14228,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Team(ctx, sel, obj)
+	case model.DeploymentKey:
+		return ec._DeploymentKey(ctx, sel, &obj)
+	case *model.DeploymentKey:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DeploymentKey(ctx, sel, obj)
 	case model.TeamMember:
 		return ec._TeamMember(ctx, sel, &obj)
 	case *model.TeamMember:
@@ -15064,7 +15127,7 @@ func (ec *executionContext) _DeploymentEdge(ctx context.Context, sel ast.Selecti
 	return out
 }
 
-var deploymentKeyImplementors = []string{"DeploymentKey"}
+var deploymentKeyImplementors = []string{"DeploymentKey", "Node"}
 
 func (ec *executionContext) _DeploymentKey(ctx context.Context, sel ast.SelectionSet, obj *model.DeploymentKey) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deploymentKeyImplementors)
@@ -15074,6 +15137,13 @@ func (ec *executionContext) _DeploymentKey(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DeploymentKey")
+		case "id":
+
+			out.Values[i] = ec._DeploymentKey_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "key":
 
 			out.Values[i] = ec._DeploymentKey_key(ctx, field, obj)

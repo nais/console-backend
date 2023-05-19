@@ -37,7 +37,8 @@ type Team implements Node {
   deployKey: DeploymentKey!
 }
 
-type DeploymentKey {
+type DeploymentKey implements Node {
+  id: ID!
   key: String!
   created: Time!
   expires: Time!

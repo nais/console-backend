@@ -92,10 +92,14 @@ type DatabaseUser struct {
 }
 
 type DeploymentKey struct {
+	ID      Ident     `json:"id"`
 	Key     string    `json:"key"`
 	Created time.Time `json:"created"`
 	Expires time.Time `json:"expires"`
 }
+
+func (DeploymentKey) IsNode()           {}
+func (this DeploymentKey) GetID() Ident { return this.ID }
 
 type Env struct {
 	ID   Ident  `json:"id"`

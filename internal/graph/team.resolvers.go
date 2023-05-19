@@ -20,38 +20,10 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
 	}
 	return &model.DeploymentKey{
+		ID:      model.Ident{ID: team, Type: "deployKey"},
 		Key:     new.Key,
 		Created: new.Created,
 		Expires: new.Expires,
-	}, nil
-}
-
-// Team is the resolver for the team field.
-func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
-	team, err := r.Console.GetTeam(ctx, name)
-	if err != nil {
-		return nil, fmt.Errorf("getting team from Console: %w", err)
-	}
-
-	if team == nil {
-		return nil, fmt.Errorf("team %q not found", name)
-	}
-
-	return &model.Team{
-		ID:           model.Ident{ID: team.Slug, Type: "team"},
-		Name:         team.Slug,
-		SlackChannel: team.SlackChannel,
-		SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
-			ret := []model.SlackAlertsChannel{}
-			for _, v := range t {
-				ret = append(ret, model.SlackAlertsChannel{
-					Env:  v.Environment,
-					Name: v.ChannelName,
-				})
-			}
-			return ret
-		}(team.SlackAlertsChannels),
-		Description: &team.Purpose,
 	}, nil
 }
 
@@ -89,6 +61,35 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 		},
+	}, nil
+}
+
+// Team is the resolver for the team field.
+func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
+	team, err := r.Console.GetTeam(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("getting team from Console: %w", err)
+	}
+
+	if team == nil {
+		return nil, fmt.Errorf("team %q not found", name)
+	}
+
+	return &model.Team{
+		ID:           model.Ident{ID: team.Slug, Type: "team"},
+		Name:         team.Slug,
+		SlackChannel: team.SlackChannel,
+		SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
+			ret := []model.SlackAlertsChannel{}
+			for _, v := range t {
+				ret = append(ret, model.SlackAlertsChannel{
+					Env:  v.Environment,
+					Name: v.ChannelName,
+				})
+			}
+			return ret
+		}(team.SlackAlertsChannels),
+		Description: &team.Purpose,
 	}, nil
 }
 
@@ -277,6 +278,7 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 	}
 
 	return &model.DeploymentKey{
+		ID:      model.Ident{ID: obj.Name, Type: "deployKey"},
 		Key:     key.Key,
 		Created: key.Created,
 		Expires: key.Expires,
@@ -289,7 +291,5 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	teamResolver     struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type teamResolver struct{ *Resolver }
