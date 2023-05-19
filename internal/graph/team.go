@@ -1,45 +1,25 @@
 package graph
 
 import (
-	"fmt"
-
 	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-func teamEdges(teams []console.Team, first, last int, before *model.Cursor, after int) []*model.TeamEdge {
+func teamEdges(teams []console.Team, p *model.Pagination) []*model.TeamEdge {
 	edges := []*model.TeamEdge{}
-	limit := first + after
-	if limit > len(teams) {
-		limit = len(teams)
+	start, end := p.ForSlice(len(teams))
+
+	for i, t := range teams[start:end] {
+		edges = append(edges, &model.TeamEdge{
+			Cursor: model.Cursor{Offset: start + i},
+			Node: &model.Team{
+				ID:          model.Ident{ID: t.Slug, Type: "team"},
+				Name:        t.Slug,
+				Description: &t.Purpose,
+			},
+		})
 	}
-	if before != nil {
-		fmt.Print("before and last")
-		limit = last + before.Offset
-		for i := before.Offset; i < limit; i-- {
-			team := teams[i]
-			edges = append(edges, &model.TeamEdge{
-				Cursor: model.Cursor{Offset: i - 1},
-				Node: &model.Team{
-					ID:          model.Ident{ID: team.Slug, Type: "team"},
-					Name:        team.Slug,
-					Description: &team.Purpose,
-				},
-			})
-		}
-	} else {
-		for i := after; i < limit; i++ {
-			team := teams[i]
-			edges = append(edges, &model.TeamEdge{
-				Cursor: model.Cursor{Offset: i + 1},
-				Node: &model.Team{
-					ID:          model.Ident{ID: team.Slug, Type: "team"},
-					Name:        team.Slug,
-					Description: &team.Purpose,
-				},
-			})
-		}
-	}
+
 	return edges
 }
 
