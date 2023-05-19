@@ -37,7 +37,7 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 	}
 
 	pagination := model.NewPagination(first, last, after, before)
-	e := edges(teams, pagination)
+	e := userTeamEdges(teams, pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor

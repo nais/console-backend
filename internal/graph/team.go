@@ -9,13 +9,25 @@ func teamEdges(teams []console.Team, p *model.Pagination) []*model.TeamEdge {
 	edges := []*model.TeamEdge{}
 	start, end := p.ForSlice(len(teams))
 
-	for i, t := range teams[start:end] {
+	for i, team := range teams[start:end] {
+		team := team
 		edges = append(edges, &model.TeamEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.Team{
-				ID:          model.Ident{ID: t.Slug, Type: "team"},
-				Name:        t.Slug,
-				Description: &t.Purpose,
+				ID:           model.Ident{ID: team.Slug, Type: "teams_team"},
+				Name:         team.Slug,
+				Description:  &team.Purpose,
+				SlackChannel: team.SlackChannel,
+				SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
+					ret := []model.SlackAlertsChannel{}
+					for _, v := range t {
+						ret = append(ret, model.SlackAlertsChannel{
+							Env:  v.Environment,
+							Name: v.ChannelName,
+						})
+					}
+					return ret
+				}(team.SlackAlertsChannels),
 			},
 		})
 	}
