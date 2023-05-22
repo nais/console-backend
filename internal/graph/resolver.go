@@ -4,6 +4,7 @@ import (
 	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
+	"github.com/nais/console-backend/internal/search"
 )
 
 // This file will not be regenerated automatically.
@@ -11,7 +12,8 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Hookd   *hookd.Client
-	Console *console.Client
-	K8s     *k8s.Client
+	Hookd    *hookd.Client
+	Console  *console.Client
+	K8s      *k8s.Client
+	Searcher *search.Searcher
 }

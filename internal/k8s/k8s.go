@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/search"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -73,6 +74,32 @@ func New(kubeconfig string, log *logrus.Entry) (*Client, error) {
 		informers: infs,
 		log:       log,
 	}, nil
+}
+
+func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []*model.SearchEdge {
+	ret := []*model.SearchEdge{}
+	for env, infs := range c.informers {
+		objs, err := infs.AppInformer.Lister().List(labels.Everything())
+		if err != nil {
+			return []*model.SearchEdge{}
+		}
+		for _, obj := range objs {
+			app, err := toApp(obj, env)
+			if err != nil {
+				return []*model.SearchEdge{}
+			}
+			rank := search.Match(q, app.Name)
+			if rank == -1 {
+				continue
+			}
+
+			ret = append(ret, &model.SearchEdge{
+				Node: app,
+				Rank: rank,
+			})
+		}
+	}
+	return ret
 }
 
 func (c *Client) Run(ctx context.Context) {
@@ -204,11 +231,13 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	}
 	ret.Ingresses = ingresses
 
-	ret.AutoScaling = model.AutoScaling{
-		Min:          *app.Spec.Replicas.Min,
-		Max:          *app.Spec.Replicas.Max,
-		Disabled:     app.Spec.Replicas.DisableAutoScaling,
-		CPUThreshold: app.Spec.Replicas.CpuThresholdPercentage,
+	if app.Spec.Replicas != nil {
+		ret.AutoScaling = model.AutoScaling{
+			Min:          *app.Spec.Replicas.Min,
+			Max:          *app.Spec.Replicas.Max,
+			Disabled:     app.Spec.Replicas.DisableAutoScaling,
+			CPUThreshold: app.Spec.Replicas.CpuThresholdPercentage,
+		}
 	}
 
 	ap := model.AccessPolicy{}

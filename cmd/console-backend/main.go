@@ -12,6 +12,7 @@ import (
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
+	"github.com/nais/console-backend/internal/search"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 )
@@ -55,12 +56,15 @@ func main() {
 	}
 
 	k8s.Run(ctx)
+	consoleClient := console.New(cfg.ConsoleToken, cfg.ConsoleEndpoint)
+	searcher := search.New(consoleClient, k8s)
 
 	graphConfig := graph.Config{
 		Resolvers: &graph.Resolver{
-			Hookd:   hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
-			Console: console.New(cfg.ConsoleToken, cfg.ConsoleEndpoint),
-			K8s:     k8s,
+			Hookd:    hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
+			Console:  consoleClient,
+			K8s:      k8s,
+			Searcher: searcher,
 		},
 	}
 

@@ -6,12 +6,13 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/search"
 )
 
 // Search is the resolver for the search field.
 func (r *queryResolver) Search(ctx context.Context, query string) (*model.SearchConnection, error) {
-	panic(fmt.Errorf("not implemented: Search - search"))
+	edges := r.Searcher.Search(ctx, query, search.Filters{})
+	return &model.SearchConnection{Edges: edges}, nil
 }
