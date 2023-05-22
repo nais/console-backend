@@ -66,6 +66,7 @@ type App struct {
 	} `json:"-"`
 }
 
+func (App) IsSearchNode()  {}
 func (App) IsNode()        {}
 func (a App) GetID() Ident { return a.ID }
 

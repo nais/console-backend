@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/99designs/gqlgen v0.17.30
 	github.com/google/uuid v1.3.0
+	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/nais/liberator v0.0.0-20230504115547-b8aedad0d49e
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/pflag v1.0.5

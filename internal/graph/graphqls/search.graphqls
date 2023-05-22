@@ -1,0 +1,15 @@
+extend type Query {
+  search(query: String!): SearchConnection!
+}
+
+type SearchConnection {
+  edges: [SearchEdge!]!
+  pageInfo: PageInfo!
+}
+
+type SearchEdge {
+  node: SearchNode!
+  cursor: String!
+}
+
+union SearchNode = App | Team

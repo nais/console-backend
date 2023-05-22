@@ -18,6 +18,10 @@ type Node interface {
 	GetID() Ident
 }
 
+type SearchNode interface {
+	IsSearchNode()
+}
+
 type Storage interface {
 	IsStorage()
 	GetName() string
@@ -216,6 +220,11 @@ func (this OpenSearch) GetName() string { return this.Name }
 type Scope struct {
 	Consumes []*Consume `json:"consumes"`
 	Exposes  []*Expose  `json:"exposes"`
+}
+
+type SearchConnection struct {
+	Edges    []*SearchEdge `json:"edges"`
+	PageInfo *PageInfo     `json:"pageInfo"`
 }
 
 type Sidecar struct {

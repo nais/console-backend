@@ -8,9 +8,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/search"
 )
 
 type User struct {
@@ -31,6 +34,7 @@ type Team struct {
 	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
 	Members             []Member             `json:"members"`
 }
+
 type GitHubRepository struct {
 	Name string `json:"name"`
 }
@@ -44,6 +48,7 @@ type Member struct {
 	Role string   `json:"role"`
 	User TeamUser `json:"user"`
 }
+
 type TeamUser struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -52,10 +57,76 @@ type TeamUser struct {
 type Client struct {
 	endpoint   string
 	httpClient *http.Client
+	lock       sync.RWMutex
+	Teams      []*model.Team
+	Updated    time.Time
 }
 
 func New(token, endpoint string) *Client {
 	return &Client{endpoint: endpoint, httpClient: Transport{Token: token}.Client()}
+}
+
+func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []model.SearchEdge {
+	c.updateTeams(ctx)
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	edges := []model.SearchEdge{}
+	for _, team := range c.Teams {
+		team := team
+		rank := search.Match(q, team.Name)
+		if rank == -1 {
+			continue
+		}
+		edges = append(edges, model.SearchEdge{
+			Rank: rank,
+			Node: team,
+		})
+	}
+	return edges
+}
+
+func (c *Client) updateTeams(ctx context.Context) {
+	c.lock.RLock()
+	if time.Since(c.Updated) < 15*time.Minute {
+		c.lock.RUnlock()
+		return
+	}
+	c.lock.RUnlock()
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	teams, err := c.GetTeams(ctx)
+	if err != nil {
+		fmt.Printf("error getting teams from console: %v\n", err)
+		return
+	}
+
+	c.Teams = toModelTeams(teams)
+	c.Updated = time.Now()
+}
+
+func toModelTeams(teams []Team) []*model.Team {
+	ret := []*model.Team{}
+	for _, team := range teams {
+		ret = append(ret, &model.Team{
+			ID:           model.Ident{ID: team.Slug, Type: "team"},
+			Name:         team.Slug,
+			Description:  &team.Purpose,
+			SlackChannel: team.SlackChannel,
+			SlackAlertsChannels: func(t []SlackAlertsChannel) []model.SlackAlertsChannel {
+				ret := []model.SlackAlertsChannel{}
+				for _, v := range t {
+					ret = append(ret, model.SlackAlertsChannel{
+						Env:  v.Environment,
+						Name: v.ChannelName,
+					})
+				}
+				return ret
+			}(team.SlackAlertsChannels),
+		})
+	}
+	return ret
 }
 
 func (c *Client) GetTeam(ctx context.Context, name string) (*Team, error) {
