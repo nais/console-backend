@@ -25,6 +25,7 @@ type App implements Node {
   variables: [Variable!]!
   authz: [Authz!]!
   manifest: String!
+  team: Team!
   #  networking: [Networking!]!
 }
 

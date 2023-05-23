@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/auth"
-	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
@@ -71,26 +70,7 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 		return nil, fmt.Errorf("getting team from Console: %w", err)
 	}
 
-	if team == nil {
-		return nil, fmt.Errorf("team %q not found", name)
-	}
-
-	return &model.Team{
-		ID:           model.Ident{ID: team.Slug, Type: "team"},
-		Name:         team.Slug,
-		SlackChannel: team.SlackChannel,
-		SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
-			ret := []model.SlackAlertsChannel{}
-			for _, v := range t {
-				ret = append(ret, model.SlackAlertsChannel{
-					Env:  v.Environment,
-					Name: v.ChannelName,
-				})
-			}
-			return ret
-		}(team.SlackAlertsChannels),
-		Description: &team.Purpose,
-	}, nil
+	return team, nil
 }
 
 // Members is the resolver for the members field.

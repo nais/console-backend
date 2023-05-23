@@ -58,8 +58,8 @@ type Client struct {
 	endpoint   string
 	httpClient *http.Client
 	lock       sync.RWMutex
-	Teams      []*model.Team
-	Updated    time.Time
+	teams      []*model.Team
+	updated    time.Time
 }
 
 func New(token, endpoint string) *Client {
@@ -72,7 +72,7 @@ func (c *Client) Search(ctx context.Context, q string, filters search.Filters) [
 	defer c.lock.RUnlock()
 
 	edges := []*search.SearchResult{}
-	for _, team := range c.Teams {
+	for _, team := range c.teams {
 		team := team
 		rank := search.Match(q, team.Name)
 		if rank == -1 {
@@ -88,7 +88,7 @@ func (c *Client) Search(ctx context.Context, q string, filters search.Filters) [
 
 func (c *Client) updateTeams(ctx context.Context) {
 	c.lock.RLock()
-	if time.Since(c.Updated) < 15*time.Minute {
+	if time.Since(c.updated) < 15*time.Minute {
 		c.lock.RUnlock()
 		return
 	}
@@ -102,8 +102,8 @@ func (c *Client) updateTeams(ctx context.Context) {
 		return
 	}
 
-	c.Teams = toModelTeams(teams)
-	c.Updated = time.Now()
+	c.teams = toModelTeams(teams)
+	c.updated = time.Now()
 }
 
 func toModelTeams(teams []Team) []*model.Team {
@@ -129,37 +129,17 @@ func toModelTeams(teams []Team) []*model.Team {
 	return ret
 }
 
-func (c *Client) GetTeam(ctx context.Context, name string) (*Team, error) {
-	q := `query team($slug: Slug!) {
-	team(slug: $slug) {
-	  slug
-	  purpose
-	  slackChannel
-	  gitHubRepositories{
-		name
-	  }
-	  slackAlertsChannels{
-		environment
-		channelName
-	  }
-}}`
+func (c *Client) GetTeam(ctx context.Context, name string) (*model.Team, error) {
+	c.updateTeams(ctx)
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
-	vars := map[string]string{
-		"slug": name,
+	for _, team := range c.teams {
+		if team.Name == name {
+			return team, nil
+		}
 	}
-
-	respBody := struct {
-		Data struct {
-			Team *Team `json:"team"`
-		} `json:"data"`
-		Errors []map[string]any `json:"errors"`
-	}{}
-
-	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying console: %w", err)
-	}
-
-	return respBody.Data.Team, nil
+	return nil, fmt.Errorf("team not found: %s", name)
 }
 
 func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitHubRepository, error) {

@@ -22,6 +22,7 @@ type Config struct {
 	BindHost        string
 	ConsoleEndpoint string
 	ConsoleToken    string
+	FieldSelector   string
 	HookdEndpoint   string
 	HookdPSK        string
 	Kubeconfig      string
@@ -43,6 +44,7 @@ func init() {
 	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
 	flag.StringVar(&cfg.Kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "kubeconfig")
 	flag.StringVar(&cfg.RunAsUser, "run-as-user", os.Getenv("RUN_AS_USER"), "Statically configured frontend user")
+	flag.StringVar(&cfg.FieldSelector, "field-selector", os.Getenv("FIELD_SELECTOR"), "Field selector for k8s resources")
 }
 
 func main() {
@@ -50,7 +52,7 @@ func main() {
 	log := newLogger()
 	ctx := context.Background()
 
-	k8s, err := k8s.New(cfg.Kubeconfig, log.WithField("client", "k8s"))
+	k8s, err := k8s.New(cfg.Kubeconfig, cfg.FieldSelector, log.WithField("client", "k8s"))
 	if err != nil {
 		log.Fatal(err)
 	}

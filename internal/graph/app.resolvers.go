@@ -69,6 +69,11 @@ func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, err
 	return app, err
 }
 
+// Team is the resolver for the team field.
+func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, error) {
+	return r.Console.GetTeam(ctx, obj.GQLVars.Team)
+}
+
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
 	app, err := r.K8s.App(ctx, name, team, env)

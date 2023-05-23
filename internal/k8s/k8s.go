@@ -12,6 +12,7 @@ import (
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,7 +36,7 @@ type Informers struct {
 	PodInformer corev1inf.PodInformer
 }
 
-func New(kubeconfig string, log *logrus.Entry) (*Client, error) {
+func New(kubeconfig, fieldSelector string, log *logrus.Entry) (*Client, error) {
 	infs := map[string]*Informers{}
 
 	kubeConfig, err := clientcmd.LoadFromFile(kubeconfig)
@@ -62,8 +63,12 @@ func New(kubeconfig string, log *logrus.Entry) (*Client, error) {
 		}
 
 		log.Debug("creating informers")
-		dinf := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, 4*time.Hour, "", nil)
-		inf := informers.NewSharedInformerFactory(clientSet, 4*time.Hour)
+		dinf := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, 4*time.Hour, "", func(options *metav1.ListOptions) {
+			options.FieldSelector = fieldSelector
+		})
+		inf := informers.NewFilteredSharedInformerFactory(clientSet, 4*time.Hour, "", func(options *metav1.ListOptions) {
+			options.FieldSelector = fieldSelector
+		})
 
 		infs[contextName].PodInformer = inf.Core().V1().Pods()
 
@@ -220,10 +225,13 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 	ret := &model.App{}
 	ret.ID = model.Ident{ID: "app_" + env + "_" + app.GetNamespace() + "_" + app.GetName(), Type: "app"}
 	ret.Name = app.GetName()
+
 	ret.Env = &model.Env{
 		Name: env,
 		ID:   model.Ident{ID: env, Type: "env"},
 	}
+
+	ret.GQLVars.Team = app.GetNamespace()
 
 	ret.Image = app.Spec.Image
 
