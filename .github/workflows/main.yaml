@@ -3,13 +3,6 @@ on:
   push:
     branches:
       - main
-
-env:
-  BUILDER_IMG: "cgr.dev/chainguard/go:1.19"
-  RUNNER_IMG: "cgr.dev/chainguard/static"
-  BASEIMG_IDENTITY: "https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main"
-  BASEIMG_ISSUER: "https://token.actions.githubusercontent.com"
-
 jobs:
   build:
     permissions:
@@ -19,19 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # ratchet:actions/checkout@v3
-      - name: Install cosign
-        uses: sigstore/cosign-installer@66dd3f388647c8d36a2b8b27371cce115a10e003 # ratchet:sigstore/cosign-installer@main
-        with:
-          cosign-release: 'v2.0.0'
-      - name: Verify builder image
-        run: cosign verify --certificate-identity ${{ env.BASEIMG_IDENTITY }} --certificate-oidc-issuer ${{ env.BASEIMG_ISSUER }} ${{ env.BUILDER_IMG }}
-      - name: Verify runner image
-        run: cosign verify --certificate-identity ${{ env.BASEIMG_IDENTITY }} --certificate-oidc-issuer ${{ env.BASEIMG_ISSUER }} ${{ env.RUNNER_IMG }}
       - uses: nais/platform-build-push-sign@8b336817c5749f179373fd63a7f511bae7246f10 # ratchet:nais/platform-build-push-sign@main
         id: build-push-sign
         with:
-          name: netroll
-          google_service_account: gh-netroll
+          name: console-backend
+          google_service_account: gh-console-backend
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           push: true
       - uses: azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab # ratchet:azure/setup-helm@v1
