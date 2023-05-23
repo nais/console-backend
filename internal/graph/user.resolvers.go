@@ -18,7 +18,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	user, err := r.Console.GetUser(ctx, email)
+	user, err := r.TeamsClient.GetUser(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("getting user from Console: %w", err)
 	}
@@ -31,7 +31,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 
 // Teams is the resolver for the teams field.
 func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error) {
-	teams, err := r.Console.GetTeamsForUser(ctx, obj.Email)
+	teams, err := r.TeamsClient.GetTeamsForUser(ctx, obj.Email)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}

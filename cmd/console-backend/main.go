@@ -8,27 +8,27 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/nais/console-backend/internal/auth"
-	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
+	"github.com/nais/console-backend/internal/teams"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 )
 
 type Config struct {
-	Audience        string
-	BindHost        string
-	ConsoleEndpoint string
-	ConsoleToken    string
-	FieldSelector   string
-	HookdEndpoint   string
-	HookdPSK        string
-	Kubeconfig      string
-	LogLevel        string
-	Port            string
-	RunAsUser       string
+	Audience      string
+	BindHost      string
+	TeamsEndpoint string
+	TeamsToken    string
+	FieldSelector string
+	HookdEndpoint string
+	HookdPSK      string
+	Kubeconfig    string
+	LogLevel      string
+	Port          string
+	RunAsUser     string
 }
 
 var cfg = &Config{}
@@ -36,8 +36,8 @@ var cfg = &Config{}
 func init() {
 	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
 	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
-	flag.StringVar(&cfg.ConsoleEndpoint, "console-endpoint", envOrDefault("CONSOLE_ENDPOINT", "http://console.local.nais.io/query"), "Console endpoint")
-	flag.StringVar(&cfg.ConsoleToken, "console-token", envOrDefault("CONSOLE_TOKEN", "secret-admin-api-key"), "Console Token")
+	flag.StringVar(&cfg.TeamsEndpoint, "teams-endpoint", envOrDefault("TEAMS_ENDPOINT", "http://teams.local.nais.io/query"), "Teams endpoint")
+	flag.StringVar(&cfg.TeamsToken, "teams-token", envOrDefault("TEAMS_TOKEN", "secret-admin-api-key"), "Teams token")
 	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd.local.nais.io"), "Hookd endpoint")
 	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
 	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
@@ -58,15 +58,15 @@ func main() {
 	}
 
 	k8s.Run(ctx)
-	consoleClient := console.New(cfg.ConsoleToken, cfg.ConsoleEndpoint)
-	searcher := search.New(consoleClient, k8s)
+	teams := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint)
+	searcher := search.New(teams, k8s)
 
 	graphConfig := graph.Config{
 		Resolvers: &graph.Resolver{
-			Hookd:    hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
-			Console:  consoleClient,
-			K8s:      k8s,
-			Searcher: searcher,
+			Hookd:       hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
+			TeamsClient: teams,
+			K8s:         k8s,
+			Searcher:    searcher,
 		},
 	}
 

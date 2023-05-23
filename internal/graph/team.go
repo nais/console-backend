@@ -1,11 +1,11 @@
 package graph
 
 import (
-	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
+	t "github.com/nais/console-backend/internal/teams"
 )
 
-func teamEdges(teams []console.Team, p *model.Pagination) []*model.TeamEdge {
+func teamEdges(teams []t.Team, p *model.Pagination) []*model.TeamEdge {
 	edges := []*model.TeamEdge{}
 	start, end := p.ForSlice(len(teams))
 
@@ -18,7 +18,7 @@ func teamEdges(teams []console.Team, p *model.Pagination) []*model.TeamEdge {
 				Name:         team.Slug,
 				Description:  &team.Purpose,
 				SlackChannel: team.SlackChannel,
-				SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
+				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {
 					ret := []model.SlackAlertsChannel{}
 					for _, v := range t {
 						ret = append(ret, model.SlackAlertsChannel{
@@ -53,7 +53,7 @@ func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppE
 	return edges
 }
 
-func memberEdges(members []console.Member, p *model.Pagination) []*model.TeamMemberEdge {
+func memberEdges(members []t.Member, p *model.Pagination) []*model.TeamMemberEdge {
 	edges := []*model.TeamMemberEdge{}
 
 	start, end := p.ForSlice(len(members))
@@ -74,7 +74,7 @@ func memberEdges(members []console.Member, p *model.Pagination) []*model.TeamMem
 	return edges
 }
 
-func githubRepositoryEdges(repos []console.GitHubRepository, first int, after int) []*model.GithubRepositoryEdge {
+func githubRepositoryEdges(repos []t.GitHubRepository, first int, after int) []*model.GithubRepositoryEdge {
 	edges := []*model.GithubRepositoryEdge{}
 	limit := first + after
 	if limit > len(repos) {

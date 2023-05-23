@@ -28,9 +28,9 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error) {
-	teams, err := r.Console.GetTeams(ctx)
+	teams, err := r.TeamsClient.GetTeams(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("getting teams from Console: %w", err)
+		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
 
 	pagination := model.NewPagination(first, last, after, before)
@@ -65,9 +65,9 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 
 // Team is the resolver for the team field.
 func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
-	team, err := r.Console.GetTeam(ctx, name)
+	team, err := r.TeamsClient.GetTeam(ctx, name)
 	if err != nil {
-		return nil, fmt.Errorf("getting team from Console: %w", err)
+		return nil, fmt.Errorf("getting team from Teams: %w", err)
 	}
 
 	return team, nil
@@ -75,9 +75,9 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 
 // Members is the resolver for the members field.
 func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamMemberConnection, error) {
-	members, err := r.Console.GetMembers(ctx, obj.Name)
+	members, err := r.TeamsClient.GetMembers(ctx, obj.Name)
 	if err != nil {
-		return nil, fmt.Errorf("getting members from Console: %w", err)
+		return nil, fmt.Errorf("getting members from Teams: %w", err)
 	}
 
 	pagination := model.NewPagination(first, last, after, before)
@@ -157,7 +157,7 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 		after = &model.Cursor{Offset: 0}
 	}
 
-	repos, err := r.Console.GetGithubRepositories(ctx, obj.Name)
+	repos, err := r.TeamsClient.GetGithubRepositories(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}
@@ -235,7 +235,7 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 		return nil, fmt.Errorf("getting email from context: %w", err)
 	}
 
-	teams, err := r.Console.GetTeamsForUser(ctx, email)
+	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Console: %w", err)
 	}
@@ -271,5 +271,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)

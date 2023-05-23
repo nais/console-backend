@@ -1,4 +1,4 @@
-package console
+package teams
 
 import (
 	"bytes"
@@ -98,7 +98,7 @@ func (c *Client) updateTeams(ctx context.Context) {
 
 	teams, err := c.GetTeams(ctx)
 	if err != nil {
-		fmt.Printf("error getting teams from console: %v\n", err)
+		fmt.Printf("error getting teams from teams: %v\n", err)
 		return
 	}
 
@@ -163,7 +163,7 @@ func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitH
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
 		return nil, err
 	}
 
@@ -193,8 +193,8 @@ func (c *Client) GetMembers(ctx context.Context, name string) ([]Member, error) 
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying console: %w", err)
+	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+		return nil, fmt.Errorf("querying teams: %w", err)
 	}
 
 	return respBody.Data.Team.Members, nil
@@ -214,8 +214,8 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.consoleQuery(ctx, q, nil, &respBody); err != nil {
-		return nil, fmt.Errorf("querying console: %w", err)
+	if err := c.teamsQuery(ctx, q, nil, &respBody); err != nil {
+		return nil, fmt.Errorf("querying teams: %w", err)
 	}
 
 	return respBody.Data.Teams, nil
@@ -243,8 +243,8 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying console: %w", err)
+	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+		return nil, fmt.Errorf("querying teams: %w", err)
 	}
 
 	return respBody.Data.UserByEmail.Teams, nil
@@ -264,8 +264,8 @@ func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
-	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying console: %w", err)
+	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+		return nil, fmt.Errorf("querying teams: %w", err)
 	}
 	if respBody.Data.UserByID == nil {
 		return nil, fmt.Errorf("user %s not found", id)
@@ -295,8 +295,8 @@ func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
-	if err := c.consoleQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying console: %w", err)
+	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+		return nil, fmt.Errorf("querying teams: %w", err)
 	}
 	if respBody.Data.UserByEmail == nil {
 		return nil, fmt.Errorf("user %s not found", email)
@@ -305,7 +305,7 @@ func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
 	return respBody.Data.UserByEmail, nil
 }
 
-func (c *Client) consoleQuery(ctx context.Context, query string, vars map[string]string, respBody interface{}) error {
+func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]string, respBody interface{}) error {
 	q := struct {
 		Query     string            `json:"query"`
 		Variables map[string]string `json:"variables"`
@@ -332,7 +332,7 @@ func (c *Client) consoleQuery(ctx context.Context, query string, vars map[string
 
 	if resp.StatusCode != http.StatusOK {
 		io.Copy(os.Stdout, resp.Body)
-		return fmt.Errorf("console: %v", resp.Status)
+		return fmt.Errorf("teams: %v", resp.Status)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {

@@ -1,11 +1,11 @@
 package graph
 
 import (
-	"github.com/nais/console-backend/internal/console"
 	"github.com/nais/console-backend/internal/graph/model"
+	t "github.com/nais/console-backend/internal/teams"
 )
 
-func userTeamEdges(teams []console.TeamMembership, p *model.Pagination) []*model.TeamEdge {
+func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []*model.TeamEdge {
 	edges := []*model.TeamEdge{}
 	start, end := p.ForSlice(len(teams))
 
@@ -18,7 +18,7 @@ func userTeamEdges(teams []console.TeamMembership, p *model.Pagination) []*model
 				Name:         team.Team.Slug,
 				Description:  &team.Team.Purpose,
 				SlackChannel: team.Team.SlackChannel,
-				SlackAlertsChannels: func(t []console.SlackAlertsChannel) []model.SlackAlertsChannel {
+				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {
 					ret := []model.SlackAlertsChannel{}
 					for _, v := range t {
 						ret = append(ret, model.SlackAlertsChannel{

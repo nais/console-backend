@@ -32,7 +32,7 @@ func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, e
 	fmt.Println("this be ID", id)
 	switch id.Type {
 	case "user":
-		u, err := r.Console.GetUserByID(ctx, id.ID)
+		u, err := r.TeamsClient.GetUserByID(ctx, id.ID)
 		if err != nil {
 			return nil, fmt.Errorf("getting user from Console: %w", err)
 		}
@@ -47,5 +47,7 @@ func (r *Resolver) PageInfo() PageInfoResolver { return &pageInfoResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type pageInfoResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	pageInfoResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
