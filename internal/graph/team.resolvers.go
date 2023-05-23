@@ -159,7 +159,7 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 
 	repos, err := r.TeamsClient.GetGithubRepositories(ctx, obj.Name)
 	if err != nil {
-		return nil, fmt.Errorf("getting teams from Console: %w", err)
+		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
 	if *first > len(repos) {
 		*first = len(repos)
@@ -237,7 +237,7 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 
 	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email)
 	if err != nil {
-		return nil, fmt.Errorf("getting teams from Console: %w", err)
+		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
 
 	var isMember bool

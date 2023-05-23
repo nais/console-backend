@@ -34,7 +34,7 @@ func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, e
 	case "user":
 		u, err := r.TeamsClient.GetUserByID(ctx, id.ID)
 		if err != nil {
-			return nil, fmt.Errorf("getting user from Console: %w", err)
+			return nil, fmt.Errorf("getting user from Teams: %w", err)
 		}
 		return u, nil
 	}

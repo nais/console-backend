@@ -20,7 +20,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 	}
 	user, err := r.TeamsClient.GetUser(ctx, email)
 	if err != nil {
-		return nil, fmt.Errorf("getting user from Console: %w", err)
+		return nil, fmt.Errorf("getting user from Teams: %w", err)
 	}
 	return &model.User{
 		ID:    model.Ident{ID: user.ID.String(), Type: "user"},
@@ -33,7 +33,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error) {
 	teams, err := r.TeamsClient.GetTeamsForUser(ctx, obj.Email)
 	if err != nil {
-		return nil, fmt.Errorf("getting teams from Console: %w", err)
+		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
 
 	pagination := model.NewPagination(first, last, after, before)
