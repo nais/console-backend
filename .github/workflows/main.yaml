@@ -16,7 +16,6 @@ jobs:
         id: build-push-sign
         with:
           name: console-backend
-          dockerfile: Dockerfile
           google_service_account: gh-console-backend
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           push: true
