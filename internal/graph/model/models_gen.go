@@ -223,8 +223,9 @@ type Scope struct {
 }
 
 type SearchConnection struct {
-	Edges    []*SearchEdge `json:"edges"`
-	PageInfo *PageInfo     `json:"pageInfo"`
+	Edges      []*SearchEdge `json:"edges"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
+	TotalCount int           `json:"totalCount"`
 }
 
 type Sidecar struct {

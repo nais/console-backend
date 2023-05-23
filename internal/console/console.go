@@ -66,19 +66,19 @@ func New(token, endpoint string) *Client {
 	return &Client{endpoint: endpoint, httpClient: Transport{Token: token}.Client()}
 }
 
-func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []*model.SearchEdge {
+func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []*search.SearchResult {
 	c.updateTeams(ctx)
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	edges := []*model.SearchEdge{}
+	edges := []*search.SearchResult{}
 	for _, team := range c.Teams {
 		team := team
 		rank := search.Match(q, team.Name)
 		if rank == -1 {
 			continue
 		}
-		edges = append(edges, &model.SearchEdge{
+		edges = append(edges, &search.SearchResult{
 			Rank: rank,
 			Node: team,
 		})

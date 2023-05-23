@@ -12,8 +12,13 @@ type Filters struct {
 	Type string
 }
 
+type SearchResult struct {
+	Node model.SearchNode
+	Rank int
+}
+
 type Searchable interface {
-	Search(ctx context.Context, q string, filters Filters) []*model.SearchEdge
+	Search(ctx context.Context, q string, filters Filters) []*SearchResult
 }
 
 type Searcher struct {
@@ -24,11 +29,11 @@ func New(s ...Searchable) *Searcher {
 	return &Searcher{searchables: s}
 }
 
-func (s *Searcher) Search(ctx context.Context, q string, filters Filters) []*model.SearchEdge {
-	ret := []*model.SearchEdge{}
+func (s *Searcher) Search(ctx context.Context, q string, filters Filters) []*SearchResult {
+	ret := []*SearchResult{}
 	for _, searchable := range s.searchables {
-		edges := searchable.Search(ctx, q, filters)
-		ret = append(ret, edges...)
+		results := searchable.Search(ctx, q, filters)
+		ret = append(ret, results...)
 	}
 
 	sort.Slice(ret, func(i, j int) bool {

@@ -321,7 +321,7 @@ type ComplexityRoot struct {
 		App         func(childComplexity int, name string, team string, env string) int
 		Deployments func(childComplexity int, first *int, after *model.Cursor) int
 		Node        func(childComplexity int, id model.Ident) int
-		Search      func(childComplexity int, query string) int
+		Search      func(childComplexity int, query string, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		Team        func(childComplexity int, name string) int
 		Teams       func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		User        func(childComplexity int) int
@@ -348,8 +348,9 @@ type ComplexityRoot struct {
 	}
 
 	SearchConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	SearchEdge struct {
@@ -464,7 +465,7 @@ type QueryResolver interface {
 	Node(ctx context.Context, id model.Ident) (model.Node, error)
 	App(ctx context.Context, name string, team string, env string) (*model.App, error)
 	Deployments(ctx context.Context, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
-	Search(ctx context.Context, query string) (*model.SearchConnection, error)
+	Search(ctx context.Context, query string, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error)
 	Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error)
 	Team(ctx context.Context, name string) (*model.Team, error)
 	User(ctx context.Context) (*model.User, error)
@@ -1539,7 +1540,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Search(childComplexity, args["query"].(string)), true
+		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
 
 	case "Query.team":
 		if e.complexity.Query.Team == nil {
@@ -1641,6 +1642,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SearchConnection.PageInfo(childComplexity), true
+
+	case "SearchConnection.totalCount":
+		if e.complexity.SearchConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.SearchConnection.TotalCount(childComplexity), true
 
 	case "SearchEdge.cursor":
 		if e.complexity.SearchEdge.Cursor == nil {
@@ -2291,6 +2299,42 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 		}
 	}
 	args["query"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *model.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg3
+	var arg4 *model.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg4, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg4
 	return args, nil
 }
 
@@ -9261,7 +9305,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string))
+		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9290,6 +9334,8 @@ func (ec *executionContext) fieldContext_Query_search(ctx context.Context, field
 				return ec.fieldContext_SearchConnection_edges(ctx, field)
 			case "pageInfo":
 				return ec.fieldContext_SearchConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_SearchConnection_totalCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SearchConnection", field.Name)
 		},
@@ -10121,6 +10167,50 @@ func (ec *executionContext) fieldContext_SearchConnection_pageInfo(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SearchConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SearchEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.SearchEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SearchEdge_node(ctx, field)
 	if err != nil {
@@ -10191,9 +10281,9 @@ func (ec *executionContext) _SearchEdge_cursor(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.Cursor)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10203,7 +10293,7 @@ func (ec *executionContext) fieldContext_SearchEdge_cursor(ctx context.Context, 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Cursor does not have child fields")
 		},
 	}
 	return fc, nil
@@ -16889,6 +16979,13 @@ func (ec *executionContext) _SearchConnection(ctx context.Context, sel ast.Selec
 		case "pageInfo":
 
 			out.Values[i] = ec._SearchConnection_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalCount":
+
+			out.Values[i] = ec._SearchConnection_totalCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

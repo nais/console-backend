@@ -1,15 +1,22 @@
 extend type Query {
-  search(query: String!): SearchConnection!
+  search(
+    query: String!
+    first: Int
+    last: Int
+    after: Cursor
+    before: Cursor
+  ): SearchConnection!
 }
 
 type SearchConnection {
   edges: [SearchEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type SearchEdge {
   node: SearchNode!
-  cursor: String!
+  cursor: Cursor!
 }
 
 union SearchNode = App | Team

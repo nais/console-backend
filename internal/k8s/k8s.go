@@ -76,24 +76,26 @@ func New(kubeconfig string, log *logrus.Entry) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []*model.SearchEdge {
-	ret := []*model.SearchEdge{}
+func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []*search.SearchResult {
+	ret := []*search.SearchResult{}
+
 	for env, infs := range c.informers {
 		objs, err := infs.AppInformer.Lister().List(labels.Everything())
 		if err != nil {
-			return []*model.SearchEdge{}
+			return []*search.SearchResult{}
 		}
+
 		for _, obj := range objs {
 			app, err := toApp(obj, env)
 			if err != nil {
-				return []*model.SearchEdge{}
+				return []*search.SearchResult{}
 			}
 			rank := search.Match(q, app.Name)
 			if rank == -1 {
 				continue
 			}
 
-			ret = append(ret, &model.SearchEdge{
+			ret = append(ret, &search.SearchResult{
 				Node: app,
 				Rank: rank,
 			})

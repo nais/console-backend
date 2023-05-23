@@ -2,6 +2,6 @@ package model
 
 type SearchEdge struct {
 	Node   SearchNode `json:"node"`
-	Cursor string     `json:"cursor"`
+	Cursor Cursor     `json:"cursor"`
 	Rank   int        `json:"-"`
 }

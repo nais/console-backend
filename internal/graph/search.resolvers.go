@@ -12,7 +12,34 @@ import (
 )
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string) (*model.SearchConnection, error) {
-	edges := r.Searcher.Search(ctx, query, search.Filters{})
-	return &model.SearchConnection{Edges: edges}, nil
+func (r *queryResolver) Search(ctx context.Context, query string, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error) {
+	results := r.Searcher.Search(ctx, query, search.Filters{})
+	pagination := model.NewPagination(first, last, after, before)
+	edges := searchEdges(results, pagination)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
+	}
+
+	hasNext := len(results) > pagination.First()+pagination.After().Offset+1
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
+	return &model.SearchConnection{
+		TotalCount: len(results),
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
 }
