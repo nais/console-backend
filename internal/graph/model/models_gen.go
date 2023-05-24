@@ -228,6 +228,10 @@ type SearchConnection struct {
 	TotalCount int           `json:"totalCount"`
 }
 
+type SearchFilter struct {
+	Type *SearchType `json:"type,omitempty"`
+}
+
 type Sidecar struct {
 	AutoLogin            bool       `json:"autoLogin"`
 	AutoLoginIgnorePaths []string   `json:"autoLoginIgnorePaths"`
@@ -265,6 +269,47 @@ func (TokenX) IsAuthz() {}
 type Variable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type SearchType string
+
+const (
+	SearchTypeApp  SearchType = "APP"
+	SearchTypeTeam SearchType = "TEAM"
+)
+
+var AllSearchType = []SearchType{
+	SearchTypeApp,
+	SearchTypeTeam,
+}
+
+func (e SearchType) IsValid() bool {
+	switch e {
+	case SearchTypeApp, SearchTypeTeam:
+		return true
+	}
+	return false
+}
+
+func (e SearchType) String() string {
+	return string(e)
+}
+
+func (e *SearchType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SearchType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SearchType", str)
+	}
+	return nil
+}
+
+func (e SearchType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type TeamRole string

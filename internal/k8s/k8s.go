@@ -81,19 +81,24 @@ func New(kubeconfig, fieldSelector string, log *logrus.Entry) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []*search.SearchResult {
+func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.SearchResult {
+	// early exit if we're not searching for apps
+	if filter != nil && filter.Type != nil && *filter.Type != model.SearchTypeApp {
+		return nil
+	}
+
 	ret := []*search.SearchResult{}
 
 	for env, infs := range c.informers {
 		objs, err := infs.AppInformer.Lister().List(labels.Everything())
 		if err != nil {
-			return []*search.SearchResult{}
+			return nil
 		}
 
 		for _, obj := range objs {
 			app, err := toApp(obj, env)
 			if err != nil {
-				return []*search.SearchResult{}
+				return nil
 			}
 			rank := search.Match(q, app.Name)
 			if rank == -1 {

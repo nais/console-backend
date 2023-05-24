@@ -18,7 +18,7 @@ type SearchResult struct {
 }
 
 type Searchable interface {
-	Search(ctx context.Context, q string, filters Filters) []*SearchResult
+	Search(ctx context.Context, q string, filter *model.SearchFilter) []*SearchResult
 }
 
 type Searcher struct {
@@ -29,10 +29,11 @@ func New(s ...Searchable) *Searcher {
 	return &Searcher{searchables: s}
 }
 
-func (s *Searcher) Search(ctx context.Context, q string, filters Filters) []*SearchResult {
+func (s *Searcher) Search(ctx context.Context, q string, filter *model.SearchFilter) []*SearchResult {
 	ret := []*SearchResult{}
+
 	for _, searchable := range s.searchables {
-		results := searchable.Search(ctx, q, filters)
+		results := searchable.Search(ctx, q, filter)
 		ret = append(ret, results...)
 	}
 

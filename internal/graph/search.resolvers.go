@@ -8,12 +8,11 @@ import (
 	"context"
 
 	"github.com/nais/console-backend/internal/graph/model"
-	"github.com/nais/console-backend/internal/search"
 )
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error) {
-	results := r.Searcher.Search(ctx, query, search.Filters{})
+func (r *queryResolver) Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error) {
+	results := r.Searcher.Search(ctx, query, filter)
 	pagination := model.NewPagination(first, last, after, before)
 	edges := searchEdges(results, pagination)
 

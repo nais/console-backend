@@ -1,13 +1,3 @@
-extend type Query {
-  search(
-    query: String!
-    first: Int
-    last: Int
-    after: Cursor
-    before: Cursor
-  ): SearchConnection!
-}
-
 type SearchConnection {
   edges: [SearchEdge!]!
   pageInfo: PageInfo!
@@ -20,3 +10,23 @@ type SearchEdge {
 }
 
 union SearchNode = App | Team
+
+input SearchFilter {
+  type: SearchType
+}
+
+enum SearchType {
+  APP
+  TEAM
+}
+
+extend type Query {
+  search(
+    query: String!
+    filter: SearchFilter
+    first: Int
+    last: Int
+    after: Cursor
+    before: Cursor
+  ): SearchConnection!
+}

@@ -66,7 +66,12 @@ func New(token, endpoint string) *Client {
 	return &Client{endpoint: endpoint, httpClient: Transport{Token: token}.Client()}
 }
 
-func (c *Client) Search(ctx context.Context, q string, filters search.Filters) []*search.SearchResult {
+func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.SearchResult {
+	// early exit if we're not searching for teams
+	if filter != nil && filter.Type != nil && *filter.Type != model.SearchTypeTeam {
+		return nil
+	}
+
 	c.updateTeams(ctx)
 	c.lock.RLock()
 	defer c.lock.RUnlock()
