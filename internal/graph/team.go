@@ -1,6 +1,9 @@
 package graph
 
 import (
+	"context"
+
+	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
 	t "github.com/nais/console-backend/internal/teams"
 )
@@ -90,4 +93,28 @@ func githubRepositoryEdges(repos []t.GitHubRepository, first int, after int) []*
 		})
 	}
 	return edges
+}
+
+func (r *Resolver) hasAccess(ctx context.Context, team string) bool {
+	email, err := auth.GetEmail(ctx)
+	if err != nil {
+		r.Log.Errorf("getting email from context: %w", err)
+		return false
+	}
+
+	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email)
+	if err != nil {
+		r.Log.Errorf("getting teams from Teams: %w", err)
+		return false
+	}
+
+	var isMember bool
+	for _, t := range teams {
+		if t.Team.Slug == team {
+			isMember = true
+			break
+		}
+	}
+
+	return isMember
 }

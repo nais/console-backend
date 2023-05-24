@@ -1,3 +1,16 @@
 image:
   repository: europe-north1-docker.pkg.dev/nais-io/nais/images
   name: console-backend
+
+kubeconfig: |-
+  yaml: sa folk
+  med: linjeskift
+  tilogmed: er det yaml
+
+teams:
+  endpoint: "http://teams-backend"
+  token: "secret-teams-token"
+
+hookd:
+  endpoint: "http://hookd"
+  psk: "secret-hookd-psk"

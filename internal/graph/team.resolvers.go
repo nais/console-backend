@@ -8,23 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
 )
-
-// ChangeDeployKey is the resolver for the changeDeployKey field.
-func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
-	new, err := r.Hookd.ChangeDeployKey(ctx, team)
-	if err != nil {
-		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
-	}
-	return &model.DeploymentKey{
-		ID:      model.Ident{ID: team, Type: "deployKey"},
-		Key:     new.Key,
-		Created: new.Created,
-		Expires: new.Expires,
-	}, nil
-}
 
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error) {
@@ -228,28 +213,28 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 	}, nil
 }
 
+// ChangeDeployKey is the resolver for the changeDeployKey field.
+func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
+	if !r.hasAccess(ctx, team) {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	new, err := r.Hookd.ChangeDeployKey(ctx, team)
+	if err != nil {
+		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
+	}
+	return &model.DeploymentKey{
+		ID:      model.Ident{ID: team, Type: "deployKey"},
+		Key:     new.Key,
+		Created: new.Created,
+		Expires: new.Expires,
+	}, nil
+}
+
 // DeployKey is the resolver for the deployKey field.
 func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error) {
-	email, err := auth.GetEmail(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("getting email from context: %w", err)
-	}
-
-	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email)
-	if err != nil {
-		return nil, fmt.Errorf("getting teams from Teams: %w", err)
-	}
-
-	var isMember bool
-	for _, t := range teams {
-		if t.Team.Slug == obj.Name {
-			isMember = true
-			break
-		}
-	}
-
-	if !isMember {
-		return nil, fmt.Errorf("user is not a member of team %s", obj.Name)
+	if !r.hasAccess(ctx, obj.Name) {
+		return nil, fmt.Errorf("access denied")
 	}
 
 	key, err := r.Hookd.DeployKey(ctx, obj.Name)
@@ -271,5 +256,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)

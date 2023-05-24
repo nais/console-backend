@@ -67,6 +67,7 @@ func main() {
 			TeamsClient: teams,
 			K8s:         k8s,
 			Searcher:    searcher,
+			Log:         log,
 		},
 	}
 

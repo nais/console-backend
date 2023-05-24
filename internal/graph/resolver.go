@@ -5,6 +5,7 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
+	"github.com/sirupsen/logrus"
 )
 
 // This file will not be regenerated automatically.
@@ -16,4 +17,5 @@ type Resolver struct {
 	TeamsClient *teams.Client
 	K8s         *k8s.Client
 	Searcher    *search.Searcher
+	Log         *logrus.Logger
 }

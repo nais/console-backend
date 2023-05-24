@@ -1,22 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: "{{ .Release.Name }}"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }} 
+      app: "{{ .Release.Name }}"
   template:
     metadata:
       annotations:
         prometheus.io/path: "/metrics"
       labels:
-        app: {{ .Release.Name }} 
+        app: "{{ .Release.Name }}"
     spec:
-      serviceAccountName: {{ .Release.Name }}
+      serviceAccountName: "{{ .Release.Name }}"
       containers:
-        - name: {{ .Chart.Name }}
+        - name: "{{ .Chart.Name }}"
+          env:
+            - name: TEAMS_ENDPOINT
+              value: "{{ .Values.teams.endpoint }}"
+            - name: HOOKD_ENDPOINT
+              value: "{{ .Values.hookd.endpoint }}"
+            - name: KUBECONFIG
+              value: /etc/secrets/kubeconfig
+          envFrom:
+            - secretRef:
+                name: "{{ .Release.Name }}"
+          volumes:
+            - name: secrets
+              secret:
+                secretName: "{{ .Release.Name }}"
+                items:
+                  - key: KUBECONFIG
+                    path: kubeconfig
           securityContext:
             capabilities:
               drop:
@@ -32,14 +49,14 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /metrics
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /metrics
-              port: http
+          #livenessProbe:
+          #  httpGet:
+          #    path: /metrics
+          #    port: http
+          #readinessProbe:
+          #  httpGet:
+          #    path: /metrics
+          #    port: http
           resources:
             requests:
               cpu: 100m
