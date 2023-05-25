@@ -8,9 +8,7 @@ kubeconfig: |-
   tilogmed: er det yaml
 
 teams:
-  endpoint: "http://teams-backend"
   token: "secret-teams-token"
 
 hookd:
-  endpoint: "http://hookd"
   psk: "secret-hookd-psk"

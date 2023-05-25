@@ -18,10 +18,6 @@ spec:
       containers:
         - name: "{{ .Chart.Name }}"
           env:
-            - name: TEAMS_ENDPOINT
-              value: "{{ .Values.teams.endpoint }}"
-            - name: HOOKD_ENDPOINT
-              value: "{{ .Values.hookd.endpoint }}"
             - name: KUBECONFIG
               value: /etc/secrets/kubeconfig
           envFrom:
