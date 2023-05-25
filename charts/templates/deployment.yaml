@@ -15,6 +15,13 @@ spec:
         app: "{{ .Release.Name }}"
     spec:
       serviceAccountName: "{{ .Release.Name }}"
+      volumes:
+        - name: secrets
+          secret:
+            secretName: "{{ .Release.Name }}"
+            items:
+              - key: KUBECONFIG
+                path: kubeconfig
       containers:
         - name: "{{ .Chart.Name }}"
           env:
@@ -23,13 +30,6 @@ spec:
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"
-          volumes:
-            - name: secrets
-              secret:
-                secretName: "{{ .Release.Name }}"
-                items:
-                  - key: KUBECONFIG
-                    path: kubeconfig
           securityContext:
             capabilities:
               drop:
@@ -45,17 +45,12 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-          #livenessProbe:
-          #  httpGet:
-          #    path: /metrics
-          #    port: http
-          #readinessProbe:
-          #  httpGet:
-          #    path: /metrics
-          #    port: http
           resources:
             requests:
               cpu: 100m
               memory: 32Mi
             limits:
               memory: 512Mi
+          volumeMounts:
+            - name: secrets
+              mountPath: /etc/secrets
