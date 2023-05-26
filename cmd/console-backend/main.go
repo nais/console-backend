@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -18,17 +19,17 @@ import (
 )
 
 type Config struct {
-	Audience      string
-	BindHost      string
-	TeamsEndpoint string
-	TeamsToken    string
-	FieldSelector string
-	HookdEndpoint string
-	HookdPSK      string
-	Kubeconfig    string
-	LogLevel      string
-	Port          string
-	RunAsUser     string
+	Audience           string
+	BindHost           string
+	TeamsEndpoint      string
+	TeamsToken         string
+	FieldSelector      string
+	HookdEndpoint      string
+	HookdPSK           string
+	LogLevel           string
+	Port               string
+	RunAsUser          string
+	KubernetesProjects []string
 }
 
 var cfg = &Config{}
@@ -42,7 +43,7 @@ func init() {
 	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
 	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
 	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
-	flag.StringVar(&cfg.Kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "kubeconfig")
+	flag.StringSliceVar(&cfg.KubernetesProjects, "kubernetes-projects", strings.Split(os.Getenv("KUBECONFIG"), ","), "kubeconfig")
 	flag.StringVar(&cfg.RunAsUser, "run-as-user", os.Getenv("RUN_AS_USER"), "Statically configured frontend user")
 	flag.StringVar(&cfg.FieldSelector, "field-selector", os.Getenv("FIELD_SELECTOR"), "Field selector for k8s resources")
 }
@@ -52,7 +53,7 @@ func main() {
 	log := newLogger()
 	ctx := context.Background()
 
-	k8s, err := k8s.New(cfg.Kubeconfig, cfg.FieldSelector, log.WithField("client", "k8s"))
+	k8s, err := k8s.New(cfg.KubernetesProjects, cfg.FieldSelector, log.WithField("client", "k8s"))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -24,9 +24,11 @@ spec:
                 path: kubeconfig
       containers:
         - name: "{{ .Chart.Name }}"
+          {{- if .Values.kubernetes.projects }}
           env:
-            - name: KUBECONFIG
-              value: /etc/secrets/kubeconfig
+            - name: KUBERNETES_PROJECTS
+              value: "{{ .Values.kubernetes.projects | join "," }}"
+          {{- end }}
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"

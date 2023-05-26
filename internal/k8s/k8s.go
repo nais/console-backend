@@ -36,14 +36,13 @@ type Informers struct {
 	PodInformer corev1inf.PodInformer
 }
 
-func New(kubeconfig, fieldSelector string, log *logrus.Entry) (*Client, error) {
-	infs := map[string]*Informers{}
-
-	kubeConfig, err := clientcmd.LoadFromFile(kubeconfig)
+func New(projects []string, fieldSelector string, log *logrus.Entry) (*Client, error) {
+	kubeConfig, err := createKubeConfig(projects)
 	if err != nil {
-		return nil, fmt.Errorf("load config from file: %w", err)
+		return nil, fmt.Errorf("create kubeconfig: %w", err)
 	}
 
+	infs := map[string]*Informers{}
 	for contextName, context := range kubeConfig.Contexts {
 		infs[contextName] = &Informers{}
 		contextSpec := &api.Context{Cluster: context.Cluster, AuthInfo: context.AuthInfo}
