@@ -12,6 +12,8 @@ RUN echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /et
 RUN apt-get update && \
     apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
+RUN apt-get install -y google-cloud-sdk
+
 COPY . /src
 WORKDIR /src
 RUN rm -f go.sum
@@ -22,7 +24,7 @@ FROM gcr.io/distroless/base
 WORKDIR /app
 COPY --from=builder /src/bin/console-backend /app/console-backend
 
-# copy the gke-gcloud-auth-plugin installed from builder image to path
 COPY --from=builder /usr/bin/gke-gcloud-auth-plugin /usr/bin/gke-gcloud-auth-plugin
+COPY --from=builder /usr/bin/gcloud /usr/bin/gcloud
 
 ENTRYPOINT ["/app/console-backend"]
