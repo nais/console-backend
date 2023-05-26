@@ -3,12 +3,10 @@ image:
   name: console-backend
 
 teams:
-  token: "secret-teams-token"
+  token: ""
 
 hookd:
-  psk: "secret-hookd-psk"
+  psk: ""
 
 kubernetes:
-  projects:
-    - "dev-project"
-    - "prod-project"
+  projects: []
