@@ -8,5 +8,8 @@ teams:
 hookd:
   psk: ""
 
+serviceaccount:
+  email: ""
+
 kubernetes:
   projects: []
