@@ -258,14 +258,16 @@ func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (boo
 		return false, fmt.Errorf("getting email from context: %w", err)
 	}
 
-	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email)
+	members, err := r.TeamsClient.GetMembers(ctx, obj.Name)
 	if err != nil {
 		return false, fmt.Errorf("getting teams from Teams: %w", err)
 	}
 
-	for _, t := range teams {
-		if t.Team.Slug == obj.Name {
-			return true, nil
+	for _, m := range members {
+		if m.User.Email == email {
+			if m.Role == "OWNER" || m.Role == "MEMBER" {
+				return true, nil
+			}
 		}
 	}
 
@@ -278,21 +280,15 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 	if err != nil {
 		return false, fmt.Errorf("getting email from context: %w", err)
 	}
-	team, err := r.TeamsClient.GetTeamsForUser(ctx, email)
+
+	members, err := r.TeamsClient.GetMembers(ctx, obj.Name)
 	if err != nil {
-		return false, fmt.Errorf("getting team from Teams: %w", err)
+		return false, fmt.Errorf("getting members from Teams: %w", err)
 	}
-	for _, t := range team {
-		if t.Team.Slug == obj.Name {
-			members, err := r.TeamsClient.GetMembers(ctx, obj.Name)
-			if err != nil {
-				return false, fmt.Errorf("getting members from Teams: %w", err)
-			}
-			for _, m := range members {
-				if m.User.Email == email {
-					return m.Role == "OWNER", nil
-				}
-			}
+
+	for _, m := range members {
+		if m.User.Email == email {
+			return m.Role == "OWNER", nil
 		}
 	}
 	return false, nil
