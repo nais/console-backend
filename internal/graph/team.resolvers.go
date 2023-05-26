@@ -288,7 +288,9 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 
 	for _, m := range members {
 		if m.User.Email == email {
-			return m.Role == "OWNER", nil
+			if m.Role == "OWNER" {
+				return true, nil
+			}
 		}
 	}
 	return false, nil
