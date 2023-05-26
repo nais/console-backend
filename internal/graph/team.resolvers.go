@@ -11,6 +11,26 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+const contextEmail contextKey = 1
+
+// ChangeDeployKey is the resolver for the changeDeployKey field.
+func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
+	if !r.hasAccess(ctx, team) {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	new, err := r.Hookd.ChangeDeployKey(ctx, team)
+	if err != nil {
+		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
+	}
+	return &model.DeploymentKey{
+		ID:      model.Ident{ID: team, Type: "deployKey"},
+		Key:     new.Key,
+		Created: new.Created,
+		Expires: new.Expires,
+	}, nil
+}
+
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error) {
 	teams, err := r.TeamsClient.GetTeams(ctx)
@@ -213,24 +233,6 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 	}, nil
 }
 
-// ChangeDeployKey is the resolver for the changeDeployKey field.
-func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
-	if !r.hasAccess(ctx, team) {
-		return nil, fmt.Errorf("access denied")
-	}
-
-	new, err := r.Hookd.ChangeDeployKey(ctx, team)
-	if err != nil {
-		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
-	}
-	return &model.DeploymentKey{
-		ID:      model.Ident{ID: team, Type: "deployKey"},
-		Key:     new.Key,
-		Created: new.Created,
-		Expires: new.Expires,
-	}, nil
-}
-
 // DeployKey is the resolver for the deployKey field.
 func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error) {
 	if !r.hasAccess(ctx, obj.Name) {
@@ -250,13 +252,44 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 	}, nil
 }
 
+// ViewerIsMember is the resolver for the viewerIsMember field.
+func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error) {
+	email := ctx.Value(contextEmail)
+	if email == nil {
+		return false, fmt.Errorf("no email in context")
+	}
+
+	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email.(string))
+	if err != nil {
+		return false, fmt.Errorf("getting teams from Teams: %w", err)
+	}
+	for _, t := range teams {
+		if t.Team.Slug == obj.Name {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// ViewerIsAdmin is the resolver for the viewerIsAdmin field.
+func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error) {
+	//email := ctx.Value(contextEmail)
+	//if email == nil {
+	//	return false, fmt.Errorf("no email in context")
+	//}
+	//team, err := r.TeamsClient.GetTeam(ctx, obj.Name)
+	//if err != nil {
+	//	return false, fmt.Errorf("getting team from Teams: %w", err)
+	//}
+	return false, nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	teamResolver     struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type teamResolver struct{ *Resolver }

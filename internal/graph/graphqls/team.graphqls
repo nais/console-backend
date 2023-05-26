@@ -35,6 +35,8 @@ type Team implements Node {
   slackAlertsChannels: [SlackAlertsChannel!]
   deployments(first: Int, after: Cursor): DeploymentConnection!
   deployKey: DeploymentKey!
+  viewerIsMember: Boolean!
+  viewerIsAdmin: Boolean!
 }
 
 type DeploymentKey implements Node {
