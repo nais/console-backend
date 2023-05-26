@@ -11,6 +11,8 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+type contextKey int
+
 const contextEmail contextKey = 1
 
 // ChangeDeployKey is the resolver for the changeDeployKey field.
@@ -291,5 +293,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)
