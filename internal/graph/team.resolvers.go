@@ -8,12 +8,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
 )
-
-type contextKey int
-
-const contextEmail contextKey = 1
 
 // ChangeDeployKey is the resolver for the changeDeployKey field.
 func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
@@ -256,15 +253,16 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 
 // ViewerIsMember is the resolver for the viewerIsMember field.
 func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error) {
-	email := ctx.Value(contextEmail)
-	if email == nil {
-		return false, fmt.Errorf("no email in context")
+	email, err := auth.GetEmail(ctx)
+	if err != nil {
+		return false, fmt.Errorf("getting email from context: %w", err)
 	}
 
-	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email.(string))
+	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email)
 	if err != nil {
 		return false, fmt.Errorf("getting teams from Teams: %w", err)
 	}
+
 	for _, t := range teams {
 		if t.Team.Slug == obj.Name {
 			return true, nil
@@ -276,14 +274,27 @@ func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (boo
 
 // ViewerIsAdmin is the resolver for the viewerIsAdmin field.
 func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error) {
-	//email := ctx.Value(contextEmail)
-	//if email == nil {
-	//	return false, fmt.Errorf("no email in context")
-	//}
-	//team, err := r.TeamsClient.GetTeam(ctx, obj.Name)
-	//if err != nil {
-	//	return false, fmt.Errorf("getting team from Teams: %w", err)
-	//}
+	email, err := auth.GetEmail(ctx)
+	if err != nil {
+		return false, fmt.Errorf("getting email from context: %w", err)
+	}
+	team, err := r.TeamsClient.GetTeamsForUser(ctx, email)
+	if err != nil {
+		return false, fmt.Errorf("getting team from Teams: %w", err)
+	}
+	for _, t := range team {
+		if t.Team.Slug == obj.Name {
+			members, err := r.TeamsClient.GetMembers(ctx, obj.Name)
+			if err != nil {
+				return false, fmt.Errorf("getting members from Teams: %w", err)
+			}
+			for _, m := range members {
+				if m.User.Email == email {
+					return m.Role == "OWNER", nil
+				}
+			}
+		}
+	}
 	return false, nil
 }
 
