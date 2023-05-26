@@ -22,8 +22,6 @@ import (
 	"k8s.io/client-go/informers"
 	corev1inf "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type Client struct {
@@ -37,26 +35,22 @@ type Informers struct {
 }
 
 func New(projects []string, fieldSelector string, log *logrus.Entry) (*Client, error) {
-	kubeConfig, err := createKubeConfig(projects)
+	restConfigs, err := createRestConfigs(projects)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
 	}
 
 	infs := map[string]*Informers{}
-	for contextName, context := range kubeConfig.Contexts {
-		infs[contextName] = &Informers{}
-		contextSpec := &api.Context{Cluster: context.Cluster, AuthInfo: context.AuthInfo}
-		restConfig, err := clientcmd.NewDefaultClientConfig(*kubeConfig, &clientcmd.ConfigOverrides{Context: *contextSpec}).ClientConfig()
-		if err != nil {
-			return nil, fmt.Errorf("create client config: %w", err)
-		}
+	for cluster, cfg := range restConfigs {
+		cfg := cfg
+		infs[cluster] = &Informers{}
 
-		clientSet, err := kubernetes.NewForConfig(restConfig)
+		clientSet, err := kubernetes.NewForConfig(&cfg)
 		if err != nil {
 			return nil, fmt.Errorf("create clientset: %w", err)
 		}
 
-		dynamicClient, err := dynamic.NewForConfig(restConfig)
+		dynamicClient, err := dynamic.NewForConfig(&cfg)
 		if err != nil {
 			return nil, fmt.Errorf("create dynamic client: %w", err)
 		}
@@ -69,9 +63,8 @@ func New(projects []string, fieldSelector string, log *logrus.Entry) (*Client, e
 			options.FieldSelector = fieldSelector
 		})
 
-		infs[contextName].PodInformer = inf.Core().V1().Pods()
-
-		infs[contextName].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
+		infs[cluster].PodInformer = inf.Core().V1().Pods()
+		infs[cluster].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
 	}
 
 	return &Client{

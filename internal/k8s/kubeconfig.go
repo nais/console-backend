@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"google.golang.org/api/container/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -16,40 +17,28 @@ type cluster struct {
 	CA       string
 }
 
-func createKubeConfig(projects []string) (*api.Config, error) {
+func createRestConfigs(projects []string) (map[string]rest.Config, error) {
 	clusters, err := clusters(context.Background(), projects)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := &api.Config{
-		Clusters:  map[string]*api.Cluster{},
-		Contexts:  map[string]*api.Context{},
-		AuthInfos: map[string]*api.AuthInfo{},
-	}
-
+	ret := map[string]rest.Config{}
 	for _, cluster := range clusters {
 		ca, err := base64.StdEncoding.DecodeString(cluster.CA)
 		if err != nil {
 			return nil, fmt.Errorf("base64 decoding CA for cluster %s: %w", cluster.Name, err)
 		}
 
-		ret.Clusters[cluster.Name] = &api.Cluster{
-			Server:                   cluster.Endpoint,
-			CertificateAuthorityData: ca,
+		ret[cluster.Name] = rest.Config{
+			Host: cluster.Endpoint,
+			TLSClientConfig: rest.TLSClientConfig{
+				CAData: ca,
+			},
+			AuthProvider: &api.AuthProviderConfig{
+				Name: googleAuthPlugin,
+			},
 		}
-		ret.Contexts[cluster.Name] = &api.Context{
-			Cluster:  cluster.Name,
-			AuthInfo: "user",
-		}
-	}
-	ret.AuthInfos["user"] = &api.AuthInfo{
-		Exec: &api.ExecConfig{
-			APIVersion:         "client.authentication.k8s.io/v1beta1",
-			Command:            "gke-gcloud-auth-plugin",
-			ProvideClusterInfo: true,
-			InteractiveMode:    api.IfAvailableExecInteractiveMode,
-		},
 	}
 
 	return ret, nil
