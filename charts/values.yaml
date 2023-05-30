@@ -11,5 +11,7 @@ hookd:
 serviceaccount:
   email: ""
 
+tenant: ""
+
 kubernetes:
-  projects: []
+  clusters: []

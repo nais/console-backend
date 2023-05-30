@@ -19,8 +19,8 @@ spec:
         - name: "{{ .Chart.Name }}"
           {{- if .Values.kubernetes.projects }}
           env:
-            - name: KUBERNETES_PROJECTS
-              value: "{{ .Values.kubernetes.projects | join "," }}"
+            - name: KUBERNETES_CLUSTERS
+              value: "{{ .Values.kubernetes.clusters | join "," }}"
           {{- end }}
           envFrom:
             - secretRef:

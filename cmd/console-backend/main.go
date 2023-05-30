@@ -21,15 +21,16 @@ import (
 type Config struct {
 	Audience           string
 	BindHost           string
-	TeamsEndpoint      string
-	TeamsToken         string
 	FieldSelector      string
 	HookdEndpoint      string
 	HookdPSK           string
 	LogLevel           string
 	Port               string
 	RunAsUser          string
-	KubernetesProjects []string
+	TeamsEndpoint      string
+	TeamsToken         string
+	Tenant             string
+	KubernetesClusters []string
 }
 
 var cfg = &Config{}
@@ -43,9 +44,10 @@ func init() {
 	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
 	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
 	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
-	flag.StringSliceVar(&cfg.KubernetesProjects, "kubernetes-projects", strings.Split(os.Getenv("KUBERNETES_PROJECTS"), ","), "Kubernetes projects to watch")
+	flag.StringVar(&cfg.Tenant, "tenant", envOrDefault("TENANT", "dev-nais"), "Which tenant we are running in")
 	flag.StringVar(&cfg.RunAsUser, "run-as-user", os.Getenv("RUN_AS_USER"), "Statically configured frontend user")
 	flag.StringVar(&cfg.FieldSelector, "field-selector", os.Getenv("FIELD_SELECTOR"), "Field selector for k8s resources")
+	flag.StringSliceVar(&cfg.KubernetesClusters, "kubernetes-clusters", strings.Split(os.Getenv("KUBERNETES_CLUSTERS"), ","), "Kubernetes clusters to watch")
 }
 
 func main() {
@@ -53,7 +55,7 @@ func main() {
 	log := newLogger()
 	ctx := context.Background()
 
-	k8s, err := k8s.New(cfg.KubernetesProjects, cfg.FieldSelector, log.WithField("client", "k8s"))
+	k8s, err := k8s.New(cfg.KubernetesClusters, cfg.Tenant, cfg.FieldSelector, log.WithField("client", "k8s"))
 	if err != nil {
 		log.Fatal(err)
 	}

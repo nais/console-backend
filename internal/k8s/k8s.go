@@ -34,8 +34,8 @@ type Informers struct {
 	PodInformer corev1inf.PodInformer
 }
 
-func New(projects []string, fieldSelector string, log *logrus.Entry) (*Client, error) {
-	restConfigs, err := createRestConfigs(projects)
+func New(clusters []string, tenant, fieldSelector string, log *logrus.Entry) (*Client, error) {
+	restConfigs, err := createRestConfigs(clusters, tenant)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
 	}
