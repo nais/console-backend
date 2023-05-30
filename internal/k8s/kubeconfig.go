@@ -2,8 +2,6 @@ package k8s
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
 	"strings"
 
 	"google.golang.org/api/container/v1"
@@ -25,15 +23,15 @@ func createRestConfigs(projects []string) (map[string]rest.Config, error) {
 
 	ret := map[string]rest.Config{}
 	for _, cluster := range clusters {
-		ca, err := base64.StdEncoding.DecodeString(cluster.CA)
-		if err != nil {
-			return nil, fmt.Errorf("base64 decoding CA for cluster %s: %w", cluster.Name, err)
-		}
+		// ca, err := base64.StdEncoding.DecodeString(cluster.CA)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("base64 decoding CA for cluster %s: %w", cluster.Name, err)
+		// }
 
 		ret[cluster.Name] = rest.Config{
-			Host: cluster.Endpoint,
+			Host: "https://apiserver." + cluster.Name + ".dev-nais.cloud.nais.io",
 			TLSClientConfig: rest.TLSClientConfig{
-				CAData: ca,
+				Insecure: true,
 			},
 			AuthProvider: &api.AuthProviderConfig{
 				Name: googleAuthPlugin,

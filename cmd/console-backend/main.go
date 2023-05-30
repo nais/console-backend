@@ -79,10 +79,10 @@ func main() {
 		log.Infof("Running as user %s", cfg.RunAsUser)
 		http.Handle("/query", auth.StaticUser(cfg.RunAsUser, srv))
 	} else {
-		http.Handle("/query", auth.ValidateIAPJWT("audience")(srv))
+		http.Handle("/query", auth.ValidateIAPJWT(cfg.Audience)(srv))
 	}
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
+	log.Printf("connect to http://%s:%s/ for GraphQL playground", cfg.BindHost, cfg.Port)
 	log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))
 }
 
