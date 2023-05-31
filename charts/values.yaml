@@ -2,6 +2,8 @@ image:
   repository: europe-north1-docker.pkg.dev/nais-io/nais/images
   name: console-backend
 
+audience: ""
+
 teams:
   token: ""
 

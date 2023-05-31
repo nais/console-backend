@@ -17,10 +17,12 @@ spec:
       serviceAccountName: "{{ .Release.Name }}"
       containers:
         - name: "{{ .Chart.Name }}"
-          {{- if .Values.kubernetes.projects }}
+          {{- if .Values.kubernetes.clusters }}
           env:
             - name: KUBERNETES_CLUSTERS
               value: "{{ .Values.kubernetes.clusters | join "," }}"
+            - name: IAP_AUDIENCE
+              value: "{{ .Values.audience }}"
           {{- end }}
           envFrom:
             - secretRef:
