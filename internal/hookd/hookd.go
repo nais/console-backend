@@ -55,7 +55,7 @@ type Resource struct {
 }
 
 func (c *Client) Deployments(ctx context.Context, team, cluster *string) ([]Deploy, error) {
-	url := fmt.Sprintf("%s/api/v1/dashboard/deployments?", c.endpoint)
+	url := fmt.Sprintf("%s/internal/api/v1/console/deployments?", c.endpoint)
 	if team != nil {
 		url = fmt.Sprintf("%s&team=%s", url, *team)
 	}
