@@ -1,0 +1,33 @@
+apiVersion: networking.gke.io/v1alpha3
+kind: FQDNNetworkPolicy
+metadata:
+  name: "{{ .Release.Name }}-fqdn"
+  namespace: nais-system
+spec:
+  egress:
+  - ports:
+    - port: 80
+      protocol: TCP
+    to:
+    - fqdns:
+      - metadata.google.internal
+  - ports:
+    - port: 443
+      protocol: TCP
+    to:
+    - fqdns:
+      - private.googleapis.com
+{{- $root := . }}
+{{- range .Values.kubernetes.clusters }}
+  - ports:
+    - port: 443
+      protocol: TCP
+    to:
+    - fqdns:
+      - "apiserver.{{ . }}.{{ $root.Values.tenant }}.cloud.nais.io"
+{{- end }}
+  podSelector:
+    matchLabels:
+      app: console-backend
+  policyTypes:
+  - Egress
