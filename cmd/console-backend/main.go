@@ -87,7 +87,7 @@ func main() {
 		log.Infof("Running as user %s", cfg.RunAsUser)
 		http.Handle("/query", auth.StaticUser(cfg.RunAsUser, corsMW.Handler(srv)))
 	} else {
-		http.Handle("/query", auth.ValidateIAPJWT(cfg.Audience)(srv))
+		http.Handle("/query", auth.ValidateIAPJWT(cfg.Audience)(corsMW.Handler(srv)))
 	}
 
 	log.Printf("connect to http://%s:%s/ for GraphQL playground", cfg.BindHost, cfg.Port)
