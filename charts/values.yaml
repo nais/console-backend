@@ -13,7 +13,7 @@ hookd:
 serviceaccount:
   email: ""
 
-tenant: ""
+tenant: "dev-nais"
 
 kubernetes:
-  clusters: []
+  clusters: ["dev", "prod"]
