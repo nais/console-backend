@@ -14,6 +14,7 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
+	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 )
@@ -73,13 +74,18 @@ func main() {
 			Log:         log,
 		},
 	}
+	corsMW := cors.New(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+	})
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	if cfg.RunAsUser != "" && cfg.Audience == "" {
 		log.Infof("Running as user %s", cfg.RunAsUser)
-		http.Handle("/query", auth.StaticUser(cfg.RunAsUser, srv))
+		http.Handle("/query", auth.StaticUser(cfg.RunAsUser, corsMW.Handler(srv)))
 	} else {
 		http.Handle("/query", auth.ValidateIAPJWT(cfg.Audience)(srv))
 	}
