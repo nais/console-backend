@@ -203,10 +203,16 @@ type Maintenance struct {
 }
 
 type Maskinporten struct {
-	Scopes []*Scope `json:"scopes"`
+	Scopes  *MaskinportenScope `json:"scopes"`
+	Enabled bool               `json:"enabled"`
 }
 
 func (Maskinporten) IsAuthz() {}
+
+type MaskinportenScope struct {
+	Consumes []*Consume `json:"consumes"`
+	Exposes  []*Expose  `json:"exposes"`
+}
 
 type OpenSearch struct {
 	// The opensearch instance name
@@ -216,11 +222,6 @@ type OpenSearch struct {
 
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
-
-type Scope struct {
-	Consumes []*Consume `json:"consumes"`
-	Exposes  []*Expose  `json:"exposes"`
-}
 
 type SearchConnection struct {
 	Edges      []*SearchEdge `json:"edges"`

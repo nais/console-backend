@@ -16,11 +16,12 @@ type Expose {
   product: String!
 }
 
-type Scope {
+type MaskinportenScope {
   consumes: [Consume!]!
   exposes: [Expose!]!
 }
 
 type Maskinporten {
-  scopes: [Scope!]!
+  scopes: MaskinportenScope!
+  enabled: Boolean!
 }
