@@ -88,9 +88,9 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	if cfg.RunAsUser != "" && cfg.Audience == "" {
 		log.Infof("Running as user %s", cfg.RunAsUser)
-		http.Handle("/query", auth.StaticUser(cfg.RunAsUser, corsMW.Handler(srv)))
+		http.Handle("/query", corsMW.Handler(auth.StaticUser(cfg.RunAsUser, srv)))
 	} else {
-		http.Handle("/query", auth.ValidateIAPJWT(cfg.Audience)(corsMW.Handler(srv)))
+		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.Audience)(srv)))
 	}
 
 	log.Printf("connect to http://%s:%s/ for GraphQL playground", cfg.BindHost, cfg.Port)
