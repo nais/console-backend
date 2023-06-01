@@ -385,13 +385,13 @@ func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
 		ret = append(ret, idPorten)
 	}
 
-	// if app.Spec.Maskinporten != nil && app.Spec.Maskinporten.Enabled {
-	// 	maskinporten := model.Maskinporten{}
-	// 	if err := convert(app.Spec.Maskinporten, &maskinporten); err != nil {
-	// 		return nil, fmt.Errorf("converting maskinporten: %w", err)
-	// 	}
-	// 	ret = append(ret, maskinporten)
-	// }
+	if app.Spec.Maskinporten != nil && app.Spec.Maskinporten.Enabled {
+		maskinporten := model.Maskinporten{}
+		if err := convert(app.Spec.Maskinporten, &maskinporten); err != nil {
+			return nil, fmt.Errorf("converting maskinporten: %w", err)
+		}
+		ret = append(ret, maskinporten)
+	}
 
 	if app.Spec.TokenX != nil && app.Spec.TokenX.Enabled {
 		tokenX := model.TokenX{}

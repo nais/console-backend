@@ -98,13 +98,13 @@ func githubRepositoryEdges(repos []t.GitHubRepository, first int, after int) []*
 func (r *Resolver) hasAccess(ctx context.Context, team string) bool {
 	email, err := auth.GetEmail(ctx)
 	if err != nil {
-		r.Log.Errorf("getting email from context: %w", err)
+		r.Log.Errorf("getting email from context: %v", err)
 		return false
 	}
 
 	teams, err := r.TeamsClient.GetTeamsForUser(ctx, email)
 	if err != nil {
-		r.Log.Errorf("getting teams from Teams: %w", err)
+		r.Log.Errorf("getting teams from Teams: %v", err)
 		return false
 	}
 
