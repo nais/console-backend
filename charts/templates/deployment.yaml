@@ -23,6 +23,8 @@ spec:
               value: "{{ .Values.kubernetes.clusters | join "," }}"
             - name: IAP_AUDIENCE
               value: "{{ .Values.audience }}"
+            - name: TENANT
+              value: "{{ .Values.tenant }}"
           {{- end }}
           envFrom:
             - secretRef:
