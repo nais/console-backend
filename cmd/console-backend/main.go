@@ -74,11 +74,14 @@ func main() {
 			Log:         log,
 		},
 	}
-	corsMW := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowCredentials: true,
-	})
+
+	corsMW := cors.New(
+		cors.Options{
+			AllowedOrigins:   []string{"https://*", "http://*"},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowCredentials: true,
+			Debug:            cfg.LogLevel == "debug",
+		})
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
 
