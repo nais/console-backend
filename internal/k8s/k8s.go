@@ -84,17 +84,20 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 	for env, infs := range c.informers {
 		objs, err := infs.AppInformer.Lister().List(labels.Everything())
 		if err != nil {
+			c.log.WithError(err).Error("listing applications")
 			return nil
 		}
 
 		for _, obj := range objs {
-			app, err := toApp(obj, env)
-			if err != nil {
-				return nil
-			}
-			rank := search.Match(q, app.Name)
+			u := obj.(*unstructured.Unstructured)
+			rank := search.Match(q, u.GetName())
 			if rank == -1 {
 				continue
+			}
+			app, err := toApp(u, env)
+			if err != nil {
+				c.log.WithError(err).Error("converting to app")
+				return nil
 			}
 
 			ret = append(ret, &search.SearchResult{
@@ -119,7 +122,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	if err != nil {
 		return nil, fmt.Errorf("getting application: %w", err)
 	}
-	return toApp(obj, env)
+	return toApp(obj.(*unstructured.Unstructured), env)
 }
 
 func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, error) {
@@ -160,7 +163,7 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 			return nil, fmt.Errorf("listing applications: %w", err)
 		}
 		for _, obj := range objs {
-			app, err := toApp(obj, env)
+			app, err := toApp(obj.(*unstructured.Unstructured), env)
 			if err != nil {
 				return nil, fmt.Errorf("converting to app: %w", err)
 			}
@@ -212,8 +215,7 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 	return ret, nil
 }
 
-func toApp(obj runtime.Object, env string) (*model.App, error) {
-	u := obj.(*unstructured.Unstructured)
+func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
 	app := &naisv1alpha1.Application{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, app); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
@@ -383,13 +385,13 @@ func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
 		ret = append(ret, idPorten)
 	}
 
-	if app.Spec.Maskinporten != nil && app.Spec.Maskinporten.Enabled {
-		maskinporten := model.Maskinporten{}
-		if err := convert(app.Spec.Maskinporten, &maskinporten); err != nil {
-			return nil, fmt.Errorf("converting maskinporten: %w", err)
-		}
-		ret = append(ret, maskinporten)
-	}
+	// if app.Spec.Maskinporten != nil && app.Spec.Maskinporten.Enabled {
+	// 	maskinporten := model.Maskinporten{}
+	// 	if err := convert(app.Spec.Maskinporten, &maskinporten); err != nil {
+	// 		return nil, fmt.Errorf("converting maskinporten: %w", err)
+	// 	}
+	// 	ret = append(ret, maskinporten)
+	// }
 
 	if app.Spec.TokenX != nil && app.Spec.TokenX.Enabled {
 		tokenX := model.TokenX{}
