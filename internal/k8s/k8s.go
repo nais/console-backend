@@ -240,10 +240,14 @@ func toApp(obj runtime.Object, env string) (*model.App, error) {
 
 	if app.Spec.Replicas != nil {
 		ret.AutoScaling = model.AutoScaling{
-			Min:          *app.Spec.Replicas.Min,
-			Max:          *app.Spec.Replicas.Max,
 			Disabled:     app.Spec.Replicas.DisableAutoScaling,
 			CPUThreshold: app.Spec.Replicas.CpuThresholdPercentage,
+		}
+		if app.Spec.Replicas.Min != nil {
+			ret.AutoScaling.Min = *app.Spec.Replicas.Min
+		}
+		if app.Spec.Replicas.Max != nil {
+			ret.AutoScaling.Max = *app.Spec.Replicas.Max
 		}
 	}
 
