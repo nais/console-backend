@@ -19,3 +19,10 @@ tenant: "dev-nais"
 
 kubernetes:
   clusters: "dev,prod"
+
+resources:
+  limits:
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
