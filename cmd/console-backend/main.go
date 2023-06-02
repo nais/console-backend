@@ -14,9 +14,12 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
+	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/sdk/metric"
 )
 
 type Config struct {
@@ -56,18 +59,30 @@ func main() {
 	log := newLogger()
 	ctx := context.Background()
 
-	k8s, err := k8s.New(cfg.KubernetesClusters, cfg.Tenant, cfg.FieldSelector, log.WithField("client", "k8s"))
+	exporter, err := prometheus.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	provider := metric.NewMeterProvider(metric.WithReader(exporter))
+	meter := provider.Meter("github.com/nais/console-backend")
+
+	errors, err := meter.Int64Counter("errors")
+	if err != nil {
+		log.Fatalf("creating error counter: %v", err)
+	}
+
+	k8s, err := k8s.New(cfg.KubernetesClusters, cfg.Tenant, cfg.FieldSelector, errors, log.WithField("client", "k8s"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	k8s.Run(ctx)
-	teams := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint)
+	teams := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errors, log.WithField("client", "teams"))
 	searcher := search.New(teams, k8s)
 
 	graphConfig := graph.Config{
 		Resolvers: &graph.Resolver{
-			Hookd:       hookd.New(cfg.HookdPSK, cfg.HookdEndpoint),
+			Hookd:       hookd.New(cfg.HookdPSK, cfg.HookdEndpoint, errors, log.WithField("client", "hookd")),
 			TeamsClient: teams,
 			K8s:         k8s,
 			Searcher:    searcher,
@@ -92,6 +107,8 @@ func main() {
 	} else {
 		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.Audience)(srv)))
 	}
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	log.Printf("connect to http://%s:%s/ for GraphQL playground", cfg.BindHost, cfg.Port)
 	log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))

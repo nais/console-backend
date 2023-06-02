@@ -14,6 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/search"
+	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	api "go.opentelemetry.io/otel/metric"
 )
 
 type User struct {
@@ -60,10 +63,17 @@ type Client struct {
 	lock       sync.RWMutex
 	teams      []*model.Team
 	updated    time.Time
+	log        *logrus.Entry
+	errors     api.Int64Counter
 }
 
-func New(token, endpoint string) *Client {
-	return &Client{endpoint: endpoint, httpClient: Transport{Token: token}.Client()}
+func New(token, endpoint string, errors api.Int64Counter, log *logrus.Entry) *Client {
+	return &Client{
+		endpoint:   endpoint,
+		httpClient: Transport{Token: token}.Client(),
+		log:        log,
+		errors:     errors,
+	}
 }
 
 func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.SearchResult {
@@ -103,7 +113,7 @@ func (c *Client) updateTeams(ctx context.Context) {
 
 	teams, err := c.GetTeams(ctx)
 	if err != nil {
-		fmt.Printf("error getting teams from teams: %v\n", err)
+		c.error(ctx, err, "getting teams from teams")
 		return
 	}
 
@@ -171,7 +181,7 @@ func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitH
 	}{}
 
 	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, err
+		return nil, c.error(ctx, err, "querying teams for github repositories")
 	}
 
 	return respBody.Data.Team.GitHubRepositories, nil
@@ -201,7 +211,7 @@ func (c *Client) GetMembers(ctx context.Context, name string) ([]Member, error) 
 	}{}
 
 	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying teams: %w", err)
+		return nil, c.error(ctx, err, "querying teams for members")
 	}
 
 	return respBody.Data.Team.Members, nil
@@ -222,7 +232,7 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 	}{}
 
 	if err := c.teamsQuery(ctx, q, nil, &respBody); err != nil {
-		return nil, fmt.Errorf("querying teams: %w", err)
+		return nil, c.error(ctx, err, "querying teams for teams")
 	}
 
 	return respBody.Data.Teams, nil
@@ -251,7 +261,7 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 	}{}
 
 	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying teams: %w", err)
+		return nil, c.error(ctx, err, "querying teams for user teams")
 	}
 
 	return respBody.Data.UserByEmail.Teams, nil
@@ -272,7 +282,7 @@ func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error
 		Errors []map[string]any `json:"errors"`
 	}{}
 	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying teams: %w", err)
+		return nil, c.error(ctx, err, "querying teams for user")
 	}
 	if respBody.Data.UserByID == nil {
 		return nil, fmt.Errorf("user %s not found", id)
@@ -303,7 +313,7 @@ func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
 		Errors []map[string]any `json:"errors"`
 	}{}
 	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
-		return nil, fmt.Errorf("querying teams: %w", err)
+		return nil, c.error(ctx, err, "querying teams for user")
 	}
 	if respBody.Data.UserByEmail == nil {
 		return nil, fmt.Errorf("user %s not found", email)
@@ -347,4 +357,10 @@ func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]s
 	}
 
 	return nil
+}
+
+func (c *Client) error(ctx context.Context, err error, msg string) error {
+	c.errors.Add(context.Background(), 1, api.WithAttributes(attribute.String("component", "teams-client")))
+	c.log.WithError(err).Error(msg)
+	return fmt.Errorf("%s: %w", msg, err)
 }

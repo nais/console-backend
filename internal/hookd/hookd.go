@@ -8,16 +8,28 @@ import (
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	api "go.opentelemetry.io/otel/metric"
 )
 
 type Client struct {
 	psk        string
 	endpoint   string
 	httpClient *http.Client
+	log        *logrus.Entry
+	errors     api.Int64Counter
 }
 
-func New(psk, endpoint string) *Client {
-	return &Client{psk: psk, endpoint: endpoint, httpClient: Transport{PSK: psk}.Client()}
+func New(psk, endpoint string, errors api.Int64Counter, log *logrus.Entry) *Client {
+	return &Client{
+		psk:        psk,
+		endpoint:   endpoint,
+		httpClient: Transport{PSK: psk}.Client(),
+		log:        log,
+		errors:     errors,
+	}
 }
 
 type DeploymentsResponse struct {
@@ -65,18 +77,18 @@ func (c *Client) Deployments(ctx context.Context, team, cluster *string) ([]Depl
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
+		return nil, c.error(ctx, err, "create request for hookd")
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("making request: %w", err)
+		return nil, c.error(ctx, err, "calling hookd")
 	}
 
 	var deploymentsResponse DeploymentsResponse
 
 	if err := json.NewDecoder(resp.Body).Decode(&deploymentsResponse); err != nil {
-		return nil, fmt.Errorf("decoding hookd response: %w", err)
+		return nil, c.error(ctx, err, "decoding response from hookd")
 	}
 
 	ret := deploymentsResponse.Deployments
@@ -91,7 +103,7 @@ func (c *Client) Deployments(ctx context.Context, team, cluster *string) ([]Depl
 func (c *Client) DeploymentsByApp(ctx context.Context, app, team, env string) ([]Deploy, error) {
 	deploys, err := c.Deployments(ctx, &team, &env)
 	if err != nil {
-		return nil, fmt.Errorf("getting deployments: %w", err)
+		return nil, c.error(ctx, err, "getting deploys from hookd")
 	}
 
 	return filterByApplication(deploys, app), nil
@@ -121,17 +133,17 @@ func (c *Client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, 
 	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("create request for deploy key API: %w", err)
+		return nil, c.error(ctx, err, "create request for deploy key API")
 	}
 
 	resp, err := c.httpClient.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, c.error(ctx, err, "calling hookd")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("deploy key API returned %s", resp.Status)
+		return nil, c.error(ctx, fmt.Errorf("deploy key API returned %s", resp.Status), "deploy key API returned non-200")
 	}
 
 	return c.DeployKey(ctx, team)
@@ -141,7 +153,7 @@ func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error)
 	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("create request for deploy key API: %w", err)
+		return nil, c.error(ctx, err, "create request for deploy key API")
 	}
 
 	resp, err := c.httpClient.Do(request)
@@ -151,15 +163,21 @@ func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("deploy key API returned %s", resp.Status)
+		return nil, c.error(ctx, fmt.Errorf("deploy key API returned %s", resp.Status), "deploy key API returned non-200")
 	}
 
 	data, _ := io.ReadAll(resp.Body)
 	ret := &DeployKey{}
 	err = json.Unmarshal(data, ret)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal reply from deploy API: %v", err)
+		return nil, c.error(ctx, err, "unmarshal reply from deploy API")
 	}
 
 	return ret, nil
+}
+
+func (c *Client) error(ctx context.Context, err error, msg string) error {
+	c.errors.Add(context.Background(), 1, api.WithAttributes(attribute.String("component", "hookd-client")))
+	c.log.WithError(err).Error(msg)
+	return fmt.Errorf("%s: %w", msg, err)
 }

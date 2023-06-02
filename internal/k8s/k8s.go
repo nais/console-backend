@@ -11,6 +11,8 @@ import (
 	"github.com/nais/console-backend/internal/search"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	api "go.opentelemetry.io/otel/metric"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,6 +29,7 @@ import (
 type Client struct {
 	informers map[string]*Informers
 	log       *logrus.Entry
+	errors    api.Int64Counter
 }
 
 type Informers struct {
@@ -34,7 +37,7 @@ type Informers struct {
 	PodInformer corev1inf.PodInformer
 }
 
-func New(clusters []string, tenant, fieldSelector string, log *logrus.Entry) (*Client, error) {
+func New(clusters []string, tenant, fieldSelector string, errors api.Int64Counter, log *logrus.Entry) (*Client, error) {
 	restConfigs, err := createRestConfigs(clusters, tenant)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
@@ -70,6 +73,7 @@ func New(clusters []string, tenant, fieldSelector string, log *logrus.Entry) (*C
 	return &Client{
 		informers: infs,
 		log:       log,
+		errors:    errors,
 	}, nil
 }
 
@@ -84,7 +88,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 	for env, infs := range c.informers {
 		objs, err := infs.AppInformer.Lister().List(labels.Everything())
 		if err != nil {
-			c.log.WithError(err).Error("listing applications")
+			c.error(ctx, err, "listing applications")
 			return nil
 		}
 
@@ -96,7 +100,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 			}
 			app, err := toApp(u, env)
 			if err != nil {
-				c.log.WithError(err).Error("converting to app")
+				c.error(ctx, err, "converting to app")
 				return nil
 			}
 
@@ -121,7 +125,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	c.log.Debugf("getting app %q in namespace %q in env %q", name, team, env)
 	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
 	if err != nil {
-		return nil, fmt.Errorf("getting application: %w", err)
+		return nil, c.error(ctx, err, "getting application")
 	}
 	return toApp(obj.(*unstructured.Unstructured), env)
 }
@@ -129,27 +133,28 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, error) {
 	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
 	if err != nil {
-		return "", fmt.Errorf("getting application: %w", err)
+		return "", c.error(ctx, err, "getting application")
 	}
 	u := obj.(*unstructured.Unstructured)
 
-	x := map[string]any{}
+	tmp := map[string]any{}
 
 	spec, _, err := unstructured.NestedMap(u.Object, "spec")
 	if err != nil {
-		return "", fmt.Errorf("getting application spec: %w", err)
+		return "", c.error(ctx, err, "getting spec")
 	}
 
-	x["spec"] = spec
-	x["apiVersion"] = u.GetAPIVersion()
-	x["kind"] = u.GetKind()
+	tmp["spec"] = spec
+	tmp["apiVersion"] = u.GetAPIVersion()
+	tmp["kind"] = u.GetKind()
 	metadata := map[string]any{"labels": u.GetLabels()}
 	metadata["name"] = u.GetName()
 	metadata["namespace"] = u.GetNamespace()
-	x["metadata"] = metadata
-	b, err := yaml.Marshal(x)
+	tmp["metadata"] = metadata
+	b, err := yaml.Marshal(tmp)
 	if err != nil {
-		return "", fmt.Errorf("marshalling manifest: %w", err)
+		// return "", fmt.Errorf("marshalling manifest: %w", err)
+		return "", c.error(ctx, err, "marshalling manifest")
 	}
 
 	return string(b), nil
@@ -161,12 +166,12 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 	for env, infs := range c.informers {
 		objs, err := infs.AppInformer.Lister().ByNamespace(team).List(labels.Everything())
 		if err != nil {
-			return nil, fmt.Errorf("listing applications: %w", err)
+			return nil, c.error(ctx, err, "listing applications")
 		}
 		for _, obj := range objs {
 			app, err := toApp(obj.(*unstructured.Unstructured), env)
 			if err != nil {
-				return nil, fmt.Errorf("converting to app: %w", err)
+				return nil, c.error(ctx, err, "converting to app")
 			}
 			ret = append(ret, app)
 		}
@@ -174,6 +179,7 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i].Name < ret[j].Name
 	})
+
 	return ret, nil
 }
 
@@ -181,13 +187,13 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 	ret := []*model.Instance{}
 	req, err := labels.NewRequirement("app", selection.Equals, []string{name})
 	if err != nil {
-		return nil, fmt.Errorf("creating label selector: %w", err)
+		return nil, c.error(ctx, err, "creating label selector")
 	}
 
 	selector := labels.NewSelector().Add(*req)
 	pods, err := c.informers[env].PodInformer.Lister().Pods(team).List(selector)
 	if err != nil {
-		return nil, fmt.Errorf("listing pods: %w", err)
+		return nil, c.error(ctx, err, "listing pods")
 	}
 
 	for _, pod := range pods {
@@ -403,4 +409,10 @@ func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
 	}
 
 	return ret, nil
+}
+
+func (c *Client) error(ctx context.Context, err error, msg string) error {
+	c.errors.Add(context.Background(), 1, api.WithAttributes(attribute.String("component", "k8s-client")))
+	c.log.WithError(err).Error(msg)
+	return fmt.Errorf("%s: %w", msg, err)
 }
