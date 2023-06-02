@@ -18,4 +18,4 @@ serviceaccount:
 tenant: "dev-nais"
 
 kubernetes:
-  clusters: ["dev", "prod"]
+  clusters: "dev,prod"
