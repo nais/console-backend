@@ -100,6 +100,12 @@ func main() {
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
 
+	metricsMW, err := graph.NewMetrics(meter)
+	if err != nil {
+		log.WithError(err).Fatal("setting up metrics middleware")
+	}
+	srv.Use(metricsMW)
+
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	if cfg.RunAsUser != "" && cfg.Audience == "" {
 		log.Infof("Running as user %s", cfg.RunAsUser)
