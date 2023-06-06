@@ -23,3 +23,6 @@ kubernetes:
 resources:
   cpu: 300m
   memory: 512Mi
+
+alerts:
+  enabled: true
