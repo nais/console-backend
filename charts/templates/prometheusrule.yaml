@@ -2,13 +2,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: "{{ .Release.Name }}-alerts"
+  name: "{{ .Release.Name }}"
 spec:
   groups:
     - name: "{{ .Release.Name }}-alerts"
       rules:
         - alert: Hookd requests failing
-          expr: increase(errors_total{job="console-backend", component="hookd-client"}[1m]) > 0 
+          expr: increase(errors_total{job="console-backend", component="hookd-client"}[2m]) > 0 
           for: 5m
           labels:
             namespace: nais-system
@@ -18,7 +18,7 @@ spec:
             consequence: Users may not be able to see deployments in console.
             action: "Check logs in console-backend and hookd"
         - alert: Teams requests failing
-          expr: increase(errors_total{job="console-backend", component="teams-client"}[1m]) > 0 
+          expr: increase(errors_total{job="console-backend", component="teams-client"}[2m]) > 0 
           for: 5m
           labels:
             namespace: nais-system
@@ -28,7 +28,7 @@ spec:
             consequence: Users may not be able to see team info in console.
             action: "Check logs in console-backend and teams-backend"
         - alert: Kubernetes API server requests failing
-          expr: increase(errors_total{job="console-backend", component="k8s-client"}[1m]) > 0 
+          expr: increase(errors_total{job="console-backend", component="k8s-client"}[2m]) > 0 
           for: 5m
           labels:
             namespace: nais-system
