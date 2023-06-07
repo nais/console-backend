@@ -13,23 +13,37 @@ type App implements Node {
   id: ID!
   name: String!
   image: String!
-  deployed: Time
+  deployInfo: DeployInfo!
   env: Env!
   ingresses: [String!]!
   instances: [Instance!]!
   accessPolicy: AccessPolicy!
   resources: Resources!
-  deploys(first: Int, after: Cursor): DeploymentConnection!
   autoScaling: AutoScaling!
   storage: [Storage!]!
   variables: [Variable!]!
   authz: [Authz!]!
   manifest: String!
   team: Team!
-  workflowRun: String!
+}
+
+type DeployInfo {
+  deployer: String!
+  timestamp: Time
   commitSha: String!
-  actor: String!
-  #  networking: [Networking!]!
+  url: String!
+  history(
+    first: Int
+    last: Int
+    after: Cursor
+    before: Cursor
+  ): DeploymentResponse!
+}
+
+union DeploymentResponse = DeploymentConnection | Error
+
+type Error {
+  message: String!
 }
 
 extend type Query {

@@ -13,6 +13,10 @@ type Authz interface {
 	IsAuthz()
 }
 
+type DeploymentResponse interface {
+	IsDeploymentResponse()
+}
+
 type Node interface {
 	IsNode()
 	GetID() Ident

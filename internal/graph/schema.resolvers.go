@@ -29,7 +29,6 @@ func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, er
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, error) {
-	fmt.Println("this be ID", id)
 	switch id.Type {
 	case "user":
 		u, err := r.TeamsClient.GetUserByID(ctx, id.ID)

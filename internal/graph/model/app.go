@@ -51,6 +51,7 @@ type App struct {
 	ID           Ident        `json:"id"`
 	Name         string       `json:"name"`
 	Image        string       `json:"image"`
+	DeployInfo   DeployInfo   `json:"deployInfo"`
 	Env          *Env         `json:"env"`
 	AccessPolicy AccessPolicy `json:"accessPolicy"`
 	Authz        []Authz      `json:"authz"`
@@ -62,10 +63,7 @@ type App struct {
 	Storage      []Storage    `json:"storage"`
 	Variables    []Variable   `json:"variables"`
 	GQLVars      struct {
-		Actor       string
-		CommitSHA   string
-		Team        string
-		WorkflowRun string
+		Team string
 	} `json:"-"`
 }
 

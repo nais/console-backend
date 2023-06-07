@@ -21,8 +21,22 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 	return instances, nil
 }
 
-// Deploys is the resolver for the deploys field.
-func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, after *model.Cursor) (*model.DeploymentConnection, error) {
+// Manifest is the resolver for the manifest field.
+func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, error) {
+	app, err := r.K8s.Manifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
+	if err != nil {
+		return "", fmt.Errorf("getting app from Kubernetes: %w", err)
+	}
+	return app, err
+}
+
+// Team is the resolver for the team field.
+func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, error) {
+	return r.TeamsClient.GetTeam(ctx, obj.GQLVars.Team)
+}
+
+// History is the resolver for the history field.
+func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *model.Cursor, before *model.Cursor) (model.DeploymentResponse, error) {
 	if first == nil {
 		first = new(int)
 		*first = 10
@@ -30,9 +44,9 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	if after == nil {
 		after = &model.Cursor{Offset: 0}
 	}
-	deps, err := r.Hookd.DeploymentsByApp(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
+	deps, err := r.Hookd.DeploymentsByApp(ctx, obj.GQLVars.App, obj.GQLVars.Team, obj.GQLVars.Env)
 	if err != nil {
-		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
+		return &model.Error{Message: err.Error()}, nil
 	}
 
 	if *first > len(deps) {
@@ -63,46 +77,20 @@ func (r *appResolver) Deploys(ctx context.Context, obj *model.App, first *int, a
 	return &model.DeploymentConnection{}, nil
 }
 
-// Manifest is the resolver for the manifest field.
-func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, error) {
-	app, err := r.K8s.Manifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
-	if err != nil {
-		return "", fmt.Errorf("getting app from Kubernetes: %w", err)
-	}
-	return app, err
-}
-
-// Team is the resolver for the team field.
-func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, error) {
-	return r.TeamsClient.GetTeam(ctx, obj.GQLVars.Team)
-}
-
-// WorkflowRun is the resolver for the workflowRun field.
-func (r *appResolver) WorkflowRun(ctx context.Context, obj *model.App) (string, error) {
-	return obj.GQLVars.WorkflowRun, nil
-}
-
-// CommitSha is the resolver for the commitSha field.
-func (r *appResolver) CommitSha(ctx context.Context, obj *model.App) (string, error) {
-	return obj.GQLVars.CommitSHA, nil
-}
-
-// Actor is the resolver for the actor field.
-func (r *appResolver) Actor(ctx context.Context, obj *model.App) (string, error) {
-	return obj.GQLVars.Actor, nil
-}
-
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
 	app, err := r.K8s.App(ctx, name, team, env)
 	if err != nil {
 		return nil, fmt.Errorf("getting app from Kubernetes: %w", err)
 	}
-	app.GQLVars.Team = team
 	return app, nil
 }
 
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
+// DeployInfo returns DeployInfoResolver implementation.
+func (r *Resolver) DeployInfo() DeployInfoResolver { return &deployInfoResolver{r} }
+
 type appResolver struct{ *Resolver }
+type deployInfoResolver struct{ *Resolver }

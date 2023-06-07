@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Deployment struct {
 	ID         string                `json:"id"`
@@ -18,6 +20,8 @@ type DeploymentConnection struct {
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	Edges      []*DeploymentEdge `json:"edges"`
 }
+
+func (d *DeploymentConnection) IsDeploymentResponse() {}
 
 type DeploymentEdge struct {
 	Cursor Cursor      `json:"cursor"`
@@ -39,3 +43,21 @@ type DeploymentStatus struct {
 	Message *string   `json:"message,omitempty"`
 	Created time.Time `json:"created"`
 }
+
+type DeployInfo struct {
+	Deployer  string     `json:"deployer"`
+	Timestamp *time.Time `json:"timestamp,omitempty"`
+	CommitSha string     `json:"commitSha"`
+	URL       string     `json:"url"`
+	GQLVars   struct {
+		App  string
+		Env  string
+		Team string
+	} `json:"-"`
+}
+
+type Error struct {
+	Message string `json:"message"`
+}
+
+func (e *Error) IsDeploymentResponse() {}

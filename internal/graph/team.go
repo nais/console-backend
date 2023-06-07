@@ -43,11 +43,8 @@ func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppE
 	start, end := p.ForSlice(len(apps))
 
 	for i, app := range apps[start:end] {
-		app.GQLVars = struct{ Actor, CommitSHA, Team, WorkflowRun string }{
-			Actor:       app.GQLVars.Actor,
-			CommitSHA:   app.GQLVars.CommitSHA,
-			Team:        team,
-			WorkflowRun: app.GQLVars.WorkflowRun,
+		app.GQLVars = struct{ Team string }{
+			Team: team,
 		}
 
 		edges = append(edges, &model.AppEdge{
