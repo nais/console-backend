@@ -237,7 +237,10 @@ func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
 		ID:   model.Ident{ID: env, Type: "env"},
 	}
 
+	ret.GQLVars.Actor = app.GetAnnotations()["deploy.nais.io/github-actor"]
+	ret.GQLVars.CommitSHA = app.GetAnnotations()["deploy.nais.io/github-sha"]
 	ret.GQLVars.Team = app.GetNamespace()
+	ret.GQLVars.WorkflowRun = app.GetAnnotations()["deploy.nais.io/github-workflow-run-url"]
 
 	ret.Image = app.Spec.Image
 

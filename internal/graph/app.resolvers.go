@@ -77,6 +77,21 @@ func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, er
 	return r.TeamsClient.GetTeam(ctx, obj.GQLVars.Team)
 }
 
+// WorkflowRun is the resolver for the workflowRun field.
+func (r *appResolver) WorkflowRun(ctx context.Context, obj *model.App) (string, error) {
+	return obj.GQLVars.WorkflowRun, nil
+}
+
+// CommitSha is the resolver for the commitSha field.
+func (r *appResolver) CommitSha(ctx context.Context, obj *model.App) (string, error) {
+	return obj.GQLVars.CommitSHA, nil
+}
+
+// Actor is the resolver for the actor field.
+func (r *appResolver) Actor(ctx context.Context, obj *model.App) (string, error) {
+	return obj.GQLVars.Actor, nil
+}
+
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
 	app, err := r.K8s.App(ctx, name, team, env)

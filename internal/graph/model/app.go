@@ -62,7 +62,10 @@ type App struct {
 	Storage      []Storage    `json:"storage"`
 	Variables    []Variable   `json:"variables"`
 	GQLVars      struct {
-		Team string
+		Actor       string
+		CommitSHA   string
+		Team        string
+		WorkflowRun string
 	} `json:"-"`
 }
 

@@ -26,6 +26,9 @@ type App implements Node {
   authz: [Authz!]!
   manifest: String!
   team: Team!
+  workflowRun: String!
+  commitSha: String!
+  actor: String!
   #  networking: [Networking!]!
 }
 
