@@ -13,21 +13,9 @@ import (
 
 // Deployments is the resolver for the deployments field.
 func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.DeploymentConnection, error) {
-	if first == nil {
-		first = new(int)
-		*first = 10
-	}
-	if after == nil {
-		after = &model.Cursor{Offset: 0}
-	}
-
 	deploys, err := r.Hookd.Deployments(ctx, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
-	}
-
-	if *first > len(deploys) {
-		*first = len(deploys)
 	}
 
 	pagination := model.NewPagination(first, last, after, before)
@@ -35,10 +23,17 @@ func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, 
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
-
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
+	}
+
+	hasNext := len(deploys) > pagination.First()+pagination.After().Offset+1
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
 	}
 
 	return &model.DeploymentConnection{
@@ -47,8 +42,8 @@ func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, 
 		PageInfo: &model.PageInfo{
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
-			HasNextPage:     len(deploys) > *first+after.Offset,
-			HasPreviousPage: after.Offset > 0,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
 		},
 	}, nil
 }

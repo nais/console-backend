@@ -193,35 +193,28 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 
 // Deployments is the resolver for the deployments field.
 func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.DeploymentConnection, error) {
-	if first == nil {
-		first = new(int)
-		*first = 10
-	}
-	if after == nil {
-		after = &model.Cursor{Offset: 0}
-	}
-
-	deploys, err := r.Hookd.Deployments(ctx, nil, nil)
+	deploys, err := r.Hookd.Deployments(ctx, &obj.Name, nil)
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
 
-	if *first > len(deploys) {
-		*first = len(deploys)
-	}
-
 	pagination := model.NewPagination(first, last, after, before)
 	e := deployEdges(deploys, pagination)
-	fmt.Printf("pagination %#v\n", pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
-
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
 	}
-	fmt.Println("startCursor", startCursor.Offset)
+
+	hasNext := len(deploys) > pagination.First()+pagination.After().Offset+1
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
 
 	return &model.DeploymentConnection{
 		TotalCount: len(deploys),
@@ -229,8 +222,8 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 		PageInfo: &model.PageInfo{
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
-			HasNextPage:     len(deploys) > *first+after.Offset,
-			HasPreviousPage: after.Offset > 0,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
 		},
 	}, nil
 }
