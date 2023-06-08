@@ -338,7 +338,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		App         func(childComplexity int, name string, team string, env string) int
-		Deployments func(childComplexity int, first *int, after *model.Cursor) int
+		Deployments func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		Node        func(childComplexity int, id model.Ident) int
 		Search      func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		Team        func(childComplexity int, name string) int
@@ -405,7 +405,7 @@ type ComplexityRoot struct {
 	Team struct {
 		Apps                func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		DeployKey           func(childComplexity int) int
-		Deployments         func(childComplexity int, first *int, after *model.Cursor) int
+		Deployments         func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		Description         func(childComplexity int) int
 		GithubRepositories  func(childComplexity int, first *int, after *model.Cursor) int
 		ID                  func(childComplexity int) int
@@ -482,7 +482,7 @@ type PageInfoResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id model.Ident) (model.Node, error)
 	App(ctx context.Context, name string, team string, env string) (*model.App, error)
-	Deployments(ctx context.Context, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
+	Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.DeploymentConnection, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error)
 	Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error)
 	Team(ctx context.Context, name string) (*model.Team, error)
@@ -493,7 +493,7 @@ type TeamResolver interface {
 	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.AppConnection, error)
 	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error)
 
-	Deployments(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.DeploymentConnection, error)
+	Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.DeploymentConnection, error)
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
 	ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error)
 	ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error)
@@ -1599,7 +1599,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Deployments(childComplexity, args["first"].(*int), args["after"].(*model.Cursor)), true
+		return e.complexity.Query.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
 
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
@@ -1909,7 +1909,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Deployments(childComplexity, args["first"].(*int), args["after"].(*model.Cursor)), true
+		return e.complexity.Team.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
 
 	case "Team.description":
 		if e.complexity.Team.Description == nil {
@@ -2363,15 +2363,33 @@ func (ec *executionContext) field_Query_deployments_args(ctx context.Context, ra
 		}
 	}
 	args["first"] = arg0
-	var arg1 *model.Cursor
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg1, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+	var arg1 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["last"] = arg1
+	var arg2 *model.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg2
+	var arg3 *model.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -2561,15 +2579,33 @@ func (ec *executionContext) field_Team_deployments_args(ctx context.Context, raw
 		}
 	}
 	args["first"] = arg0
-	var arg1 *model.Cursor
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg1, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+	var arg1 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["last"] = arg1
+	var arg2 *model.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg2
+	var arg3 *model.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg3
 	return args, nil
 }
 
@@ -9802,7 +9838,7 @@ func (ec *executionContext) _Query_deployments(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Deployments(rctx, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor))
+		return ec.resolvers.Query().Deployments(rctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12137,7 +12173,7 @@ func (ec *executionContext) _Team_deployments(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Deployments(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor))
+		return ec.resolvers.Team().Deployments(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

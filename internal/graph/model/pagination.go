@@ -1,5 +1,7 @@
 package model
 
+import "fmt"
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`
@@ -21,6 +23,7 @@ func NewPagination(first, last *int, after, before *Cursor) *Pagination {
 		after:  after,
 		before: before,
 	}
+	fmt.Printf("first %#v\n", *first)
 	return p
 }
 

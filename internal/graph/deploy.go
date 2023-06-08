@@ -5,16 +5,15 @@ import (
 	"github.com/nais/console-backend/internal/hookd"
 )
 
-func deployEdges(deploys []hookd.Deploy, first int, after int) []*model.DeploymentEdge {
+func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []*model.DeploymentEdge {
 	edges := []*model.DeploymentEdge{}
-	limit := first + after
-	if limit > len(deploys) {
-		limit = len(deploys)
-	}
-	for i := after; i < limit; i++ {
-		deploy := deploys[i]
+
+	start, end := p.ForSlice(len(deploys))
+
+	for i, deploy := range deploys[start:end] {
+		deploy := deploy
 		edges = append(edges, &model.DeploymentEdge{
-			Cursor: model.Cursor{Offset: i + 1},
+			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.Deployment{
 				ID:         deploy.DeploymentInfo.ID,
 				Statuses:   mapStatuses(deploy.Statuses),
@@ -25,7 +24,9 @@ func deployEdges(deploys []hookd.Deploy, first int, after int) []*model.Deployme
 				Repository: deploy.DeploymentInfo.GithubRepository,
 			},
 		})
+
 	}
+
 	return edges
 }
 

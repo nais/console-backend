@@ -14,6 +14,9 @@ type Ident struct {
 }
 
 func (i Ident) MarshalGQL(w io.Writer) {
+	if i.ID == "" || i.Type == "" {
+		panic(fmt.Errorf("id and type must be set"))
+	}
 	v := url.Values{}
 	v.Set("id", i.ID)
 	v.Set("type", i.Type)

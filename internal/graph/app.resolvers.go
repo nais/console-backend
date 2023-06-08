@@ -44,16 +44,18 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 	if after == nil {
 		after = &model.Cursor{Offset: 0}
 	}
-	deps, err := r.Hookd.DeploymentsByApp(ctx, obj.GQLVars.App, obj.GQLVars.Team, obj.GQLVars.Env)
+
+	deploys, err := r.Hookd.Deployments(ctx, nil, nil)
 	if err != nil {
-		return &model.Error{Message: err.Error()}, nil
+		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
 
-	if *first > len(deps) {
-		*first = len(deps)
+	if *first > len(deploys) {
+		*first = len(deploys)
 	}
 
-	e := deployEdges(deps, *first, after.Offset)
+	pagination := model.NewPagination(first, last, after, before)
+	e := deployEdges(deploys, pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
@@ -69,7 +71,7 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 			PageInfo: &model.PageInfo{
 				StartCursor:     startCursor,
 				EndCursor:       endCursor,
-				HasNextPage:     len(deps) > *first+after.Offset,
+				HasNextPage:     len(deploys) > *first+after.Offset,
 				HasPreviousPage: startCursor.Offset > 0,
 			},
 		}, nil

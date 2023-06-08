@@ -192,7 +192,7 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 }
 
 // Deployments is the resolver for the deployments field.
-func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.DeploymentConnection, error) {
+func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.DeploymentConnection, error) {
 	if first == nil {
 		first = new(int)
 		*first = 10
@@ -201,16 +201,18 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 		after = &model.Cursor{Offset: 0}
 	}
 
-	deploys, err := r.Hookd.Deployments(ctx, &obj.Name, nil)
+	deploys, err := r.Hookd.Deployments(ctx, nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("getting team deploys from Hookd: %w", err)
+		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
 
 	if *first > len(deploys) {
 		*first = len(deploys)
 	}
 
-	e := deployEdges(deploys, *first, after.Offset)
+	pagination := model.NewPagination(first, last, after, before)
+	e := deployEdges(deploys, pagination)
+	fmt.Printf("pagination %#v\n", pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor
@@ -219,6 +221,7 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
 	}
+	fmt.Println("startCursor", startCursor.Offset)
 
 	return &model.DeploymentConnection{
 		TotalCount: len(deploys),
@@ -302,5 +305,7 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)

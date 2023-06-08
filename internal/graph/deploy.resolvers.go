@@ -12,7 +12,7 @@ import (
 )
 
 // Deployments is the resolver for the deployments field.
-func (r *queryResolver) Deployments(ctx context.Context, first *int, after *model.Cursor) (*model.DeploymentConnection, error) {
+func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.DeploymentConnection, error) {
 	if first == nil {
 		first = new(int)
 		*first = 10
@@ -30,7 +30,8 @@ func (r *queryResolver) Deployments(ctx context.Context, first *int, after *mode
 		*first = len(deploys)
 	}
 
-	e := deployEdges(deploys, *first, after.Offset)
+	pagination := model.NewPagination(first, last, after, before)
+	e := deployEdges(deploys, pagination)
 
 	var startCursor *model.Cursor
 	var endCursor *model.Cursor

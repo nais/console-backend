@@ -36,5 +36,10 @@ type DeploymentStatus {
 }
 
 extend type Query {
-  deployments(first: Int, after: Cursor): DeploymentConnection!
+  deployments(
+    first: Int
+    last: Int
+    after: Cursor
+    before: Cursor
+  ): DeploymentConnection!
 }
