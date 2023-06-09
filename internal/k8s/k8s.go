@@ -123,6 +123,9 @@ func (c *Client) Run(ctx context.Context) {
 
 func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
 	c.log.Debugf("getting app %q in namespace %q in env %q", name, team, env)
+	if c.informers[env] == nil {
+		return nil, fmt.Errorf("no appInformer for env %q", env)
+	}
 	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
 	if err != nil {
 		return nil, c.error(ctx, err, "getting application")
