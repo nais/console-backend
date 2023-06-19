@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -66,18 +68,50 @@ type Resource struct {
 	Namespace string `json:"namespace"`
 }
 
-func (c *Client) Deployments(ctx context.Context, team, cluster *string) ([]Deploy, error) {
-	url := fmt.Sprintf("%s/internal/api/v1/console/deployments?", c.endpoint)
-	if team != nil {
-		url = fmt.Sprintf("%s&team=%s", url, *team)
+type RequestOptions func(*http.Request)
+
+func WithTeam(team string) RequestOptions {
+	return func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set("team", team)
+		req.URL.RawQuery = q.Encode()
 	}
-	if cluster != nil {
-		url = fmt.Sprintf("%s&cluster=%s", url, *cluster)
+}
+
+func WithCluster(cluster string) RequestOptions {
+	return func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set("cluster", cluster)
+		req.URL.RawQuery = q.Encode()
 	}
+}
+
+func WithLimit(limit int) RequestOptions {
+	return func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set("limit", strconv.Itoa(limit))
+		req.URL.RawQuery = q.Encode()
+	}
+}
+
+func WithIgnoreTeams(teams ...string) RequestOptions {
+	return func(req *http.Request) {
+		q := req.URL.Query()
+		q.Set("ignoreTeam", strings.Join(teams, ","))
+		req.URL.RawQuery = q.Encode()
+	}
+}
+
+func (c *Client) Deployments(ctx context.Context, opts ...RequestOptions) ([]Deploy, error) {
+	url := c.endpoint + "/internal/api/v1/console/deployments"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, c.error(ctx, err, "create request for hookd")
+	}
+
+	for _, opt := range opts {
+		opt(req)
 	}
 
 	resp, err := c.httpClient.Do(req)
@@ -101,7 +135,7 @@ func (c *Client) Deployments(ctx context.Context, team, cluster *string) ([]Depl
 }
 
 func (c *Client) DeploymentsByApp(ctx context.Context, app, team, env string) ([]Deploy, error) {
-	deploys, err := c.Deployments(ctx, &team, &env)
+	deploys, err := c.Deployments(ctx, WithTeam(team), WithCluster(env))
 	if err != nil {
 		return nil, c.error(ctx, err, "getting deploys from hookd")
 	}

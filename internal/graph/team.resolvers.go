@@ -10,6 +10,7 @@ import (
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/hookd"
 )
 
 // ChangeDeployKey is the resolver for the changeDeployKey field.
@@ -192,8 +193,13 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 }
 
 // Deployments is the resolver for the deployments field.
-func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.DeploymentConnection, error) {
-	deploys, err := r.Hookd.Deployments(ctx, &obj.Name, nil)
+func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error) {
+	if limit == nil {
+		limit = new(int)
+		*limit = 10
+	}
+
+	deploys, err := r.Hookd.Deployments(ctx, hookd.WithTeam(obj.Name), hookd.WithLimit(*limit))
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
@@ -298,7 +304,5 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	teamResolver     struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type teamResolver struct{ *Resolver }

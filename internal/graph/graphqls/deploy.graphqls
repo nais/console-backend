@@ -41,5 +41,6 @@ extend type Query {
     last: Int
     after: Cursor
     before: Cursor
+    limit: Int
   ): DeploymentConnection!
 }

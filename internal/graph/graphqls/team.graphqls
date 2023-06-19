@@ -38,6 +38,7 @@ type Team implements Node {
     last: Int
     after: Cursor
     before: Cursor
+    limit: Int
   ): DeploymentConnection!
   deployKey: DeploymentKey!
   viewerIsMember: Boolean!
