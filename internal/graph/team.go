@@ -108,13 +108,11 @@ func (r *Resolver) hasAccess(ctx context.Context, team string) bool {
 		return false
 	}
 
-	var isMember bool
 	for _, t := range teams {
 		if t.Team.Slug == team {
-			isMember = true
-			break
+			return true
 		}
 	}
 
-	return isMember
+	return false
 }
