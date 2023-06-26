@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/search"
+	naisv1 "github.com/nais/liberator/pkg/apis/nais.io/v1"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
@@ -35,6 +37,7 @@ type Client struct {
 type Informers struct {
 	AppInformer informers.GenericInformer
 	PodInformer corev1inf.PodInformer
+	JobInformer informers.GenericInformer
 }
 
 func New(clusters []string, tenant, fieldSelector string, errors api.Int64Counter, log *logrus.Entry) (*Client, error) {
@@ -68,6 +71,7 @@ func New(clusters []string, tenant, fieldSelector string, errors api.Int64Counte
 
 		infs[cluster].PodInformer = inf.Core().V1().Pods()
 		infs[cluster].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
+		infs[cluster].JobInformer = dinf.ForResource(naisv1.GroupVersion.WithResource("naisjobs"))
 	}
 
 	return &Client{
@@ -86,10 +90,35 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 	ret := []*search.SearchResult{}
 
 	for env, infs := range c.informers {
+		jobs, err := infs.JobInformer.Lister().List(labels.Everything())
+		if err != nil {
+			c.error(ctx, err, "listing jobs")
+			return nil
+		}
 		objs, err := infs.AppInformer.Lister().List(labels.Everything())
 		if err != nil {
 			c.error(ctx, err, "listing applications")
 			return nil
+		}
+
+		fmt.Printf("jobs len: %d\n", len(jobs))
+		for _, obj := range jobs {
+
+			u := obj.(*unstructured.Unstructured)
+			rank := search.Match(q, u.GetName())
+			if rank == -1 {
+				continue
+			}
+			job, err := toJob(u, env)
+			if err != nil {
+				c.error(ctx, err, "converting to job")
+				return nil
+			}
+
+			ret = append(ret, &search.SearchResult{
+				Node: job,
+				Rank: rank,
+			})
 		}
 
 		for _, obj := range objs {
@@ -109,6 +138,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 				Rank: rank,
 			})
 		}
+
 	}
 	return ret
 }
@@ -118,6 +148,7 @@ func (c *Client) Run(ctx context.Context) {
 		c.log.Info("starting informers for ", env)
 		go inf.PodInformer.Informer().Run(ctx.Done())
 		go inf.AppInformer.Informer().Run(ctx.Done())
+		go inf.JobInformer.Informer().Run(ctx.Done())
 	}
 }
 
@@ -131,6 +162,19 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		return nil, c.error(ctx, err, "getting application")
 	}
 	return toApp(obj.(*unstructured.Unstructured), env)
+}
+
+func (c *Client) Job(ctx context.Context, name, team, env string) (*model.Job, error) {
+	c.log.Infof("getting job %q in namespace %q in env %q", name, team, env)
+	if c.informers[env] == nil {
+		return nil, fmt.Errorf("no jobInformer for env %q", env)
+	}
+	obj, err := c.informers[env].JobInformer.Lister().ByNamespace(team).Get(name)
+	if err != nil {
+		return nil, c.error(ctx, err, "getting job")
+	}
+	return toJob(obj.(*unstructured.Unstructured), env)
+
 }
 
 func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, error) {
@@ -156,7 +200,35 @@ func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, 
 	tmp["metadata"] = metadata
 	b, err := yaml.Marshal(tmp)
 	if err != nil {
-		// return "", fmt.Errorf("marshalling manifest: %w", err)
+		return "", c.error(ctx, err, "marshalling manifest")
+	}
+
+	return string(b), nil
+}
+
+func (c *Client) JobManifest(ctx context.Context, name, team, env string) (string, error) {
+	obj, err := c.informers[env].JobInformer.Lister().ByNamespace(team).Get(name)
+	if err != nil {
+		return "", c.error(ctx, err, "getting job")
+	}
+	u := obj.(*unstructured.Unstructured)
+
+	tmp := map[string]any{}
+
+	spec, _, err := unstructured.NestedMap(u.Object, "spec")
+	if err != nil {
+		return "", c.error(ctx, err, "getting spec")
+	}
+
+	tmp["spec"] = spec
+	tmp["apiVersion"] = u.GetAPIVersion()
+	tmp["kind"] = u.GetKind()
+	metadata := map[string]any{"labels": u.GetLabels()}
+	metadata["name"] = u.GetName()
+	metadata["namespace"] = u.GetNamespace()
+	tmp["metadata"] = metadata
+	b, err := yaml.Marshal(tmp)
+	if err != nil {
 		return "", c.error(ctx, err, "marshalling manifest")
 	}
 
@@ -222,6 +294,64 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 			Created:  pod.GetCreationTimestamp().Time,
 		})
 	}
+	return ret, nil
+}
+
+func toJob(u *unstructured.Unstructured, env string) (*model.Job, error) {
+	job := &naisv1.Naisjob{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, job); err != nil {
+		return nil, fmt.Errorf("converting to job: %w", err)
+	}
+
+	ret := &model.Job{}
+	ret.ID = model.Ident{ID: "job_" + env + "_" + job.GetNamespace() + "_" + job.GetName(), Type: "job"}
+	ret.Name = job.GetName()
+
+	ret.Env = &model.Env{
+		Name: env,
+		ID:   model.Ident{ID: env, Type: "env"},
+	}
+
+	ret.DeployInfo.CommitSha = job.GetAnnotations()["deploy.nais.io/github-sha"]
+	ret.DeployInfo.Deployer = job.GetAnnotations()["deploy.nais.io/github-actor"]
+	ret.DeployInfo.URL = job.GetAnnotations()["deploy.nais.io/github-workflow-run-url"]
+	timestamp := time.Unix(0, job.GetStatus().RolloutCompleteTime)
+	ret.DeployInfo.Timestamp = &timestamp
+	ret.DeployInfo.GQLVars.Job = job.GetName()
+	ret.DeployInfo.GQLVars.Env = env
+	ret.DeployInfo.GQLVars.Team = job.GetNamespace()
+	ret.GQLVars.Team = job.GetNamespace()
+	ret.Image = job.Spec.Image
+	ret.ConcurrencyPolicy = model.ConcurrencyPolicyAllow
+
+	for _, cp := range model.AllConcurrencyPolicy {
+		if strings.EqualFold(cp.String(), job.Spec.ConcurrencyPolicy) {
+			ret.ConcurrencyPolicy = cp
+			break
+		}
+	}
+
+	ap := model.AccessPolicy{}
+	if err := convert(job.Spec.AccessPolicy, &ap); err != nil {
+		return nil, fmt.Errorf("converting accessPolicy: %w", err)
+	}
+	ret.AccessPolicy = &ap
+
+	r := model.Resources{}
+	if err := convert(job.Spec.Resources, &r); err != nil {
+		return nil, fmt.Errorf("converting resources: %w", err)
+	}
+
+	if r.Requests == nil {
+		r.Requests = &model.Requests{}
+	}
+	if r.Limits == nil {
+		r.Limits = &model.Limits{}
+	}
+	ret.Resources = r
+
+	ret.Schedule = job.Spec.Schedule
+
 	return ret, nil
 }
 

@@ -27,25 +27,6 @@ type App implements Node {
   team: Team!
 }
 
-type DeployInfo {
-  deployer: String!
-  timestamp: Time
-  commitSha: String!
-  url: String!
-  history(
-    first: Int
-    last: Int
-    after: Cursor
-    before: Cursor
-  ): DeploymentResponse!
-}
-
-union DeploymentResponse = DeploymentConnection | Error
-
-type Error {
-  message: String!
-}
-
 extend type Query {
   app(name: String!, team: String!, env: String!): App!
 }

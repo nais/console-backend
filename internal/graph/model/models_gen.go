@@ -276,6 +276,49 @@ type Variable struct {
 	Value string `json:"value"`
 }
 
+type ConcurrencyPolicy string
+
+const (
+	ConcurrencyPolicyAllow   ConcurrencyPolicy = "ALLOW"
+	ConcurrencyPolicyForbid  ConcurrencyPolicy = "FORBID"
+	ConcurrencyPolicyReplace ConcurrencyPolicy = "REPLACE"
+)
+
+var AllConcurrencyPolicy = []ConcurrencyPolicy{
+	ConcurrencyPolicyAllow,
+	ConcurrencyPolicyForbid,
+	ConcurrencyPolicyReplace,
+}
+
+func (e ConcurrencyPolicy) IsValid() bool {
+	switch e {
+	case ConcurrencyPolicyAllow, ConcurrencyPolicyForbid, ConcurrencyPolicyReplace:
+		return true
+	}
+	return false
+}
+
+func (e ConcurrencyPolicy) String() string {
+	return string(e)
+}
+
+func (e *ConcurrencyPolicy) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ConcurrencyPolicy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ConcurrencyPolicy", str)
+	}
+	return nil
+}
+
+func (e ConcurrencyPolicy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type SearchType string
 
 const (

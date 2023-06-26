@@ -25,7 +25,7 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, error) {
 	app, err := r.K8s.Manifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
 	if err != nil {
-		return "", fmt.Errorf("getting app from Kubernetes: %w", err)
+		return "", fmt.Errorf("getting app manifest from Kubernetes: %w", err)
 	}
 	return app, err
 }
@@ -33,42 +33,6 @@ func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, err
 // Team is the resolver for the team field.
 func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, error) {
 	return r.TeamsClient.GetTeam(ctx, obj.GQLVars.Team)
-}
-
-// History is the resolver for the history field.
-func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *model.Cursor, before *model.Cursor) (model.DeploymentResponse, error) {
-	deploys, err := r.Hookd.DeploymentsByApp(ctx, obj.GQLVars.App, obj.GQLVars.Team, obj.GQLVars.Env)
-	if err != nil {
-		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
-	}
-
-	pagination := model.NewPagination(first, last, after, before)
-	e := deployEdges(deploys, pagination)
-
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
-	}
-
-	hasNext := len(deploys) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.DeploymentConnection{
-		Edges: e,
-		PageInfo: &model.PageInfo{
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-		},
-	}, nil
 }
 
 // App is the resolver for the app field.
@@ -83,8 +47,4 @@ func (r *queryResolver) App(ctx context.Context, name string, team string, env s
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
-// DeployInfo returns DeployInfoResolver implementation.
-func (r *Resolver) DeployInfo() DeployInfoResolver { return &deployInfoResolver{r} }
-
 type appResolver struct{ *Resolver }
-type deployInfoResolver struct{ *Resolver }

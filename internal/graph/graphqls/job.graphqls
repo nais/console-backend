@@ -1,0 +1,33 @@
+type JobConnection {
+  edges: [JobEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type JobEdge {
+  cursor: Cursor!
+  node: Job!
+}
+
+type Job implements Node {
+  id: ID!
+  name: String!
+  image: String!
+  deployInfo: DeployInfo!
+  env: Env!
+  accessPolicy: AccessPolicy!
+  resources: Resources!
+  schedule: String!
+  manifest: String!
+  concurrencyPolicy: ConcurrencyPolicy!
+}
+
+enum ConcurrencyPolicy {
+  ALLOW
+  FORBID
+  REPLACE
+}
+
+extend type Query {
+  job(name: String!, team: String!, env: String!): Job!
+}
