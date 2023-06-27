@@ -20,6 +20,7 @@ type Job implements Node {
   schedule: String!
   manifest: String!
   concurrencyPolicy: ConcurrencyPolicy!
+  team: Team!
 }
 
 enum ConcurrencyPolicy {

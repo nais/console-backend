@@ -20,6 +20,11 @@ func (r *jobResolver) Manifest(ctx context.Context, obj *model.Job) (string, err
 	return job, err
 }
 
+// Team is the resolver for the team field.
+func (r *jobResolver) Team(ctx context.Context, obj *model.Job) (*model.Team, error) {
+	return r.TeamsClient.GetTeam(ctx, obj.GQLVars.Team)
+}
+
 // Job is the resolver for the job field.
 func (r *queryResolver) Job(ctx context.Context, name string, team string, env string) (*model.Job, error) {
 	job, err := r.K8s.Job(ctx, name, team, env)

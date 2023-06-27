@@ -324,16 +324,18 @@ type SearchType string
 const (
 	SearchTypeApp  SearchType = "APP"
 	SearchTypeTeam SearchType = "TEAM"
+	SearchTypeJob  SearchType = "JOB"
 )
 
 var AllSearchType = []SearchType{
 	SearchTypeApp,
 	SearchTypeTeam,
+	SearchTypeJob,
 }
 
 func (e SearchType) IsValid() bool {
 	switch e {
-	case SearchTypeApp, SearchTypeTeam:
+	case SearchTypeApp, SearchTypeTeam, SearchTypeJob:
 		return true
 	}
 	return false

@@ -258,6 +258,29 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 	return ret, nil
 }
 
+func (c *Client) Jobs(ctx context.Context, team string) ([]*model.Job, error) {
+	ret := []*model.Job{}
+
+	for env, infs := range c.informers {
+		objs, err := infs.JobInformer.Lister().ByNamespace(team).List(labels.Everything())
+		if err != nil {
+			return nil, c.error(ctx, err, "listing jobs")
+		}
+		for _, obj := range objs {
+			job, err := toJob(obj.(*unstructured.Unstructured), env)
+			if err != nil {
+				return nil, c.error(ctx, err, "converting to job")
+			}
+			ret = append(ret, job)
+		}
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Name < ret[j].Name
+	})
+
+	return ret, nil
+}
+
 func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*model.Instance, error) {
 	ret := []*model.Instance{}
 	req, err := labels.NewRequirement("app", selection.Equals, []string{name})

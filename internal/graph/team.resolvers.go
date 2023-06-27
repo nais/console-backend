@@ -152,6 +152,43 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 	}, nil
 }
 
+// Jobs is the resolver for the jobs field.
+func (r *teamResolver) Jobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.JobConnection, error) {
+	jobs, err := r.K8s.Jobs(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting jobs from Kubernetes: %w", err)
+	}
+
+	pagination := model.NewPagination(first, last, after, before)
+	j := jobEdges(jobs, obj.Name, pagination)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+	if len(j) > 0 {
+		startCursor = &j[0].Cursor
+		endCursor = &j[len(j)-1].Cursor
+	}
+
+	hasNext := len(jobs) > pagination.First()+pagination.After().Offset
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
+
+	return &model.JobConnection{
+		TotalCount: len(jobs),
+		Edges:      j,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
+
 // GithubRepositories is the resolver for the githubRepositories field.
 func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error) {
 	if first == nil {

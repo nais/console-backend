@@ -9,7 +9,7 @@ type SearchEdge {
   cursor: Cursor!
 }
 
-union SearchNode = App | Team
+union SearchNode = App | Team | Job
 
 input SearchFilter {
   type: SearchType
@@ -18,6 +18,7 @@ input SearchFilter {
 enum SearchType {
   APP
   TEAM
+  JOB
 }
 
 extend type Query {
