@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+env:
+  NAME: console-backend
 jobs:
   build:
     permissions:
@@ -15,8 +17,8 @@ jobs:
       - uses: nais/platform-build-push-sign@099ac96939c35cf243a1d13865e25224d2f5fa04 # ratchet:nais/platform-build-push-sign@main
         id: build-push-sign
         with:
-          name: console-backend
-          google_service_account: gh-console-backend
+          name: ${{ env.NAME }}
+          google_service_account: gh-${{ env.NAME }}
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           push: true
       - uses: azure/setup-helm@18bc76811624f360dbd7f18c2d4ecb32c7b87bab # ratchet:azure/setup-helm@v1
