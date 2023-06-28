@@ -320,11 +320,11 @@ func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*m
 			if condition.Status == corev1.ConditionTrue {
 				instance.StatusType = (*string)(&condition.Type)
 				instance.StatusMessage = &condition.Message
-				instance.StatusDate = &condition.LastTransitionTime.Time
 				instance.StatusReason = &condition.Reason
 				if condition.Type == batchv1.JobFailed {
 					d := condition.LastTransitionTime.Time.Sub(instance.StartTime).String()
 					instance.RunDuration = &d
+					instance.CompletionTime = &condition.LastTransitionTime.Time
 				}
 			}
 		}

@@ -204,7 +204,6 @@ type JobInstance struct {
 	StatusMessage  *string    `json:"statusMessage,omitempty"`
 	StatusReason   *string    `json:"statusReason,omitempty"`
 	StatusType     *string    `json:"statusType,omitempty"`
-	StatusDate     *time.Time `json:"statusDate,omitempty"`
 }
 
 func (JobInstance) IsNode()           {}

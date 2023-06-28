@@ -21,7 +21,6 @@ type JobInstance implements Node {
   statusMessage: String # Human readable message indicating details about last transition.
   statusReason: String # (brief) reason for the condition's last transition.
   statusType: String # Type of job condition, Complete or Failed.
-  statusDate: Time # Last time we probed the job condition.
 }
 
 type Job implements Node {
