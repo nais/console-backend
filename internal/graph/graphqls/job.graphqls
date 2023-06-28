@@ -9,17 +9,32 @@ type JobEdge {
   node: Job!
 }
 
-type Job implements Node {
+type JobInstance implements Node {
   id: ID!
   name: String!
-  image: String!
+  exitCode: Int!
+  reason: String!
+  startedAt: Time!
+  finishedAt: Time!
+  runDuration: String!
+}
+
+type Job implements Node {
+  id: ID!
+  accessPolicy: AccessPolicy!
+  activeDeadlineSeconds: Int!
+  backoffLimit: Int!
+  concurrencyPolicy: ConcurrencyPolicy!
   deployInfo: DeployInfo!
   env: Env!
-  accessPolicy: AccessPolicy!
+  failedJobsHistoryLimit: Int!
+  image: String!
+  jobInstances: [JobInstance!]!
+  manifest: String!
+  name: String!
   resources: Resources!
   schedule: String!
-  manifest: String!
-  concurrencyPolicy: ConcurrencyPolicy!
+  successfulJobsHistoryLimit: Int!
   team: Team!
 }
 

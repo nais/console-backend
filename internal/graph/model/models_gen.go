@@ -192,6 +192,19 @@ type Instance struct {
 func (Instance) IsNode()           {}
 func (this Instance) GetID() Ident { return this.ID }
 
+type JobInstance struct {
+	ID          Ident     `json:"id"`
+	Name        string    `json:"name"`
+	ExitCode    int       `json:"exitCode"`
+	Reason      string    `json:"reason"`
+	StartedAt   time.Time `json:"startedAt"`
+	FinishedAt  time.Time `json:"finishedAt"`
+	RunDuration string    `json:"runDuration"`
+}
+
+func (JobInstance) IsNode()           {}
+func (this JobInstance) GetID() Ident { return this.ID }
+
 type Kafka struct {
 	// The kafka pool name
 	Name    string `json:"name"`

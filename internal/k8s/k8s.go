@@ -281,6 +281,56 @@ func (c *Client) Jobs(ctx context.Context, team string) ([]*model.Job, error) {
 	return ret, nil
 }
 
+func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*model.JobInstance, error) {
+	ret := []*model.JobInstance{}
+	nameReq, err := labels.NewRequirement("app", selection.Equals, []string{name})
+	if err != nil {
+		return nil, c.error(ctx, err, "creating label selector")
+	}
+	naisjobReq, err := labels.NewRequirement("nais.io/naisjob", selection.Equals, []string{"true"})
+	if err != nil {
+		return nil, c.error(ctx, err, "creating label selector")
+	}
+
+	selector := labels.NewSelector().Add(*nameReq).Add(*naisjobReq)
+	pods, err := c.informers[env].PodInformer.Lister().Pods(team).List(selector)
+	if err != nil {
+		return nil, c.error(ctx, err, "listing pods")
+	}
+
+	for _, pod := range pods {
+		fmt.Println(pod.Name)
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.Name == name {
+				if cs.State.Terminated != nil {
+					ret = append(ret, &model.JobInstance{
+						ID:         model.Ident{ID: string(pod.GetUID()), Type: "pod"},
+						Name:       pod.Name,
+						FinishedAt: cs.State.Terminated.FinishedAt.Time,
+						StartedAt:  cs.State.Terminated.StartedAt.Time,
+						ExitCode:   int(cs.State.Terminated.ExitCode),
+						Reason:     cs.State.Terminated.Reason,
+						RunDuration: cs.State.Terminated.FinishedAt.Time.Sub(
+							cs.State.Terminated.StartedAt.Time,
+						).String(),
+					})
+				} else {
+					ret = append(ret, &model.JobInstance{
+						ID:        model.Ident{ID: string(pod.GetUID()), Type: "pod"},
+						Name:      pod.Name,
+						StartedAt: cs.State.Running.StartedAt.Time,
+					})
+				}
+			}
+		}
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].StartedAt.After(ret[j].StartedAt)
+	})
+	return ret, nil
+}
+
 func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*model.Instance, error) {
 	ret := []*model.Instance{}
 	req, err := labels.NewRequirement("app", selection.Equals, []string{name})
@@ -345,8 +395,15 @@ func toJob(u *unstructured.Unstructured, env string) (*model.Job, error) {
 	ret.DeployInfo.GQLVars.Team = job.GetNamespace()
 	ret.GQLVars.Team = job.GetNamespace()
 	ret.Image = job.Spec.Image
-	ret.ConcurrencyPolicy = model.ConcurrencyPolicyAllow
 
+	if job.Spec.ActiveDeadlineSeconds != nil {
+		ret.ActiveDeadlineSeconds = int(*job.Spec.ActiveDeadlineSeconds)
+	}
+	ret.BackoffLimit = int(job.Spec.BackoffLimit)
+	ret.FailedJobsHistoryLimit = int(job.Spec.FailedJobsHistoryLimit)
+	ret.SuccessfulJobsHistoryLimit = int(job.Spec.SuccessfulJobsHistoryLimit)
+
+	ret.ConcurrencyPolicy = model.ConcurrencyPolicyAllow
 	for _, cp := range model.AllConcurrencyPolicy {
 		if strings.EqualFold(cp.String(), job.Spec.ConcurrencyPolicy) {
 			ret.ConcurrencyPolicy = cp
