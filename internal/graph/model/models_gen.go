@@ -193,13 +193,13 @@ func (Instance) IsNode()           {}
 func (this Instance) GetID() Ident { return this.ID }
 
 type JobInstance struct {
-	ID             Ident     `json:"id"`
-	Name           string    `json:"name"`
-	StartTime      time.Time `json:"startTime"`
-	CompletionTime time.Time `json:"completionTime"`
-	Failed         int       `json:"failed"`
-	Succeeded      int       `json:"succeeded"`
-	RunDuration    string    `json:"runDuration"`
+	ID             Ident      `json:"id"`
+	Name           string     `json:"name"`
+	StartTime      time.Time  `json:"startTime"`
+	CompletionTime *time.Time `json:"completionTime,omitempty"`
+	Failed         int        `json:"failed"`
+	Succeeded      int        `json:"succeeded"`
+	RunDuration    *string    `json:"runDuration,omitempty"`
 }
 
 func (JobInstance) IsNode()           {}

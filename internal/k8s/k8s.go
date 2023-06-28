@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -169,7 +168,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 }
 
 func (c *Client) Job(ctx context.Context, name, team, env string) (*model.Job, error) {
-	c.log.Infof("getting job %q in namespace %q in env %q", name, team, env)
+	c.log.Debugf("getting job %q in namespace %q in env %q", name, team, env)
 	if c.informers[env] == nil {
 		return nil, fmt.Errorf("no jobInformer for env %q", env)
 	}
@@ -178,7 +177,6 @@ func (c *Client) Job(ctx context.Context, name, team, env string) (*model.Job, e
 		return nil, c.error(ctx, err, "getting job")
 	}
 	return toJob(obj.(*unstructured.Unstructured), env)
-
 }
 
 func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, error) {
@@ -287,43 +285,42 @@ func (c *Client) Jobs(ctx context.Context, team string) ([]*model.Job, error) {
 
 func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*model.JobInstance, error) {
 	ret := []*model.JobInstance{}
+
 	nameReq, err := labels.NewRequirement("app", selection.Equals, []string{name})
 	if err != nil {
 		return nil, c.error(ctx, err, "creating label selector")
 	}
-	/*naisjobReq, err := labels.NewRequirement("nais.io/naisjob", selection.Equals, []string{"true"})
-	if err != nil {
-		return nil, c.error(ctx, err, "creating label selector")
-	}*/
 
-	selector := labels.NewSelector().Add(*nameReq) //.Add(*naisjobReq)
-
-	/*pods, err := c.informers[env].PodInformer.Lister().Pods(team).List(selector)
-	if err != nil {
-		return nil, c.error(ctx, err, "listing pods")
-	}*/
+	selector := labels.NewSelector().Add(*nameReq)
 
 	jobs, err := c.informers[env].JobInformer.Lister().Jobs(team).List(selector)
-
-	for _, job := range jobs {
-		fmt.Println(job.Name)
-
-		ret = append(ret, &model.JobInstance{
-			ID:             model.Ident{ID: string(job.GetUID()), Type: "pod"},
-			Name:           job.Name,
-			StartTime:      job.Status.StartTime.Time,
-			CompletionTime: job.Status.CompletionTime.Time,
-			Failed:         int(job.Status.Failed),
-			Succeeded:      int(job.Status.Succeeded),
-			RunDuration: job.Status.CompletionTime.Time.Sub(
-				job.Status.StartTime.Time,
-			).String(),
-		})
+	if err != nil {
+		return nil, c.error(ctx, err, "listing job instances")
 	}
 
-	/*sort.Slice(ret, func(i, j int) bool {
-		return ret[i].StartedAt.After(ret[j].StartedAt)
-	})*/
+	for _, job := range jobs {
+		instance := &model.JobInstance{
+			ID:        model.Ident{ID: string(job.GetUID()), Type: "pod"},
+			Name:      job.Name,
+			StartTime: job.Status.StartTime.Time,
+			Failed:    int(job.Status.Failed),
+			Succeeded: int(job.Status.Succeeded),
+		}
+
+		if job.Status.CompletionTime != nil {
+			instance.CompletionTime = &job.Status.CompletionTime.Time
+			d := instance.CompletionTime.Sub(instance.StartTime).String()
+			instance.RunDuration = &d
+		}
+
+		ret = append(ret, instance)
+	}
+
+	// sort ret by StartTime, newest first
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].StartTime.After(ret[j].StartTime)
+	})
+
 	return ret, nil
 }
 
@@ -391,21 +388,6 @@ func toJob(u *unstructured.Unstructured, env string) (*model.Job, error) {
 	ret.DeployInfo.GQLVars.Team = job.GetNamespace()
 	ret.GQLVars.Team = job.GetNamespace()
 	ret.Image = job.Spec.Image
-
-	if job.Spec.ActiveDeadlineSeconds != nil {
-		ret.ActiveDeadlineSeconds = int(*job.Spec.ActiveDeadlineSeconds)
-	}
-	ret.BackoffLimit = int(job.Spec.BackoffLimit)
-	ret.FailedJobsHistoryLimit = int(job.Spec.FailedJobsHistoryLimit)
-	ret.SuccessfulJobsHistoryLimit = int(job.Spec.SuccessfulJobsHistoryLimit)
-
-	ret.ConcurrencyPolicy = model.ConcurrencyPolicyAllow
-	for _, cp := range model.AllConcurrencyPolicy {
-		if strings.EqualFold(cp.String(), job.Spec.ConcurrencyPolicy) {
-			ret.ConcurrencyPolicy = cp
-			break
-		}
-	}
 
 	ap := model.AccessPolicy{}
 	if err := convert(job.Spec.AccessPolicy, &ap); err != nil {

@@ -11,14 +11,9 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-// JobInstances is the resolver for the jobInstances field.
-func (r *jobResolver) JobInstances(ctx context.Context, obj *model.Job) ([]*model.JobInstance, error) {
-	jobInstances, err := r.K8s.JobInstances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
-	if err != nil {
-		return nil, fmt.Errorf("getting job instances from Kubernetes: %w", err)
-	}
-
-	return jobInstances, nil
+// Instances is the resolver for the instances field.
+func (r *jobResolver) Instances(ctx context.Context, obj *model.Job) ([]*model.JobInstance, error) {
+	return r.K8s.JobInstances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
 }
 
 // Manifest is the resolver for the manifest field.
@@ -48,13 +43,3 @@ func (r *queryResolver) Job(ctx context.Context, name string, team string, env s
 func (r *Resolver) Job() JobResolver { return &jobResolver{r} }
 
 type jobResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *jobResolver) Instances(ctx context.Context, obj *model.Job) ([]*model.JobInstance, error) {
-	panic(fmt.Errorf("not implemented: Instances - instances"))
-}

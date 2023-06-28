@@ -1,19 +1,14 @@
 package model
 
 type Job struct {
-	ID                         Ident             `json:"id"`
-	Name                       string            `json:"name"`
-	Image                      string            `json:"image"`
-	DeployInfo                 DeployInfo        `json:"deployInfo"`
-	Env                        *Env              `json:"env"`
-	AccessPolicy               *AccessPolicy     `json:"accessPolicy"`
-	Resources                  Resources         `json:"resources"`
-	Schedule                   string            `json:"schedule"`
-	ConcurrencyPolicy          ConcurrencyPolicy `json:"concurrencyPolicy"`
-	ActiveDeadlineSeconds      int               `json:"activeDeadlineSeconds"`
-	BackoffLimit               int               `json:"backoffLimit"`
-	FailedJobsHistoryLimit     int               `json:"failedJobsHistoryLimit"`
-	SuccessfulJobsHistoryLimit int               `json:"successfulJobsHistoryLimit"`
+	ID           Ident         `json:"id"`
+	Name         string        `json:"name"`
+	Image        string        `json:"image"`
+	DeployInfo   DeployInfo    `json:"deployInfo"`
+	Env          *Env          `json:"env"`
+	AccessPolicy *AccessPolicy `json:"accessPolicy"`
+	Resources    Resources     `json:"resources"`
+	Schedule     string        `json:"schedule"`
 
 	GQLVars struct {
 		Team string

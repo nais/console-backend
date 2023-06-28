@@ -286,22 +286,17 @@ type ComplexityRoot struct {
 	}
 
 	Job struct {
-		AccessPolicy               func(childComplexity int) int
-		ActiveDeadlineSeconds      func(childComplexity int) int
-		BackoffLimit               func(childComplexity int) int
-		ConcurrencyPolicy          func(childComplexity int) int
-		DeployInfo                 func(childComplexity int) int
-		Env                        func(childComplexity int) int
-		FailedJobsHistoryLimit     func(childComplexity int) int
-		ID                         func(childComplexity int) int
-		Image                      func(childComplexity int) int
-		JobInstances               func(childComplexity int) int
-		Manifest                   func(childComplexity int) int
-		Name                       func(childComplexity int) int
-		Resources                  func(childComplexity int) int
-		Schedule                   func(childComplexity int) int
-		SuccessfulJobsHistoryLimit func(childComplexity int) int
-		Team                       func(childComplexity int) int
+		AccessPolicy func(childComplexity int) int
+		DeployInfo   func(childComplexity int) int
+		Env          func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Image        func(childComplexity int) int
+		Instances    func(childComplexity int) int
+		Manifest     func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Resources    func(childComplexity int) int
+		Schedule     func(childComplexity int) int
+		Team         func(childComplexity int) int
 	}
 
 	JobConnection struct {
@@ -516,7 +511,7 @@ type DeployInfoResolver interface {
 	History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *model.Cursor, before *model.Cursor) (model.DeploymentResponse, error)
 }
 type JobResolver interface {
-	JobInstances(ctx context.Context, obj *model.Job) ([]*model.JobInstance, error)
+	Instances(ctx context.Context, obj *model.Job) ([]*model.JobInstance, error)
 	Manifest(ctx context.Context, obj *model.Job) (string, error)
 
 	Team(ctx context.Context, obj *model.Job) (*model.Team, error)
@@ -1476,27 +1471,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Job.AccessPolicy(childComplexity), true
 
-	case "Job.activeDeadlineSeconds":
-		if e.complexity.Job.ActiveDeadlineSeconds == nil {
-			break
-		}
-
-		return e.complexity.Job.ActiveDeadlineSeconds(childComplexity), true
-
-	case "Job.backoffLimit":
-		if e.complexity.Job.BackoffLimit == nil {
-			break
-		}
-
-		return e.complexity.Job.BackoffLimit(childComplexity), true
-
-	case "Job.concurrencyPolicy":
-		if e.complexity.Job.ConcurrencyPolicy == nil {
-			break
-		}
-
-		return e.complexity.Job.ConcurrencyPolicy(childComplexity), true
-
 	case "Job.deployInfo":
 		if e.complexity.Job.DeployInfo == nil {
 			break
@@ -1510,13 +1484,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Job.Env(childComplexity), true
-
-	case "Job.failedJobsHistoryLimit":
-		if e.complexity.Job.FailedJobsHistoryLimit == nil {
-			break
-		}
-
-		return e.complexity.Job.FailedJobsHistoryLimit(childComplexity), true
 
 	case "Job.id":
 		if e.complexity.Job.ID == nil {
@@ -1532,12 +1499,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Job.Image(childComplexity), true
 
-	case "Job.jobInstances":
-		if e.complexity.Job.JobInstances == nil {
+	case "Job.instances":
+		if e.complexity.Job.Instances == nil {
 			break
 		}
 
-		return e.complexity.Job.JobInstances(childComplexity), true
+		return e.complexity.Job.Instances(childComplexity), true
 
 	case "Job.manifest":
 		if e.complexity.Job.Manifest == nil {
@@ -1566,13 +1533,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Job.Schedule(childComplexity), true
-
-	case "Job.successfulJobsHistoryLimit":
-		if e.complexity.Job.SuccessfulJobsHistoryLimit == nil {
-			break
-		}
-
-		return e.complexity.Job.SuccessfulJobsHistoryLimit(childComplexity), true
 
 	case "Job.team":
 		if e.complexity.Job.Team == nil {
@@ -9130,138 +9090,6 @@ func (ec *executionContext) fieldContext_Job_accessPolicy(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Job_activeDeadlineSeconds(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Job_activeDeadlineSeconds(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ActiveDeadlineSeconds, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Job_activeDeadlineSeconds(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Job",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Job_backoffLimit(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Job_backoffLimit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BackoffLimit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Job_backoffLimit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Job",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Job_concurrencyPolicy(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Job_concurrencyPolicy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ConcurrencyPolicy, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.ConcurrencyPolicy)
-	fc.Result = res
-	return ec.marshalNConcurrencyPolicy2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConcurrencyPolicy(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Job_concurrencyPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Job",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ConcurrencyPolicy does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Job_deployInfo(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Job_deployInfo(ctx, field)
 	if err != nil {
@@ -9368,50 +9196,6 @@ func (ec *executionContext) fieldContext_Job_env(ctx context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Job_failedJobsHistoryLimit(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Job_failedJobsHistoryLimit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FailedJobsHistoryLimit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Job_failedJobsHistoryLimit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Job",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Job_image(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Job_image(ctx, field)
 	if err != nil {
@@ -9456,8 +9240,8 @@ func (ec *executionContext) fieldContext_Job_image(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Job_jobInstances(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Job_jobInstances(ctx, field)
+func (ec *executionContext) _Job_instances(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Job_instances(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9470,7 +9254,7 @@ func (ec *executionContext) _Job_jobInstances(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Job().JobInstances(rctx, obj)
+		return ec.resolvers.Job().Instances(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9487,7 +9271,7 @@ func (ec *executionContext) _Job_jobInstances(ctx context.Context, field graphql
 	return ec.marshalNJobInstance2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐJobInstanceᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Job_jobInstances(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Job_instances(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Job",
 		Field:      field,
@@ -9693,50 +9477,6 @@ func (ec *executionContext) fieldContext_Job_schedule(ctx context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Job_successfulJobsHistoryLimit(ctx context.Context, field graphql.CollectedField, obj *model.Job) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Job_successfulJobsHistoryLimit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SuccessfulJobsHistoryLimit, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Job_successfulJobsHistoryLimit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Job",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10053,22 +9793,14 @@ func (ec *executionContext) fieldContext_JobEdge_node(ctx context.Context, field
 				return ec.fieldContext_Job_id(ctx, field)
 			case "accessPolicy":
 				return ec.fieldContext_Job_accessPolicy(ctx, field)
-			case "activeDeadlineSeconds":
-				return ec.fieldContext_Job_activeDeadlineSeconds(ctx, field)
-			case "backoffLimit":
-				return ec.fieldContext_Job_backoffLimit(ctx, field)
-			case "concurrencyPolicy":
-				return ec.fieldContext_Job_concurrencyPolicy(ctx, field)
 			case "deployInfo":
 				return ec.fieldContext_Job_deployInfo(ctx, field)
 			case "env":
 				return ec.fieldContext_Job_env(ctx, field)
-			case "failedJobsHistoryLimit":
-				return ec.fieldContext_Job_failedJobsHistoryLimit(ctx, field)
 			case "image":
 				return ec.fieldContext_Job_image(ctx, field)
-			case "jobInstances":
-				return ec.fieldContext_Job_jobInstances(ctx, field)
+			case "instances":
+				return ec.fieldContext_Job_instances(ctx, field)
 			case "manifest":
 				return ec.fieldContext_Job_manifest(ctx, field)
 			case "name":
@@ -10077,8 +9809,6 @@ func (ec *executionContext) fieldContext_JobEdge_node(ctx context.Context, field
 				return ec.fieldContext_Job_resources(ctx, field)
 			case "schedule":
 				return ec.fieldContext_Job_schedule(ctx, field)
-			case "successfulJobsHistoryLimit":
-				return ec.fieldContext_Job_successfulJobsHistoryLimit(ctx, field)
 			case "team":
 				return ec.fieldContext_Job_team(ctx, field)
 			}
@@ -10241,14 +9971,11 @@ func (ec *executionContext) _JobInstance_completionTime(ctx context.Context, fie
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_JobInstance_completionTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10373,14 +10100,11 @@ func (ec *executionContext) _JobInstance_runDuration(ctx context.Context, field 
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_JobInstance_runDuration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11660,22 +11384,14 @@ func (ec *executionContext) fieldContext_Query_job(ctx context.Context, field gr
 				return ec.fieldContext_Job_id(ctx, field)
 			case "accessPolicy":
 				return ec.fieldContext_Job_accessPolicy(ctx, field)
-			case "activeDeadlineSeconds":
-				return ec.fieldContext_Job_activeDeadlineSeconds(ctx, field)
-			case "backoffLimit":
-				return ec.fieldContext_Job_backoffLimit(ctx, field)
-			case "concurrencyPolicy":
-				return ec.fieldContext_Job_concurrencyPolicy(ctx, field)
 			case "deployInfo":
 				return ec.fieldContext_Job_deployInfo(ctx, field)
 			case "env":
 				return ec.fieldContext_Job_env(ctx, field)
-			case "failedJobsHistoryLimit":
-				return ec.fieldContext_Job_failedJobsHistoryLimit(ctx, field)
 			case "image":
 				return ec.fieldContext_Job_image(ctx, field)
-			case "jobInstances":
-				return ec.fieldContext_Job_jobInstances(ctx, field)
+			case "instances":
+				return ec.fieldContext_Job_instances(ctx, field)
 			case "manifest":
 				return ec.fieldContext_Job_manifest(ctx, field)
 			case "name":
@@ -11684,8 +11400,6 @@ func (ec *executionContext) fieldContext_Query_job(ctx context.Context, field gr
 				return ec.fieldContext_Job_resources(ctx, field)
 			case "schedule":
 				return ec.fieldContext_Job_schedule(ctx, field)
-			case "successfulJobsHistoryLimit":
-				return ec.fieldContext_Job_successfulJobsHistoryLimit(ctx, field)
 			case "team":
 				return ec.fieldContext_Job_team(ctx, field)
 			}
@@ -18927,27 +18641,6 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "activeDeadlineSeconds":
-
-			out.Values[i] = ec._Job_activeDeadlineSeconds(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "backoffLimit":
-
-			out.Values[i] = ec._Job_backoffLimit(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "concurrencyPolicy":
-
-			out.Values[i] = ec._Job_concurrencyPolicy(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "deployInfo":
 
 			out.Values[i] = ec._Job_deployInfo(ctx, field, obj)
@@ -18962,13 +18655,6 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "failedJobsHistoryLimit":
-
-			out.Values[i] = ec._Job_failedJobsHistoryLimit(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "image":
 
 			out.Values[i] = ec._Job_image(ctx, field, obj)
@@ -18976,7 +18662,7 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "jobInstances":
+		case "instances":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -18985,7 +18671,7 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Job_jobInstances(ctx, field, obj)
+				res = ec._Job_instances(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -19033,13 +18719,6 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 		case "schedule":
 
 			out.Values[i] = ec._Job_schedule(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "successfulJobsHistoryLimit":
-
-			out.Values[i] = ec._Job_successfulJobsHistoryLimit(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -19187,9 +18866,6 @@ func (ec *executionContext) _JobInstance(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._JobInstance_completionTime(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "failed":
 
 			out.Values[i] = ec._JobInstance_failed(ctx, field, obj)
@@ -19208,9 +18884,6 @@ func (ec *executionContext) _JobInstance(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._JobInstance_runDuration(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21262,16 +20935,6 @@ func (ec *executionContext) marshalNClaims2ᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 		return graphql.Null
 	}
 	return ec._Claims(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNConcurrencyPolicy2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConcurrencyPolicy(ctx context.Context, v interface{}) (model.ConcurrencyPolicy, error) {
-	var res model.ConcurrencyPolicy
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNConcurrencyPolicy2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConcurrencyPolicy(ctx context.Context, sel ast.SelectionSet, v model.ConcurrencyPolicy) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) marshalNConsume2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Consume) graphql.Marshaler {

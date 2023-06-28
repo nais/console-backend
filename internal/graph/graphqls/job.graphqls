@@ -13,28 +13,23 @@ type JobInstance implements Node {
   id: ID!
   name: String!
   startTime: Time!
-  completionTime: Time!
+  completionTime: Time
   failed: Int!
   succeeded: Int!
-  runDuration: String!
+  runDuration: String
 }
 
 type Job implements Node {
   id: ID!
   accessPolicy: AccessPolicy!
-  activeDeadlineSeconds: Int!
-  backoffLimit: Int!
-  concurrencyPolicy: ConcurrencyPolicy!
   deployInfo: DeployInfo!
   env: Env!
-  failedJobsHistoryLimit: Int!
   image: String!
-  jobInstances: [JobInstance!]!
+  instances: [JobInstance!]!
   manifest: String!
   name: String!
   resources: Resources!
   schedule: String!
-  successfulJobsHistoryLimit: Int!
   team: Team!
 }
 
