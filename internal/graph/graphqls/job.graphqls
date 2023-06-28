@@ -12,10 +12,10 @@ type JobEdge {
 type JobInstance implements Node {
   id: ID!
   name: String!
-  exitCode: Int!
-  reason: String!
-  startedAt: Time!
-  finishedAt: Time!
+  startTime: Time!
+  completionTime: Time!
+  failed: Int!
+  succeeded: Int!
   runDuration: String!
 }
 

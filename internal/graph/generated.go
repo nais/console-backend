@@ -316,13 +316,13 @@ type ComplexityRoot struct {
 	}
 
 	JobInstance struct {
-		ExitCode    func(childComplexity int) int
-		FinishedAt  func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Reason      func(childComplexity int) int
-		RunDuration func(childComplexity int) int
-		StartedAt   func(childComplexity int) int
+		CompletionTime func(childComplexity int) int
+		Failed         func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Name           func(childComplexity int) int
+		RunDuration    func(childComplexity int) int
+		StartTime      func(childComplexity int) int
+		Succeeded      func(childComplexity int) int
 	}
 
 	Kafka struct {
@@ -1616,19 +1616,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.JobEdge.Node(childComplexity), true
 
-	case "JobInstance.exitCode":
-		if e.complexity.JobInstance.ExitCode == nil {
+	case "JobInstance.completionTime":
+		if e.complexity.JobInstance.CompletionTime == nil {
 			break
 		}
 
-		return e.complexity.JobInstance.ExitCode(childComplexity), true
+		return e.complexity.JobInstance.CompletionTime(childComplexity), true
 
-	case "JobInstance.finishedAt":
-		if e.complexity.JobInstance.FinishedAt == nil {
+	case "JobInstance.failed":
+		if e.complexity.JobInstance.Failed == nil {
 			break
 		}
 
-		return e.complexity.JobInstance.FinishedAt(childComplexity), true
+		return e.complexity.JobInstance.Failed(childComplexity), true
 
 	case "JobInstance.id":
 		if e.complexity.JobInstance.ID == nil {
@@ -1644,13 +1644,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.JobInstance.Name(childComplexity), true
 
-	case "JobInstance.reason":
-		if e.complexity.JobInstance.Reason == nil {
-			break
-		}
-
-		return e.complexity.JobInstance.Reason(childComplexity), true
-
 	case "JobInstance.runDuration":
 		if e.complexity.JobInstance.RunDuration == nil {
 			break
@@ -1658,12 +1651,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.JobInstance.RunDuration(childComplexity), true
 
-	case "JobInstance.startedAt":
-		if e.complexity.JobInstance.StartedAt == nil {
+	case "JobInstance.startTime":
+		if e.complexity.JobInstance.StartTime == nil {
 			break
 		}
 
-		return e.complexity.JobInstance.StartedAt(childComplexity), true
+		return e.complexity.JobInstance.StartTime(childComplexity), true
+
+	case "JobInstance.succeeded":
+		if e.complexity.JobInstance.Succeeded == nil {
+			break
+		}
+
+		return e.complexity.JobInstance.Succeeded(childComplexity), true
 
 	case "Kafka.name":
 		if e.complexity.Kafka.Name == nil {
@@ -9499,14 +9499,14 @@ func (ec *executionContext) fieldContext_Job_jobInstances(ctx context.Context, f
 				return ec.fieldContext_JobInstance_id(ctx, field)
 			case "name":
 				return ec.fieldContext_JobInstance_name(ctx, field)
-			case "exitCode":
-				return ec.fieldContext_JobInstance_exitCode(ctx, field)
-			case "reason":
-				return ec.fieldContext_JobInstance_reason(ctx, field)
-			case "startedAt":
-				return ec.fieldContext_JobInstance_startedAt(ctx, field)
-			case "finishedAt":
-				return ec.fieldContext_JobInstance_finishedAt(ctx, field)
+			case "startTime":
+				return ec.fieldContext_JobInstance_startTime(ctx, field)
+			case "completionTime":
+				return ec.fieldContext_JobInstance_completionTime(ctx, field)
+			case "failed":
+				return ec.fieldContext_JobInstance_failed(ctx, field)
+			case "succeeded":
+				return ec.fieldContext_JobInstance_succeeded(ctx, field)
 			case "runDuration":
 				return ec.fieldContext_JobInstance_runDuration(ctx, field)
 			}
@@ -10176,8 +10176,8 @@ func (ec *executionContext) fieldContext_JobInstance_name(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _JobInstance_exitCode(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JobInstance_exitCode(ctx, field)
+func (ec *executionContext) _JobInstance_startTime(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_startTime(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10190,7 +10190,95 @@ func (ec *executionContext) _JobInstance_exitCode(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ExitCode, nil
+		return obj.StartTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobInstance_startTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobInstance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobInstance_completionTime(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_completionTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CompletionTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobInstance_completionTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobInstance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobInstance_failed(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_failed(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Failed, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10207,7 +10295,7 @@ func (ec *executionContext) _JobInstance_exitCode(ctx context.Context, field gra
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_JobInstance_exitCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_JobInstance_failed(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "JobInstance",
 		Field:      field,
@@ -10220,8 +10308,8 @@ func (ec *executionContext) fieldContext_JobInstance_exitCode(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _JobInstance_reason(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JobInstance_reason(ctx, field)
+func (ec *executionContext) _JobInstance_succeeded(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_succeeded(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10234,7 +10322,7 @@ func (ec *executionContext) _JobInstance_reason(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Reason, nil
+		return obj.Succeeded, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10246,107 +10334,19 @@ func (ec *executionContext) _JobInstance_reason(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_JobInstance_reason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_JobInstance_succeeded(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "JobInstance",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _JobInstance_startedAt(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JobInstance_startedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StartedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_JobInstance_startedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "JobInstance",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _JobInstance_finishedAt(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_JobInstance_finishedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FinishedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_JobInstance_finishedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "JobInstance",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19176,30 +19176,30 @@ func (ec *executionContext) _JobInstance(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "exitCode":
+		case "startTime":
 
-			out.Values[i] = ec._JobInstance_exitCode(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "reason":
-
-			out.Values[i] = ec._JobInstance_reason(ctx, field, obj)
+			out.Values[i] = ec._JobInstance_startTime(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "startedAt":
+		case "completionTime":
 
-			out.Values[i] = ec._JobInstance_startedAt(ctx, field, obj)
+			out.Values[i] = ec._JobInstance_completionTime(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "finishedAt":
+		case "failed":
 
-			out.Values[i] = ec._JobInstance_finishedAt(ctx, field, obj)
+			out.Values[i] = ec._JobInstance_failed(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "succeeded":
+
+			out.Values[i] = ec._JobInstance_succeeded(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
