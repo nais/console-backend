@@ -15,6 +15,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	api "go.opentelemetry.io/otel/metric"
 	"gopkg.in/yaml.v2"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -299,6 +301,7 @@ func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*m
 	}
 
 	for _, job := range jobs {
+
 		instance := &model.JobInstance{
 			ID:        model.Ident{ID: string(job.GetUID()), Type: "pod"},
 			Name:      job.Name,
@@ -311,6 +314,19 @@ func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*m
 			instance.CompletionTime = &job.Status.CompletionTime.Time
 			d := instance.CompletionTime.Sub(instance.StartTime).String()
 			instance.RunDuration = &d
+		}
+
+		for _, condition := range job.Status.Conditions {
+			if condition.Status == corev1.ConditionTrue {
+				instance.StatusType = (*string)(&condition.Type)
+				instance.StatusMessage = &condition.Message
+				instance.StatusDate = &condition.LastTransitionTime.Time
+				instance.StatusReason = &condition.Reason
+				if condition.Type == batchv1.JobFailed {
+					d := condition.LastTransitionTime.Time.Sub(instance.StartTime).String()
+					instance.RunDuration = &d
+				}
+			}
 		}
 
 		ret = append(ret, instance)

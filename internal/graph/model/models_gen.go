@@ -197,9 +197,14 @@ type JobInstance struct {
 	Name           string     `json:"name"`
 	StartTime      time.Time  `json:"startTime"`
 	CompletionTime *time.Time `json:"completionTime,omitempty"`
+	Active         int        `json:"active"`
 	Failed         int        `json:"failed"`
 	Succeeded      int        `json:"succeeded"`
 	RunDuration    *string    `json:"runDuration,omitempty"`
+	StatusMessage  *string    `json:"statusMessage,omitempty"`
+	StatusReason   *string    `json:"statusReason,omitempty"`
+	StatusType     *string    `json:"statusType,omitempty"`
+	StatusDate     *time.Time `json:"statusDate,omitempty"`
 }
 
 func (JobInstance) IsNode()           {}

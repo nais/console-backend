@@ -311,12 +311,17 @@ type ComplexityRoot struct {
 	}
 
 	JobInstance struct {
+		Active         func(childComplexity int) int
 		CompletionTime func(childComplexity int) int
 		Failed         func(childComplexity int) int
 		ID             func(childComplexity int) int
 		Name           func(childComplexity int) int
 		RunDuration    func(childComplexity int) int
 		StartTime      func(childComplexity int) int
+		StatusDate     func(childComplexity int) int
+		StatusMessage  func(childComplexity int) int
+		StatusReason   func(childComplexity int) int
+		StatusType     func(childComplexity int) int
 		Succeeded      func(childComplexity int) int
 	}
 
@@ -1576,6 +1581,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.JobEdge.Node(childComplexity), true
 
+	case "JobInstance.active":
+		if e.complexity.JobInstance.Active == nil {
+			break
+		}
+
+		return e.complexity.JobInstance.Active(childComplexity), true
+
 	case "JobInstance.completionTime":
 		if e.complexity.JobInstance.CompletionTime == nil {
 			break
@@ -1617,6 +1629,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.JobInstance.StartTime(childComplexity), true
+
+	case "JobInstance.statusDate":
+		if e.complexity.JobInstance.StatusDate == nil {
+			break
+		}
+
+		return e.complexity.JobInstance.StatusDate(childComplexity), true
+
+	case "JobInstance.statusMessage":
+		if e.complexity.JobInstance.StatusMessage == nil {
+			break
+		}
+
+		return e.complexity.JobInstance.StatusMessage(childComplexity), true
+
+	case "JobInstance.statusReason":
+		if e.complexity.JobInstance.StatusReason == nil {
+			break
+		}
+
+		return e.complexity.JobInstance.StatusReason(childComplexity), true
+
+	case "JobInstance.statusType":
+		if e.complexity.JobInstance.StatusType == nil {
+			break
+		}
+
+		return e.complexity.JobInstance.StatusType(childComplexity), true
 
 	case "JobInstance.succeeded":
 		if e.complexity.JobInstance.Succeeded == nil {
@@ -9287,12 +9327,22 @@ func (ec *executionContext) fieldContext_Job_instances(ctx context.Context, fiel
 				return ec.fieldContext_JobInstance_startTime(ctx, field)
 			case "completionTime":
 				return ec.fieldContext_JobInstance_completionTime(ctx, field)
+			case "active":
+				return ec.fieldContext_JobInstance_active(ctx, field)
 			case "failed":
 				return ec.fieldContext_JobInstance_failed(ctx, field)
 			case "succeeded":
 				return ec.fieldContext_JobInstance_succeeded(ctx, field)
 			case "runDuration":
 				return ec.fieldContext_JobInstance_runDuration(ctx, field)
+			case "statusMessage":
+				return ec.fieldContext_JobInstance_statusMessage(ctx, field)
+			case "statusReason":
+				return ec.fieldContext_JobInstance_statusReason(ctx, field)
+			case "statusType":
+				return ec.fieldContext_JobInstance_statusType(ctx, field)
+			case "statusDate":
+				return ec.fieldContext_JobInstance_statusDate(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type JobInstance", field.Name)
 		},
@@ -9991,6 +10041,50 @@ func (ec *executionContext) fieldContext_JobInstance_completionTime(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _JobInstance_active(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_active(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Active, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobInstance_active(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobInstance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _JobInstance_failed(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_JobInstance_failed(ctx, field)
 	if err != nil {
@@ -10115,6 +10209,170 @@ func (ec *executionContext) fieldContext_JobInstance_runDuration(ctx context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobInstance_statusMessage(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_statusMessage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StatusMessage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobInstance_statusMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobInstance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobInstance_statusReason(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_statusReason(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StatusReason, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobInstance_statusReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobInstance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobInstance_statusType(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_statusType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StatusType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobInstance_statusType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobInstance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobInstance_statusDate(ctx context.Context, field graphql.CollectedField, obj *model.JobInstance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobInstance_statusDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StatusDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobInstance_statusDate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobInstance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18866,6 +19124,13 @@ func (ec *executionContext) _JobInstance(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._JobInstance_completionTime(ctx, field, obj)
 
+		case "active":
+
+			out.Values[i] = ec._JobInstance_active(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "failed":
 
 			out.Values[i] = ec._JobInstance_failed(ctx, field, obj)
@@ -18883,6 +19148,22 @@ func (ec *executionContext) _JobInstance(ctx context.Context, sel ast.SelectionS
 		case "runDuration":
 
 			out.Values[i] = ec._JobInstance_runDuration(ctx, field, obj)
+
+		case "statusMessage":
+
+			out.Values[i] = ec._JobInstance_statusMessage(ctx, field, obj)
+
+		case "statusReason":
+
+			out.Values[i] = ec._JobInstance_statusReason(ctx, field, obj)
+
+		case "statusType":
+
+			out.Values[i] = ec._JobInstance_statusType(ctx, field, obj)
+
+		case "statusDate":
+
+			out.Values[i] = ec._JobInstance_statusDate(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
