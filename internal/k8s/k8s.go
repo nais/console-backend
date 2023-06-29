@@ -262,7 +262,7 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 	return ret, nil
 }
 
-func (c *Client) Jobs(ctx context.Context, team string) ([]*model.NaisJob, error) {
+func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, error) {
 	ret := []*model.NaisJob{}
 
 	for env, infs := range c.informers {
@@ -285,7 +285,7 @@ func (c *Client) Jobs(ctx context.Context, team string) ([]*model.NaisJob, error
 	return ret, nil
 }
 
-func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*model.Run, error) {
+func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run, error) {
 	ret := []*model.Run{}
 
 	nameReq, err := labels.NewRequirement("app", selection.Equals, []string{name})
@@ -301,15 +301,18 @@ func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*m
 	}
 
 	for _, job := range jobs {
-		var completionTime *time.Time
+		var startTime, completionTime *time.Time
 		if job.Status.CompletionTime != nil {
 			completionTime = &job.Status.CompletionTime.Time
+		}
+		if job.Status.StartTime != nil {
+			startTime = &job.Status.StartTime.Time
 		}
 
 		ret = append(ret, &model.Run{
 			ID:             model.Ident{ID: job.Name, Type: "job"},
 			Name:           job.Name,
-			StartTime:      job.Status.StartTime.Time,
+			StartTime:      startTime,
 			CompletionTime: completionTime,
 			Failed:         failed(job),
 			RunDuration:    duration(job).String(),
@@ -318,24 +321,34 @@ func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*m
 		})
 	}
 
-	// sort ret by StartTime, newest first
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].StartTime.After(ret[j].StartTime)
+		if ret[i].StartTime == nil {
+			return false
+		}
+		if ret[j].StartTime == nil {
+			return true
+		}
+
+		return ret[i].StartTime.After(*ret[j].StartTime)
 	})
 
 	return ret, nil
 }
 
 func message(job *batchv1.Job) string {
-	target := completionTarget(*job)
 	if failed(job) {
-		return "Run failed"
+		return fmt.Sprintf("Run failed after %d attempts.", job.Status.Failed)
 	}
+	target := completionTarget(*job)
 	if job.Status.Active > 0 {
 		return fmt.Sprintf("%d run(s) in progress. %d/%d runs finished successfully with %d failed.", job.Status.Active, job.Status.Succeeded, target, job.Status.Failed)
 	}
 	if job.Status.Succeeded == target {
-		return fmt.Sprintf("%d/%d runs finished successfully", job.Status.Succeeded, target)
+		msg := fmt.Sprintf("%d/%d runs finished successfully", job.Status.Succeeded, target)
+		if job.Status.Failed > 0 {
+			msg += fmt.Sprintf(" (%d failed attempt)", job.Status.Failed)
+		}
+		return msg
 	}
 	return ""
 }

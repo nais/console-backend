@@ -12,7 +12,7 @@ import (
 
 // Runs is the resolver for the runs field.
 func (r *naisJobResolver) Runs(ctx context.Context, obj *model.NaisJob) ([]*model.Run, error) {
-	return r.K8s.JobInstances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
+	return r.K8s.Runs(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
 }
 
 // Manifest is the resolver for the manifest field.

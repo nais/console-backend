@@ -5,7 +5,7 @@ import "time"
 type Run struct {
 	ID             Ident      `json:"id"`
 	Name           string     `json:"name"`
-	StartTime      time.Time  `json:"startTime"`
+	StartTime      *time.Time `json:"startTime,omitempty"`
 	CompletionTime *time.Time `json:"completionTime,omitempty"`
 	RunDuration    string     `json:"runDuration"`
 	Image          string     `json:"image"`

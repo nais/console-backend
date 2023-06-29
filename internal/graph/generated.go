@@ -12073,14 +12073,11 @@ func (ec *executionContext) _Run_startTime(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Run_startTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19828,9 +19825,6 @@ func (ec *executionContext) _Run(ctx context.Context, sel ast.SelectionSet, obj 
 
 			out.Values[i] = ec._Run_startTime(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "completionTime":
 
 			out.Values[i] = ec._Run_completionTime(ctx, field, obj)
