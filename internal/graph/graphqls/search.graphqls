@@ -9,7 +9,7 @@ type SearchEdge {
   cursor: Cursor!
 }
 
-union SearchNode = App | Team | Job
+union SearchNode = App | Team | NaisJob
 
 input SearchFilter {
   type: SearchType

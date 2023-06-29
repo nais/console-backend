@@ -192,23 +192,6 @@ type Instance struct {
 func (Instance) IsNode()           {}
 func (this Instance) GetID() Ident { return this.ID }
 
-type JobInstance struct {
-	ID             Ident      `json:"id"`
-	Name           string     `json:"name"`
-	StartTime      time.Time  `json:"startTime"`
-	CompletionTime *time.Time `json:"completionTime,omitempty"`
-	Active         int        `json:"active"`
-	Failed         int        `json:"failed"`
-	Succeeded      int        `json:"succeeded"`
-	RunDuration    *string    `json:"runDuration,omitempty"`
-	StatusMessage  *string    `json:"statusMessage,omitempty"`
-	StatusReason   *string    `json:"statusReason,omitempty"`
-	StatusType     *string    `json:"statusType,omitempty"`
-}
-
-func (JobInstance) IsNode()           {}
-func (this JobInstance) GetID() Ident { return this.ID }
-
 type Kafka struct {
 	// The kafka pool name
 	Name    string `json:"name"`
@@ -291,49 +274,6 @@ func (TokenX) IsAuthz() {}
 type Variable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
-}
-
-type ConcurrencyPolicy string
-
-const (
-	ConcurrencyPolicyAllow   ConcurrencyPolicy = "ALLOW"
-	ConcurrencyPolicyForbid  ConcurrencyPolicy = "FORBID"
-	ConcurrencyPolicyReplace ConcurrencyPolicy = "REPLACE"
-)
-
-var AllConcurrencyPolicy = []ConcurrencyPolicy{
-	ConcurrencyPolicyAllow,
-	ConcurrencyPolicyForbid,
-	ConcurrencyPolicyReplace,
-}
-
-func (e ConcurrencyPolicy) IsValid() bool {
-	switch e {
-	case ConcurrencyPolicyAllow, ConcurrencyPolicyForbid, ConcurrencyPolicyReplace:
-		return true
-	}
-	return false
-}
-
-func (e ConcurrencyPolicy) String() string {
-	return string(e)
-}
-
-func (e *ConcurrencyPolicy) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ConcurrencyPolicy(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ConcurrencyPolicy", str)
-	}
-	return nil
-}
-
-func (e ConcurrencyPolicy) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type SearchType string

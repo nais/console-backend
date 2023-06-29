@@ -38,16 +38,16 @@ func teamEdges(teams []t.Team, p *model.Pagination) []*model.TeamEdge {
 	return edges
 }
 
-func jobEdges(jobs []*model.Job, team string, p *model.Pagination) []*model.JobEdge {
-	edges := []*model.JobEdge{}
-	start, end := p.ForSlice(len(jobs))
+func naisJobEdges(naisjobs []*model.NaisJob, team string, p *model.Pagination) []*model.NaisJobEdge {
+	edges := []*model.NaisJobEdge{}
+	start, end := p.ForSlice(len(naisjobs))
 
-	for i, job := range jobs[start:end] {
+	for i, job := range naisjobs[start:end] {
 		job.GQLVars = struct{ Team string }{
 			Team: team,
 		}
 
-		edges = append(edges, &model.JobEdge{
+		edges = append(edges, &model.NaisJobEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node:   job,
 		})

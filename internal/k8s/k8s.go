@@ -113,7 +113,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 			if rank == -1 {
 				continue
 			}
-			job, err := toJob(u, env)
+			job, err := toNaisJob(u, env)
 			if err != nil {
 				c.error(ctx, err, "converting to job")
 				return nil
@@ -169,8 +169,8 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	return toApp(obj.(*unstructured.Unstructured), env)
 }
 
-func (c *Client) Job(ctx context.Context, name, team, env string) (*model.Job, error) {
-	c.log.Debugf("getting job %q in namespace %q in env %q", name, team, env)
+func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.NaisJob, error) {
+	c.log.Infof("getting job %q in namespace %q in env %q", name, team, env)
 	if c.informers[env] == nil {
 		return nil, fmt.Errorf("no jobInformer for env %q", env)
 	}
@@ -178,7 +178,7 @@ func (c *Client) Job(ctx context.Context, name, team, env string) (*model.Job, e
 	if err != nil {
 		return nil, c.error(ctx, err, "getting job")
 	}
-	return toJob(obj.(*unstructured.Unstructured), env)
+	return toNaisJob(obj.(*unstructured.Unstructured), env)
 }
 
 func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, error) {
@@ -262,8 +262,8 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 	return ret, nil
 }
 
-func (c *Client) Jobs(ctx context.Context, team string) ([]*model.Job, error) {
-	ret := []*model.Job{}
+func (c *Client) Jobs(ctx context.Context, team string) ([]*model.NaisJob, error) {
+	ret := []*model.NaisJob{}
 
 	for env, infs := range c.informers {
 		objs, err := infs.NaisjobInformer.Lister().ByNamespace(team).List(labels.Everything())
@@ -271,7 +271,7 @@ func (c *Client) Jobs(ctx context.Context, team string) ([]*model.Job, error) {
 			return nil, c.error(ctx, err, "listing jobs")
 		}
 		for _, obj := range objs {
-			job, err := toJob(obj.(*unstructured.Unstructured), env)
+			job, err := toNaisJob(obj.(*unstructured.Unstructured), env)
 			if err != nil {
 				return nil, c.error(ctx, err, "converting to job")
 			}
@@ -285,8 +285,8 @@ func (c *Client) Jobs(ctx context.Context, team string) ([]*model.Job, error) {
 	return ret, nil
 }
 
-func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*model.JobInstance, error) {
-	ret := []*model.JobInstance{}
+func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*model.Run, error) {
+	ret := []*model.Run{}
 
 	nameReq, err := labels.NewRequirement("app", selection.Equals, []string{name})
 	if err != nil {
@@ -301,35 +301,21 @@ func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*m
 	}
 
 	for _, job := range jobs {
-
-		instance := &model.JobInstance{
-			ID:        model.Ident{ID: string(job.GetUID()), Type: "pod"},
-			Name:      job.Name,
-			StartTime: job.Status.StartTime.Time,
-			Failed:    int(job.Status.Failed),
-			Succeeded: int(job.Status.Succeeded),
-		}
-
+		var completionTime *time.Time
 		if job.Status.CompletionTime != nil {
-			instance.CompletionTime = &job.Status.CompletionTime.Time
-			d := instance.CompletionTime.Sub(instance.StartTime).String()
-			instance.RunDuration = &d
+			completionTime = &job.Status.CompletionTime.Time
 		}
 
-		for _, condition := range job.Status.Conditions {
-			if condition.Status == corev1.ConditionTrue {
-				instance.StatusType = (*string)(&condition.Type)
-				instance.StatusMessage = &condition.Message
-				instance.StatusReason = &condition.Reason
-				if condition.Type == batchv1.JobFailed {
-					d := condition.LastTransitionTime.Time.Sub(instance.StartTime).String()
-					instance.RunDuration = &d
-					instance.CompletionTime = &condition.LastTransitionTime.Time
-				}
-			}
-		}
-
-		ret = append(ret, instance)
+		ret = append(ret, &model.Run{
+			ID:             model.Ident{ID: job.Name, Type: "job"},
+			Name:           job.Name,
+			StartTime:      job.Status.StartTime.Time,
+			CompletionTime: completionTime,
+			Failed:         failed(job),
+			RunDuration:    duration(job).String(),
+			Image:          job.Spec.Template.Spec.Containers[0].Image,
+			Message:        message(job),
+		})
 	}
 
 	// sort ret by StartTime, newest first
@@ -338,6 +324,63 @@ func (c *Client) JobInstances(ctx context.Context, team, env, name string) ([]*m
 	})
 
 	return ret, nil
+}
+
+func message(job *batchv1.Job) string {
+	target := completionTarget(*job)
+	if failed(job) {
+		return "Run failed"
+	}
+	if job.Status.Active > 0 {
+		return fmt.Sprintf("%d run(s) in progress. %d/%d runs finished successfully with %d failed.", job.Status.Active, job.Status.Succeeded, target, job.Status.Failed)
+	}
+	if job.Status.Succeeded == target {
+		return fmt.Sprintf("%d/%d runs finished successfully", job.Status.Succeeded, target)
+	}
+	return ""
+}
+
+// completion target is the number of successful runs we want to see based on parallelism and completions
+func completionTarget(job batchv1.Job) int32 {
+	if job.Spec.Completions == nil && job.Spec.Parallelism == nil {
+		return 1
+	}
+	if job.Spec.Completions != nil {
+		return *job.Spec.Completions
+	}
+	return *job.Spec.Parallelism
+}
+
+func duration(job *batchv1.Job) time.Duration {
+	if job.Status.StartTime == nil {
+		return time.Duration(0)
+	}
+	if job.Status.CompletionTime != nil {
+		return job.Status.CompletionTime.Sub(job.Status.StartTime.Time)
+	}
+	if !failed(job) {
+		return time.Since(job.Status.StartTime.Time)
+	}
+	for _, cs := range job.Status.Conditions {
+		if cs.Status == corev1.ConditionTrue {
+			if cs.Type == batchv1.JobFailed {
+				return cs.LastTransitionTime.Time.Sub(job.Status.StartTime.Time)
+			}
+		}
+	}
+
+	return time.Duration(0)
+}
+
+func failed(job *batchv1.Job) bool {
+	for _, cs := range job.Status.Conditions {
+		if cs.Status == corev1.ConditionTrue {
+			if cs.Type == batchv1.JobFailed {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*model.Instance, error) {
@@ -379,40 +422,41 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 	return ret, nil
 }
 
-func toJob(u *unstructured.Unstructured, env string) (*model.Job, error) {
-	job := &naisv1.Naisjob{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, job); err != nil {
+func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error) {
+	naisjob := &naisv1.Naisjob{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, naisjob); err != nil {
 		return nil, fmt.Errorf("converting to job: %w", err)
 	}
 
-	ret := &model.Job{}
-	ret.ID = model.Ident{ID: "job_" + env + "_" + job.GetNamespace() + "_" + job.GetName(), Type: "job"}
-	ret.Name = job.GetName()
-
+	ret := &model.NaisJob{}
+	ret.ID = model.Ident{ID: "job_" + env + "_" + naisjob.GetNamespace() + "_" + naisjob.GetName(), Type: "job"}
+	ret.Name = naisjob.GetName()
 	ret.Env = &model.Env{
 		Name: env,
 		ID:   model.Ident{ID: env, Type: "env"},
 	}
-
-	ret.DeployInfo.CommitSha = job.GetAnnotations()["deploy.nais.io/github-sha"]
-	ret.DeployInfo.Deployer = job.GetAnnotations()["deploy.nais.io/github-actor"]
-	ret.DeployInfo.URL = job.GetAnnotations()["deploy.nais.io/github-workflow-run-url"]
-	timestamp := time.Unix(0, job.GetStatus().RolloutCompleteTime)
-	ret.DeployInfo.Timestamp = &timestamp
-	ret.DeployInfo.GQLVars.Job = job.GetName()
+	ret.DeployInfo = &model.DeployInfo{
+		CommitSha: naisjob.GetAnnotations()["deploy.nais.io/github-sha"],
+		Deployer:  naisjob.GetAnnotations()["deploy.nais.io/github-actor"],
+		URL:       naisjob.GetAnnotations()["deploy.nais.io/github-workflow-run-url"],
+	}
+	ret.DeployInfo.GQLVars.Job = naisjob.GetName()
 	ret.DeployInfo.GQLVars.Env = env
-	ret.DeployInfo.GQLVars.Team = job.GetNamespace()
-	ret.GQLVars.Team = job.GetNamespace()
-	ret.Image = job.Spec.Image
+	ret.DeployInfo.GQLVars.Team = naisjob.GetNamespace()
+
+	timestamp := time.Unix(0, naisjob.GetStatus().RolloutCompleteTime)
+	ret.DeployInfo.Timestamp = &timestamp
+	ret.GQLVars.Team = naisjob.GetNamespace()
+	ret.Image = naisjob.Spec.Image
 
 	ap := model.AccessPolicy{}
-	if err := convert(job.Spec.AccessPolicy, &ap); err != nil {
+	if err := convert(naisjob.Spec.AccessPolicy, &ap); err != nil {
 		return nil, fmt.Errorf("converting accessPolicy: %w", err)
 	}
 	ret.AccessPolicy = &ap
 
 	r := model.Resources{}
-	if err := convert(job.Spec.Resources, &r); err != nil {
+	if err := convert(naisjob.Spec.Resources, &r); err != nil {
 		return nil, fmt.Errorf("converting resources: %w", err)
 	}
 
@@ -422,9 +466,17 @@ func toJob(u *unstructured.Unstructured, env string) (*model.Job, error) {
 	if r.Limits == nil {
 		r.Limits = &model.Limits{}
 	}
-	ret.Resources = r
+	ret.Resources = &r
 
-	ret.Schedule = job.Spec.Schedule
+	ret.Schedule = naisjob.Spec.Schedule
+
+	if naisjob.Spec.Completions != nil {
+		ret.Completions = int(*naisjob.Spec.Completions)
+	}
+	if naisjob.Spec.Parallelism != nil {
+		ret.Parallelism = int(*naisjob.Spec.Parallelism)
+	}
+	ret.Retries = int(naisjob.Spec.BackoffLimit)
 
 	return ret, nil
 }

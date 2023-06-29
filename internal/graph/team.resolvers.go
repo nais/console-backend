@@ -152,41 +152,9 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 	}, nil
 }
 
-// Jobs is the resolver for the jobs field.
-func (r *teamResolver) Jobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.JobConnection, error) {
-	jobs, err := r.K8s.Jobs(ctx, obj.Name)
-	if err != nil {
-		return nil, fmt.Errorf("getting jobs from Kubernetes: %w", err)
-	}
-
-	pagination := model.NewPagination(first, last, after, before)
-	j := jobEdges(jobs, obj.Name, pagination)
-
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
-	if len(j) > 0 {
-		startCursor = &j[0].Cursor
-		endCursor = &j[len(j)-1].Cursor
-	}
-
-	hasNext := len(jobs) > pagination.First()+pagination.After().Offset
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.JobConnection{
-		TotalCount: len(jobs),
-		Edges:      j,
-		PageInfo: &model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
-	}, nil
+// Naisjobs is the resolver for the naisjobs field.
+func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.NaisJobConnection, error) {
+	panic(fmt.Errorf("not implemented: Naisjobs - naisjobs"))
 }
 
 // GithubRepositories is the resolver for the githubRepositories field.
@@ -343,3 +311,45 @@ func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *teamResolver) Jobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.NaisJobConnection, error) {
+	jobs, err := r.K8s.Jobs(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting jobs from Kubernetes: %w", err)
+	}
+
+	pagination := model.NewPagination(first, last, after, before)
+	j := naisJobEdges(jobs, obj.Name, pagination)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+	if len(j) > 0 {
+		startCursor = &j[0].Cursor
+		endCursor = &j[len(j)-1].Cursor
+	}
+
+	hasNext := len(jobs) > pagination.First()+pagination.After().Offset
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
+
+	return &model.NaisJobConnection{
+		TotalCount: len(jobs),
+		Edges:      j,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
