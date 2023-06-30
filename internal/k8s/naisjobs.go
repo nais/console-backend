@@ -113,7 +113,7 @@ func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run
 			Failed:         failed(job),
 			Duration:       duration(job).String(),
 			Image:          job.Spec.Template.Spec.Containers[0].Image,
-			Message:        message(job),
+			Message:        Message(job),
 		})
 	}
 
@@ -131,21 +131,21 @@ func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run
 	return ret, nil
 }
 
-func message(job *batchv1.Job) string {
+func Message(job *batchv1.Job) string {
 	if failed(job) {
-		return fmt.Sprintf("Run failed after %d attempts.", job.Status.Failed)
+		return fmt.Sprintf("Run failed after %d attempts", job.Status.Failed)
 	}
 	target := completionTarget(*job)
 	if job.Status.Active > 0 {
 		msg := ""
 		if job.Status.Active == 1 {
-			msg = "1 instance running."
+			msg = "1 instance running"
 		} else {
-			msg = fmt.Sprintf("%d instances running. ", job.Status.Active)
+			msg = fmt.Sprintf("%d instances running", job.Status.Active)
 		}
-		return fmt.Sprintf("%s. %d/%d runs completed (%d failed %s)", msg, job.Status.Succeeded, target, job.Status.Failed, pluralize("attempt", job.Status.Failed))
+		return fmt.Sprintf("%s. %d/%d completed (%d failed %s)", msg, job.Status.Succeeded, target, job.Status.Failed, pluralize("attempt", job.Status.Failed))
 	} else if job.Status.Succeeded == target {
-		return fmt.Sprintf("%d/%d runs completed successfully (%d failed %s)", job.Status.Succeeded, target, job.Status.Failed, pluralize("attempt", job.Status.Failed))
+		return fmt.Sprintf("%d/%d instances completed (%d failed %s)", job.Status.Succeeded, target, job.Status.Failed, pluralize("attempt", job.Status.Failed))
 	}
 	return ""
 }
@@ -191,10 +191,8 @@ func duration(job *batchv1.Job) time.Duration {
 
 func failed(job *batchv1.Job) bool {
 	for _, cs := range job.Status.Conditions {
-		if cs.Status == corev1.ConditionTrue {
-			if cs.Type == batchv1.JobFailed {
-				return true
-			}
+		if cs.Status == corev1.ConditionTrue && cs.Type == batchv1.JobFailed {
+			return true
 		}
 	}
 	return false
