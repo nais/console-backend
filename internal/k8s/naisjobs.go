@@ -143,18 +143,18 @@ func message(job *batchv1.Job) string {
 		} else {
 			msg = fmt.Sprintf("%d instances running. ", job.Status.Active)
 		}
-		return fmt.Sprintf("%s. %d/%d runs completed (%d failed)", msg, job.Status.Succeeded, target, job.Status.Failed)
-	}
-	if job.Status.Succeeded == target {
-		msg := fmt.Sprintf("%d/%d runs completed successfully", job.Status.Succeeded, target)
-		if job.Status.Failed == 1 {
-			msg += " (1 failed attempt)"
-		} else if job.Status.Failed > 1 {
-			msg += fmt.Sprintf(" (%d failed attempts)", job.Status.Failed)
-		}
-		return msg
+		return fmt.Sprintf("%s. %d/%d runs completed (%d failed %s)", msg, job.Status.Succeeded, target, job.Status.Failed, pluralize("attempt", job.Status.Failed))
+	} else if job.Status.Succeeded == target {
+		return fmt.Sprintf("%d/%d runs completed successfully (%d failed %s)", job.Status.Succeeded, target, job.Status.Failed, pluralize("attempt", job.Status.Failed))
 	}
 	return ""
+}
+
+func pluralize(s string, count int32) string {
+	if count == 1 {
+		return s
+	}
+	return s + "s"
 }
 
 // completion target is the number of successful runs we want to see based on parallelism and completions
