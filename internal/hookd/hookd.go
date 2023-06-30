@@ -134,20 +134,21 @@ func (c *Client) Deployments(ctx context.Context, opts ...RequestOptions) ([]Dep
 	return ret, nil
 }
 
-func (c *Client) DeploymentsByApp(ctx context.Context, app, team, env string) ([]Deploy, error) {
+func (c *Client) DeploymentsByKind(ctx context.Context, name, team, env, kind string) ([]Deploy, error) {
 	deploys, err := c.Deployments(ctx, WithTeam(team), WithCluster(env))
 	if err != nil {
 		return nil, c.error(ctx, err, "getting deploys from hookd")
 	}
 
-	return filterByApplication(deploys, app), nil
+	return filterByKind(deploys, name, kind), nil
 }
 
-func filterByApplication(deploys []Deploy, app string) []Deploy {
+func filterByKind(deploys []Deploy, name, kind string) []Deploy {
 	ret := []Deploy{}
 	for _, deploy := range deploys {
 		for _, resource := range deploy.Resources {
-			if resource.Name == app && resource.Kind == "Application" {
+			fmt.Println(resource.Name, resource.Kind)
+			if resource.Name == name && resource.Kind == kind {
 				ret = append(ret, deploy)
 				continue
 			}

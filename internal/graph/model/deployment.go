@@ -51,6 +51,7 @@ type DeployInfo struct {
 	URL       string     `json:"url"`
 	GQLVars   struct {
 		App  string
+		Job  string
 		Env  string
 		Team string
 	} `json:"-"`

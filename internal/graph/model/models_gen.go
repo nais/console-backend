@@ -279,18 +279,20 @@ type Variable struct {
 type SearchType string
 
 const (
-	SearchTypeApp  SearchType = "APP"
-	SearchTypeTeam SearchType = "TEAM"
+	SearchTypeApp     SearchType = "APP"
+	SearchTypeTeam    SearchType = "TEAM"
+	SearchTypeNaisjob SearchType = "NAISJOB"
 )
 
 var AllSearchType = []SearchType{
 	SearchTypeApp,
 	SearchTypeTeam,
+	SearchTypeNaisjob,
 }
 
 func (e SearchType) IsValid() bool {
 	switch e {
-	case SearchTypeApp, SearchTypeTeam:
+	case SearchTypeApp, SearchTypeTeam, SearchTypeNaisjob:
 		return true
 	}
 	return false

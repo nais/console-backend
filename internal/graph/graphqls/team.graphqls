@@ -30,6 +30,12 @@ type Team implements Node {
     before: Cursor
   ): TeamMemberConnection!
   apps(first: Int, last: Int, after: Cursor, before: Cursor): AppConnection!
+  naisjobs(
+    first: Int
+    last: Int
+    after: Cursor
+    before: Cursor
+  ): NaisJobConnection!
   githubRepositories(first: Int, after: Cursor): GithubRepositoryConnection!
   slackChannel: String
   slackAlertsChannels: [SlackAlertsChannel!]

@@ -152,6 +152,43 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 	}, nil
 }
 
+// Naisjobs is the resolver for the naisjobs field.
+func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.NaisJobConnection, error) {
+	naisjobs, err := r.K8s.NaisJobs(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
+	}
+
+	pagination := model.NewPagination(first, last, after, before)
+	j := naisJobEdges(naisjobs, obj.Name, pagination)
+
+	var startCursor *model.Cursor
+	var endCursor *model.Cursor
+	if len(j) > 0 {
+		startCursor = &j[0].Cursor
+		endCursor = &j[len(j)-1].Cursor
+	}
+
+	hasNext := len(naisjobs) > pagination.First()+pagination.After().Offset
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
+
+	return &model.NaisJobConnection{
+		TotalCount: len(naisjobs),
+		Edges:      j,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
+
 // GithubRepositories is the resolver for the githubRepositories field.
 func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error) {
 	if first == nil {

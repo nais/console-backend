@@ -1,0 +1,42 @@
+type NaisJobConnection {
+  edges: [NaisJobEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type NaisJobEdge {
+  cursor: Cursor!
+  node: NaisJob!
+}
+
+type Run implements Node {
+  id: ID!
+  name: String!
+  startTime: Time
+  completionTime: Time
+  duration: String!
+  image: String!
+  message: String!
+  failed: Boolean!
+}
+
+type NaisJob implements Node {
+  id: ID!
+  accessPolicy: AccessPolicy!
+  deployInfo: DeployInfo!
+  env: Env!
+  image: String!
+  runs: [Run!]!
+  manifest: String!
+  name: String!
+  resources: Resources!
+  schedule: String!
+  team: Team!
+  completions: Int!
+  parallelism: Int!
+  retries: Int!
+}
+
+extend type Query {
+  naisjob(name: String!, team: String!, env: String!): NaisJob!
+}
