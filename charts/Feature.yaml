@@ -1,0 +1,38 @@
+environmentKinds:
+  - management
+values:
+  kubernetes.clusters:
+    displayName: Comma-separated list of clusters to monitor
+    required: true
+    config:
+      type: string
+  audience:
+    displayName: IAP audience
+    required: true
+    config:
+      type: string
+  hookd.psk:
+    description: The pre-shared key used to authenticate against hookd
+    displayName: hookd pre-shared key
+    computed:
+      template: '"{{.Management.hookd_frontend_pre_shared_key}}"'
+  host:
+    computed:
+      template: '{{ subdomain . "console" }}'
+  resources.cpu:
+    displayName: CPU requirements (request == limit, because Autopilot)
+    config:
+      type: string
+  resources.memory:
+    displayName: Memory requirements (request == limit, because Autopilot)
+    config:
+      type: string
+  serviceaccount.email:
+    displayName: console-backend service account email
+    computed:
+      template: '"{{.Management.console_backend_serviceaccount_email}}"'
+  teams.token:
+    description: The pre-shared key used by console to authenticate against teams
+    displayName: teams pre-shared key
+    computed:
+      template: '"{{.Management.console_teams_api_key}}"'
