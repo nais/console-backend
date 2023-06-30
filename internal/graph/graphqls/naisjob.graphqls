@@ -14,7 +14,7 @@ type Run implements Node {
   name: String!
   startTime: Time
   completionTime: Time
-  runDuration: String!
+  duration: String!
   image: String!
   message: String!
   failed: Boolean!

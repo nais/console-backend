@@ -393,12 +393,12 @@ type ComplexityRoot struct {
 
 	Run struct {
 		CompletionTime func(childComplexity int) int
+		Duration       func(childComplexity int) int
 		Failed         func(childComplexity int) int
 		ID             func(childComplexity int) int
 		Image          func(childComplexity int) int
 		Message        func(childComplexity int) int
 		Name           func(childComplexity int) int
-		RunDuration    func(childComplexity int) int
 		StartTime      func(childComplexity int) int
 	}
 
@@ -1900,6 +1900,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Run.CompletionTime(childComplexity), true
 
+	case "Run.duration":
+		if e.complexity.Run.Duration == nil {
+			break
+		}
+
+		return e.complexity.Run.Duration(childComplexity), true
+
 	case "Run.failed":
 		if e.complexity.Run.Failed == nil {
 			break
@@ -1934,13 +1941,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Run.Name(childComplexity), true
-
-	case "Run.runDuration":
-		if e.complexity.Run.RunDuration == nil {
-			break
-		}
-
-		return e.complexity.Run.RunDuration(childComplexity), true
 
 	case "Run.startTime":
 		if e.complexity.Run.StartTime == nil {
@@ -9848,8 +9848,8 @@ func (ec *executionContext) fieldContext_NaisJob_runs(ctx context.Context, field
 				return ec.fieldContext_Run_startTime(ctx, field)
 			case "completionTime":
 				return ec.fieldContext_Run_completionTime(ctx, field)
-			case "runDuration":
-				return ec.fieldContext_Run_runDuration(ctx, field)
+			case "duration":
+				return ec.fieldContext_Run_duration(ctx, field)
 			case "image":
 				return ec.fieldContext_Run_image(ctx, field)
 			case "message":
@@ -12134,8 +12134,8 @@ func (ec *executionContext) fieldContext_Run_completionTime(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Run_runDuration(ctx context.Context, field graphql.CollectedField, obj *model.Run) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Run_runDuration(ctx, field)
+func (ec *executionContext) _Run_duration(ctx context.Context, field graphql.CollectedField, obj *model.Run) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Run_duration(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12148,7 +12148,7 @@ func (ec *executionContext) _Run_runDuration(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.RunDuration, nil
+		return obj.Duration, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12165,7 +12165,7 @@ func (ec *executionContext) _Run_runDuration(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Run_runDuration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Run_duration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Run",
 		Field:      field,
@@ -19829,9 +19829,9 @@ func (ec *executionContext) _Run(ctx context.Context, sel ast.SelectionSet, obj 
 
 			out.Values[i] = ec._Run_completionTime(ctx, field, obj)
 
-		case "runDuration":
+		case "duration":
 
-			out.Values[i] = ec._Run_runDuration(ctx, field, obj)
+			out.Values[i] = ec._Run_duration(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

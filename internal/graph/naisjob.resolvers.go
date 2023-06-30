@@ -17,7 +17,7 @@ func (r *naisJobResolver) Runs(ctx context.Context, obj *model.NaisJob) ([]*mode
 
 // Manifest is the resolver for the manifest field.
 func (r *naisJobResolver) Manifest(ctx context.Context, obj *model.NaisJob) (string, error) {
-	return r.K8s.JobManifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
+	return r.K8s.NaisJobManifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
 }
 
 // Team is the resolver for the team field.

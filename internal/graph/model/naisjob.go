@@ -7,7 +7,7 @@ type Run struct {
 	Name           string     `json:"name"`
 	StartTime      *time.Time `json:"startTime,omitempty"`
 	CompletionTime *time.Time `json:"completionTime,omitempty"`
-	RunDuration    string     `json:"runDuration"`
+	Duration       string     `json:"duration"`
 	Image          string     `json:"image"`
 	Message        string     `json:"message"`
 	Failed         bool       `json:"failed,omitempty"`
