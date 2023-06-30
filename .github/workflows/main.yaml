@@ -5,8 +5,11 @@ on:
       - main
 env:
   NAME: console-backend
+  IMAGE_REPOSITORY: oci://europe-north1-docker.pkg.dev/nais-io/nais
 jobs:
-  build:
+  build_push:
+    outputs:
+      version: ${{ steps.build-push-sign.outputs.version }}
     permissions:
       contents: "read"
       id-token: "write"
@@ -32,4 +35,16 @@ jobs:
           helm package charts
       - name: Push Chart
         run: |-
-          helm push ${{ env.NAME }}*.tgz oci://europe-north1-docker.pkg.dev/nais-io/nais
+          helm push ${{ env.NAME }}*.tgz ${{ env.IMAGE_REPOSITORY }}
+  rollout:
+    needs:
+      - build_push
+    runs-on: fasit-deploy
+    permissions:
+      id-token: write
+    steps:
+      - uses: nais/fasit-deploy@v2
+        with:
+          chart: ${{ env.IMAGE_REPOSITORY }}/${{ env.NAME }}
+          version: ${{ needs.build_push.outputs.version }}
+          feature_name: ${{ env.NAME }}
