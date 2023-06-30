@@ -24,7 +24,7 @@ spec:
       protocol: TCP
     to:
     - fqdns:
-      - "apiserver.{{ . }}.{{ $root.Values.tenant }}.cloud.nais.io"
+      - "apiserver.{{ . }}.{{ $root.Values.fasit.tenant.name }}.cloud.nais.io"
 {{- end }}
   podSelector:
     matchLabels:

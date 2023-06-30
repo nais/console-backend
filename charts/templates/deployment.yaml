@@ -23,7 +23,7 @@ spec:
             - name: IAP_AUDIENCE
               value: "{{ .Values.audience }}"
             - name: TENANT
-              value: "{{ .Values.tenant }}"
+              value: "{{ .Values.fasit.tenant.name }}"
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"

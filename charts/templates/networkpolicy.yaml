@@ -15,9 +15,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/instance: teams
-              app.kubernetes.io/name: teams
-              component: backend
+              app.kubernetes.io/name: teams-backend
     - to:
         - podSelector:
             matchLabels:
