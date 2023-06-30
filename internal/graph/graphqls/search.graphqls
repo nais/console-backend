@@ -18,7 +18,7 @@ input SearchFilter {
 enum SearchType {
   APP
   TEAM
-  JOB
+  NAISJOB
 }
 
 extend type Query {
