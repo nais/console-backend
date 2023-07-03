@@ -23,18 +23,19 @@ import (
 )
 
 type Config struct {
-	Audience           string
-	BindHost           string
-	FieldSelector      string
-	HookdEndpoint      string
-	HookdPSK           string
-	LogLevel           string
-	Port               string
-	RunAsUser          string
-	TeamsEndpoint      string
-	TeamsToken         string
-	Tenant             string
-	KubernetesClusters []string
+	Audience                 string
+	BindHost                 string
+	FieldSelector            string
+	HookdEndpoint            string
+	HookdPSK                 string
+	LogLevel                 string
+	Port                     string
+	RunAsUser                string
+	TeamsEndpoint            string
+	TeamsToken               string
+	Tenant                   string
+	KubernetesClusters       []string
+	KubernetesClustersStatic []string
 }
 
 var cfg = &Config{}
@@ -51,7 +52,8 @@ func init() {
 	flag.StringVar(&cfg.Tenant, "tenant", envOrDefault("TENANT", "dev-nais"), "Which tenant we are running in")
 	flag.StringVar(&cfg.RunAsUser, "run-as-user", os.Getenv("RUN_AS_USER"), "Statically configured frontend user")
 	flag.StringVar(&cfg.FieldSelector, "field-selector", os.Getenv("FIELD_SELECTOR"), "Field selector for k8s resources")
-	flag.StringSliceVar(&cfg.KubernetesClusters, "kubernetes-clusters", strings.Split(os.Getenv("KUBERNETES_CLUSTERS"), ","), "Kubernetes clusters to watch")
+	flag.StringSliceVar(&cfg.KubernetesClusters, "kubernetes-clusters", strings.Split(os.Getenv("KUBERNETES_CLUSTERS"), ","), "Kubernetes clusters to watch (comma separated))")
+	flag.StringSliceVar(&cfg.KubernetesClustersStatic, "kubernetes-clusters-static", strings.Split(os.Getenv("KUBERNETES_CLUSTERS_STATIC"), ","), "Kubernetes clusters to watch with static credentials (comma separated entries on the format 'name|apiserver-host|token')")
 }
 
 func main() {
@@ -71,12 +73,13 @@ func main() {
 		log.Fatalf("creating error counter: %v", err)
 	}
 
-	k8s, err := k8s.New(cfg.KubernetesClusters, cfg.Tenant, cfg.FieldSelector, errors, log.WithField("client", "k8s"))
+	k8s, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errors, log.WithField("client", "k8s"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	k8s.Run(ctx)
+
 	teams := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errors, log.WithField("client", "teams"))
 	searcher := search.New(teams, k8s)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -12,7 +13,7 @@ import (
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
-	api "go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -22,12 +23,13 @@ import (
 	batchv1inf "k8s.io/client-go/informers/batch/v1"
 	corev1inf "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type Client struct {
 	informers map[string]*Informers
 	log       *logrus.Entry
-	errors    api.Int64Counter
+	errors    metric.Int64Counter
 }
 
 type Informers struct {
@@ -37,10 +39,14 @@ type Informers struct {
 	JobInformer     batchv1inf.JobInformer
 }
 
-func New(clusters []string, tenant, fieldSelector string, errors api.Int64Counter, log *logrus.Entry) (*Client, error) {
+func New(clusters, static []string, tenant, fieldSelector string, errors metric.Int64Counter, log *logrus.Entry) (*Client, error) {
 	restConfigs, err := createRestConfigs(clusters, tenant)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
+	}
+
+	if err := addStaticClusters(restConfigs, static, tenant); err != nil {
+		return nil, fmt.Errorf("add static clusters: %w", err)
 	}
 
 	infs := map[string]*Informers{}
@@ -165,7 +171,28 @@ func convert(m any, target any) error {
 }
 
 func (c *Client) error(ctx context.Context, err error, msg string) error {
-	c.errors.Add(context.Background(), 1, api.WithAttributes(attribute.String("component", "k8s-client")))
+	c.errors.Add(context.Background(), 1, metric.WithAttributes(attribute.String("component", "k8s-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
+}
+
+func addStaticClusters(restConfigs map[string]rest.Config, static []string, tenant string) error {
+	for _, entry := range static {
+		parts := strings.Split(entry, "|")
+		if len(parts) != 3 {
+			return fmt.Errorf("invalid static cluster entry: %s. Must be on format 'name|apiserver-host|token'", entry)
+		}
+		name := parts[0]
+		host := parts[1]
+		token := parts[2]
+
+		restConfigs[name] = rest.Config{
+			Host:        host,
+			BearerToken: token,
+			TLSClientConfig: rest.TLSClientConfig{
+				Insecure: true,
+			},
+		}
+	}
+	return nil
 }
