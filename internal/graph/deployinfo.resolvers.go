@@ -20,7 +20,6 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 		name = obj.GQLVars.Job
 	}
 
-	fmt.Println("name: ", name, "kind: ", kind)
 	deploys, err := r.Hookd.DeploymentsByKind(ctx, name, obj.GQLVars.Team, obj.GQLVars.Env, kind)
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)

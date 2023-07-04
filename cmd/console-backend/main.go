@@ -52,8 +52,8 @@ func init() {
 	flag.StringVar(&cfg.Tenant, "tenant", envOrDefault("TENANT", "dev-nais"), "Which tenant we are running in")
 	flag.StringVar(&cfg.RunAsUser, "run-as-user", os.Getenv("RUN_AS_USER"), "Statically configured frontend user")
 	flag.StringVar(&cfg.FieldSelector, "field-selector", os.Getenv("FIELD_SELECTOR"), "Field selector for k8s resources")
-	flag.StringSliceVar(&cfg.KubernetesClusters, "kubernetes-clusters", strings.Split(os.Getenv("KUBERNETES_CLUSTERS"), ","), "Kubernetes clusters to watch (comma separated))")
-	flag.StringSliceVar(&cfg.KubernetesClustersStatic, "kubernetes-clusters-static", strings.Split(os.Getenv("KUBERNETES_CLUSTERS_STATIC"), ","), "Kubernetes clusters to watch with static credentials (comma separated entries on the format 'name|apiserver-host|token')")
+	flag.StringSliceVar(&cfg.KubernetesClusters, "kubernetes-clusters", splitEnv("KUBERNETES_CLUSTERS", ","), "Kubernetes clusters to watch (comma separated)")
+	flag.StringSliceVar(&cfg.KubernetesClustersStatic, "kubernetes-clusters-static", splitEnv("KUBERNETES_CLUSTERS_STATIC", ","), "Kubernetes clusters to watch with static credentials (comma separated entries on the format 'name|apiserver-host|token')")
 }
 
 func main() {
@@ -128,6 +128,13 @@ func envOrDefault(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func splitEnv(key, sep string) []string {
+	if value, ok := os.LookupEnv(key); ok {
+		return strings.Split(value, sep)
+	}
+	return nil
 }
 
 func newLogger() *logrus.Logger {

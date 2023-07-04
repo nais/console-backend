@@ -105,9 +105,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 			return nil
 		}
 
-		fmt.Printf("jobs len: %d\n", len(jobs))
 		for _, obj := range jobs {
-
 			u := obj.(*unstructured.Unstructured)
 			rank := search.Match(q, u.GetName())
 			if rank == -1 {

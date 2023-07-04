@@ -26,6 +26,14 @@ spec:
     - fqdns:
       - "apiserver.{{ . }}.{{ $root.Values.fasit.tenant.name }}.cloud.nais.io"
 {{- end }}
+{{- range split "," .Values.kubernetes.static }}
+  - ports:
+    - port: 443
+      protocol: TCP
+    to:
+    - fqdns:
+      - {{ (split "|" .)._1  }}
+{{- end }}
   podSelector:
     matchLabels:
       app: console-backend

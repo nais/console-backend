@@ -147,7 +147,6 @@ func filterByKind(deploys []Deploy, name, kind string) []Deploy {
 	ret := []Deploy{}
 	for _, deploy := range deploys {
 		for _, resource := range deploy.Resources {
-			fmt.Println(resource.Name, resource.Kind)
 			if resource.Name == name && resource.Kind == kind {
 				ret = append(ret, deploy)
 				continue
