@@ -16,6 +16,7 @@ portforward-teams:
 local-nav:
 	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nav-management -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 -D)" \
 	HOOKD_PSK="$(shell kubectl get secret console-backend --context nav-management -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 -D)" \
+	KUBERNETES_CLUSTERS_STATIC="dev-fss|apiserver.dev-fss.nais.io|$(shell kubectl get secret --context nav-dev-fss --namespace nais-system console-backend -ojsonpath='{ .data.token }' | base64 -D)" \
 	go run ./cmd/console-backend/main.go --bind-host 127.0.0.1 --port 4242 --kubernetes-clusters "dev-gcp,prod-gcp" --run-as-user johnny.horvi@nav.no --teams-endpoint="http://localhost:8181/query" --hookd-endpoint="http://localhost:8282" --tenant="nav"
 
 local:
