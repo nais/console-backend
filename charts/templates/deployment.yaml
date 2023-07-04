@@ -20,8 +20,10 @@ spec:
           env:
             - name: KUBERNETES_CLUSTERS
               value: "{{ .Values.kubernetes.clusters }}"
+            {{- if .Values.kubernetes.static }}
             - name: KUBERNETES_CLUSTERS_STATIC
               value: "{{ .Values.kubernetes.static }}"
+            {{- end }}
             - name: IAP_AUDIENCE
               value: "{{ .Values.audience }}"
             - name: TENANT

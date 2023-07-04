@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: console-backend
+  namespace: nais-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: console-backend
+rules:
+  - apiGroups: ["batch", "extensions", "apps", "nais.io"]
+    resources: ["naisjobs", "naisapplications", "pods", "jobs"]
+    verbs: ["get", "list", "watch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: console-backend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: console-backend
+subjects:
+  - kind: ServiceAccount
+    name: console-backend
+    namespace: nais-system
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: console-backend
+  namespace: nais-system
+  annotations:
+    "kubernetes.io/service-account.name": console-backend
+type: kubernetes.io/service-account-token
