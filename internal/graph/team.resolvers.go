@@ -132,7 +132,7 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 		endCursor = &a[len(a)-1].Cursor
 	}
 
-	hasNext := len(apps) > pagination.First()+pagination.After().Offset
+	hasNext := len(apps) > pagination.First()+pagination.After().Offset+1
 	hasPrevious := pagination.After().Offset > 0
 
 	if pagination.Before() != nil && startCursor != nil {
@@ -169,7 +169,7 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 		endCursor = &j[len(j)-1].Cursor
 	}
 
-	hasNext := len(naisjobs) > pagination.First()+pagination.After().Offset
+	hasNext := len(naisjobs) > pagination.First()+pagination.After().Offset+1
 	hasPrevious := pagination.After().Offset > 0
 
 	if pagination.Before() != nil && startCursor != nil {

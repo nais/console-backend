@@ -46,7 +46,7 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 		endCursor = &e[len(e)-1].Cursor
 	}
 
-	hasNext := len(teams) > pagination.First()+pagination.After().Offset
+	hasNext := len(teams) > pagination.First()+pagination.After().Offset+1
 	hasPrevious := pagination.After().Offset > 0
 
 	if pagination.Before() != nil && startCursor != nil {
