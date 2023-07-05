@@ -254,5 +254,92 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	}
 	ret.Retries = int(naisjob.Spec.BackoffLimit)
 
+	storage, err := naisjobStorage(naisjob)
+	if err != nil {
+		return nil, fmt.Errorf("getting storage: %w", err)
+	}
+
+	ret.Storage = storage
+
+	authz, err := jobAuthz(naisjob)
+	if err != nil {
+		return nil, fmt.Errorf("getting authz: %w", err)
+	}
+
+	ret.Authz = authz
+
+	return ret, nil
+}
+
+func naisjobStorage(naisjob *naisv1.Naisjob) ([]model.Storage, error) {
+	ret := []model.Storage{}
+
+	if naisjob.Spec.GCP != nil {
+		for _, v := range naisjob.Spec.GCP.Buckets {
+			bucket := model.Bucket{}
+			if err := convert(v, &bucket); err != nil {
+				return nil, fmt.Errorf("converting buckets: %w", err)
+			}
+			ret = append(ret, bucket)
+		}
+		for _, v := range naisjob.Spec.GCP.SqlInstances {
+			sqlInstance := model.SQLInstance{}
+			if err := convert(v, &sqlInstance); err != nil {
+				return nil, fmt.Errorf("converting sqlInstance: %w", err)
+			}
+			if sqlInstance.Name == "" {
+				sqlInstance.Name = naisjob.Name
+			}
+			ret = append(ret, sqlInstance)
+		}
+
+		for _, v := range naisjob.Spec.GCP.BigQueryDatasets {
+			bqDataset := model.BigQueryDataset{}
+			if err := convert(v, &bqDataset); err != nil {
+				return nil, fmt.Errorf("converting bigQueryDataset: %w", err)
+			}
+			ret = append(ret, bqDataset)
+		}
+	}
+
+	if naisjob.Spec.OpenSearch != nil {
+		os := model.OpenSearch{
+			Name:   naisjob.Spec.OpenSearch.Instance,
+			Access: naisjob.Spec.OpenSearch.Access,
+		}
+		ret = append(ret, os)
+	}
+
+	if naisjob.Spec.Kafka != nil {
+		kafka := model.Kafka{
+			Name:    naisjob.Spec.Kafka.Pool,
+			Streams: naisjob.Spec.Kafka.Streams,
+		}
+		ret = append(ret, kafka)
+	}
+	return ret, nil
+}
+
+func jobAuthz(job *naisv1.Naisjob) ([]model.Authz, error) {
+	ret := []model.Authz{}
+	if job.Spec.Azure != nil {
+		isApp := job.Spec.Azure.Application != nil && job.Spec.Azure.Application.Enabled
+		if isApp {
+			azureAd := model.AzureAd{}
+			if err := convert(job.Spec.Azure, &azureAd); err != nil {
+				return nil, fmt.Errorf("converting azureAd: %w", err)
+			}
+			ret = append(ret, azureAd)
+		}
+	}
+
+	if job.Spec.Maskinporten != nil && job.Spec.Maskinporten.Enabled {
+		maskinporten := model.Maskinporten{}
+		if err := convert(job.Spec.Maskinporten, &maskinporten); err != nil {
+			return nil, fmt.Errorf("converting maskinporten: %w", err)
+		}
+		ret = append(ret, maskinporten)
+	}
+
 	return ret, nil
 }

@@ -32,6 +32,8 @@ type NaisJob implements Node {
   resources: Resources!
   schedule: String!
   team: Team!
+  storage: [Storage!]!
+  authz: [Authz!]!
   completions: Int!
   parallelism: Int!
   retries: Int!

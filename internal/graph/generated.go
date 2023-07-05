@@ -316,6 +316,7 @@ type ComplexityRoot struct {
 
 	NaisJob struct {
 		AccessPolicy func(childComplexity int) int
+		Authz        func(childComplexity int) int
 		Completions  func(childComplexity int) int
 		DeployInfo   func(childComplexity int) int
 		Env          func(childComplexity int) int
@@ -328,6 +329,7 @@ type ComplexityRoot struct {
 		Retries      func(childComplexity int) int
 		Runs         func(childComplexity int) int
 		Schedule     func(childComplexity int) int
+		Storage      func(childComplexity int) int
 		Team         func(childComplexity int) int
 	}
 
@@ -1557,6 +1559,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NaisJob.AccessPolicy(childComplexity), true
 
+	case "NaisJob.authz":
+		if e.complexity.NaisJob.Authz == nil {
+			break
+		}
+
+		return e.complexity.NaisJob.Authz(childComplexity), true
+
 	case "NaisJob.completions":
 		if e.complexity.NaisJob.Completions == nil {
 			break
@@ -1640,6 +1649,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.NaisJob.Schedule(childComplexity), true
+
+	case "NaisJob.storage":
+		if e.complexity.NaisJob.Storage == nil {
+			break
+		}
+
+		return e.complexity.NaisJob.Storage(childComplexity), true
 
 	case "NaisJob.team":
 		if e.complexity.NaisJob.Team == nil {
@@ -10117,6 +10133,94 @@ func (ec *executionContext) fieldContext_NaisJob_team(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _NaisJob_storage(ctx context.Context, field graphql.CollectedField, obj *model.NaisJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NaisJob_storage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Storage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.Storage)
+	fc.Result = res
+	return ec.marshalNStorage2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐStorageᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NaisJob_storage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NaisJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NaisJob_authz(ctx context.Context, field graphql.CollectedField, obj *model.NaisJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NaisJob_authz(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Authz, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.Authz)
+	fc.Result = res
+	return ec.marshalNAuthz2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAuthzᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NaisJob_authz(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NaisJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Authz does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _NaisJob_completions(ctx context.Context, field graphql.CollectedField, obj *model.NaisJob) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NaisJob_completions(ctx, field)
 	if err != nil {
@@ -10506,6 +10610,10 @@ func (ec *executionContext) fieldContext_NaisJobEdge_node(ctx context.Context, f
 				return ec.fieldContext_NaisJob_schedule(ctx, field)
 			case "team":
 				return ec.fieldContext_NaisJob_team(ctx, field)
+			case "storage":
+				return ec.fieldContext_NaisJob_storage(ctx, field)
+			case "authz":
+				return ec.fieldContext_NaisJob_authz(ctx, field)
 			case "completions":
 				return ec.fieldContext_NaisJob_completions(ctx, field)
 			case "parallelism":
@@ -11272,6 +11380,10 @@ func (ec *executionContext) fieldContext_Query_naisjob(ctx context.Context, fiel
 				return ec.fieldContext_NaisJob_schedule(ctx, field)
 			case "team":
 				return ec.fieldContext_NaisJob_team(ctx, field)
+			case "storage":
+				return ec.fieldContext_NaisJob_storage(ctx, field)
+			case "authz":
+				return ec.fieldContext_NaisJob_authz(ctx, field)
 			case "completions":
 				return ec.fieldContext_NaisJob_completions(ctx, field)
 			case "parallelism":
@@ -19179,6 +19291,20 @@ func (ec *executionContext) _NaisJob(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
+		case "storage":
+
+			out.Values[i] = ec._NaisJob_storage(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "authz":
+
+			out.Values[i] = ec._NaisJob_authz(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "completions":
 
 			out.Values[i] = ec._NaisJob_completions(ctx, field, obj)

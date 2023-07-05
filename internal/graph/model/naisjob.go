@@ -24,6 +24,8 @@ type NaisJob struct {
 	Image        string        `json:"image"`
 	AccessPolicy *AccessPolicy `json:"accessPolicy"`
 	Resources    *Resources    `json:"resources"`
+	Storage      []Storage     `json:"storage"`
+	Authz        []Authz       `json:"authz"`
 	Schedule     string        `json:"schedule"`
 	Completions  int           `json:"completions"`
 	Parallelism  int           `json:"parallelism"`
