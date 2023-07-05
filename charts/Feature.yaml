@@ -3,9 +3,9 @@ environmentKinds:
 values:
   kubernetes.static:
     displayName: Comma-separated list of clusters with static credentials on the format 'name|apiserverHost|token'
-    secret: true
     config:
       type: string
+      secret: true
   kubernetes.clusters:
     displayName: Comma-separated list of clusters to monitor
     required: true

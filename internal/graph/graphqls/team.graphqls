@@ -94,9 +94,6 @@ type Mutation {
   changeDeployKey(team: String!): DeploymentKey!
 }
 enum TeamRole {
-  "Regular member, read only access."
   MEMBER
-
-  "Team owner, full access to the team."
   OWNER
 }
