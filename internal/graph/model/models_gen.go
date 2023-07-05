@@ -180,18 +180,6 @@ type Insights struct {
 	RecordClientAddress   bool `json:"recordClientAddress"`
 }
 
-type Instance struct {
-	ID       Ident     `json:"id"`
-	Name     string    `json:"name"`
-	Status   string    `json:"status"`
-	Image    string    `json:"image"`
-	Restarts int       `json:"restarts"`
-	Created  time.Time `json:"created"`
-}
-
-func (Instance) IsNode()           {}
-func (this Instance) GetID() Ident { return this.ID }
-
 type Kafka struct {
 	// The kafka pool name
 	Name    string `json:"name"`
@@ -322,10 +310,8 @@ func (e SearchType) MarshalGQL(w io.Writer) {
 type TeamRole string
 
 const (
-	// Regular member, read only access.
 	TeamRoleMember TeamRole = "MEMBER"
-	// Team owner, full access to the team.
-	TeamRoleOwner TeamRole = "OWNER"
+	TeamRoleOwner  TeamRole = "OWNER"
 )
 
 var AllTeamRole = []TeamRole{

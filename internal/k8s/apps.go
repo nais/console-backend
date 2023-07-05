@@ -9,6 +9,7 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -80,7 +81,6 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 }
 
 func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*model.Instance, error) {
-	ret := []*model.Instance{}
 	req, err := labels.NewRequirement("app", selection.Equals, []string{name})
 	if err != nil {
 		return nil, c.error(ctx, err, "creating label selector")
@@ -92,30 +92,70 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 		return nil, c.error(ctx, err, "listing pods")
 	}
 
+	ret := []*model.Instance{}
 	for _, pod := range pods {
-		restarts := 0
-		for _, cs := range pod.Status.ContainerStatuses {
-			if cs.Name == name {
-				restarts = int(cs.RestartCount)
-			}
-		}
-
-		image := "unknown"
-		for _, c := range pod.Spec.Containers {
-			if c.Name == name {
-				image = c.Image
-			}
-		}
-		ret = append(ret, &model.Instance{
-			ID:       model.Ident{ID: string(pod.GetUID()), Type: "pod"},
-			Name:     pod.GetName(),
-			Status:   string(pod.Status.Phase),
-			Restarts: restarts,
-			Image:    image,
-			Created:  pod.GetCreationTimestamp().Time,
-		})
+		ret = append(ret, Instance(pod))
 	}
 	return ret, nil
+}
+
+func Instance(pod *corev1.Pod) *model.Instance {
+	appName := pod.Labels["app"]
+
+	image := "unknown"
+	for _, c := range pod.Spec.Containers {
+		if c.Name == appName {
+			image = c.Image
+		}
+	}
+
+	appCS := appContainerStatus(pod, appName)
+
+	ret := &model.Instance{
+		ID:       model.Ident{ID: string(pod.GetUID()), Type: "pod"},
+		Name:     pod.GetName(),
+		Image:    image,
+		Restarts: int(appCS.RestartCount),
+		Message:  messageFromCS(appCS),
+		State:    stateFromCS(appCS),
+		Created:  pod.GetCreationTimestamp().Time,
+	}
+
+	return ret
+}
+
+func stateFromCS(cs *corev1.ContainerStatus) model.InstanceState {
+	switch {
+	case cs == nil:
+		return model.InstanceStateUnknown
+	case cs.State.Running != nil:
+		return model.InstanceStateRunning
+	case cs.State.Waiting != nil:
+		return model.InstanceStateFailing
+	default:
+		return model.InstanceStateUnknown
+	}
+}
+
+func messageFromCS(cs *corev1.ContainerStatus) string {
+	if cs == nil {
+		return ""
+	}
+
+	if cs.State.Waiting != nil {
+		return cs.State.Waiting.Reason
+	}
+
+	return ""
+}
+
+func appContainerStatus(pod *corev1.Pod, appName string) *corev1.ContainerStatus {
+	for _, cs := range pod.Status.ContainerStatuses {
+		if cs.Name == appName {
+			return &cs
+		}
+	}
+	return nil
 }
 
 func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {

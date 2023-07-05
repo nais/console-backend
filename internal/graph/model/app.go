@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type AccessPolicyRule struct {
 	Application string `json:"application"`
