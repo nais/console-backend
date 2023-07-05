@@ -322,10 +322,8 @@ func (e SearchType) MarshalGQL(w io.Writer) {
 type TeamRole string
 
 const (
-	// Regular member, read only access.
 	TeamRoleMember TeamRole = "MEMBER"
-	// Team owner, full access to the team.
-	TeamRoleOwner TeamRole = "OWNER"
+	TeamRoleOwner  TeamRole = "OWNER"
 )
 
 var AllTeamRole = []TeamRole{
