@@ -110,7 +110,7 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 		ret = append(ret, &model.Instance{
 			ID:       model.Ident{ID: string(pod.GetUID()), Type: "pod"},
 			Name:     pod.GetName(),
-			Status:   "",
+			Status:   string(pod.Status.Phase),
 			Restarts: restarts,
 			Image:    image,
 			Created:  pod.GetCreationTimestamp().Time,
