@@ -134,8 +134,13 @@ func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
 		ID:   model.Ident{ID: env, Type: "env"},
 	}
 
-	if app.GetStatus().SynchronizationState == "RolloutComplete" {
+	appSynchState := app.GetStatus().SynchronizationState
+
+	if appSynchState == "RolloutComplete" {
 		timestamp := time.Unix(0, app.GetStatus().RolloutCompleteTime)
+		ret.DeployInfo.Timestamp = &timestamp
+	} else if appSynchState == "Synchronized" {
+		timestamp := time.Unix(0, app.GetStatus().SynchronizationTime)
 		ret.DeployInfo.Timestamp = &timestamp
 	} else {
 		ret.DeployInfo.Timestamp = nil
