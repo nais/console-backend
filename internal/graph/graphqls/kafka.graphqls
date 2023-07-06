@@ -4,4 +4,16 @@ type Kafka implements Storage {
   """
   name: String!
   streams: Boolean!
+  topics: [Topic!]!
+}
+
+type Topic {
+  name: String!
+  acl: [Acl!]!
+}
+
+type Acl {
+  access: String!
+  application: String!
+  team: String!
 }

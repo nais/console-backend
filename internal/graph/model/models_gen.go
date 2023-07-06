@@ -31,6 +31,12 @@ type Storage interface {
 	GetName() string
 }
 
+type ACL struct {
+	Access      string `json:"access"`
+	Application string `json:"application"`
+	Team        string `json:"team"`
+}
+
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent
@@ -182,8 +188,9 @@ type Insights struct {
 
 type Kafka struct {
 	// The kafka pool name
-	Name    string `json:"name"`
-	Streams bool   `json:"streams"`
+	Name    string   `json:"name"`
+	Streams bool     `json:"streams"`
+	Topics  []*Topic `json:"topics"`
 }
 
 func (Kafka) IsStorage()           {}
@@ -258,6 +265,11 @@ type TokenX struct {
 }
 
 func (TokenX) IsAuthz() {}
+
+type Topic struct {
+	Name string `json:"name"`
+	ACL  []*ACL `json:"acl"`
+}
 
 type Variable struct {
 	Name  string `json:"name"`

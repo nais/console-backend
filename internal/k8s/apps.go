@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	kafka_nais_io_v1 "github.com/nais/liberator/pkg/apis/kafka.nais.io/v1"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
@@ -21,11 +22,55 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	if c.informers[env] == nil {
 		return nil, fmt.Errorf("no appInformer for env %q", env)
 	}
+
 	obj, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(name)
 	if err != nil {
 		return nil, c.error(ctx, err, "getting application")
 	}
-	return toApp(obj.(*unstructured.Unstructured), env)
+
+	app, err := toApp(obj.(*unstructured.Unstructured), env)
+	if err != nil {
+		return nil, c.error(ctx, err, "converting to app")
+	}
+
+	topics, err := c.getTopics(ctx, name, team, env)
+	if err != nil {
+		return nil, c.error(ctx, err, "getting topics")
+	}
+
+	storage, err := appStorage(obj.(*unstructured.Unstructured), topics)
+	if err != nil {
+		return nil, c.error(ctx, err, "converting to app storage")
+	}
+
+	app.Storage = storage
+	return app, nil
+}
+
+func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*model.Topic, error) {
+	topics, err := c.informers[env].TopicInformer.Lister().List(labels.Everything())
+	if err != nil {
+		return nil, c.error(ctx, err, "listing topics")
+	}
+
+	// FFS!?
+
+	ret := []*model.Topic{}
+	for _, topic := range topics {
+		u := topic.(*unstructured.Unstructured)
+		t, err := toTopic(u, name, team)
+		if err != nil {
+			return nil, c.error(ctx, err, "converting to topic")
+		}
+
+		for _, acl := range t.ACL {
+			if acl.Team == team && acl.Application == name {
+				ret = append(ret, t)
+			}
+		}
+	}
+
+	return ret, nil
 }
 
 func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, error) {
@@ -65,6 +110,7 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 		if err != nil {
 			return nil, c.error(ctx, err, "listing applications")
 		}
+
 		for _, obj := range objs {
 			app, err := toApp(obj.(*unstructured.Unstructured), env)
 			if err != nil {
@@ -233,12 +279,12 @@ func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
 
 	ret.Replicas = reps
 
-	storage, err := appStorage(app)
+	/*storage, err := appStorage(app)
 	if err != nil {
 		return nil, fmt.Errorf("getting storage: %w", err)
 	}
 
-	ret.Storage = storage
+	ret.Storage = storage*/
 
 	authz, err := appAuthz(app)
 	if err != nil {
@@ -262,7 +308,40 @@ func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
 	return ret, nil
 }
 
-func appStorage(app *naisv1alpha1.Application) ([]model.Storage, error) {
+func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, error) {
+	topic := &kafka_nais_io_v1.Topic{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, topic); err != nil {
+		return nil, fmt.Errorf("converting to application: %w", err)
+	}
+
+	ret := &model.Topic{}
+
+	if topic.Status != nil && topic.Status.FullyQualifiedName != "" {
+		ret.Name = topic.Status.FullyQualifiedName
+	} else {
+		ret.Name = topic.GetName()
+	}
+	ret.ACL = []*model.ACL{}
+
+	for _, v := range topic.Spec.ACL {
+		acl := &model.ACL{}
+		if err := convert(v, acl); err != nil {
+			return nil, fmt.Errorf("converting acl: %w", err)
+		}
+		if acl.Team == team && acl.Application == name {
+			ret.ACL = append(ret.ACL, acl)
+		}
+	}
+
+	return ret, nil
+}
+
+func appStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.Storage, error) {
+	app := &naisv1alpha1.Application{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, app); err != nil {
+		return nil, fmt.Errorf("converting to application: %w", err)
+	}
+
 	ret := []model.Storage{}
 
 	if app.Spec.GCP != nil {
@@ -305,7 +384,9 @@ func appStorage(app *naisv1alpha1.Application) ([]model.Storage, error) {
 		kafka := model.Kafka{
 			Name:    app.Spec.Kafka.Pool,
 			Streams: app.Spec.Kafka.Streams,
+			Topics:  topics,
 		}
+
 		ret = append(ret, kafka)
 	}
 	return ret, nil

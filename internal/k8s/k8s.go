@@ -9,6 +9,7 @@ import (
 
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/search"
+	kafka_nais_io_v1 "github.com/nais/liberator/pkg/apis/kafka.nais.io/v1"
 	naisv1 "github.com/nais/liberator/pkg/apis/nais.io/v1"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/informers"
@@ -37,6 +39,7 @@ type Informers struct {
 	PodInformer     corev1inf.PodInformer
 	NaisjobInformer informers.GenericInformer
 	JobInformer     batchv1inf.JobInformer
+	TopicInformer   informers.GenericInformer
 }
 
 func New(clusters, static []string, tenant, fieldSelector string, errors metric.Int64Counter, log *logrus.Entry) (*Client, error) {
@@ -76,6 +79,25 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 		infs[cluster].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
 		infs[cluster].NaisjobInformer = dinf.ForResource(naisv1.GroupVersion.WithResource("naisjobs"))
 		infs[cluster].JobInformer = inf.Batch().V1().Jobs()
+
+		resources, err := discovery.NewDiscoveryClient(clientSet.RESTClient()).ServerResourcesForGroupVersion(kafka_nais_io_v1.GroupVersion.String())
+		if err != nil {
+			return nil, fmt.Errorf("get server resources for group version: %w", err)
+		} else {
+			log.WithField("cluster", cluster).Info("found kafka.nais.io API resources: ", func() string {
+				var names []string
+				for _, r := range resources.APIResources {
+					names = append(names, r.Name)
+				}
+				return strings.Join(names, ", ")
+			}())
+		}
+
+		for _, r := range resources.APIResources {
+			if r.Name == "topics" {
+				infs[cluster].TopicInformer = dinf.ForResource(kafka_nais_io_v1.GroupVersion.WithResource("topics"))
+			}
+		}
 	}
 
 	return &Client{
@@ -152,6 +174,9 @@ func (c *Client) Run(ctx context.Context) {
 		go inf.AppInformer.Informer().Run(ctx.Done())
 		go inf.NaisjobInformer.Informer().Run(ctx.Done())
 		go inf.JobInformer.Informer().Run(ctx.Done())
+		if inf.TopicInformer != nil {
+			go inf.TopicInformer.Informer().Run(ctx.Done())
+		}
 	}
 }
 
