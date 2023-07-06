@@ -280,9 +280,10 @@ type ComplexityRoot struct {
 		Created  func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Image    func(childComplexity int) int
+		Message  func(childComplexity int) int
 		Name     func(childComplexity int) int
 		Restarts func(childComplexity int) int
-		Status   func(childComplexity int) int
+		State    func(childComplexity int) int
 	}
 
 	Kafka struct {
@@ -1449,6 +1450,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Instance.Image(childComplexity), true
 
+	case "Instance.message":
+		if e.complexity.Instance.Message == nil {
+			break
+		}
+
+		return e.complexity.Instance.Message(childComplexity), true
+
 	case "Instance.name":
 		if e.complexity.Instance.Name == nil {
 			break
@@ -1463,12 +1471,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Instance.Restarts(childComplexity), true
 
-	case "Instance.status":
-		if e.complexity.Instance.Status == nil {
+	case "Instance.state":
+		if e.complexity.Instance.State == nil {
 			break
 		}
 
-		return e.complexity.Instance.Status(childComplexity), true
+		return e.complexity.Instance.State(childComplexity), true
 
 	case "Kafka.name":
 		if e.complexity.Kafka.Name == nil {
@@ -3552,8 +3560,10 @@ func (ec *executionContext) fieldContext_App_instances(ctx context.Context, fiel
 				return ec.fieldContext_Instance_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Instance_name(ctx, field)
-			case "status":
-				return ec.fieldContext_Instance_status(ctx, field)
+			case "state":
+				return ec.fieldContext_Instance_state(ctx, field)
+			case "message":
+				return ec.fieldContext_Instance_message(ctx, field)
 			case "image":
 				return ec.fieldContext_Instance_image(ctx, field)
 			case "restarts":
@@ -8868,8 +8878,8 @@ func (ec *executionContext) fieldContext_Instance_name(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Instance_status(ctx context.Context, field graphql.CollectedField, obj *model.Instance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Instance_status(ctx, field)
+func (ec *executionContext) _Instance_state(ctx context.Context, field graphql.CollectedField, obj *model.Instance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Instance_state(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8882,7 +8892,51 @@ func (ec *executionContext) _Instance_status(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return obj.State, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.InstanceState)
+	fc.Result = res
+	return ec.marshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Instance_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Instance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type InstanceState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Instance_message(ctx context.Context, field graphql.CollectedField, obj *model.Instance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Instance_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8899,7 +8953,7 @@ func (ec *executionContext) _Instance_status(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Instance_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Instance_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Instance",
 		Field:      field,
@@ -18912,9 +18966,16 @@ func (ec *executionContext) _Instance(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "status":
+		case "state":
 
-			out.Values[i] = ec._Instance_status(ctx, field, obj)
+			out.Values[i] = ec._Instance_state(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "message":
+
+			out.Values[i] = ec._Instance_message(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -22158,6 +22219,16 @@ func (ec *executionContext) marshalNInstance2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 		return graphql.Null
 	}
 	return ec._Instance(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx context.Context, v interface{}) (model.InstanceState, error) {
+	var res model.InstanceState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx context.Context, sel ast.SelectionSet, v model.InstanceState) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
