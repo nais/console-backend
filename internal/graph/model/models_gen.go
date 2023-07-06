@@ -264,6 +264,51 @@ type Variable struct {
 	Value string `json:"value"`
 }
 
+type AppState string
+
+const (
+	AppStateNais    AppState = "NAIS"
+	AppStateNotnais AppState = "NOTNAIS"
+	AppStateFailing AppState = "FAILING"
+	AppStateUnknown AppState = "UNKNOWN"
+)
+
+var AllAppState = []AppState{
+	AppStateNais,
+	AppStateNotnais,
+	AppStateFailing,
+	AppStateUnknown,
+}
+
+func (e AppState) IsValid() bool {
+	switch e {
+	case AppStateNais, AppStateNotnais, AppStateFailing, AppStateUnknown:
+		return true
+	}
+	return false
+}
+
+func (e AppState) String() string {
+	return string(e)
+}
+
+func (e *AppState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AppState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AppState", str)
+	}
+	return nil
+}
+
+func (e AppState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type SearchType string
 
 const (
