@@ -26,7 +26,25 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 	if err != nil {
 		return nil, c.error(ctx, err, "getting job")
 	}
-	return toNaisJob(obj.(*unstructured.Unstructured), env)
+
+	job, err := toNaisJob(obj.(*unstructured.Unstructured), env)
+	if err != nil {
+		return nil, c.error(ctx, err, "converting to job")
+	}
+
+	topics, err := c.getTopics(ctx, name, team, env)
+	if err != nil {
+		return nil, c.error(ctx, err, "getting topics")
+	}
+
+	storage, err := naisjobStorage(obj.(*unstructured.Unstructured), topics)
+	if err != nil {
+		return nil, c.error(ctx, err, "getting storage")
+	}
+
+	job.Storage = storage
+
+	return job, nil
 }
 
 func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, error) {
@@ -254,13 +272,6 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	}
 	ret.Retries = int(naisjob.Spec.BackoffLimit)
 
-	storage, err := naisjobStorage(naisjob)
-	if err != nil {
-		return nil, fmt.Errorf("getting storage: %w", err)
-	}
-
-	ret.Storage = storage
-
 	authz, err := jobAuthz(naisjob)
 	if err != nil {
 		return nil, fmt.Errorf("getting authz: %w", err)
@@ -271,7 +282,12 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	return ret, nil
 }
 
-func naisjobStorage(naisjob *naisv1.Naisjob) ([]model.Storage, error) {
+func naisjobStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.Storage, error) {
+	naisjob := &naisv1.Naisjob{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, naisjob); err != nil {
+		return nil, fmt.Errorf("converting to application: %w", err)
+	}
+
 	ret := []model.Storage{}
 
 	if naisjob.Spec.GCP != nil {
@@ -314,6 +330,7 @@ func naisjobStorage(naisjob *naisv1.Naisjob) ([]model.Storage, error) {
 		kafka := model.Kafka{
 			Name:    naisjob.Spec.Kafka.Pool,
 			Streams: naisjob.Spec.Kafka.Streams,
+			Topics:  topics,
 		}
 		ret = append(ret, kafka)
 	}
