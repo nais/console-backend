@@ -64,7 +64,10 @@ type App struct {
 	Resources    Resources    `json:"resources"`
 	Storage      []Storage    `json:"storage"`
 	Variables    []Variable   `json:"variables"`
-	GQLVars      struct {
+	State        AppState     `json:"state"`
+	Messages     []string     `json:"messages"`
+
+	GQLVars struct {
 		Team string
 	} `json:"-"`
 }

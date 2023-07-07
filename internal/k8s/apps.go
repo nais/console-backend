@@ -11,10 +11,20 @@ import (
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
+)
+
+type AppCondition string
+
+const (
+	AppConditionRolloutComplete       AppCondition = "RolloutComplete"
+	AppConditionFailedSynchronization AppCondition = "FailedSynchronization"
+	AppConditionSynchronized          AppCondition = "Synchronized"
+	AppConditionUnknown               AppCondition = "Unknown"
 )
 
 func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
@@ -28,7 +38,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		return nil, c.error(ctx, err, "getting application")
 	}
 
-	app, err := toApp(obj.(*unstructured.Unstructured), env)
+	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
 	if err != nil {
 		return nil, c.error(ctx, err, "converting to app")
 	}
@@ -112,7 +122,7 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 		}
 
 		for _, obj := range objs {
-			app, err := toApp(obj.(*unstructured.Unstructured), env)
+			app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
 			if err != nil {
 				return nil, c.error(ctx, err, "converting to app")
 			}
@@ -156,12 +166,16 @@ func Instance(pod *corev1.Pod) *model.Instance {
 	}
 
 	appCS := appContainerStatus(pod, appName)
+	restarts := 0
+	if appCS != nil {
+		restarts = int(appCS.RestartCount)
+	}
 
 	ret := &model.Instance{
 		ID:       model.Ident{ID: string(pod.GetUID()), Type: "pod"},
 		Name:     pod.GetName(),
 		Image:    image,
-		Restarts: int(appCS.RestartCount),
+		Restarts: restarts,
 		Message:  messageFromCS(appCS),
 		State:    stateFromCS(appCS),
 		Created:  pod.GetCreationTimestamp().Time,
@@ -189,7 +203,14 @@ func messageFromCS(cs *corev1.ContainerStatus) string {
 	}
 
 	if cs.State.Waiting != nil {
-		return cs.State.Waiting.Reason
+		switch cs.State.Waiting.Reason {
+		case "CrashLoopBackOff":
+			return "Process is crashing, check logs"
+		case "ErrImagePull", "ImagePullBackOff":
+			return "Unable to pull image"
+		case "CreateContainerConfigError":
+			return "Invalid instance configuration, check logs"
+		}
 	}
 
 	return ""
@@ -204,7 +225,7 @@ func appContainerStatus(pod *corev1.Pod, appName string) *corev1.ContainerStatus
 	return nil
 }
 
-func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
+func (c *Client) toApp(ctx context.Context, u *unstructured.Unstructured, env string) (*model.App, error) {
 	app := &naisv1alpha1.Application{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, app); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
@@ -279,13 +300,6 @@ func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
 
 	ret.Replicas = reps
 
-	/*storage, err := appStorage(app)
-	if err != nil {
-		return nil, fmt.Errorf("getting storage: %w", err)
-	}
-
-	ret.Storage = storage*/
-
 	authz, err := appAuthz(app)
 	if err != nil {
 		return nil, fmt.Errorf("getting authz: %w", err)
@@ -304,6 +318,13 @@ func toApp(u *unstructured.Unstructured, env string) (*model.App, error) {
 	if app.Status.RolloutCompleteTime > 0 {
 		ret.Deployed = time.Unix(0, app.Status.RolloutCompleteTime)
 	}
+
+	instances, err := c.Instances(ctx, app.GetNamespace(), env, app.GetName())
+	if err != nil {
+		return nil, fmt.Errorf("getting instances: %w", err)
+	}
+
+	setStatus(ret, *app.Status.Conditions, instances)
 
 	return ret, nil
 }
@@ -334,6 +355,57 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 	}
 
 	return ret, nil
+}
+
+func setStatus(app *model.App, conditions []metav1.Condition, instances []*model.Instance) {
+	currentCondition := getCurrentCondition(conditions)
+	failing := failing(instances)
+
+	switch currentCondition {
+	case AppConditionFailedSynchronization:
+		app.Messages = append(app.Messages, "Invalid nais.yaml")
+	case AppConditionSynchronized:
+		app.Messages = append(app.Messages, "New instances failing")
+	}
+
+	if len(instances) == 0 || failing == len(instances) {
+		app.State = model.AppStateFailing
+		app.Messages = append(app.Messages, "No running instances")
+		return
+	}
+
+	if currentCondition == AppConditionRolloutComplete && failing == 0 {
+		app.State = model.AppStateNais
+		return
+	}
+
+	app.State = model.AppStateNotnais
+}
+
+func failing(instances []*model.Instance) int {
+	ret := 0
+	for _, instance := range instances {
+		if instance.State == model.InstanceStateFailing {
+			ret++
+		}
+	}
+	return ret
+}
+
+func getCurrentCondition(conditions []metav1.Condition) AppCondition {
+	for _, condition := range conditions {
+		if condition.Status == metav1.ConditionTrue {
+			switch condition.Reason {
+			case "RolloutComplete":
+				return AppConditionRolloutComplete
+			case "FailedSynchronization":
+				return AppConditionFailedSynchronization
+			case "Synchronized":
+				return AppConditionSynchronized
+			}
+		}
+	}
+	return AppConditionUnknown
 }
 
 func appStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.Storage, error) {

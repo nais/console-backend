@@ -25,6 +25,15 @@ type App implements Node {
   authz: [Authz!]!
   manifest: String!
   team: Team!
+  state: AppState!
+  messages: [String!]
+}
+
+enum AppState {
+  NAIS
+  NOTNAIS
+  FAILING
+  UNKNOWN
 }
 
 extend type Query {

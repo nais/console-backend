@@ -151,7 +151,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 			if rank == -1 {
 				continue
 			}
-			app, err := toApp(u, env)
+			app, err := c.toApp(ctx, u, env)
 			if err != nil {
 				c.error(ctx, err, "converting to app")
 				return nil
