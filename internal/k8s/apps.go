@@ -120,12 +120,16 @@ func Instance(pod *corev1.Pod) *model.Instance {
 	}
 
 	appCS := appContainerStatus(pod, appName)
+	restarts := 0
+	if appCS != nil {
+		restarts = int(appCS.RestartCount)
+	}
 
 	ret := &model.Instance{
 		ID:       model.Ident{ID: string(pod.GetUID()), Type: "pod"},
 		Name:     pod.GetName(),
 		Image:    image,
-		Restarts: int(appCS.RestartCount),
+		Restarts: restarts,
 		Message:  messageFromCS(appCS),
 		State:    stateFromCS(appCS),
 		Created:  pod.GetCreationTimestamp().Time,
