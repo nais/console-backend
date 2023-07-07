@@ -58,12 +58,19 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 }
 
 func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*model.Topic, error) {
-	topics, err := c.informers[env].TopicInformer.Lister().List(labels.Everything())
+	// HACK: dev-fss and prod-fss have topic resources in dev-gcp and prod-gcp respectively.
+	topicEnv := env
+	if env == "dev-fss" {
+		topicEnv = "dev-gcp"
+	}
+	if env == "prod-fss" {
+		topicEnv = "prod-gcp"
+	}
+
+	topics, err := c.informers[topicEnv].TopicInformer.Lister().List(labels.Everything())
 	if err != nil {
 		return nil, c.error(ctx, err, "listing topics")
 	}
-
-	// FFS!?
 
 	ret := []*model.Topic{}
 	for _, topic := range topics {
