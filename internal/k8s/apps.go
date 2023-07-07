@@ -157,7 +157,14 @@ func messageFromCS(cs *corev1.ContainerStatus) string {
 	}
 
 	if cs.State.Waiting != nil {
-		return cs.State.Waiting.Reason
+		switch cs.State.Waiting.Reason {
+		case "CrashLoopBackOff":
+			return "Process is crashing, check logs"
+		case "ErrImagePull", "ImagePullBackOff":
+			return "Unable to pull image"
+		case "CreateContainerConfigError":
+			return "Invalid instance configuration, check logs"
+		}
 	}
 
 	return ""
@@ -287,11 +294,6 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 	currentCondition := getCurrentCondition(conditions)
 	failing := failing(instances)
 
-	if currentCondition == AppConditionRolloutComplete && failing == 0 {
-		app.State = model.AppStateNais
-		return
-	}
-
 	switch currentCondition {
 	case AppConditionFailedSynchronization:
 		app.Messages = append(app.Messages, "Invalid nais.yaml")
@@ -299,16 +301,19 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 		app.Messages = append(app.Messages, "New instances failing")
 	}
 
-	if failing == len(instances) {
+	if len(instances) == 0 || failing == len(instances) {
 		app.State = model.AppStateFailing
 		app.Messages = append(app.Messages, "No running instances")
 		return
 	}
 
+	if currentCondition == AppConditionRolloutComplete && failing == 0 {
+		app.State = model.AppStateNais
+		return
+	}
+
 	app.State = model.AppStateNotnais
 }
-
-// for instances map reason to something human understandable
 
 func failing(instances []*model.Instance) int {
 	ret := 0

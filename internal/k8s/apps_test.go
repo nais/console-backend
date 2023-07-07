@@ -52,6 +52,12 @@ func TestSetStatus(t *testing.T) {
 			expectedState:    model.AppStateFailing,
 			expectedMessages: []string{"New instances failing", "No running instances"},
 		},
+		{
+			appCondition:     AppConditionRolloutComplete,
+			instanceStates:   []model.InstanceState{},
+			expectedState:    model.AppStateFailing,
+			expectedMessages: []string{"No running instances"},
+		},
 	}
 
 	for _, tc := range testCases {
