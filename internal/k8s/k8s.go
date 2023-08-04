@@ -81,21 +81,14 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 		infs[cluster].JobInformer = inf.Batch().V1().Jobs()
 
 		resources, err := discovery.NewDiscoveryClient(clientSet.RESTClient()).ServerResourcesForGroupVersion(kafka_nais_io_v1.GroupVersion.String())
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "the server could not find the requested resource") {
 			return nil, fmt.Errorf("get server resources for group version: %w", err)
-		} else {
-			log.WithField("cluster", cluster).Info("found kafka.nais.io API resources: ", func() string {
-				var names []string
-				for _, r := range resources.APIResources {
-					names = append(names, r.Name)
-				}
-				return strings.Join(names, ", ")
-			}())
 		}
-
-		for _, r := range resources.APIResources {
-			if r.Name == "topics" {
-				infs[cluster].TopicInformer = dinf.ForResource(kafka_nais_io_v1.GroupVersion.WithResource("topics"))
+		if err == nil {
+			for _, r := range resources.APIResources {
+				if r.Name == "topics" {
+					infs[cluster].TopicInformer = dinf.ForResource(kafka_nais_io_v1.GroupVersion.WithResource("topics"))
+				}
 			}
 		}
 	}
