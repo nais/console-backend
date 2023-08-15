@@ -196,6 +196,11 @@ type Kafka struct {
 func (Kafka) IsStorage()           {}
 func (this Kafka) GetName() string { return this.Name }
 
+type LogLine struct {
+	Time    time.Time `json:"time"`
+	Message string    `json:"message"`
+}
+
 type Maintenance struct {
 	Day  int `json:"day"`
 	Hour int `json:"hour"`

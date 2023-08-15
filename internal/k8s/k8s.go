@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -29,9 +31,10 @@ import (
 )
 
 type Client struct {
-	informers map[string]*Informers
-	log       *logrus.Entry
-	errors    metric.Int64Counter
+	informers  map[string]*Informers
+	clientSets map[string]*kubernetes.Clientset
+	log        *logrus.Entry
+	errors     metric.Int64Counter
 }
 
 type Informers struct {
@@ -53,6 +56,7 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 	}
 
 	infs := map[string]*Informers{}
+	clientSets := map[string]*kubernetes.Clientset{}
 	for cluster, cfg := range restConfigs {
 		cfg := cfg
 		infs[cluster] = &Informers{}
@@ -79,6 +83,9 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 		infs[cluster].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
 		infs[cluster].NaisjobInformer = dinf.ForResource(naisv1.GroupVersion.WithResource("naisjobs"))
 		infs[cluster].JobInformer = inf.Batch().V1().Jobs()
+		clientSets[cluster] = clientSet
+
+		log.Info("CLUSTER: ", cluster)
 
 		resources, err := discovery.NewDiscoveryClient(clientSet.RESTClient()).ServerResourcesForGroupVersion(kafka_nais_io_v1.GroupVersion.String())
 		if err != nil && !strings.Contains(err.Error(), "the server could not find the requested resource") {
@@ -94,10 +101,46 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 	}
 
 	return &Client{
-		informers: infs,
-		log:       log,
-		errors:    errors,
+		informers:  infs,
+		log:        log,
+		errors:     errors,
+		clientSets: clientSets,
 	}, nil
+}
+
+func (c *Client) Log(ctx context.Context, cluster, namespace, pod, container string, tailLines int64) ([]*model.LogLine, error) {
+	logs, err := c.clientSets[cluster].CoreV1().Pods(namespace).GetLogs(pod, &corev1.PodLogOptions{
+		TailLines:  &tailLines,
+		Container:  container,
+		Follow:     false,
+		Timestamps: true,
+	}).Stream(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer logs.Close()
+
+	sc := bufio.NewScanner(logs)
+
+	ret := []*model.LogLine{}
+
+	for sc.Scan() {
+		line := sc.Text()
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		t, err := time.Parse(time.RFC3339Nano, parts[0])
+		if err != nil {
+			continue
+		}
+		ret = append(ret, &model.LogLine{
+			Time:    t,
+			Message: parts[1],
+		})
+	}
+
+	return ret, nil
 }
 
 func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.SearchResult {
