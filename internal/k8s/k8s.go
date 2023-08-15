@@ -85,8 +85,6 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 		infs[cluster].JobInformer = inf.Batch().V1().Jobs()
 		clientSets[cluster] = clientSet
 
-		log.Info("CLUSTER: ", cluster)
-
 		resources, err := discovery.NewDiscoveryClient(clientSet.RESTClient()).ServerResourcesForGroupVersion(kafka_nais_io_v1.GroupVersion.String())
 		if err != nil && !strings.Contains(err.Error(), "the server could not find the requested resource") {
 			return nil, fmt.Errorf("get server resources for group version: %w", err)
