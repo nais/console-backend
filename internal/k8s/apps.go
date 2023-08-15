@@ -157,12 +157,13 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 
 	ret := []*model.Instance{}
 	for _, pod := range pods {
-		ret = append(ret, Instance(pod))
+		instance := Instance(pod, env)
+		ret = append(ret, instance)
 	}
 	return ret, nil
 }
 
-func Instance(pod *corev1.Pod) *model.Instance {
+func Instance(pod *corev1.Pod, env string) *model.Instance {
 	appName := pod.Labels["app"]
 
 	image := "unknown"
@@ -186,6 +187,15 @@ func Instance(pod *corev1.Pod) *model.Instance {
 		Message:  messageFromCS(appCS),
 		State:    stateFromCS(appCS),
 		Created:  pod.GetCreationTimestamp().Time,
+		GQLVars: struct {
+			Env     string
+			Team    string
+			AppName string
+		}{
+			Env:     env,
+			Team:    pod.GetNamespace(),
+			AppName: appName,
+		},
 	}
 
 	return ret

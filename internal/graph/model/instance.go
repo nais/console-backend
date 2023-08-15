@@ -15,6 +15,11 @@ type Instance struct {
 	Restarts int           `json:"restarts"`
 	Message  string        `json:"message"`
 	Created  time.Time     `json:"created"`
+	GQLVars  struct {
+		Env     string
+		Team    string
+		AppName string
+	} `json:"-"`
 }
 
 type InstanceState string

@@ -6,6 +6,12 @@ type Instance implements Node {
   image: String!
   restarts: Int!
   created: Time!
+  log(tailLines: Int!): [LogLine!]!
+}
+
+type LogLine {
+  time: Time!
+  message: String!
 }
 
 enum InstanceState {
