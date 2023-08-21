@@ -6,7 +6,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph"
@@ -56,6 +60,22 @@ func init() {
 	flag.StringSliceVar(&cfg.KubernetesClustersStatic, "kubernetes-clusters-static", splitEnv("KUBERNETES_CLUSTERS_STATIC", ","), "Kubernetes clusters to watch with static credentials (comma separated entries on the format 'name|apiserver-host|token')")
 }
 
+func newServer(es graphql.ExecutableSchema) *handler.Server {
+	srv := handler.New(es)
+	srv.AddTransport(transport.SSE{}) // Support subscriptions
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.POST{})
+
+	srv.SetQueryCache(lru.New(1000))
+
+	srv.Use(extension.Introspection{})
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New(100),
+	})
+
+	return srv
+}
+
 func main() {
 	flag.Parse()
 	log := newLogger()
@@ -93,6 +113,14 @@ func main() {
 		},
 	}
 
+	srv := newServer(graph.NewExecutableSchema(graphConfig))
+
+	metricsMW, err := graph.NewMetrics(meter)
+	if err != nil {
+		log.WithError(err).Fatal("setting up metrics middleware")
+	}
+	srv.Use(metricsMW)
+
 	corsMW := cors.New(
 		cors.Options{
 			AllowedOrigins:   []string{"https://*", "http://*"},
@@ -100,14 +128,6 @@ func main() {
 			AllowCredentials: true,
 			Debug:            cfg.LogLevel == "debug",
 		})
-
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graphConfig))
-
-	metricsMW, err := graph.NewMetrics(meter)
-	if err != nil {
-		log.WithError(err).Fatal("setting up metrics middleware")
-	}
-	srv.Use(metricsMW)
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	if cfg.RunAsUser != "" && cfg.Audience == "" {

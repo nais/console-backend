@@ -197,8 +197,16 @@ func (Kafka) IsStorage()           {}
 func (this Kafka) GetName() string { return this.Name }
 
 type LogLine struct {
-	Time    time.Time `json:"time"`
-	Message string    `json:"message"`
+	Time     time.Time `json:"time"`
+	Message  string    `json:"message"`
+	Instance string    `json:"instance"`
+}
+
+type LogSubscriptionInput struct {
+	App       string   `json:"app"`
+	Env       string   `json:"env"`
+	Team      string   `json:"team"`
+	Instances []string `json:"instances,omitempty"`
 }
 
 type Maintenance struct {

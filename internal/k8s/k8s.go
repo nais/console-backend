@@ -28,6 +28,8 @@ import (
 	corev1inf "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
+	"k8s.io/utils/strings/slices"
 )
 
 type Client struct {
@@ -104,6 +106,68 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 		errors:     errors,
 		clientSets: clientSets,
 	}, nil
+}
+
+func (c *Client) LogStream(ctx context.Context, cluster, namespace, app string, instances []string) (<-chan *model.LogLine, error) {
+	pods, err := c.clientSets[cluster].CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=%s", app),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan *model.LogLine, 10)
+	for _, pod := range pods.Items {
+		pod := pod
+		if len(instances) > 0 && slices.Contains(instances, pod.Name) {
+			continue
+		}
+		go func() {
+			logs, err := c.clientSets[cluster].CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
+				Container:  app,
+				Follow:     true,
+				Timestamps: true,
+				TailLines:  ptr.To[int64](1),
+			}).Stream(ctx)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer logs.Close()
+
+			sc := bufio.NewScanner(logs)
+
+			for sc.Scan() {
+				line := sc.Text()
+				parts := strings.SplitN(line, " ", 2)
+				if len(parts) != 2 {
+					continue
+				}
+				time, err := time.Parse(time.RFC3339Nano, parts[0])
+				if err != nil {
+					continue
+				}
+
+				t := &model.LogLine{
+					Time:     time,
+					Message:  parts[1],
+					Instance: pod.Name,
+				}
+
+				select {
+				case <-ctx.Done():
+					// Exit on cancellation
+					fmt.Println("Subscription closed.")
+					return
+
+				case ch <- t:
+					// Our message went through, do nothing
+				}
+
+			}
+		}()
+	}
+	return ch, nil
 }
 
 func (c *Client) Log(ctx context.Context, cluster, namespace, pod, container string, tailLines int64) ([]*model.LogLine, error) {
