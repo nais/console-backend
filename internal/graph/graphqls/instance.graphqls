@@ -9,11 +9,6 @@ type Instance implements Node {
   log(tailLines: Int!): [LogLine!]!
 }
 
-type LogLine {
-  time: Time!
-  message: String!
-}
-
 enum InstanceState {
   RUNNING
   FAILING
