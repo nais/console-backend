@@ -127,7 +127,7 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, app string, 
 				Container:  app,
 				Follow:     true,
 				Timestamps: true,
-				TailLines:  ptr.To[int64](1),
+				TailLines:  ptr.To[int64](int64(150 / len(pods.Items))),
 			}).Stream(ctx)
 			if err != nil {
 				fmt.Println(err)
