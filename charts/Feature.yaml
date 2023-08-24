@@ -2,17 +2,20 @@ environmentKinds:
   - management
 values:
   kubernetes.static:
-    displayName: Comma-separated list of clusters with static credentials on the format 'name|apiserverHost|token'
+    displayName: static cluster
+    description: Comma-separated list of clusters with static credentials on the format 'name|apiserverHost|token'
     config:
       type: string
       secret: true
   kubernetes.clusters:
-    displayName: Comma-separated list of clusters to monitor
+    displayName: clusters
+    description: Comma-separated list of clusters to monitor
     required: true
     config:
       type: string
   audience:
-    displayName: IAP audience
+    displayName: audience
+    description: IAP audience
     required: true
     config:
       type: string
@@ -25,15 +28,18 @@ values:
     computed:
       template: '{{ subdomain . "console" }}'
   resources.cpu:
-    displayName: CPU requirements (request == limit, because Autopilot)
+    displayName: CPU
+    description: CPU requirements (request == limit, because Autopilot)
     config:
       type: string
   resources.memory:
-    displayName: Memory requirements (request == limit, because Autopilot)
+    displayName: Memory
+    description: Memory requirements (request == limit, because Autopilot)
     config:
       type: string
   serviceaccount.email:
-    displayName: console-backend service account email
+    displayName: sa email
+    description: console-backend service account email
     computed:
       template: '"{{.Management.console_backend_serviceaccount_email}}"'
   teams.token:
