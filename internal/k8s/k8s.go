@@ -119,7 +119,7 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, app string, 
 	ch := make(chan *model.LogLine, 10)
 	for _, pod := range pods.Items {
 		pod := pod
-		if len(instances) > 0 && slices.Contains(instances, pod.Name) {
+		if len(instances) > 0 && !slices.Contains(instances, pod.Name) {
 			continue
 		}
 		go func() {
