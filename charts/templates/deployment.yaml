@@ -28,6 +28,8 @@ spec:
               value: "{{ .Values.audience }}"
             - name: TENANT
               value: "{{ .Values.fasit.tenant.name }}"
+            - name: FIELD_SELECTOR
+              value: "{{ .Values.fieldSelector }}"
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"

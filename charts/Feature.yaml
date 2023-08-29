@@ -19,6 +19,11 @@ values:
     required: true
     config:
       type: string
+  fieldselector:
+    displayName: field selector
+    description: Kubernetes field selector to filter out resources from api server
+    config:
+      type: string
   hookd.psk:
     description: The pre-shared key used to authenticate against hookd
     displayName: hookd pre-shared key
