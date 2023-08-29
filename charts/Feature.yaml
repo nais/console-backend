@@ -19,7 +19,7 @@ values:
     required: true
     config:
       type: string
-  fieldselector:
+  fieldSelector:
     displayName: field selector
     description: Kubernetes field selector to filter out resources from api server
     config:
