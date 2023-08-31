@@ -108,9 +108,9 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 	}, nil
 }
 
-func (c *Client) LogStream(ctx context.Context, cluster, namespace, app string, instances []string) (<-chan *model.LogLine, error) {
+func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, container string, instances []string) (<-chan *model.LogLine, error) {
 	pods, err := c.clientSets[cluster].CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("app=%s", app),
+		LabelSelector: selector,
 	})
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, app string, 
 		}
 		go func() {
 			logs, err := c.clientSets[cluster].CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
-				Container:  app,
+				Container:  container,
 				Follow:     true,
 				Timestamps: true,
 				TailLines:  ptr.To[int64](int64(150 / len(pods.Items))),

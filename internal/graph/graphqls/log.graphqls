@@ -5,7 +5,8 @@ type LogLine {
 }
 
 input LogSubscriptionInput {
-  app: String!
+  app: String
+  job: String
   env: String!
   team: String!
   instances: [String!]

@@ -203,7 +203,8 @@ type LogLine struct {
 }
 
 type LogSubscriptionInput struct {
-	App       string   `json:"app"`
+	App       *string  `json:"app,omitempty"`
+	Job       *string  `json:"job,omitempty"`
 	Env       string   `json:"env"`
 	Team      string   `json:"team"`
 	Instances []string `json:"instances,omitempty"`

@@ -12,6 +12,7 @@ type NaisJobEdge {
 type Run implements Node {
   id: ID!
   name: String!
+  podNames: [String!]!
   startTime: Time
   completionTime: Time
   duration: String!
