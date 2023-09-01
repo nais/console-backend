@@ -18,7 +18,7 @@ import (
 )
 
 func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.NaisJob, error) {
-	c.log.Infof("getting job %q in namespace %q in env %q", name, team, env)
+	c.log.Debugf("getting job %q in namespace %q in env %q", name, team, env)
 	if c.informers[env] == nil {
 		return nil, fmt.Errorf("no jobInformer for env %q", env)
 	}
@@ -123,15 +123,36 @@ func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run
 			startTime = &job.Status.StartTime.Time
 		}
 
+		podReq, err := labels.NewRequirement("job-name", selection.Equals, []string{job.Name})
+		if err != nil {
+			return nil, c.error(ctx, err, "creating label selector")
+		}
+		podSelector := labels.NewSelector().Add(*podReq)
+		pods, err := c.informers[env].PodInformer.Lister().Pods(team).List(podSelector)
+		if err != nil {
+			return nil, c.error(ctx, err, "listing job instance pods")
+		}
+
+		var podNames []string
+		for _, pod := range pods {
+			podNames = append(podNames, pod.Name)
+		}
+
 		ret = append(ret, &model.Run{
 			ID:             model.Ident{ID: job.Name, Type: "job"},
 			Name:           job.Name,
+			PodNames:       podNames,
 			StartTime:      startTime,
 			CompletionTime: completionTime,
 			Failed:         failed(job),
 			Duration:       duration(job).String(),
 			Image:          job.Spec.Template.Spec.Containers[0].Image,
 			Message:        Message(job),
+			GQLVars: struct {
+				Env     string
+				Team    string
+				NaisJob string
+			}{Env: env, Team: team, NaisJob: name},
 		})
 	}
 
@@ -229,6 +250,7 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 		Name: env,
 		ID:   model.Ident{ID: env, Type: "env"},
 	}
+
 	ret.DeployInfo = &model.DeployInfo{
 		CommitSha: naisjob.GetAnnotations()["deploy.nais.io/github-sha"],
 		Deployer:  naisjob.GetAnnotations()["deploy.nais.io/github-actor"],

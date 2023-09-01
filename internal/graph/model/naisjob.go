@@ -5,12 +5,18 @@ import "time"
 type Run struct {
 	ID             Ident      `json:"id"`
 	Name           string     `json:"name"`
+	PodNames       []string   `json:"podNames"`
 	StartTime      *time.Time `json:"startTime,omitempty"`
 	CompletionTime *time.Time `json:"completionTime,omitempty"`
 	Duration       string     `json:"duration"`
 	Image          string     `json:"image"`
 	Message        string     `json:"message"`
 	Failed         bool       `json:"failed,omitempty"`
+	GQLVars        struct {
+		Env     string
+		Team    string
+		NaisJob string
+	} `json:"-"`
 }
 
 func (Run) IsNode()        {}
