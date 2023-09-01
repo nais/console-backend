@@ -168,6 +168,7 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 				}
 
 			}
+
 			fmt.Println("Logs done", sc.Err())
 
 		}(wg)
@@ -175,6 +176,11 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 	go func() {
 		wg.Wait()
 		fmt.Println("Closing subscription.")
+		ch <- &model.LogLine{
+			Time:     time.Now(),
+			Message:  "Subscription closed.",
+			Instance: "console-backend",
+		}
 		close(ch)
 	}()
 	return ch, nil
