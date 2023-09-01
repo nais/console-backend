@@ -408,6 +408,7 @@ type ComplexityRoot struct {
 
 	Rule struct {
 		Application func(childComplexity int) int
+		Cluster     func(childComplexity int) int
 		Namespace   func(childComplexity int) int
 	}
 
@@ -2002,6 +2003,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Rule.Application(childComplexity), true
+
+	case "Rule.cluster":
+		if e.complexity.Rule.Cluster == nil {
+			break
+		}
+
+		return e.complexity.Rule.Cluster(childComplexity), true
 
 	case "Rule.namespace":
 		if e.complexity.Rule.Namespace == nil {
@@ -9025,6 +9033,8 @@ func (ec *executionContext) fieldContext_Inbound_rules(ctx context.Context, fiel
 				return ec.fieldContext_Rule_application(ctx, field)
 			case "namespace":
 				return ec.fieldContext_Rule_namespace(ctx, field)
+			case "cluster":
+				return ec.fieldContext_Rule_cluster(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
 		},
@@ -11414,6 +11424,8 @@ func (ec *executionContext) fieldContext_Outbound_rules(ctx context.Context, fie
 				return ec.fieldContext_Rule_application(ctx, field)
 			case "namespace":
 				return ec.fieldContext_Rule_namespace(ctx, field)
+			case "cluster":
+				return ec.fieldContext_Rule_cluster(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
 		},
@@ -12724,6 +12736,50 @@ func (ec *executionContext) _Rule_namespace(ctx context.Context, field graphql.C
 }
 
 func (ec *executionContext) fieldContext_Rule_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Rule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Rule_cluster(ctx context.Context, field graphql.CollectedField, obj *model.Rule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Rule_cluster(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cluster, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Rule_cluster(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Rule",
 		Field:      field,
@@ -21425,6 +21481,11 @@ func (ec *executionContext) _Rule(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "namespace":
 			out.Values[i] = ec._Rule_namespace(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cluster":
+			out.Values[i] = ec._Rule_cluster(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

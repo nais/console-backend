@@ -30,6 +30,7 @@ type Port struct {
 type Rule struct {
 	Application string `json:"application"`
 	Namespace   string `json:"namespace"`
+	Cluster     string `json:"cluster"`
 }
 
 type Limits struct {
