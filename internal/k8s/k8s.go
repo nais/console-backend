@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -116,13 +117,16 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 		return nil, err
 	}
 
+	wg := &sync.WaitGroup{}
 	ch := make(chan *model.LogLine, 10)
 	for _, pod := range pods.Items {
 		pod := pod
 		if len(instances) > 0 && !slices.Contains(instances, pod.Name) {
 			continue
 		}
-		go func() {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
 			logs, err := c.clientSets[cluster].CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
 				Container:  container,
 				Follow:     true,
@@ -134,7 +138,6 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 				return
 			}
 			defer logs.Close()
-
 			sc := bufio.NewScanner(logs)
 
 			for sc.Scan() {
@@ -165,8 +168,15 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 				}
 
 			}
-		}()
+			fmt.Println("Logs done", sc.Err())
+
+		}(wg)
 	}
+	go func() {
+		wg.Wait()
+		fmt.Println("Closing subscription.")
+		close(ch)
+	}()
 	return ch, nil
 }
 
