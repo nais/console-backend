@@ -17,14 +17,17 @@ require (
 	golang.org/x/vuln v1.0.1
 	google.golang.org/api v0.103.0
 	gopkg.in/yaml.v2 v2.4.0
+	honnef.co/go/tools v0.4.5
 	k8s.io/apimachinery v0.27.1
 	k8s.io/client-go v0.26.1
 )
 
 require (
+	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	go.opentelemetry.io/otel/sdk v1.16.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20230817173708-d852ddb80c63 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 )
 
@@ -76,7 +79,7 @@ require (
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/oauth2 v0.5.0
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
