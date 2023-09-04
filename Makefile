@@ -24,3 +24,6 @@ local:
 
 test:
 	go test ./... 
+
+check:
+	go run golang.org/x/vuln/cmd/govulncheck ./...
