@@ -2,7 +2,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: console-backend-deprecated-ingresses
+  name: "{{ .Release.Name }}"-deprecated-ingresses
 data:
   deprecatedIngresses: |
     cluster:
