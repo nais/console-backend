@@ -1,4 +1,4 @@
-{{- if eq .Values.fasit.tenant "nav" -}}
+{{- if eq .Tenant.Name "nav" -}}
 kind: ConfigMap
 apiVersion: v1
 metadata:
