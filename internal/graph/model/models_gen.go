@@ -38,8 +38,8 @@ type ACL struct {
 }
 
 type AppState struct {
-	State  State       `json:"state"`
-	Errors []ErrorType `json:"errors,omitempty"`
+	State  State         `json:"state"`
+	Errors []*StateError `json:"errors"`
 }
 
 type AutoScaling struct {
@@ -278,6 +278,11 @@ type SQLInstance struct {
 
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
+
+type StateError struct {
+	Type   ErrorType `json:"type"`
+	Detail string    `json:"detail"`
+}
 
 type TokenX struct {
 	MountSecretsAsFilesOnly bool `json:"mountSecretsAsFilesOnly"`

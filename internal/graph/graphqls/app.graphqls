@@ -30,7 +30,7 @@ type App implements Node {
 
 type AppState {
   state: State!
-  errors: [ErrorType!]
+  errors: [StateError!]!
 }
 
 enum ErrorType {
@@ -39,6 +39,11 @@ enum ErrorType {
   NO_RUNNING_INSTANCES
   NEW_INSTANCES_FAILING
   INVALID_NAIS_YAML
+}
+
+type StateError {
+  type: ErrorType!
+  detail: String!
 }
 
 enum State {

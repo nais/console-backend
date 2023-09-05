@@ -33,10 +33,6 @@ spec:
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"
-            {{- if eq .Tenant.Name "nav" }}
-            - configMapRef:
-                name: "{{ .Release.Name }}"-deprecated-ingresses
-            {{- end }}
           securityContext:
             capabilities:
               drop:

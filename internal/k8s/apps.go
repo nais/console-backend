@@ -28,6 +28,69 @@ const (
 	AppConditionUnknown               AppCondition = "Unknown"
 )
 
+/*
+cluster:
+	dev-fss:
+	  - ".adeo.no"
+	  - ".intern.dev.adeo.no"
+	  - ".dev-fss.nais.io"
+	  - ".dev.adeo.no"
+	  - ".dev.intern.nav.no"
+	  - ".nais.preprod.local"
+	dev-gcp:
+	  - ".dev-gcp.nais.io"
+	  - ".dev.intern.nav.no"
+	  - ".dev.nav.no"
+	  - ".intern.nav.no"
+	  - ".dev.adeo.no"
+	  - ".labs.nais.io"
+	  - ".ekstern.dev.nais.io"
+	prod-fss:
+	  - ".adeo.no"
+	  - ".nais.adeo.no"
+	  - ".prod-fss.nais.io"
+	prod-gcp:
+	  - ".dev.intern.nav.no"
+	  - ".prod-gcp.nais.io"
+}
+*/
+
+func getDeprecatedIngresses(cluster string) []string {
+	deprecatedIngresses := map[string][]string{
+		"dev-fss": {
+			"adeo.no",
+			"intern.dev.adeo.no",
+			"dev-fss.nais.io",
+			"dev.adeo.no",
+			"dev.intern.nav.no",
+			"nais.preprod.local",
+		},
+		"dev-gcp": {
+			"dev-gcp.nais.io",
+			"dev.intern.nav.no",
+			"dev.nav.no",
+			"intern.nav.no",
+			"dev.adeo.no",
+			"labs.nais.io",
+			"ekstern.dev.nais.io",
+		},
+		"prod-fss": {
+			"adeo.no",
+			"nais.adeo.no",
+			"prod-fss.nais.io",
+		},
+		"prod-gcp": {
+			"dev.intern.nav.no",
+			"prod-gcp.nais.io",
+		},
+	}
+	ingresses, ok := deprecatedIngresses[cluster]
+	if !ok {
+		return []string{}
+	}
+	return ingresses
+}
+
 func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
 	c.log.Debugf("getting app %q in namespace %q in env %q", name, team, env)
 	if c.informers[env] == nil {
@@ -378,40 +441,63 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 func setStatus(app *model.App, conditions []metav1.Condition, instances []*model.Instance) {
 	currentCondition := getCurrentCondition(conditions)
 	failing := failing(instances)
-
 	appState := model.AppState{
-		Errors: []model.ErrorType{},
+		Errors: []*model.StateError{},
 		State:  model.StateNais,
 	}
 
 	switch currentCondition {
 	case AppConditionFailedSynchronization:
-		appState.Errors = append(appState.Errors, model.ErrorTypeInvalidNaisYaml)
+		appState.Errors = append(appState.Errors, &model.StateError{
+			Type: model.ErrorTypeInvalidNaisYaml,
+		})
+		appState.State = model.StateNotnais
 	case AppConditionSynchronized:
-		appState.Errors = append(appState.Errors, model.ErrorTypeNewInstancesFailing)
+		appState.Errors = append(appState.Errors, &model.StateError{
+			Type: model.ErrorTypeNewInstancesFailing,
+		})
+		appState.State = model.StateNotnais
 	}
 
 	if len(instances) == 0 || failing == len(instances) {
+		appState.Errors = append(appState.Errors, &model.StateError{
+			Type: model.ErrorTypeNoRunningInstances,
+		})
 		appState.State = model.StateFailing
-		appState.Errors = append(appState.Errors, model.ErrorTypeNoRunningInstances)
-		app.AppState = appState
-		return
 	}
 
 	if !strings.Contains(app.Image, "europe-north1-docker.pkg.dev") {
-		appState.Errors = append(appState.Errors, model.ErrorTypeDeprecatedRegistry)
-		appState.State = model.StateNotnais
-		app.AppState = appState
-		return
+		appState.Errors = append(appState.Errors, &model.StateError{
+			Type:   model.ErrorTypeDeprecatedRegistry,
+			Detail: app.Image,
+		})
+		if appState.State != model.StateFailing {
+			appState.State = model.StateNotnais
+		}
+	}
+
+	deprecatedIngresses := getDeprecatedIngresses(app.Env.Name)
+	for _, ingress := range app.Ingresses {
+		i := strings.Join(strings.Split(ingress, ".")[1:], ".")
+		for _, deprecatedIngress := range deprecatedIngresses {
+			if i == deprecatedIngress {
+				appState.Errors = append(appState.Errors, &model.StateError{
+					Type:   model.ErrorTypeDeprecatedIngress,
+					Detail: ingress,
+				})
+				if appState.State != model.StateFailing {
+					appState.State = model.StateNotnais
+				}
+			}
+		}
 	}
 
 	if currentCondition == AppConditionRolloutComplete && failing == 0 {
-		appState.State = model.StateNais
-		app.AppState = appState
-		return
+		if appState.State != model.StateFailing && appState.State != model.StateNotnais {
+			appState.State = model.StateNais
+		}
 	}
 
-	appState.State = model.StateNotnais
 	app.AppState = appState
 }
 
