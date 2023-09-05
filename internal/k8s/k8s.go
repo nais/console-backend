@@ -28,7 +28,6 @@ import (
 	batchv1inf "k8s.io/client-go/informers/batch/v1"
 	corev1inf "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
 )
@@ -49,13 +48,9 @@ type Informers struct {
 }
 
 func New(clusters, static []string, tenant, fieldSelector string, errors metric.Int64Counter, log *logrus.Entry) (*Client, error) {
-	restConfigs, err := createRestConfigs(clusters, tenant)
+	restConfigs, err := CreateClusterConfigMap(clusters, static, tenant)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
-	}
-
-	if err := addStaticClusters(restConfigs, static, tenant); err != nil {
-		return nil, fmt.Errorf("add static clusters: %w", err)
 	}
 
 	infs := map[string]*Informers{}
@@ -307,29 +302,8 @@ func convert(m any, target any) error {
 	return nil
 }
 
-func (c *Client) error(ctx context.Context, err error, msg string) error {
+func (c *Client) error(_ context.Context, err error, msg string) error {
 	c.errors.Add(context.Background(), 1, metric.WithAttributes(attribute.String("component", "k8s-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
-}
-
-func addStaticClusters(restConfigs map[string]rest.Config, static []string, tenant string) error {
-	for _, entry := range static {
-		parts := strings.Split(entry, "|")
-		if len(parts) != 3 {
-			return fmt.Errorf("invalid static cluster entry: %s. Must be on format 'name|apiserver-host|token'", entry)
-		}
-		name := parts[0]
-		host := parts[1]
-		token := parts[2]
-
-		restConfigs[name] = rest.Config{
-			Host:        host,
-			BearerToken: token,
-			TLSClientConfig: rest.TLSClientConfig{
-				Insecure: true,
-			},
-		}
-	}
-	return nil
 }
