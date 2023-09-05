@@ -47,4 +47,3 @@ jobs:
         with:
           chart: ${{ env.IMAGE_REPOSITORY }}/${{ env.NAME }}
           version: ${{ needs.build_push.outputs.version }}
-          feature_name: ${{ env.NAME }}
