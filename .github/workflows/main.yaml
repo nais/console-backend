@@ -37,6 +37,7 @@ jobs:
         run: |-
           helm push ${{ env.NAME }}*.tgz ${{ env.IMAGE_REPOSITORY }}
   test:
+    name: Run tests and static code analysis
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
