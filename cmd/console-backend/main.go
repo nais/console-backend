@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -24,54 +27,59 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 )
 
-func newServer(es graphql.ExecutableSchema) *handler.Server {
-	srv := handler.New(es)
-	srv.AddTransport(transport.SSE{}) // Support subscriptions
-	srv.AddTransport(transport.Options{})
-	srv.AddTransport(transport.POST{})
-
-	srv.SetQueryCache(lru.New(1000))
-
-	srv.Use(extension.Introspection{})
-	srv.Use(extension.AutomaticPersistedQuery{
-		Cache: lru.New(100),
-	})
-
-	return srv
-}
+const (
+	exitCodeSuccess     = 0
+	exitCodeLoggerError = 1
+	exitCodeRunError    = 2
+)
 
 func main() {
-	ctx := context.Background()
 	cfg := config.New()
+	log, err := newLogger(cfg.LogLevel)
+	if err != nil {
+		fmt.Printf("create logger: %s", err)
+		os.Exit(exitCodeLoggerError)
+	}
 
-	log := newLogger(cfg.LogLevel)
+	err = run(cfg, log)
+	if err != nil {
+		log.WithError(err).Errorf("error in run()")
+		os.Exit(exitCodeRunError)
+	}
+
+	os.Exit(exitCodeSuccess)
+}
+
+func run(cfg *config.Config, log *logrus.Logger) error {
+	ctx := context.Background()
+
 	exporter, err := prometheus.New()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("create prometheus exporter: %w", err)
 	}
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	meter := provider.Meter("github.com/nais/console-backend")
 
-	errors, err := meter.Int64Counter("errors")
+	errorsCounter, err := meter.Int64Counter("errors")
 	if err != nil {
-		log.Fatalf("creating error counter: %v", err)
+		return fmt.Errorf("create error counter: %w", err)
 	}
 
-	k8s, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errors, log.WithField("client", "k8s"))
+	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("create k8s client: %w", err)
 	}
 
-	k8s.Run(ctx)
+	k8sClient.Run(ctx)
 
-	teams := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errors, log.WithField("client", "teams"))
-	searcher := search.New(teams, k8s)
+	teamsBackendClient := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errorsCounter, log.WithField("client", "teams"))
+	searcher := search.New(teamsBackendClient, k8sClient)
 
 	graphConfig := graph.Config{
 		Resolvers: &graph.Resolver{
-			Hookd:       hookd.New(cfg.HookdPSK, cfg.HookdEndpoint, errors, log.WithField("client", "hookd")),
-			TeamsClient: teams,
-			K8s:         k8s,
+			Hookd:       hookd.New(cfg.HookdPSK, cfg.HookdEndpoint, errorsCounter, log.WithField("client", "hookd")),
+			TeamsClient: teamsBackendClient,
+			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
 		},
@@ -81,7 +89,7 @@ func main() {
 
 	metricsMW, err := graph.NewMetrics(meter)
 	if err != nil {
-		log.WithError(err).Fatal("setting up metrics middleware")
+		return fmt.Errorf("create metrics middleware: %w", err)
 	}
 	srv.Use(metricsMW)
 
@@ -104,17 +112,38 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 
 	log.Printf("connect to http://%s:%s/ for GraphQL playground", cfg.BindHost, cfg.Port)
-	log.Fatal(http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil))
+	err = http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil)
+	if !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	log.Info("HTTP server finished, terminating...")
+	return nil
 }
 
-func newLogger(logLevel string) *logrus.Logger {
+func newLogger(logLevel string) (*logrus.Logger, error) {
 	log := logrus.StandardLogger()
 	log.SetFormatter(&logrus.JSONFormatter{})
 
 	l, err := logrus.ParseLevel(logLevel)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	log.SetLevel(l)
-	return log
+	return log, nil
+}
+
+func newServer(es graphql.ExecutableSchema) *handler.Server {
+	srv := handler.New(es)
+	srv.AddTransport(transport.SSE{}) // Support subscriptions
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.POST{})
+
+	srv.SetQueryCache(lru.New(1000))
+
+	srv.Use(extension.Introspection{})
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New(100),
+	})
+
+	return srv
 }
