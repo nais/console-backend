@@ -65,21 +65,21 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		return fmt.Errorf("create error counter: %w", err)
 	}
 
-	k8s, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
+	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
 		return fmt.Errorf("create k8s client: %w", err)
 	}
 
-	k8s.Run(ctx)
+	k8sClient.Run(ctx)
 
-	teams := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errorsCounter, log.WithField("client", "teams"))
-	searcher := search.New(teams, k8s)
+	teamsBackendClient := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errorsCounter, log.WithField("client", "teams"))
+	searcher := search.New(teamsBackendClient, k8sClient)
 
 	graphConfig := graph.Config{
 		Resolvers: &graph.Resolver{
 			Hookd:       hookd.New(cfg.HookdPSK, cfg.HookdEndpoint, errorsCounter, log.WithField("client", "hookd")),
-			TeamsClient: teams,
-			K8s:         k8s,
+			TeamsClient: teamsBackendClient,
+			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
 		},
