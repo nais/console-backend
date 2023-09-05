@@ -25,11 +25,23 @@ type App implements Node {
   authz: [Authz!]!
   manifest: String!
   team: Team!
-  state: AppState!
-  messages: [String!]
+  appState: AppState!
 }
 
-enum AppState {
+type AppState {
+  state: State!
+  errors: [ErrorType!]
+}
+
+enum ErrorType {
+  DEPRECATED_REGISTRY
+  DEPRECATED_INGRESS
+  NO_RUNNING_INSTANCES
+  NEW_INSTANCES_FAILING
+  INVALID_NAIS_YAML
+}
+
+enum State {
   NAIS
   NOTNAIS
   FAILING

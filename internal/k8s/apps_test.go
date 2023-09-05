@@ -8,85 +8,108 @@ import (
 )
 
 type testCase struct {
-	appCondition     AppCondition
-	instanceStates   []model.InstanceState
-	expectedState    model.AppState
-	expectedMessages []string
+	name           string
+	appCondition   AppCondition
+	instanceStates []model.InstanceState
+	image          string
+	expectedState  model.State
+	expectedErrors []model.ErrorType
 }
 
 func TestSetStatus(t *testing.T) {
 	testCases := []testCase{
 		{
-			appCondition:     AppConditionRolloutComplete,
-			instanceStates:   []model.InstanceState{model.InstanceStateRunning},
-			expectedState:    model.AppStateNais,
-			expectedMessages: nil,
+			name:           "app is rolloutcomplete and has running instances",
+			appCondition:   AppConditionRolloutComplete,
+			instanceStates: []model.InstanceState{model.InstanceStateRunning},
+			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
+			expectedState:  model.StateNais,
+			expectedErrors: []model.ErrorType{},
 		},
 		{
-			appCondition:     AppConditionRolloutComplete,
-			instanceStates:   []model.InstanceState{model.InstanceStateFailing},
-			expectedState:    model.AppStateFailing,
-			expectedMessages: []string{"No running instances"},
+			name:           "app is rolloutcomplete and has failing instances",
+			appCondition:   AppConditionRolloutComplete,
+			instanceStates: []model.InstanceState{model.InstanceStateFailing},
+			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
+			expectedState:  model.StateFailing,
+			expectedErrors: []model.ErrorType{model.ErrorTypeNoRunningInstances},
 		},
 		{
-			appCondition:     AppConditionFailedSynchronization,
-			instanceStates:   []model.InstanceState{model.InstanceStateRunning},
-			expectedState:    model.AppStateNotnais,
-			expectedMessages: []string{"Invalid nais.yaml"},
+			name:           "app failed synchronization and has running instances",
+			appCondition:   AppConditionFailedSynchronization,
+			instanceStates: []model.InstanceState{model.InstanceStateRunning},
+			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
+			expectedState:  model.StateNotnais,
+			expectedErrors: []model.ErrorType{model.ErrorTypeInvalidNaisYaml},
 		},
 		{
-			appCondition:     AppConditionFailedSynchronization,
-			instanceStates:   []model.InstanceState{model.InstanceStateFailing},
-			expectedState:    model.AppStateFailing,
-			expectedMessages: []string{"No running instances", "Invalid nais.yaml"},
+			name:           "app failed synchronization and has failing instances",
+			appCondition:   AppConditionFailedSynchronization,
+			instanceStates: []model.InstanceState{model.InstanceStateFailing},
+			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
+			expectedState:  model.StateFailing,
+			expectedErrors: []model.ErrorType{model.ErrorTypeNoRunningInstances, model.ErrorTypeInvalidNaisYaml},
 		},
 		{
-			appCondition:     AppConditionSynchronized,
-			instanceStates:   []model.InstanceState{model.InstanceStateRunning, model.InstanceStateFailing},
-			expectedState:    model.AppStateNotnais,
-			expectedMessages: []string{"New instances failing"},
+			name:           "app is synchronized and has running and failing instances",
+			appCondition:   AppConditionSynchronized,
+			instanceStates: []model.InstanceState{model.InstanceStateRunning, model.InstanceStateFailing},
+			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
+			expectedState:  model.StateNotnais,
+			expectedErrors: []model.ErrorType{model.ErrorTypeNewInstancesFailing},
 		},
 		{
-			appCondition:     AppConditionSynchronized,
-			instanceStates:   []model.InstanceState{model.InstanceStateFailing, model.InstanceStateFailing},
-			expectedState:    model.AppStateFailing,
-			expectedMessages: []string{"New instances failing", "No running instances"},
+			name:           "app is synchronized and has multiple failing instances",
+			appCondition:   AppConditionSynchronized,
+			instanceStates: []model.InstanceState{model.InstanceStateFailing, model.InstanceStateFailing},
+			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
+			expectedState:  model.StateFailing,
+			expectedErrors: []model.ErrorType{model.ErrorTypeNewInstancesFailing, model.ErrorTypeNoRunningInstances},
 		},
 		{
-			appCondition:     AppConditionRolloutComplete,
-			instanceStates:   []model.InstanceState{},
-			expectedState:    model.AppStateFailing,
-			expectedMessages: []string{"No running instances"},
+			name:           "app is rolloutcomplete and has no instances",
+			appCondition:   AppConditionRolloutComplete,
+			instanceStates: []model.InstanceState{},
+			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
+			expectedState:  model.StateFailing,
+			expectedErrors: []model.ErrorType{model.ErrorTypeNoRunningInstances},
+		},
+		{
+			name:           "app image is from deprecated registry",
+			appCondition:   AppConditionRolloutComplete,
+			instanceStates: []model.InstanceState{model.InstanceStateRunning, model.InstanceStateRunning},
+			image:          "docker.pkg.github.com/nais/myapp/myapp:1.0.0",
+			expectedState:  model.StateNotnais,
+			expectedErrors: []model.ErrorType{model.ErrorTypeDeprecatedRegistry},
 		},
 	}
 
 	for _, tc := range testCases {
-		app := &model.App{}
+		app := &model.App{Image: tc.image}
 		setStatus(app, []metav1.Condition{{Status: metav1.ConditionTrue, Reason: string(tc.appCondition)}}, asInstances(tc.instanceStates))
-
-		if app.State != tc.expectedState {
-			t.Errorf("got: %v, want: %v", app.State, tc.expectedState)
+		if app.AppState.State != tc.expectedState {
+			t.Errorf("%s\ngot state: %v, want: %v", tc.name, app.AppState.State, tc.expectedState)
 		}
-		if !hasMessage(app.Messages, tc.expectedMessages) {
-			t.Errorf("got: %v, want: %v", app.Messages, tc.expectedMessages)
+		if !hasError(app.AppState.Errors, tc.expectedErrors) {
+			t.Errorf("%s\ngot error: %v, want: %v", tc.name, app.AppState.Errors, tc.expectedErrors)
 		}
 	}
 }
 
-func hasMessage(messages []string, expectedMessages []string) bool {
-	if len(messages) != len(expectedMessages) {
+func hasError(errors []model.ErrorType, expectedErrors []model.ErrorType) bool {
+	if len(errors) != len(expectedErrors) {
 		return false
 	}
 
-	for _, msg := range expectedMessages {
-		if !contains(messages, msg) {
+	for _, error := range expectedErrors {
+		if !contains(errors, error) {
 			return false
 		}
 	}
 	return true
 }
 
-func contains(slice []string, s string) bool {
+func contains(slice []model.ErrorType, s model.ErrorType) bool {
 	for _, item := range slice {
 		if item == s {
 			return true

@@ -67,6 +67,7 @@ type ComplexityRoot struct {
 
 	App struct {
 		AccessPolicy func(childComplexity int) int
+		AppState     func(childComplexity int) int
 		Authz        func(childComplexity int) int
 		AutoScaling  func(childComplexity int) int
 		DeployInfo   func(childComplexity int) int
@@ -76,10 +77,8 @@ type ComplexityRoot struct {
 		Ingresses    func(childComplexity int) int
 		Instances    func(childComplexity int) int
 		Manifest     func(childComplexity int) int
-		Messages     func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Resources    func(childComplexity int) int
-		State        func(childComplexity int) int
 		Storage      func(childComplexity int) int
 		Team         func(childComplexity int) int
 		Variables    func(childComplexity int) int
@@ -94,6 +93,11 @@ type ComplexityRoot struct {
 	AppEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	AppState struct {
+		Errors func(childComplexity int) int
+		State  func(childComplexity int) int
 	}
 
 	AutoScaling struct {
@@ -643,6 +647,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.AccessPolicy(childComplexity), true
 
+	case "App.appState":
+		if e.complexity.App.AppState == nil {
+			break
+		}
+
+		return e.complexity.App.AppState(childComplexity), true
+
 	case "App.authz":
 		if e.complexity.App.Authz == nil {
 			break
@@ -706,13 +717,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.Manifest(childComplexity), true
 
-	case "App.messages":
-		if e.complexity.App.Messages == nil {
-			break
-		}
-
-		return e.complexity.App.Messages(childComplexity), true
-
 	case "App.name":
 		if e.complexity.App.Name == nil {
 			break
@@ -726,13 +730,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.Resources(childComplexity), true
-
-	case "App.state":
-		if e.complexity.App.State == nil {
-			break
-		}
-
-		return e.complexity.App.State(childComplexity), true
 
 	case "App.storage":
 		if e.complexity.App.Storage == nil {
@@ -789,6 +786,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppEdge.Node(childComplexity), true
+
+	case "AppState.errors":
+		if e.complexity.AppState.Errors == nil {
+			break
+		}
+
+		return e.complexity.AppState.Errors(childComplexity), true
+
+	case "AppState.state":
+		if e.complexity.AppState.State == nil {
+			break
+		}
+
+		return e.complexity.AppState.State(childComplexity), true
 
 	case "AutoScaling.cpuThreshold":
 		if e.complexity.AutoScaling.CPUThreshold == nil {
@@ -4322,8 +4333,8 @@ func (ec *executionContext) fieldContext_App_team(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _App_state(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_App_state(ctx, field)
+func (ec *executionContext) _App_appState(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_appState(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4336,7 +4347,7 @@ func (ec *executionContext) _App_state(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.State, nil
+		return obj.AppState, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4353,55 +4364,20 @@ func (ec *executionContext) _App_state(ctx context.Context, field graphql.Collec
 	return ec.marshalNAppState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppState(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_appState(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type AppState does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _App_messages(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_App_messages(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Messages, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_App_messages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "App",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "state":
+				return ec.fieldContext_AppState_state(ctx, field)
+			case "errors":
+				return ec.fieldContext_AppState_errors(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AppState", field.Name)
 		},
 	}
 	return fc, nil
@@ -4672,12 +4648,95 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_manifest(ctx, field)
 			case "team":
 				return ec.fieldContext_App_team(ctx, field)
-			case "state":
-				return ec.fieldContext_App_state(ctx, field)
-			case "messages":
-				return ec.fieldContext_App_messages(ctx, field)
+			case "appState":
+				return ec.fieldContext_App_appState(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppState_state(ctx context.Context, field graphql.CollectedField, obj *model.AppState) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppState_state(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.State, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.State)
+	fc.Result = res
+	return ec.marshalNState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppState_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppState",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type State does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppState_errors(ctx context.Context, field graphql.CollectedField, obj *model.AppState) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppState_errors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Errors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]model.ErrorType)
+	fc.Result = res
+	return ec.marshalOErrorType2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorTypeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppState_errors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppState",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ErrorType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11906,10 +11965,8 @@ func (ec *executionContext) fieldContext_Query_app(ctx context.Context, field gr
 				return ec.fieldContext_App_manifest(ctx, field)
 			case "team":
 				return ec.fieldContext_App_team(ctx, field)
-			case "state":
-				return ec.fieldContext_App_state(ctx, field)
-			case "messages":
-				return ec.fieldContext_App_messages(ctx, field)
+			case "appState":
+				return ec.fieldContext_App_appState(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -18599,13 +18656,11 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "state":
-			out.Values[i] = ec._App_state(ctx, field, obj)
+		case "appState":
+			out.Values[i] = ec._App_appState(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "messages":
-			out.Values[i] = ec._App_messages(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18699,6 +18754,47 @@ func (ec *executionContext) _AppEdge(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var appStateImplementors = []string{"AppState"}
+
+func (ec *executionContext) _AppState(ctx context.Context, sel ast.SelectionSet, obj *model.AppState) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, appStateImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AppState")
+		case "state":
+			out.Values[i] = ec._AppState_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errors":
+			out.Values[i] = ec._AppState_errors(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23171,14 +23267,8 @@ func (ec *executionContext) marshalNAppEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 	return ec._AppEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNAppState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppState(ctx context.Context, v interface{}) (model.AppState, error) {
-	var res model.AppState
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalNAppState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppState(ctx context.Context, sel ast.SelectionSet, v model.AppState) graphql.Marshaler {
-	return v
+	return ec._AppState(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNAuthz2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAuthz(ctx context.Context, sel ast.SelectionSet, v model.Authz) graphql.Marshaler {
@@ -23722,6 +23812,16 @@ func (ec *executionContext) marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbacke
 		return graphql.Null
 	}
 	return ec._Env(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNErrorType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorType(ctx context.Context, v interface{}) (model.ErrorType, error) {
+	var res model.ErrorType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNErrorType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorType(ctx context.Context, sel ast.SelectionSet, v model.ErrorType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNExpose2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExposeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Expose) graphql.Marshaler {
@@ -24538,6 +24638,16 @@ func (ec *executionContext) marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋcon
 	return ec._SlackAlertsChannel(ctx, sel, &v)
 }
 
+func (ec *executionContext) unmarshalNState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐState(ctx context.Context, v interface{}) (model.State, error) {
+	var res model.State
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐState(ctx context.Context, sel ast.SelectionSet, v model.State) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNStorage2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐStorage(ctx context.Context, sel ast.SelectionSet, v model.Storage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -25240,6 +25350,73 @@ func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOErrorType2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorTypeᚄ(ctx context.Context, v interface{}) ([]model.ErrorType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]model.ErrorType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNErrorType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOErrorType2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.ErrorType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNErrorType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOIDPortenSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIDPortenSidecar(ctx context.Context, sel ast.SelectionSet, v *model.IDPortenSidecar) graphql.Marshaler {

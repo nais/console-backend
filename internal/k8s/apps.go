@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -378,25 +379,40 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 	currentCondition := getCurrentCondition(conditions)
 	failing := failing(instances)
 
+	appState := model.AppState{
+		Errors: []model.ErrorType{},
+		State:  model.StateNais,
+	}
+
 	switch currentCondition {
 	case AppConditionFailedSynchronization:
-		app.Messages = append(app.Messages, "Invalid nais.yaml")
+		appState.Errors = append(appState.Errors, model.ErrorTypeInvalidNaisYaml)
 	case AppConditionSynchronized:
-		app.Messages = append(app.Messages, "New instances failing")
+		appState.Errors = append(appState.Errors, model.ErrorTypeNewInstancesFailing)
 	}
 
 	if len(instances) == 0 || failing == len(instances) {
-		app.State = model.AppStateFailing
-		app.Messages = append(app.Messages, "No running instances")
+		appState.State = model.StateFailing
+		appState.Errors = append(appState.Errors, model.ErrorTypeNoRunningInstances)
+		app.AppState = appState
+		return
+	}
+
+	if !strings.Contains(app.Image, "europe-north1-docker.pkg.dev") {
+		appState.Errors = append(appState.Errors, model.ErrorTypeDeprecatedRegistry)
+		appState.State = model.StateNotnais
+		app.AppState = appState
 		return
 	}
 
 	if currentCondition == AppConditionRolloutComplete && failing == 0 {
-		app.State = model.AppStateNais
+		appState.State = model.StateNais
+		app.AppState = appState
 		return
 	}
 
-	app.State = model.AppStateNotnais
+	appState.State = model.StateNotnais
+	app.AppState = appState
 }
 
 func failing(instances []*model.Instance) int {

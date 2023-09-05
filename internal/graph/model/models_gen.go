@@ -37,6 +37,11 @@ type ACL struct {
 	Team        string `json:"team"`
 }
 
+type AppState struct {
+	State  State       `json:"state"`
+	Errors []ErrorType `json:"errors,omitempty"`
+}
+
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent
@@ -290,48 +295,50 @@ type Variable struct {
 	Value string `json:"value"`
 }
 
-type AppState string
+type ErrorType string
 
 const (
-	AppStateNais    AppState = "NAIS"
-	AppStateNotnais AppState = "NOTNAIS"
-	AppStateFailing AppState = "FAILING"
-	AppStateUnknown AppState = "UNKNOWN"
+	ErrorTypeDeprecatedRegistry  ErrorType = "DEPRECATED_REGISTRY"
+	ErrorTypeDeprecatedIngress   ErrorType = "DEPRECATED_INGRESS"
+	ErrorTypeNoRunningInstances  ErrorType = "NO_RUNNING_INSTANCES"
+	ErrorTypeNewInstancesFailing ErrorType = "NEW_INSTANCES_FAILING"
+	ErrorTypeInvalidNaisYaml     ErrorType = "INVALID_NAIS_YAML"
 )
 
-var AllAppState = []AppState{
-	AppStateNais,
-	AppStateNotnais,
-	AppStateFailing,
-	AppStateUnknown,
+var AllErrorType = []ErrorType{
+	ErrorTypeDeprecatedRegistry,
+	ErrorTypeDeprecatedIngress,
+	ErrorTypeNoRunningInstances,
+	ErrorTypeNewInstancesFailing,
+	ErrorTypeInvalidNaisYaml,
 }
 
-func (e AppState) IsValid() bool {
+func (e ErrorType) IsValid() bool {
 	switch e {
-	case AppStateNais, AppStateNotnais, AppStateFailing, AppStateUnknown:
+	case ErrorTypeDeprecatedRegistry, ErrorTypeDeprecatedIngress, ErrorTypeNoRunningInstances, ErrorTypeNewInstancesFailing, ErrorTypeInvalidNaisYaml:
 		return true
 	}
 	return false
 }
 
-func (e AppState) String() string {
+func (e ErrorType) String() string {
 	return string(e)
 }
 
-func (e *AppState) UnmarshalGQL(v interface{}) error {
+func (e *ErrorType) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = AppState(str)
+	*e = ErrorType(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid AppState", str)
+		return fmt.Errorf("%s is not a valid ErrorType", str)
 	}
 	return nil
 }
 
-func (e AppState) MarshalGQL(w io.Writer) {
+func (e ErrorType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
@@ -375,6 +382,51 @@ func (e *SearchType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e SearchType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type State string
+
+const (
+	StateNais    State = "NAIS"
+	StateNotnais State = "NOTNAIS"
+	StateFailing State = "FAILING"
+	StateUnknown State = "UNKNOWN"
+)
+
+var AllState = []State{
+	StateNais,
+	StateNotnais,
+	StateFailing,
+	StateUnknown,
+}
+
+func (e State) IsValid() bool {
+	switch e {
+	case StateNais, StateNotnais, StateFailing, StateUnknown:
+		return true
+	}
+	return false
+}
+
+func (e State) String() string {
+	return string(e)
+}
+
+func (e *State) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = State(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid State", str)
+	}
+	return nil
+}
+
+func (e State) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
