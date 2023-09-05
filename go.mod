@@ -1,6 +1,6 @@
 module github.com/nais/console-backend
 
-go 1.20
+go 1.21
 
 require (
 	github.com/99designs/gqlgen v0.17.36
@@ -9,6 +9,7 @@ require (
 	github.com/nais/liberator v0.0.0-20230504115547-b8aedad0d49e
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.8.3
 	github.com/vektah/gqlparser/v2 v2.5.8
 	go.opentelemetry.io/otel v1.16.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.39.0
@@ -25,6 +26,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.16.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230817173708-d852ddb80c63 // indirect
