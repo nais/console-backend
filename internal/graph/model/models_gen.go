@@ -252,6 +252,10 @@ type OpenSearch struct {
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
+type Port struct {
+	Port int `json:"port"`
+}
+
 type Requests struct {
 	CPU    string `json:"cpu"`
 	Memory string `json:"memory"`

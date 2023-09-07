@@ -18,10 +18,6 @@ type Inbound struct {
 	Rules []*Rule `json:"rules"`
 }
 
-type Port struct {
-	Port int `json:"port"`
-}
-
 type Rule struct {
 	Application string `json:"application"`
 	Namespace   string `json:"namespace"`
