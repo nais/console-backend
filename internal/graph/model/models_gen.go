@@ -37,6 +37,11 @@ type ACL struct {
 	Team        string `json:"team"`
 }
 
+type AppEdge struct {
+	Cursor Cursor `json:"cursor"`
+	Node   *App   `json:"node"`
+}
+
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent

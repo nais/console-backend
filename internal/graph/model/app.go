@@ -77,8 +77,3 @@ type AppConnection struct {
 	PageInfo   *PageInfo  `json:"pageInfo"`
 	Edges      []*AppEdge `json:"edges"`
 }
-
-type AppEdge struct {
-	Cursor Cursor `json:"cursor"`
-	Node   *App   `json:"node"`
-}
