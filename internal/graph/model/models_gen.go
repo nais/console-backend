@@ -330,6 +330,12 @@ type SQLInstance struct {
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
 
+type TeamConnection struct {
+	TotalCount int         `json:"totalCount"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
+	Edges      []*TeamEdge `json:"edges"`
+}
+
 type TeamEdge struct {
 	Cursor Cursor `json:"cursor"`
 	Node   *Team  `json:"node"`

@@ -12,12 +12,6 @@ func (Team) IsSearchNode()  {}
 func (Team) IsNode()        {}
 func (t Team) GetID() Ident { return t.ID }
 
-type TeamConnection struct {
-	TotalCount int         `json:"totalCount"`
-	PageInfo   *PageInfo   `json:"pageInfo"`
-	Edges      []*TeamEdge `json:"edges"`
-}
-
 type TeamMember struct {
 	ID    Ident    `json:"id"`
 	Name  string   `json:"name"`
