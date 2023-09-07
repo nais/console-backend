@@ -330,6 +330,11 @@ type SQLInstance struct {
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
 
+type TeamMemberEdge struct {
+	Cursor Cursor      `json:"cursor"`
+	Node   *TeamMember `json:"node"`
+}
+
 type TokenX struct {
 	MountSecretsAsFilesOnly bool `json:"mountSecretsAsFilesOnly"`
 }

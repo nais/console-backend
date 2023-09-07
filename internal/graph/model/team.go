@@ -38,8 +38,3 @@ type TeamMemberConnection struct {
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	Edges      []*TeamMemberEdge `json:"edges"`
 }
-
-type TeamMemberEdge struct {
-	Cursor Cursor      `json:"cursor"`
-	Node   *TeamMember `json:"node"`
-}
