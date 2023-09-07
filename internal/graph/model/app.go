@@ -71,9 +71,3 @@ type App struct {
 func (App) IsSearchNode()  {}
 func (App) IsNode()        {}
 func (a App) GetID() Ident { return a.ID }
-
-type AppConnection struct {
-	TotalCount int        `json:"totalCount"`
-	PageInfo   *PageInfo  `json:"pageInfo"`
-	Edges      []*AppEdge `json:"edges"`
-}

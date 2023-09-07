@@ -37,6 +37,12 @@ type ACL struct {
 	Team        string `json:"team"`
 }
 
+type AppConnection struct {
+	TotalCount int        `json:"totalCount"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
+	Edges      []*AppEdge `json:"edges"`
+}
+
 type AppEdge struct {
 	Cursor Cursor `json:"cursor"`
 	Node   *App   `json:"node"`
