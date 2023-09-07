@@ -12,11 +12,6 @@ func (Team) IsSearchNode()  {}
 func (Team) IsNode()        {}
 func (t Team) GetID() Ident { return t.ID }
 
-type SlackAlertsChannel struct {
-	Env  string `json:"env"`
-	Name string `json:"name"`
-}
-
 type TeamConnection struct {
 	TotalCount int         `json:"totalCount"`
 	PageInfo   *PageInfo   `json:"pageInfo"`

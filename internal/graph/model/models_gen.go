@@ -303,6 +303,11 @@ type Sidecar struct {
 	Resources            *Resources `json:"resources"`
 }
 
+type SlackAlertsChannel struct {
+	Name string `json:"name"`
+	Env  string `json:"env"`
+}
+
 type SQLInstance struct {
 	AutoBackupHour      int          `json:"autoBackupHour"`
 	CascadingDelete     bool         `json:"cascadingDelete"`
