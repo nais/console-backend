@@ -32,9 +32,3 @@ type TeamMember struct {
 
 func (TeamMember) IsNode()        {}
 func (t TeamMember) GetID() Ident { return t.ID }
-
-type TeamMemberConnection struct {
-	TotalCount int               `json:"totalCount"`
-	PageInfo   *PageInfo         `json:"pageInfo"`
-	Edges      []*TeamMemberEdge `json:"edges"`
-}
