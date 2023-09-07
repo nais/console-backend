@@ -18,12 +18,6 @@ type Inbound struct {
 	Rules []*Rule `json:"rules"`
 }
 
-type Rule struct {
-	Application string `json:"application"`
-	Namespace   string `json:"namespace"`
-	Cluster     string `json:"cluster"`
-}
-
 type AccessPolicy struct {
 	Inbound  Inbound  `json:"inbound"`
 	Outbound Outbound `json:"outbound"`

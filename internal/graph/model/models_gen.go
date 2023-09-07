@@ -266,6 +266,12 @@ type Resources struct {
 	Requests *Requests `json:"requests"`
 }
 
+type Rule struct {
+	Application string `json:"application"`
+	Namespace   string `json:"namespace"`
+	Cluster     string `json:"cluster"`
+}
+
 type SearchConnection struct {
 	Edges      []*SearchEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
