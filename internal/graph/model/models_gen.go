@@ -116,6 +116,11 @@ type DatabaseUser struct {
 	Name string `json:"name"`
 }
 
+type DeploymentEdge struct {
+	Cursor Cursor      `json:"cursor"`
+	Node   *Deployment `json:"node"`
+}
+
 type DeploymentKey struct {
 	ID      Ident     `json:"id"`
 	Key     string    `json:"key"`

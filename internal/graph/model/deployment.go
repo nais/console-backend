@@ -23,11 +23,6 @@ type DeploymentConnection struct {
 
 func (d *DeploymentConnection) IsDeploymentResponse() {}
 
-type DeploymentEdge struct {
-	Cursor Cursor      `json:"cursor"`
-	Node   *Deployment `json:"node"`
-}
-
 type DeploymentResource struct {
 	ID        string `json:"id"`
 	Group     string `json:"group"`
