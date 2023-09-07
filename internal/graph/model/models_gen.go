@@ -207,6 +207,11 @@ type Kafka struct {
 func (Kafka) IsStorage()           {}
 func (this Kafka) GetName() string { return this.Name }
 
+type Limits struct {
+	CPU    string `json:"cpu"`
+	Memory string `json:"memory"`
+}
+
 type LogLine struct {
 	Time     time.Time `json:"time"`
 	Message  string    `json:"message"`

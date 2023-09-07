@@ -28,11 +28,6 @@ type Rule struct {
 	Cluster     string `json:"cluster"`
 }
 
-type Limits struct {
-	CPU    string `json:"cpu"`
-	Memory string `json:"memory"`
-}
-
 type AccessPolicy struct {
 	Inbound  Inbound  `json:"inbound"`
 	Outbound Outbound `json:"outbound"`
