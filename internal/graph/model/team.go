@@ -18,11 +18,6 @@ type TeamConnection struct {
 	Edges      []*TeamEdge `json:"edges"`
 }
 
-type TeamEdge struct {
-	Cursor Cursor `json:"cursor"`
-	Node   *Team  `json:"node"`
-}
-
 type TeamMember struct {
 	ID    Ident    `json:"id"`
 	Name  string   `json:"name"`
