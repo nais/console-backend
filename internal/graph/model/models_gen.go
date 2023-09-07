@@ -190,6 +190,10 @@ type IDPortenSidecar struct {
 	Resources            *Resources `json:"resources,omitempty"`
 }
 
+type Inbound struct {
+	Rules []*Rule `json:"rules"`
+}
+
 type Insights struct {
 	Enabled               bool `json:"enabled"`
 	QueryStringLength     int  `json:"queryStringLength"`

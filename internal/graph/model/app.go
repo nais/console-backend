@@ -14,10 +14,6 @@ type Outbound struct {
 	External []*External `json:"external"`
 }
 
-type Inbound struct {
-	Rules []*Rule `json:"rules"`
-}
-
 type AccessPolicy struct {
 	Inbound  Inbound  `json:"inbound"`
 	Outbound Outbound `json:"outbound"`
