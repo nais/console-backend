@@ -1,3 +1,7 @@
+.PHONY: all
+
+all: generate-graphql test check linux-binary
+
 generate-graphql:
 	go run github.com/99designs/gqlgen generate
 
