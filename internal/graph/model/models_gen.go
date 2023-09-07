@@ -247,6 +247,11 @@ type MaskinportenScope struct {
 	Exposes  []*Expose  `json:"exposes"`
 }
 
+type NaisJobEdge struct {
+	Cursor Cursor   `json:"cursor"`
+	Node   *NaisJob `json:"node"`
+}
+
 type OpenSearch struct {
 	// The opensearch instance name
 	Name   string `json:"name"`

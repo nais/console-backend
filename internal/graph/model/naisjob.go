@@ -51,8 +51,3 @@ type NaisJobConnection struct {
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount int            `json:"totalCount"`
 }
-
-type NaisJobEdge struct {
-	Cursor Cursor   `json:"cursor"`
-	Node   *NaisJob `json:"node"`
-}
