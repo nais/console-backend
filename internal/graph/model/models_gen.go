@@ -236,6 +236,11 @@ type OpenSearch struct {
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
+type Resources struct {
+	Limits   *Limits   `json:"limits"`
+	Requests *Requests `json:"requests"`
+}
+
 type SearchConnection struct {
 	Edges      []*SearchEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`

@@ -87,8 +87,3 @@ type Requests struct {
 	CPU    string `json:"cpu"`
 	Memory string `json:"memory"`
 }
-
-type Resources struct {
-	Limits   *Limits   `json:"limits"`
-	Requests *Requests `json:"requests"`
-}
