@@ -9,11 +9,6 @@ type External struct {
 	Ports []Port `json:"ports"`
 }
 
-type Outbound struct {
-	Rules    []*Rule     `json:"rules"`
-	External []*External `json:"external"`
-}
-
 type AccessPolicy struct {
 	Inbound  Inbound  `json:"inbound"`
 	Outbound Outbound `json:"outbound"`

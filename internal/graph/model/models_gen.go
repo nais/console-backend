@@ -256,6 +256,11 @@ type OpenSearch struct {
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
+type Outbound struct {
+	Rules    []*Rule     `json:"rules"`
+	External []*External `json:"external"`
+}
+
 type Port struct {
 	Port int `json:"port"`
 }
