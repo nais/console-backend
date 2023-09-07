@@ -82,8 +82,3 @@ type AppEdge struct {
 	Cursor Cursor `json:"cursor"`
 	Node   *App   `json:"node"`
 }
-
-type Requests struct {
-	CPU    string `json:"cpu"`
-	Memory string `json:"memory"`
-}
