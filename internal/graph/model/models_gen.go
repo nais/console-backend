@@ -247,6 +247,12 @@ type MaskinportenScope struct {
 	Exposes  []*Expose  `json:"exposes"`
 }
 
+type NaisJobConnection struct {
+	Edges      []*NaisJobEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount int            `json:"totalCount"`
+}
+
 type NaisJobEdge struct {
 	Cursor Cursor   `json:"cursor"`
 	Node   *NaisJob `json:"node"`
