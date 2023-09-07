@@ -242,6 +242,12 @@ type SearchConnection struct {
 	TotalCount int           `json:"totalCount"`
 }
 
+type SearchEdge struct {
+	Node   SearchNode `json:"node"`
+	Cursor Cursor     `json:"cursor"`
+	Rank   int        `json:"-"`
+}
+
 type SearchFilter struct {
 	Type *SearchType `json:"type,omitempty"`
 }
