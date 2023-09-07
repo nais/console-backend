@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-type AccessPolicyRule struct {
-	Application string `json:"application"`
-	Namespace   string `json:"namespace"`
-}
-
 type External struct {
 	Host  string `json:"host"`
 	Ports []Port `json:"ports"`
