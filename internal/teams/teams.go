@@ -16,7 +16,7 @@ import (
 	"github.com/nais/console-backend/internal/search"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
-	api "go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type User struct {
@@ -64,10 +64,10 @@ type Client struct {
 	teams      []*model.Team
 	updated    time.Time
 	log        *logrus.Entry
-	errors     api.Int64Counter
+	errors     metric.Int64Counter
 }
 
-func New(token, endpoint string, errors api.Int64Counter, log *logrus.Entry) *Client {
+func New(token, endpoint string, errors metric.Int64Counter, log *logrus.Entry) *Client {
 	return &Client{
 		endpoint:   endpoint,
 		httpClient: Transport{Token: token}.Client(),
@@ -360,7 +360,7 @@ func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]s
 }
 
 func (c *Client) error(ctx context.Context, err error, msg string) error {
-	c.errors.Add(context.Background(), 1, api.WithAttributes(attribute.String("component", "teams-client")))
+	c.errors.Add(context.Background(), 1, metric.WithAttributes(attribute.String("component", "teams-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
 }
