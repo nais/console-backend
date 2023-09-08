@@ -151,7 +151,7 @@ func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]
 	return respBody.Data.Team.GitHubRepositories, nil
 }
 
-func (c *Client) GetMembers(ctx context.Context, teamSlug string) ([]Member, error) {
+func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error) {
 	q := `query teamMembers($slug: Slug!) {
 	team(slug: $slug) {
 	  members {
