@@ -445,7 +445,6 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 		State:  model.StateNais,
 		Errors: []model.StateError{},
 	}
-
 	switch currentCondition {
 	case AppConditionFailedSynchronization:
 		appState.Errors = append(appState.Errors, &model.InvalidNaisYamlError{
@@ -488,14 +487,19 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 		parts = strings.Split(parts[0], "/")
 		registry := parts[0]
 		name := parts[len(parts)-1]
-		reposistory := strings.Join(parts[1:len(parts)-1], "/")
+		repository := ""
+		if len(parts) > 2 {
+			repository = strings.Join(parts[1:len(parts)-1], "/")
+		} else {
+			repository = "confusus"
+		}
 		appState.Errors = append(appState.Errors, &model.DeprecatedRegistryError{
 			Revision:   app.DeployInfo.CommitSha,
 			Level:      model.ErrorLevelWarning,
 			Registry:   registry,
 			Name:       name,
 			Tag:        tag,
-			Repository: reposistory,
+			Repository: repository,
 		})
 		if appState.State != model.StateFailing {
 			appState.State = model.StateNotnais
