@@ -16,7 +16,7 @@ import (
 	"github.com/nais/console-backend/internal/search"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
-	api "go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type User struct {
@@ -59,26 +59,29 @@ type TeamUser struct {
 
 type Client struct {
 	endpoint   string
-	httpClient *http.Client
+	httpClient *httpClient
 	lock       sync.RWMutex
 	teams      []*model.Team
 	updated    time.Time
 	log        *logrus.Entry
-	errors     api.Int64Counter
+	errors     metric.Int64Counter
 }
 
-func New(token, endpoint string, errors api.Int64Counter, log *logrus.Entry) *Client {
+func New(token, endpoint string, errors metric.Int64Counter, log *logrus.Entry) *Client {
 	return &Client{
-		endpoint:   endpoint,
-		httpClient: Transport{Token: token}.Client(),
-		log:        log,
-		errors:     errors,
+		endpoint: endpoint,
+		httpClient: &httpClient{
+			client:   &http.Client{},
+			apiToken: token,
+		},
+		log:    log,
+		errors: errors,
 	}
 }
 
-func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.SearchResult {
-	// early exit if we're not searching for teams
-	if filter != nil && filter.Type != nil && *filter.Type != model.SearchTypeTeam {
+// Search searches for teams matching the query
+func (c *Client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.SearchResult {
+	if !isTeamFilter(filter) {
 		return nil
 	}
 
@@ -86,10 +89,9 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	edges := []*search.SearchResult{}
+	edges := make([]*search.SearchResult, 0)
 	for _, team := range c.teams {
-		team := team
-		rank := search.Match(q, team.Name)
+		rank := search.Match(query, team.Name)
 		if rank == -1 {
 			continue
 		}
@@ -99,50 +101,6 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 		})
 	}
 	return edges
-}
-
-func (c *Client) updateTeams(ctx context.Context) {
-	c.lock.RLock()
-	if time.Since(c.updated) < 15*time.Minute {
-		c.lock.RUnlock()
-		return
-	}
-	c.lock.RUnlock()
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	teams, err := c.GetTeams(ctx)
-	if err != nil {
-		c.error(ctx, err, "getting teams from teams")
-		return
-	}
-
-	c.teams = toModelTeams(teams)
-	c.updated = time.Now()
-}
-
-func toModelTeams(teams []Team) []*model.Team {
-	ret := []*model.Team{}
-	for _, team := range teams {
-		team := team
-		ret = append(ret, &model.Team{
-			ID:           model.Ident{ID: team.Slug, Type: "team"},
-			Name:         team.Slug,
-			Description:  &team.Purpose,
-			SlackChannel: team.SlackChannel,
-			SlackAlertsChannels: func(t []SlackAlertsChannel) []model.SlackAlertsChannel {
-				ret := []model.SlackAlertsChannel{}
-				for _, v := range t {
-					ret = append(ret, model.SlackAlertsChannel{
-						Env:  v.Environment,
-						Name: v.ChannelName,
-					})
-				}
-				return ret
-			}(team.SlackAlertsChannels),
-		})
-	}
-	return ret
 }
 
 func (c *Client) GetTeam(ctx context.Context, name string) (*model.Team, error) {
@@ -360,7 +318,63 @@ func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]s
 }
 
 func (c *Client) error(ctx context.Context, err error, msg string) error {
-	c.errors.Add(context.Background(), 1, api.WithAttributes(attribute.String("component", "teams-client")))
+	c.errors.Add(ctx, 1, metric.WithAttributes(attribute.String("component", "teams-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
+}
+
+func (c *Client) updateTeams(ctx context.Context) {
+	c.lock.RLock()
+	if time.Since(c.updated) < 15*time.Minute {
+		c.lock.RUnlock()
+		return
+	}
+	c.lock.RUnlock()
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	teams, err := c.GetTeams(ctx)
+	if err != nil {
+		c.error(ctx, err, "getting teams from teams")
+		return
+	}
+
+	c.teams = toModelTeams(teams)
+	c.updated = time.Now()
+}
+
+func toModelTeams(teams []Team) []*model.Team {
+	ret := []*model.Team{}
+	for _, team := range teams {
+		team := team
+		ret = append(ret, &model.Team{
+			ID:           model.Ident{ID: team.Slug, Type: "team"},
+			Name:         team.Slug,
+			Description:  &team.Purpose,
+			SlackChannel: team.SlackChannel,
+			SlackAlertsChannels: func(t []SlackAlertsChannel) []model.SlackAlertsChannel {
+				ret := []model.SlackAlertsChannel{}
+				for _, v := range t {
+					ret = append(ret, model.SlackAlertsChannel{
+						Env:  v.Environment,
+						Name: v.ChannelName,
+					})
+				}
+				return ret
+			}(team.SlackAlertsChannels),
+		})
+	}
+	return ret
+}
+
+func isTeamFilter(filter *model.SearchFilter) bool {
+	if filter == nil {
+		return false
+	}
+
+	if filter.Type == nil {
+		return false
+	}
+
+	return *filter.Type == model.SearchTypeTeam
 }
