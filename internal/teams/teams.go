@@ -105,22 +105,22 @@ func (c *Client) Search(ctx context.Context, query string, filter *model.SearchF
 	return edges
 }
 
-// GetTeam get a team by name
-func (c *Client) GetTeam(ctx context.Context, name string) (*model.Team, error) {
+// GetTeam get a team by the team slug
+func (c *Client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
 	c.updateTeams(ctx)
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	for _, team := range c.teams {
-		if team.Name == name {
+		if team.Name == teamSlug {
 			return team, nil
 		}
 	}
-	return nil, fmt.Errorf("team not found: %s", name)
+	return nil, fmt.Errorf("team not found: %s", teamSlug)
 }
 
 // GetGithubRepositories get a list of GitHub repositories for a specific team
-func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitHubRepository, error) {
+func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error) {
 	query := `query githubRepositories($slug: Slug!) {
 	  team(slug: $slug) {
 		gitHubRepositories{
@@ -130,7 +130,7 @@ func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitH
 	}`
 
 	vars := map[string]string{
-		"slug": name,
+		"slug": teamSlug,
 	}
 
 	respBody := struct {
@@ -145,13 +145,13 @@ func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitH
 	}
 
 	if len(respBody.Errors) > 0 {
-		return nil, fmt.Errorf("team not found: %s", name)
+		return nil, fmt.Errorf("team not found: %s", teamSlug)
 	}
 
 	return respBody.Data.Team.GitHubRepositories, nil
 }
 
-func (c *Client) GetMembers(ctx context.Context, name string) ([]Member, error) {
+func (c *Client) GetMembers(ctx context.Context, teamSlug string) ([]Member, error) {
 	q := `query teamMembers($slug: Slug!) {
 	team(slug: $slug) {
 	  members {
@@ -164,7 +164,7 @@ func (c *Client) GetMembers(ctx context.Context, name string) ([]Member, error) 
 	}
   }`
 	vars := map[string]string{
-		"slug": name,
+		"slug": teamSlug,
 	}
 
 	respBody := struct {
@@ -317,7 +317,11 @@ func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]s
 		return fmt.Errorf("teams: %v", resp.Status)
 	}
 
-	return json.NewDecoder(resp.Body).Decode(&respBody)
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Client) error(ctx context.Context, err error, msg string) error {
