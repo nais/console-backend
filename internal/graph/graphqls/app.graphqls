@@ -33,16 +33,46 @@ type AppState {
   errors: [StateError!]!
 }
 
-enum ErrorType {
-  DEPRECATED_REGISTRY
-  DEPRECATED_INGRESS
-  NO_RUNNING_INSTANCES
-  NEW_INSTANCES_FAILING
-  INVALID_NAIS_YAML
+enum ErrorLevel {
+  INFO
+  WARNING
+  ERROR
 }
 
-type StateError {
-  type: ErrorType!
+interface StateError {
+  revision: String!
+  level: ErrorLevel!
+}
+
+type DeprecatedRegistryError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  registry: String!
+  repository: String!
+  name: String!
+  tag: String!
+}
+
+type DeprecatedIngressError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  ingress: String!
+}
+
+type NoRunningInstancesError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+}
+
+type NewInstancesFailingError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  failingInstances: [String!]!
+}
+
+type InvalidNaisYamlError implements StateError {
+  revision: String!
+  level: ErrorLevel!
   detail: String!
 }
 

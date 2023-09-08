@@ -442,34 +442,60 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 	currentCondition := getCurrentCondition(conditions)
 	failing := failing(instances)
 	appState := model.AppState{
-		Errors: []*model.StateError{},
 		State:  model.StateNais,
+		Errors: []model.StateError{},
 	}
 
 	switch currentCondition {
 	case AppConditionFailedSynchronization:
-		appState.Errors = append(appState.Errors, &model.StateError{
-			Type: model.ErrorTypeInvalidNaisYaml,
+		appState.Errors = append(appState.Errors, &model.InvalidNaisYamlError{
+			Revision: app.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelError,
+			Detail:   "Invalid nais.yaml",
 		})
 		appState.State = model.StateNotnais
 	case AppConditionSynchronized:
-		appState.Errors = append(appState.Errors, &model.StateError{
-			Type: model.ErrorTypeNewInstancesFailing,
+		appState.Errors = append(appState.Errors, &model.NewInstancesFailingError{
+			Revision: app.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelWarning,
+			FailingInstances: func() []string {
+				ret := []string{}
+				for _, instance := range instances {
+					if instance.State == model.InstanceStateFailing {
+						ret = append(ret, instance.Name)
+					}
+				}
+				return ret
+			}(),
 		})
 		appState.State = model.StateNotnais
 	}
 
 	if len(instances) == 0 || failing == len(instances) {
-		appState.Errors = append(appState.Errors, &model.StateError{
-			Type: model.ErrorTypeNoRunningInstances,
+		appState.Errors = append(appState.Errors, &model.NoRunningInstancesError{
+			Revision: app.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelError,
 		})
 		appState.State = model.StateFailing
 	}
 
 	if !strings.Contains(app.Image, "europe-north1-docker.pkg.dev") {
-		appState.Errors = append(appState.Errors, &model.StateError{
-			Type:   model.ErrorTypeDeprecatedRegistry,
-			Detail: app.Image,
+		parts := strings.Split(app.Image, ":")
+		tag := "unknown"
+		if len(parts) > 1 {
+			tag = parts[1]
+		}
+		parts = strings.Split(parts[0], "/")
+		registry := parts[0]
+		name := parts[len(parts)-1]
+		reposistory := strings.Join(parts[1:len(parts)-1], "/")
+		appState.Errors = append(appState.Errors, &model.DeprecatedRegistryError{
+			Revision:   app.DeployInfo.CommitSha,
+			Level:      model.ErrorLevelWarning,
+			Registry:   registry,
+			Name:       name,
+			Tag:        tag,
+			Repository: reposistory,
 		})
 		if appState.State != model.StateFailing {
 			appState.State = model.StateNotnais
@@ -481,9 +507,10 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 		i := strings.Join(strings.Split(ingress, ".")[1:], ".")
 		for _, deprecatedIngress := range deprecatedIngresses {
 			if i == deprecatedIngress {
-				appState.Errors = append(appState.Errors, &model.StateError{
-					Type:   model.ErrorTypeDeprecatedIngress,
-					Detail: ingress,
+				appState.Errors = append(appState.Errors, &model.DeprecatedIngressError{
+					Revision: app.DeployInfo.CommitSha,
+					Level:    model.ErrorLevelWarning,
+					Ingress:  ingress,
 				})
 				if appState.State != model.StateFailing {
 					appState.State = model.StateNotnais
