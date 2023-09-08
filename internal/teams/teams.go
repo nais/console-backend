@@ -121,12 +121,12 @@ func (c *Client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, err
 
 // GetGithubRepositories get a list of GitHub repositories for a specific team
 func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error) {
-	query := `query githubRepositories($slug: Slug!) {
-	  team(slug: $slug) {
-		gitHubRepositories{
-			name
+	query := `query ($slug: Slug!) {
+		team(slug: $slug) {
+			gitHubRepositories {
+				name
+			}
 		}
-	  }
 	}`
 
 	vars := map[string]string{
@@ -153,17 +153,18 @@ func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]
 
 // GetTeamMembers get a list of team members for a specific team
 func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error) {
-	q := `query teamMembers($slug: Slug!) {
-	team(slug: $slug) {
-	  members {
-		role
-		user {
-		  email
-		  name
+	query := `query ($slug: Slug!) {
+		team(slug: $slug) {
+			members {
+				role
+				user {
+					email
+					name
+				}
+			}
 		}
-	  }
-	}
-  }`
+	}`
+
 	vars := map[string]string{
 		"slug": teamSlug,
 	}
@@ -175,7 +176,7 @@ func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member,
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for members")
 	}
 
@@ -187,11 +188,12 @@ func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member,
 }
 
 func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
-	q := `query {
-	teams {
-	  slug
-	  purpose
-}}`
+	query := `query {
+		teams {
+			slug
+			purpose
+		}
+	}`
 
 	respBody := struct {
 		Data struct {
@@ -200,7 +202,7 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, nil, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, nil, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for teams")
 	}
 
@@ -208,16 +210,17 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 }
 
 func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
-	q := `query userByEmail($email: String!) {
-	userByEmail(email: $email) {
-	  teams {
-		team {
-		  slug
-		  purpose
+	query := `query ($email: String!) {
+		userByEmail(email: $email) {
+			teams {
+				team {
+					slug
+					purpose
+				}
+			}
 		}
-	  }
-	}
-  }`
+	}`
+
 	vars := map[string]string{
 		"email": email,
 	}
@@ -229,7 +232,7 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for user teams")
 	}
 
@@ -237,54 +240,63 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 }
 
 func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	q := `query GetUser($id: UUID!) {
-	user(id: $id) {
-		name
-		email
+	query := `query ($id: UUID!) {
+		user(id: $id) {
+			name
+			email
+		}
+	}`
+
+	vars := map[string]string{
+		"id": id,
 	}
-}`
-	vars := map[string]string{"id": id}
+
 	respBody := struct {
 		Data struct {
 			UserByID *struct{ Name, Email string } `json:"user"`
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for user")
 	}
+
 	if respBody.Data.UserByID == nil {
 		return nil, fmt.Errorf("user %s not found", id)
 	}
-	user := &model.User{
+
+	return &model.User{
 		ID:    model.Ident{ID: id, Type: "user"},
 		Name:  respBody.Data.UserByID.Name,
 		Email: respBody.Data.UserByID.Email,
-	}
-
-	return user, nil
+	}, nil
 }
 
 // GetUser get a user by email
 func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
-	q := `query GetUser($email: String!) {
-	userByEmail(email: $email) {
-		name
-		id
-	}
-}`
+	query := `query ($email: String!) {
+		userByEmail(email: $email) {
+			name
+			id
+		}
+	}`
+
 	vars := map[string]string{
 		"email": email,
 	}
+
 	respBody := struct {
 		Data struct {
 			UserByEmail *User `json:"userByEmail"`
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for user")
 	}
+
 	if respBody.Data.UserByEmail == nil {
 		return nil, fmt.Errorf("user %s not found", email)
 	}
