@@ -173,6 +173,59 @@ func TestClient_GetGithubRepositories(t *testing.T) {
 	})
 }
 
+func TestClient_GetTeamMembers(t *testing.T) {
+	ctx := context.Background()
+	testLogger, _ := test.NewNullLogger()
+	log := testLogger.WithContext(ctx)
+
+	t.Run("team not found", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"errors": [{"message": "team not found"}],"data": null}`))
+			},
+		})
+		members, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetTeamMembers(ctx, "foobar")
+
+		assert.Nil(t, members)
+		assert.EqualError(t, err, "team not found: foobar")
+	})
+
+	t.Run("team found, no members", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"data":{"team":{"members":[]}}}`))
+			},
+		})
+		members, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetTeamMembers(ctx, "foobar")
+
+		assert.NoError(t, err)
+		assert.Len(t, members, 0)
+	})
+
+	t.Run("team with members found", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"data":{"team":{"members":[{"user":{"name":"Some User"}},{"user":{"name":"Some Other User"}}]}}}`))
+			},
+		})
+		members, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetTeamMembers(ctx, "foobar")
+
+		assert.NoError(t, err)
+		assert.Len(t, members, 2)
+		assert.Equal(t, "Some User", members[0].User.Name)
+		assert.Equal(t, "Some Other User", members[1].User.Name)
+	})
+}
+
 func httpServerWithHandlers(t *testing.T, handlers []http.HandlerFunc) *httptest.Server {
 	idx := 0
 	t.Cleanup(func() {

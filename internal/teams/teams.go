@@ -151,6 +151,7 @@ func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]
 	return respBody.Data.Team.GitHubRepositories, nil
 }
 
+// GetTeamMembers get a list of team members for a specific team
 func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error) {
 	q := `query teamMembers($slug: Slug!) {
 	team(slug: $slug) {
@@ -176,6 +177,10 @@ func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member,
 
 	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for members")
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("team not found: %s", teamSlug)
 	}
 
 	return respBody.Data.Team.Members, nil
