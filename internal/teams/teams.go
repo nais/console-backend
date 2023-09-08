@@ -59,7 +59,7 @@ type TeamUser struct {
 
 type Client struct {
 	endpoint   string
-	httpClient *http.Client
+	httpClient *httpClient
 	lock       sync.RWMutex
 	teams      []*model.Team
 	updated    time.Time
@@ -69,10 +69,13 @@ type Client struct {
 
 func New(token, endpoint string, errors metric.Int64Counter, log *logrus.Entry) *Client {
 	return &Client{
-		endpoint:   endpoint,
-		httpClient: Transport{Token: token}.Client(),
-		log:        log,
-		errors:     errors,
+		endpoint: endpoint,
+		httpClient: &httpClient{
+			client:   &http.Client{},
+			apiToken: token,
+		},
+		log:    log,
+		errors: errors,
 	}
 }
 

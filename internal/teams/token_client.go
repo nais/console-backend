@@ -4,17 +4,14 @@ import (
 	"net/http"
 )
 
-type Transport struct {
-	Token string
+type httpClient struct {
+	client   *http.Client
+	apiToken string
 }
 
-func (t Transport) Client() *http.Client {
-	return &http.Client{Transport: t}
-}
-
-func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", "Bearer "+t.Token)
+func (c *httpClient) Do(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	return http.DefaultTransport.RoundTrip(req)
+	return c.client.Do(req)
 }
