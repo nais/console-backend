@@ -216,13 +216,13 @@ func (c *Client) Log(ctx context.Context, cluster, namespace, pod, container str
 	return ret, nil
 }
 
-func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.SearchResult {
+func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.Result {
 	// early exit if we're not searching for apps
 	if filter != nil && filter.Type != nil && *filter.Type != model.SearchTypeApp {
 		return nil
 	}
 
-	ret := []*search.SearchResult{}
+	ret := []*search.Result{}
 
 	for env, infs := range c.informers {
 		jobs, err := infs.NaisjobInformer.Lister().List(labels.Everything())
@@ -248,7 +248,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 				return nil
 			}
 
-			ret = append(ret, &search.SearchResult{
+			ret = append(ret, &search.Result{
 				Node: job,
 				Rank: rank,
 			})
@@ -266,7 +266,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 				return nil
 			}
 
-			ret = append(ret, &search.SearchResult{
+			ret = append(ret, &search.Result{
 				Node: app,
 				Rank: rank,
 			})

@@ -12,13 +12,13 @@ type Filters struct {
 	Type string
 }
 
-type SearchResult struct {
+type Result struct {
 	Node model.SearchNode
 	Rank int
 }
 
 type Searchable interface {
-	Search(ctx context.Context, q string, filter *model.SearchFilter) []*SearchResult
+	Search(ctx context.Context, q string, filter *model.SearchFilter) []*Result
 }
 
 type Searcher struct {
@@ -29,8 +29,8 @@ func New(s ...Searchable) *Searcher {
 	return &Searcher{searchables: s}
 }
 
-func (s *Searcher) Search(ctx context.Context, q string, filter *model.SearchFilter) []*SearchResult {
-	ret := []*SearchResult{}
+func (s *Searcher) Search(ctx context.Context, q string, filter *model.SearchFilter) []*Result {
+	ret := []*Result{}
 
 	for _, searchable := range s.searchables {
 		results := searchable.Search(ctx, q, filter)

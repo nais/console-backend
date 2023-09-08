@@ -5,7 +5,7 @@ import (
 	"github.com/nais/console-backend/internal/search"
 )
 
-func searchEdges(results []*search.SearchResult, p *model.Pagination) []*model.SearchEdge {
+func searchEdges(results []*search.Result, p *model.Pagination) []*model.SearchEdge {
 	edges := []*model.SearchEdge{}
 	start, end := p.ForSlice(len(results))
 

@@ -80,7 +80,7 @@ func New(token, endpoint string, errors metric.Int64Counter, log *logrus.Entry) 
 }
 
 // Search searches for teams matching the query
-func (c *Client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.SearchResult {
+func (c *Client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result {
 	if !isTeamFilter(filter) {
 		return nil
 	}
@@ -89,13 +89,13 @@ func (c *Client) Search(ctx context.Context, query string, filter *model.SearchF
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	edges := make([]*search.SearchResult, 0)
+	edges := make([]*search.Result, 0)
 	for _, team := range c.teams {
 		rank := search.Match(query, team.Name)
 		if rank == -1 {
 			continue
 		}
-		edges = append(edges, &search.SearchResult{
+		edges = append(edges, &search.Result{
 			Rank: rank,
 			Node: team,
 		})
