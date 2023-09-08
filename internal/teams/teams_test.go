@@ -2,24 +2,17 @@ package teams_test
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/teams"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	api "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
-
-func errorsMeter(t *testing.T) api.Int64Counter {
-	t.Helper()
-
-	meter := metric.NewMeterProvider().Meter("github.com/nais/console-backend")
-	errors, _ := meter.Int64Counter("errors")
-	return errors
-}
 
 func TestClient_Search(t *testing.T) {
 	const apiToken = "token"
@@ -28,7 +21,7 @@ func TestClient_Search(t *testing.T) {
 	log := testLogger.WithContext(ctx)
 
 	t.Run("no teams filter", func(t *testing.T) {
-		teamsBackend := HttpServerWithHandlers(t, []http.HandlerFunc{})
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{})
 		searchType := model.SearchTypeApp
 		results := teams.
 			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
@@ -37,7 +30,7 @@ func TestClient_Search(t *testing.T) {
 	})
 
 	t.Run("no teams from the teams-backend", func(t *testing.T) {
-		teamsBackend := HttpServerWithHandlers(t, []http.HandlerFunc{
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, http.MethodPost, r.Method)
 				assert.Equal(t, "Bearer "+apiToken, r.Header.Get("Authorization"))
@@ -54,7 +47,7 @@ func TestClient_Search(t *testing.T) {
 	})
 
 	t.Run("teams from the teams-backend but no match", func(t *testing.T) {
-		teamsBackend := HttpServerWithHandlers(t, []http.HandlerFunc{
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(`{"data": {"teams": [{"slug": "team-1"}, {"slug": "team-2"}]}}`))
@@ -69,7 +62,7 @@ func TestClient_Search(t *testing.T) {
 	})
 
 	t.Run("teams from the teams-backend with matches", func(t *testing.T) {
-		teamsBackend := HttpServerWithHandlers(t, []http.HandlerFunc{
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(`{"data": {"teams": [{"slug": "foo-team"}, {"slug": "team-foo"}, {"slug": "team-foo-bar"}, {"slug": "team"}]}}`))
@@ -91,7 +84,7 @@ func TestClient_Search(t *testing.T) {
 	})
 }
 
-func HttpServerWithHandlers(t *testing.T, handlers []http.HandlerFunc) *httptest.Server {
+func httpServerWithHandlers(t *testing.T, handlers []http.HandlerFunc) *httptest.Server {
 	idx := 0
 	t.Cleanup(func() {
 		diff := len(handlers) - idx
@@ -106,4 +99,12 @@ func HttpServerWithHandlers(t *testing.T, handlers []http.HandlerFunc) *httptest
 		handlers[idx](w, r)
 		idx += 1
 	}))
+}
+
+func errorsMeter(t *testing.T) api.Int64Counter {
+	t.Helper()
+
+	meter := metric.NewMeterProvider().Meter("github.com/nais/console-backend")
+	errors, _ := meter.Int64Counter("errors")
+	return errors
 }
