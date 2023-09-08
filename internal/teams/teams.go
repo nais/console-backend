@@ -19,6 +19,8 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
+const teamsCacheTTL = 15 * time.Minute
+
 type User struct {
 	Name  string           `json:"name"`
 	ID    uuid.UUID        `json:"id"`
@@ -103,13 +105,13 @@ func (c *Client) Search(ctx context.Context, query string, filter *model.SearchF
 	return edges
 }
 
+// GetTeam get a team by name
 func (c *Client) GetTeam(ctx context.Context, name string) (*model.Team, error) {
 	c.updateTeams(ctx)
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	for _, team := range c.teams {
-		team := team
 		if team.Name == name {
 			return team, nil
 		}
@@ -117,9 +119,9 @@ func (c *Client) GetTeam(ctx context.Context, name string) (*model.Team, error) 
 	return nil, fmt.Errorf("team not found: %s", name)
 }
 
+// GetGithubRepositories get a list of GitHub repositories for a specific team
 func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitHubRepository, error) {
-	q := `
-	query githubRepositories($slug: Slug!) {
+	query := `query githubRepositories($slug: Slug!) {
 	  team(slug: $slug) {
 		gitHubRepositories{
 			name
@@ -138,8 +140,12 @@ func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitH
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for github repositories")
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("team not found: %s", name)
 	}
 
 	return respBody.Data.Team.GitHubRepositories, nil
@@ -254,6 +260,7 @@ func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error
 	return user, nil
 }
 
+// GetUser get a user by email
 func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
 	q := `query GetUser($email: String!) {
 	userByEmail(email: $email) {
@@ -310,11 +317,7 @@ func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]s
 		return fmt.Errorf("teams: %v", resp.Status)
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
-		return err
-	}
-
-	return nil
+	return json.NewDecoder(resp.Body).Decode(&respBody)
 }
 
 func (c *Client) error(ctx context.Context, err error, msg string) error {
@@ -323,11 +326,12 @@ func (c *Client) error(ctx context.Context, err error, msg string) error {
 	return fmt.Errorf("%s: %w", msg, err)
 }
 
-func (c *Client) updateTeams(ctx context.Context) {
+// updateTeams update the teams cache when necessary
+func (c *Client) updateTeams(ctx context.Context) error {
 	c.lock.RLock()
-	if time.Since(c.updated) < 15*time.Minute {
+	if time.Since(c.updated) < teamsCacheTTL {
 		c.lock.RUnlock()
-		return
+		return nil
 	}
 	c.lock.RUnlock()
 	c.lock.Lock()
@@ -335,38 +339,42 @@ func (c *Client) updateTeams(ctx context.Context) {
 
 	teams, err := c.GetTeams(ctx)
 	if err != nil {
-		c.error(ctx, err, "getting teams from teams")
-		return
+		return c.error(ctx, err, "get teams from the teams-backend")
 	}
 
 	c.teams = toModelTeams(teams)
 	c.updated = time.Now()
+	return nil
 }
 
+// toModelTeams convert a list of teams from the backend to a list of console backend teams
 func toModelTeams(teams []Team) []*model.Team {
-	ret := []*model.Team{}
+	models := make([]*model.Team, 0)
 	for _, team := range teams {
-		team := team
-		ret = append(ret, &model.Team{
-			ID:           model.Ident{ID: team.Slug, Type: "team"},
+		models = append(models, &model.Team{
+			ID: model.Ident{
+				ID:   team.Slug,
+				Type: "team",
+			},
 			Name:         team.Slug,
 			Description:  &team.Purpose,
 			SlackChannel: team.SlackChannel,
-			SlackAlertsChannels: func(t []SlackAlertsChannel) []model.SlackAlertsChannel {
-				ret := []model.SlackAlertsChannel{}
-				for _, v := range t {
-					ret = append(ret, model.SlackAlertsChannel{
-						Env:  v.Environment,
-						Name: v.ChannelName,
+			SlackAlertsChannels: func(channels []SlackAlertsChannel) []model.SlackAlertsChannel {
+				models := make([]model.SlackAlertsChannel, 0)
+				for _, ch := range channels {
+					models = append(models, model.SlackAlertsChannel{
+						Env:  ch.Environment,
+						Name: ch.ChannelName,
 					})
 				}
-				return ret
+				return models
 			}(team.SlackAlertsChannels),
 		})
 	}
-	return ret
+	return models
 }
 
+// isTeamFilter returns true if the filter is a team filter
 func isTeamFilter(filter *model.SearchFilter) bool {
 	if filter == nil {
 		return false

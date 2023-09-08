@@ -14,8 +14,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 )
 
+const apiToken = "token"
+
 func TestClient_Search(t *testing.T) {
-	const apiToken = "token"
 	ctx := context.Background()
 	testLogger, _ := test.NewNullLogger()
 	log := testLogger.WithContext(ctx)
@@ -81,6 +82,94 @@ func TestClient_Search(t *testing.T) {
 		assert.Equal(t, "foo-team", team1.Name)
 		assert.Equal(t, "team-foo", team2.Name)
 		assert.Equal(t, "team-foo-bar", team3.Name)
+	})
+}
+
+func TestClient_GetTeam(t *testing.T) {
+	ctx := context.Background()
+	testLogger, _ := test.NewNullLogger()
+	log := testLogger.WithContext(ctx)
+
+	t.Run("team not found", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"data": {"teams": [{"slug": "team-1"}, {"slug": "team-2"}]}}`))
+			},
+		})
+		team, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetTeam(ctx, "foobar")
+
+		assert.Nil(t, team)
+		assert.EqualError(t, err, "team not found: foobar")
+	})
+
+	t.Run("team found", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"data": {"teams": [{"slug": "team-1"}, {"slug": "team-2"}]}}`))
+			},
+		})
+		team, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetTeam(ctx, "team-2")
+
+		assert.Equal(t, "team-2", team.Name)
+		assert.NoError(t, err, err)
+	})
+}
+
+func TestClient_GetGithubRepositories(t *testing.T) {
+	ctx := context.Background()
+	testLogger, _ := test.NewNullLogger()
+	log := testLogger.WithContext(ctx)
+
+	t.Run("team not found", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"errors": [{"message": "team not found"}],"data": null}`))
+			},
+		})
+		repos, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetGithubRepositories(ctx, "foobar")
+
+		assert.Nil(t, repos)
+		assert.EqualError(t, err, "team not found: foobar")
+	})
+
+	t.Run("team with no repos found", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"data":{"team":{"gitHubRepositories":[]}}}`))
+			},
+		})
+		repos, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetGithubRepositories(ctx, "foobar")
+
+		assert.NoError(t, err)
+		assert.Len(t, repos, 0)
+	})
+
+	t.Run("team with repos found", func(t *testing.T) {
+		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"data":{"team":{"gitHubRepositories":[{"name":"org/repo-1"},{"name":"org/repo-2"}]}}}`))
+			},
+		})
+		repos, err := teams.
+			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			GetGithubRepositories(ctx, "foobar")
+
+		assert.NoError(t, err)
+		assert.Equal(t, "org/repo-1", repos[0].Name)
+		assert.Equal(t, "org/repo-2", repos[1].Name)
 	})
 }
 
