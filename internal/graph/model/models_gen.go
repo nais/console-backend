@@ -37,6 +37,17 @@ type ACL struct {
 	Team        string `json:"team"`
 }
 
+type AppConnection struct {
+	TotalCount int        `json:"totalCount"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
+	Edges      []*AppEdge `json:"edges"`
+}
+
+type AppEdge struct {
+	Cursor Cursor `json:"cursor"`
+	Node   *App   `json:"node"`
+}
+
 type AppState struct {
 	State  State         `json:"state"`
 	Errors []*StateError `json:"errors"`
@@ -108,6 +119,11 @@ type Database struct {
 
 type DatabaseUser struct {
 	Name string `json:"name"`
+}
+
+type DeploymentEdge struct {
+	Cursor Cursor      `json:"cursor"`
+	Node   *Deployment `json:"node"`
 }
 
 type DeploymentKey struct {
@@ -184,6 +200,10 @@ type IDPortenSidecar struct {
 	Resources            *Resources `json:"resources,omitempty"`
 }
 
+type Inbound struct {
+	Rules []*Rule `json:"rules"`
+}
+
 type Insights struct {
 	Enabled               bool `json:"enabled"`
 	QueryStringLength     int  `json:"queryStringLength"`
@@ -200,6 +220,11 @@ type Kafka struct {
 
 func (Kafka) IsStorage()           {}
 func (this Kafka) GetName() string { return this.Name }
+
+type Limits struct {
+	CPU    string `json:"cpu"`
+	Memory string `json:"memory"`
+}
 
 type LogLine struct {
 	Time     time.Time `json:"time"`
@@ -232,6 +257,17 @@ type MaskinportenScope struct {
 	Exposes  []*Expose  `json:"exposes"`
 }
 
+type NaisJobConnection struct {
+	Edges      []*NaisJobEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount int            `json:"totalCount"`
+}
+
+type NaisJobEdge struct {
+	Cursor Cursor   `json:"cursor"`
+	Node   *NaisJob `json:"node"`
+}
+
 type OpenSearch struct {
 	// The opensearch instance name
 	Name   string `json:"name"`
@@ -241,10 +277,41 @@ type OpenSearch struct {
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
+type Outbound struct {
+	Rules    []*Rule     `json:"rules"`
+	External []*External `json:"external"`
+}
+
+type Port struct {
+	Port int `json:"port"`
+}
+
+type Requests struct {
+	CPU    string `json:"cpu"`
+	Memory string `json:"memory"`
+}
+
+type Resources struct {
+	Limits   *Limits   `json:"limits"`
+	Requests *Requests `json:"requests"`
+}
+
+type Rule struct {
+	Application string `json:"application"`
+	Namespace   string `json:"namespace"`
+	Cluster     string `json:"cluster"`
+}
+
 type SearchConnection struct {
 	Edges      []*SearchEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
+}
+
+type SearchEdge struct {
+	Node   SearchNode `json:"node"`
+	Cursor Cursor     `json:"cursor"`
+	Rank   int        `json:"-"`
 }
 
 type SearchFilter struct {
@@ -255,6 +322,11 @@ type Sidecar struct {
 	AutoLogin            bool       `json:"autoLogin"`
 	AutoLoginIgnorePaths []string   `json:"autoLoginIgnorePaths"`
 	Resources            *Resources `json:"resources"`
+}
+
+type SlackAlertsChannel struct {
+	Name string `json:"name"`
+	Env  string `json:"env"`
 }
 
 type SQLInstance struct {
@@ -278,6 +350,28 @@ type SQLInstance struct {
 
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
+
+type TeamConnection struct {
+	TotalCount int         `json:"totalCount"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
+	Edges      []*TeamEdge `json:"edges"`
+}
+
+type TeamEdge struct {
+	Cursor Cursor `json:"cursor"`
+	Node   *Team  `json:"node"`
+}
+
+type TeamMemberConnection struct {
+	TotalCount int               `json:"totalCount"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	Edges      []*TeamMemberEdge `json:"edges"`
+}
+
+type TeamMemberEdge struct {
+	Cursor Cursor      `json:"cursor"`
+	Node   *TeamMember `json:"node"`
+}
 
 type StateError struct {
 	Type   ErrorType `json:"type"`

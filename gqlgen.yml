@@ -65,3 +65,7 @@ models:
   Cursor:
     model:
       - github.com/nais/console-backend/internal/graph/model.Cursor
+  SearchEdge:
+    extraFields:
+      Rank:
+        type: int

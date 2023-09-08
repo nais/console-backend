@@ -45,14 +45,3 @@ func (NaisJob) IsNode()        {}
 func (j NaisJob) GetID() Ident { return j.ID }
 
 func (NaisJob) IsSearchNode() {}
-
-type NaisJobConnection struct {
-	Edges      []*NaisJobEdge `json:"edges"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
-}
-
-type NaisJobEdge struct {
-	Cursor Cursor   `json:"cursor"`
-	Node   *NaisJob `json:"node"`
-}

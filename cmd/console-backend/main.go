@@ -106,7 +106,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		log.Infof("Running as user %s", cfg.RunAsUser)
 		http.Handle("/query", corsMW.Handler(auth.StaticUser(cfg.RunAsUser, srv)))
 	} else {
-		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.Audience)(srv)))
+		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.Audience, srv)))
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
