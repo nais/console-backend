@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -15,7 +16,7 @@ type testCase struct {
 	image          string
 	ingresses      []string
 	expectedState  model.State
-	expectedErrors []model.ErrorType
+	expectedErrors []model.StateError
 }
 
 func TestSetStatus(t *testing.T) {
@@ -27,7 +28,7 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateNais,
-			expectedErrors: []model.ErrorType{},
+			expectedErrors: []model.StateError{},
 		},
 		{
 			name:           "app is rolloutcomplete and has failing instances",
@@ -36,7 +37,11 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateFailing,
-			expectedErrors: []model.ErrorType{model.ErrorTypeNoRunningInstances},
+			expectedErrors: []model.StateError{
+				&model.NoRunningInstancesError{
+					Revision: "1",
+					Level:    model.ErrorLevelError,
+				}},
 		},
 		{
 			name:           "app failed synchronization and has running instances",
@@ -45,7 +50,11 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateNotnais,
-			expectedErrors: []model.ErrorType{model.ErrorTypeInvalidNaisYaml},
+			expectedErrors: []model.StateError{
+				&model.InvalidNaisYamlError{
+					Revision: "1",
+					Level:    model.ErrorLevelError,
+				}},
 		},
 		{
 			name:           "app failed synchronization and has failing instances",
@@ -54,7 +63,14 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateFailing,
-			expectedErrors: []model.ErrorType{model.ErrorTypeNoRunningInstances, model.ErrorTypeInvalidNaisYaml},
+			expectedErrors: []model.StateError{
+				&model.NoRunningInstancesError{
+					Revision: "1",
+					Level:    model.ErrorLevelError,
+				}, &model.InvalidNaisYamlError{
+					Revision: "1",
+					Level:    model.ErrorLevelError,
+				}},
 		},
 		{
 			name:           "app is synchronized and has running and failing instances",
@@ -63,7 +79,11 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateNotnais,
-			expectedErrors: []model.ErrorType{model.ErrorTypeNewInstancesFailing},
+			expectedErrors: []model.StateError{
+				&model.NewInstancesFailingError{
+					Revision: "1",
+					Level:    model.ErrorLevelError,
+				}},
 		},
 		{
 			name:           "app is synchronized and has multiple failing instances",
@@ -72,7 +92,14 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateFailing,
-			expectedErrors: []model.ErrorType{model.ErrorTypeNewInstancesFailing, model.ErrorTypeNoRunningInstances},
+			expectedErrors: []model.StateError{
+				&model.NewInstancesFailingError{
+					Revision: "1",
+					Level:    model.ErrorLevelError,
+				}, &model.NoRunningInstancesError{
+					Revision: "1",
+					Level:    model.ErrorLevelError,
+				}},
 		},
 		{
 			name:           "app is rolloutcomplete and has no instances",
@@ -81,7 +108,10 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateFailing,
-			expectedErrors: []model.ErrorType{model.ErrorTypeNoRunningInstances},
+			expectedErrors: []model.StateError{&model.NoRunningInstancesError{
+				Revision: "1",
+				Level:    model.ErrorLevelError,
+			}},
 		},
 		{
 			name:           "app image is from deprecated registry",
@@ -90,7 +120,10 @@ func TestSetStatus(t *testing.T) {
 			image:          "docker.pkg.github.com/nais/myapp/myapp:1.0.0",
 			ingresses:      []string{"myapp.nav.cloud.nais.io"},
 			expectedState:  model.StateNotnais,
-			expectedErrors: []model.ErrorType{model.ErrorTypeDeprecatedRegistry},
+			expectedErrors: []model.StateError{&model.DeprecatedRegistryError{
+				Revision: "1",
+				Level:    model.ErrorLevelWarning,
+			}},
 		},
 		{
 			name:           "app has deprecated ingress",
@@ -99,7 +132,10 @@ func TestSetStatus(t *testing.T) {
 			image:          "europe-north1-docker.pkg.dev/nais-io/nais/images/myapp:1.0.0",
 			ingresses:      []string{"myapp.prod-gcp.nais.io"},
 			expectedState:  model.StateNotnais,
-			expectedErrors: []model.ErrorType{model.ErrorTypeDeprecatedIngress},
+			expectedErrors: []model.StateError{&model.DeprecatedIngressError{
+				Revision: "1",
+				Level:    model.ErrorLevelWarning,
+			}},
 		},
 	}
 
@@ -107,16 +143,17 @@ func TestSetStatus(t *testing.T) {
 		app := &model.App{Image: tc.image, Ingresses: tc.ingresses, Env: &model.Env{Name: "prod-gcp"}}
 		fmt.Println(tc.name)
 		setStatus(app, []metav1.Condition{{Status: metav1.ConditionTrue, Reason: string(tc.appCondition)}}, asInstances(tc.instanceStates))
+
 		if app.AppState.State != tc.expectedState {
 			t.Errorf("%s\ngot state: %v, want: %v", tc.name, app.AppState.State, tc.expectedState)
 		}
 		if !hasError(app.AppState.Errors, tc.expectedErrors) {
-			t.Errorf("%s\ngot error: %v, want: %v", tc.name, &app.AppState.Errors, tc.expectedErrors)
+			t.Errorf("%s\ngot error: %v, want: %v", tc.name, app.AppState.Errors, tc.expectedErrors)
 		}
 	}
 }
 
-func hasError(errors []*model.StateError, expectedErrors []model.ErrorType) bool {
+func hasError(errors []model.StateError, expectedErrors []model.StateError) bool {
 	if len(errors) != len(expectedErrors) {
 		return false
 	}
@@ -129,9 +166,9 @@ func hasError(errors []*model.StateError, expectedErrors []model.ErrorType) bool
 	return true
 }
 
-func contains(slice []*model.StateError, s model.ErrorType) bool {
+func contains(slice []model.StateError, s any) bool {
 	for _, item := range slice {
-		if item.Type == s {
+		if reflect.TypeOf(item) == reflect.TypeOf(s) {
 			return true
 		}
 	}
