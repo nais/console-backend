@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -26,6 +27,69 @@ const (
 	AppConditionSynchronized          AppCondition = "Synchronized"
 	AppConditionUnknown               AppCondition = "Unknown"
 )
+
+/*
+cluster:
+	dev-fss:
+	  - ".adeo.no"
+	  - ".intern.dev.adeo.no"
+	  - ".dev-fss.nais.io"
+	  - ".dev.adeo.no"
+	  - ".dev.intern.nav.no"
+	  - ".nais.preprod.local"
+	dev-gcp:
+	  - ".dev-gcp.nais.io"
+	  - ".dev.intern.nav.no"
+	  - ".dev.nav.no"
+	  - ".intern.nav.no"
+	  - ".dev.adeo.no"
+	  - ".labs.nais.io"
+	  - ".ekstern.dev.nais.io"
+	prod-fss:
+	  - ".adeo.no"
+	  - ".nais.adeo.no"
+	  - ".prod-fss.nais.io"
+	prod-gcp:
+	  - ".dev.intern.nav.no"
+	  - ".prod-gcp.nais.io"
+}
+*/
+
+func getDeprecatedIngresses(cluster string) []string {
+	deprecatedIngresses := map[string][]string{
+		"dev-fss": {
+			"adeo.no",
+			"intern.dev.adeo.no",
+			"dev-fss.nais.io",
+			"dev.adeo.no",
+			"dev.intern.nav.no",
+			"nais.preprod.local",
+		},
+		"dev-gcp": {
+			"dev-gcp.nais.io",
+			"dev.intern.nav.no",
+			"dev.nav.no",
+			"intern.nav.no",
+			"dev.adeo.no",
+			"labs.nais.io",
+			"ekstern.dev.nais.io",
+		},
+		"prod-fss": {
+			"adeo.no",
+			"nais.adeo.no",
+			"prod-fss.nais.io",
+		},
+		"prod-gcp": {
+			"dev.intern.nav.no",
+			"prod-gcp.nais.io",
+		},
+	}
+	ingresses, ok := deprecatedIngresses[cluster]
+	if !ok {
+		return []string{}
+	}
+	return ingresses
+}
 
 func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
 	c.log.Debugf("getting app %q in namespace %q in env %q", name, team, env)
@@ -377,26 +441,95 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 func setStatus(app *model.App, conditions []metav1.Condition, instances []*model.Instance) {
 	currentCondition := getCurrentCondition(conditions)
 	failing := failing(instances)
-
+	appState := model.AppState{
+		State:  model.StateNais,
+		Errors: []model.StateError{},
+	}
 	switch currentCondition {
 	case AppConditionFailedSynchronization:
-		app.Messages = append(app.Messages, "Invalid nais.yaml")
+		appState.Errors = append(appState.Errors, &model.InvalidNaisYamlError{
+			Revision: app.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelError,
+			Detail:   "Invalid nais.yaml",
+		})
+		appState.State = model.StateNotnais
 	case AppConditionSynchronized:
-		app.Messages = append(app.Messages, "New instances failing")
+		appState.Errors = append(appState.Errors, &model.NewInstancesFailingError{
+			Revision: app.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelWarning,
+			FailingInstances: func() []string {
+				ret := []string{}
+				for _, instance := range instances {
+					if instance.State == model.InstanceStateFailing {
+						ret = append(ret, instance.Name)
+					}
+				}
+				return ret
+			}(),
+		})
+		appState.State = model.StateNotnais
 	}
 
 	if len(instances) == 0 || failing == len(instances) {
-		app.State = model.AppStateFailing
-		app.Messages = append(app.Messages, "No running instances")
-		return
+		appState.Errors = append(appState.Errors, &model.NoRunningInstancesError{
+			Revision: app.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelError,
+		})
+		appState.State = model.StateFailing
+	}
+
+	if !strings.Contains(app.Image, "europe-north1-docker.pkg.dev") {
+		parts := strings.Split(app.Image, ":")
+		tag := "unknown"
+		if len(parts) > 1 {
+			tag = parts[1]
+		}
+		parts = strings.Split(parts[0], "/")
+		registry := parts[0]
+		name := parts[len(parts)-1]
+		repository := ""
+		if len(parts) > 2 {
+			repository = strings.Join(parts[1:len(parts)-1], "/")
+		} else {
+			repository = "confusus"
+		}
+		appState.Errors = append(appState.Errors, &model.DeprecatedRegistryError{
+			Revision:   app.DeployInfo.CommitSha,
+			Level:      model.ErrorLevelWarning,
+			Registry:   registry,
+			Name:       name,
+			Tag:        tag,
+			Repository: repository,
+		})
+		if appState.State != model.StateFailing {
+			appState.State = model.StateNotnais
+		}
+	}
+
+	deprecatedIngresses := getDeprecatedIngresses(app.Env.Name)
+	for _, ingress := range app.Ingresses {
+		i := strings.Join(strings.Split(ingress, ".")[1:], ".")
+		for _, deprecatedIngress := range deprecatedIngresses {
+			if i == deprecatedIngress {
+				appState.Errors = append(appState.Errors, &model.DeprecatedIngressError{
+					Revision: app.DeployInfo.CommitSha,
+					Level:    model.ErrorLevelWarning,
+					Ingress:  ingress,
+				})
+				if appState.State != model.StateFailing {
+					appState.State = model.StateNotnais
+				}
+			}
+		}
 	}
 
 	if currentCondition == AppConditionRolloutComplete && failing == 0 {
-		app.State = model.AppStateNais
-		return
+		if appState.State != model.StateFailing && appState.State != model.StateNotnais {
+			appState.State = model.StateNais
+		}
 	}
 
-	app.State = model.AppStateNotnais
+	app.AppState = appState
 }
 
 func failing(instances []*model.Instance) int {

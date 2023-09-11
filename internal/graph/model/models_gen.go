@@ -26,6 +26,12 @@ type SearchNode interface {
 	IsSearchNode()
 }
 
+type StateError interface {
+	IsStateError()
+	GetRevision() string
+	GetLevel() ErrorLevel
+}
+
 type Storage interface {
 	IsStorage()
 	GetName() string
@@ -46,6 +52,11 @@ type AppConnection struct {
 type AppEdge struct {
 	Cursor Cursor `json:"cursor"`
 	Node   *App   `json:"node"`
+}
+
+type AppState struct {
+	State  State        `json:"state"`
+	Errors []StateError `json:"errors"`
 }
 
 type AutoScaling struct {
@@ -131,6 +142,29 @@ type DeploymentKey struct {
 func (DeploymentKey) IsNode()           {}
 func (this DeploymentKey) GetID() Ident { return this.ID }
 
+type DeprecatedIngressError struct {
+	Revision string     `json:"revision"`
+	Level    ErrorLevel `json:"level"`
+	Ingress  string     `json:"ingress"`
+}
+
+func (DeprecatedIngressError) IsStateError()             {}
+func (this DeprecatedIngressError) GetRevision() string  { return this.Revision }
+func (this DeprecatedIngressError) GetLevel() ErrorLevel { return this.Level }
+
+type DeprecatedRegistryError struct {
+	Revision   string     `json:"revision"`
+	Level      ErrorLevel `json:"level"`
+	Registry   string     `json:"registry"`
+	Repository string     `json:"repository"`
+	Name       string     `json:"name"`
+	Tag        string     `json:"tag"`
+}
+
+func (DeprecatedRegistryError) IsStateError()             {}
+func (this DeprecatedRegistryError) GetRevision() string  { return this.Revision }
+func (this DeprecatedRegistryError) GetLevel() ErrorLevel { return this.Level }
+
 type Env struct {
 	ID   Ident  `json:"id"`
 	Name string `json:"name"`
@@ -206,6 +240,16 @@ type Insights struct {
 	RecordClientAddress   bool `json:"recordClientAddress"`
 }
 
+type InvalidNaisYamlError struct {
+	Revision string     `json:"revision"`
+	Level    ErrorLevel `json:"level"`
+	Detail   string     `json:"detail"`
+}
+
+func (InvalidNaisYamlError) IsStateError()             {}
+func (this InvalidNaisYamlError) GetRevision() string  { return this.Revision }
+func (this InvalidNaisYamlError) GetLevel() ErrorLevel { return this.Level }
+
 type Kafka struct {
 	// The kafka pool name
 	Name    string   `json:"name"`
@@ -262,6 +306,25 @@ type NaisJobEdge struct {
 	Cursor Cursor   `json:"cursor"`
 	Node   *NaisJob `json:"node"`
 }
+
+type NewInstancesFailingError struct {
+	Revision         string     `json:"revision"`
+	Level            ErrorLevel `json:"level"`
+	FailingInstances []string   `json:"failingInstances"`
+}
+
+func (NewInstancesFailingError) IsStateError()             {}
+func (this NewInstancesFailingError) GetRevision() string  { return this.Revision }
+func (this NewInstancesFailingError) GetLevel() ErrorLevel { return this.Level }
+
+type NoRunningInstancesError struct {
+	Revision string     `json:"revision"`
+	Level    ErrorLevel `json:"level"`
+}
+
+func (NoRunningInstancesError) IsStateError()             {}
+func (this NoRunningInstancesError) GetRevision() string  { return this.Revision }
+func (this NoRunningInstancesError) GetLevel() ErrorLevel { return this.Level }
 
 type OpenSearch struct {
 	// The opensearch instance name
@@ -384,48 +447,46 @@ type Variable struct {
 	Value string `json:"value"`
 }
 
-type AppState string
+type ErrorLevel string
 
 const (
-	AppStateNais    AppState = "NAIS"
-	AppStateNotnais AppState = "NOTNAIS"
-	AppStateFailing AppState = "FAILING"
-	AppStateUnknown AppState = "UNKNOWN"
+	ErrorLevelInfo    ErrorLevel = "INFO"
+	ErrorLevelWarning ErrorLevel = "WARNING"
+	ErrorLevelError   ErrorLevel = "ERROR"
 )
 
-var AllAppState = []AppState{
-	AppStateNais,
-	AppStateNotnais,
-	AppStateFailing,
-	AppStateUnknown,
+var AllErrorLevel = []ErrorLevel{
+	ErrorLevelInfo,
+	ErrorLevelWarning,
+	ErrorLevelError,
 }
 
-func (e AppState) IsValid() bool {
+func (e ErrorLevel) IsValid() bool {
 	switch e {
-	case AppStateNais, AppStateNotnais, AppStateFailing, AppStateUnknown:
+	case ErrorLevelInfo, ErrorLevelWarning, ErrorLevelError:
 		return true
 	}
 	return false
 }
 
-func (e AppState) String() string {
+func (e ErrorLevel) String() string {
 	return string(e)
 }
 
-func (e *AppState) UnmarshalGQL(v interface{}) error {
+func (e *ErrorLevel) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = AppState(str)
+	*e = ErrorLevel(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid AppState", str)
+		return fmt.Errorf("%s is not a valid ErrorLevel", str)
 	}
 	return nil
 }
 
-func (e AppState) MarshalGQL(w io.Writer) {
+func (e ErrorLevel) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
@@ -469,6 +530,51 @@ func (e *SearchType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e SearchType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type State string
+
+const (
+	StateNais    State = "NAIS"
+	StateNotnais State = "NOTNAIS"
+	StateFailing State = "FAILING"
+	StateUnknown State = "UNKNOWN"
+)
+
+var AllState = []State{
+	StateNais,
+	StateNotnais,
+	StateFailing,
+	StateUnknown,
+}
+
+func (e State) IsValid() bool {
+	switch e {
+	case StateNais, StateNotnais, StateFailing, StateUnknown:
+		return true
+	}
+	return false
+}
+
+func (e State) String() string {
+	return string(e)
+}
+
+func (e *State) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = State(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid State", str)
+	}
+	return nil
+}
+
+func (e State) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

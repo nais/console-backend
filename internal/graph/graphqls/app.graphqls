@@ -25,11 +25,58 @@ type App implements Node {
   authz: [Authz!]!
   manifest: String!
   team: Team!
-  state: AppState!
-  messages: [String!]
+  appState: AppState!
 }
 
-enum AppState {
+type AppState {
+  state: State!
+  errors: [StateError!]!
+}
+
+enum ErrorLevel {
+  INFO
+  WARNING
+  ERROR
+}
+
+interface StateError {
+  revision: String!
+  level: ErrorLevel!
+}
+
+type DeprecatedRegistryError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  registry: String!
+  repository: String!
+  name: String!
+  tag: String!
+}
+
+type DeprecatedIngressError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  ingress: String!
+}
+
+type NoRunningInstancesError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+}
+
+type NewInstancesFailingError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  failingInstances: [String!]!
+}
+
+type InvalidNaisYamlError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  detail: String!
+}
+
+enum State {
   NAIS
   NOTNAIS
   FAILING

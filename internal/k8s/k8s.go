@@ -45,6 +45,7 @@ type Informers struct {
 	NaisjobInformer informers.GenericInformer
 	JobInformer     batchv1inf.JobInformer
 	TopicInformer   informers.GenericInformer
+	EventInformer   corev1inf.EventInformer
 }
 
 func New(clusters, static []string, tenant, fieldSelector string, errors metric.Int64Counter, log *logrus.Entry) (*Client, error) {
@@ -129,7 +130,7 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 				TailLines:  ptr.To[int64](int64(150 / len(pods.Items))),
 			}).Stream(ctx)
 			if err != nil {
-				fmt.Println(err)
+				c.log.Error(err)
 				return
 			}
 			defer logs.Close()
@@ -155,7 +156,7 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 				select {
 				case <-ctx.Done():
 					// Exit on cancellation
-					fmt.Println("Subscription closed.")
+					c.log.Info("closing subscription")
 					return
 
 				case ch <- t:
@@ -164,13 +165,13 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 
 			}
 
-			fmt.Println("Logs done", sc.Err())
+			c.log.Infof("Logs done: %s", sc.Err().Error())
 
 		}(wg)
 	}
 	go func() {
 		wg.Wait()
-		fmt.Println("Closing subscription.")
+		c.log.Info("closing subscription with explicit message")
 		ch <- &model.LogLine{
 			Time:     time.Now(),
 			Message:  "Subscription closed.",
