@@ -19,6 +19,8 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
+const teamsCacheTTL = 15 * time.Minute
+
 type User struct {
 	Name  string           `json:"name"`
 	ID    uuid.UUID        `json:"id"`
@@ -80,7 +82,7 @@ func New(token, endpoint string, errors metric.Int64Counter, log *logrus.Entry) 
 }
 
 // Search searches for teams matching the query
-func (c *Client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.SearchResult {
+func (c *Client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result {
 	if !isTeamFilter(filter) {
 		return nil
 	}
@@ -89,13 +91,13 @@ func (c *Client) Search(ctx context.Context, query string, filter *model.SearchF
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
-	edges := make([]*search.SearchResult, 0)
+	edges := make([]*search.Result, 0)
 	for _, team := range c.teams {
 		rank := search.Match(query, team.Name)
 		if rank == -1 {
 			continue
 		}
-		edges = append(edges, &search.SearchResult{
+		edges = append(edges, &search.Result{
 			Rank: rank,
 			Node: team,
 		})
@@ -103,32 +105,32 @@ func (c *Client) Search(ctx context.Context, query string, filter *model.SearchF
 	return edges
 }
 
-func (c *Client) GetTeam(ctx context.Context, name string) (*model.Team, error) {
+// GetTeam get a team by the team slug
+func (c *Client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
 	c.updateTeams(ctx)
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	for _, team := range c.teams {
-		team := team
-		if team.Name == name {
+		if team.Name == teamSlug {
 			return team, nil
 		}
 	}
-	return nil, fmt.Errorf("team not found: %s", name)
+	return nil, fmt.Errorf("team not found: %s", teamSlug)
 }
 
-func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitHubRepository, error) {
-	q := `
-	query githubRepositories($slug: Slug!) {
-	  team(slug: $slug) {
-		gitHubRepositories{
-			name
+// GetGithubRepositories get a list of GitHub repositories for a specific team
+func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error) {
+	query := `query ($slug: Slug!) {
+		team(slug: $slug) {
+			gitHubRepositories {
+				name
+			}
 		}
-	  }
 	}`
 
 	vars := map[string]string{
-		"slug": name,
+		"slug": teamSlug,
 	}
 
 	respBody := struct {
@@ -138,27 +140,33 @@ func (c *Client) GetGithubRepositories(ctx context.Context, name string) ([]GitH
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for github repositories")
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("team not found: %s", teamSlug)
 	}
 
 	return respBody.Data.Team.GitHubRepositories, nil
 }
 
-func (c *Client) GetMembers(ctx context.Context, name string) ([]Member, error) {
-	q := `query teamMembers($slug: Slug!) {
-	team(slug: $slug) {
-	  members {
-		role
-		user {
-		  email
-		  name
+// GetTeamMembers get a list of team members for a specific team
+func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error) {
+	query := `query ($slug: Slug!) {
+		team(slug: $slug) {
+			members {
+				role
+				user {
+					email
+					name
+				}
+			}
 		}
-	  }
-	}
-  }`
+	}`
+
 	vars := map[string]string{
-		"slug": name,
+		"slug": teamSlug,
 	}
 
 	respBody := struct {
@@ -168,19 +176,24 @@ func (c *Client) GetMembers(ctx context.Context, name string) ([]Member, error) 
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for members")
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("team not found: %s", teamSlug)
 	}
 
 	return respBody.Data.Team.Members, nil
 }
 
 func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
-	q := `query {
-	teams {
-	  slug
-	  purpose
-}}`
+	query := `query {
+		teams {
+			slug
+			purpose
+		}
+	}`
 
 	respBody := struct {
 		Data struct {
@@ -189,7 +202,7 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, nil, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, nil, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for teams")
 	}
 
@@ -197,16 +210,17 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 }
 
 func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
-	q := `query userByEmail($email: String!) {
-	userByEmail(email: $email) {
-	  teams {
-		team {
-		  slug
-		  purpose
+	query := `query ($email: String!) {
+		userByEmail(email: $email) {
+			teams {
+				team {
+					slug
+					purpose
+				}
+			}
 		}
-	  }
-	}
-  }`
+	}`
+
 	vars := map[string]string{
 		"email": email,
 	}
@@ -218,7 +232,7 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 		Errors []map[string]any `json:"errors"`
 	}{}
 
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for user teams")
 	}
 
@@ -226,53 +240,63 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 }
 
 func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	q := `query GetUser($id: UUID!) {
-	user(id: $id) {
-		name
-		email
+	query := `query ($id: UUID!) {
+		user(id: $id) {
+			name
+			email
+		}
+	}`
+
+	vars := map[string]string{
+		"id": id,
 	}
-}`
-	vars := map[string]string{"id": id}
+
 	respBody := struct {
 		Data struct {
 			UserByID *struct{ Name, Email string } `json:"user"`
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for user")
 	}
+
 	if respBody.Data.UserByID == nil {
 		return nil, fmt.Errorf("user %s not found", id)
 	}
-	user := &model.User{
+
+	return &model.User{
 		ID:    model.Ident{ID: id, Type: "user"},
 		Name:  respBody.Data.UserByID.Name,
 		Email: respBody.Data.UserByID.Email,
-	}
-
-	return user, nil
+	}, nil
 }
 
+// GetUser get a user by email
 func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
-	q := `query GetUser($email: String!) {
-	userByEmail(email: $email) {
-		name
-		id
-	}
-}`
+	query := `query ($email: String!) {
+		userByEmail(email: $email) {
+			name
+			id
+		}
+	}`
+
 	vars := map[string]string{
 		"email": email,
 	}
+
 	respBody := struct {
 		Data struct {
 			UserByEmail *User `json:"userByEmail"`
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
-	if err := c.teamsQuery(ctx, q, vars, &respBody); err != nil {
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
 		return nil, c.error(ctx, err, "querying teams for user")
 	}
+
 	if respBody.Data.UserByEmail == nil {
 		return nil, fmt.Errorf("user %s not found", email)
 	}
@@ -323,11 +347,12 @@ func (c *Client) error(ctx context.Context, err error, msg string) error {
 	return fmt.Errorf("%s: %w", msg, err)
 }
 
-func (c *Client) updateTeams(ctx context.Context) {
+// updateTeams update the teams cache when necessary
+func (c *Client) updateTeams(ctx context.Context) error {
 	c.lock.RLock()
-	if time.Since(c.updated) < 15*time.Minute {
+	if time.Since(c.updated) < teamsCacheTTL {
 		c.lock.RUnlock()
-		return
+		return nil
 	}
 	c.lock.RUnlock()
 	c.lock.Lock()
@@ -335,38 +360,42 @@ func (c *Client) updateTeams(ctx context.Context) {
 
 	teams, err := c.GetTeams(ctx)
 	if err != nil {
-		c.error(ctx, err, "getting teams from teams")
-		return
+		return c.error(ctx, err, "get teams from the teams-backend")
 	}
 
 	c.teams = toModelTeams(teams)
 	c.updated = time.Now()
+	return nil
 }
 
+// toModelTeams convert a list of teams from the backend to a list of console backend teams
 func toModelTeams(teams []Team) []*model.Team {
-	ret := []*model.Team{}
+	models := make([]*model.Team, 0)
 	for _, team := range teams {
-		team := team
-		ret = append(ret, &model.Team{
-			ID:           model.Ident{ID: team.Slug, Type: "team"},
+		models = append(models, &model.Team{
+			ID: model.Ident{
+				ID:   team.Slug,
+				Type: "team",
+			},
 			Name:         team.Slug,
 			Description:  &team.Purpose,
 			SlackChannel: team.SlackChannel,
-			SlackAlertsChannels: func(t []SlackAlertsChannel) []model.SlackAlertsChannel {
-				ret := []model.SlackAlertsChannel{}
-				for _, v := range t {
-					ret = append(ret, model.SlackAlertsChannel{
-						Env:  v.Environment,
-						Name: v.ChannelName,
+			SlackAlertsChannels: func(channels []SlackAlertsChannel) []model.SlackAlertsChannel {
+				models := make([]model.SlackAlertsChannel, 0)
+				for _, ch := range channels {
+					models = append(models, model.SlackAlertsChannel{
+						Env:  ch.Environment,
+						Name: ch.ChannelName,
 					})
 				}
-				return ret
+				return models
 			}(team.SlackAlertsChannels),
 		})
 	}
-	return ret
+	return models
 }
 
+// isTeamFilter returns true if the filter is a team filter
 func isTeamFilter(filter *model.SearchFilter) bool {
 	if filter == nil {
 		return false
