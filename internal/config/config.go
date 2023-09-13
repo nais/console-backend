@@ -13,6 +13,7 @@ type Config struct {
 	FieldSelector            string
 	HookdEndpoint            string
 	HookdPSK                 string
+	LogFormat                string
 	LogLevel                 string
 	Port                     string
 	RunAsUser                string
@@ -32,6 +33,7 @@ func New() *Config {
 	flag.StringVar(&cfg.TeamsToken, "teams-token", envOrDefault("TEAMS_TOKEN", "secret-admin-api-key"), "Teams token")
 	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd"), "Hookd endpoint")
 	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
+	flag.StringVar(&cfg.LogFormat, "log-format", "json", "which log format to use")
 	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
 	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
 	flag.StringVar(&cfg.Tenant, "tenant", envOrDefault("TENANT", "dev-nais"), "Which tenant we are running in")

@@ -35,7 +35,7 @@ const (
 
 func main() {
 	cfg := config.New()
-	log, err := newLogger(cfg.LogLevel)
+	log, err := newLogger(cfg.LogFormat, cfg.LogLevel)
 	if err != nil {
 		fmt.Printf("create logger: %s", err)
 		os.Exit(exitCodeLoggerError)
@@ -120,15 +120,24 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	return nil
 }
 
-func newLogger(logLevel string) (*logrus.Logger, error) {
+func newLogger(logFormat, logLevel string) (*logrus.Logger, error) {
 	log := logrus.StandardLogger()
-	log.SetFormatter(&logrus.JSONFormatter{})
 
-	l, err := logrus.ParseLevel(logLevel)
+	switch logFormat {
+	case "json":
+		log.SetFormatter(&logrus.JSONFormatter{})
+	case "text":
+		log.SetFormatter(&logrus.TextFormatter{})
+	default:
+		return nil, fmt.Errorf("invalid log format: %q", logFormat)
+	}
+
+	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
 		return nil, err
 	}
-	log.SetLevel(l)
+
+	log.SetLevel(level)
 	return log, nil
 }
 
