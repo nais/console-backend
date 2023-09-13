@@ -19,15 +19,15 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 		return nil, fmt.Errorf("access denied")
 	}
 
-	new, err := r.Hookd.ChangeDeployKey(ctx, team)
+	deployKey, err := r.Hookd.ChangeDeployKey(ctx, team)
 	if err != nil {
 		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
 	}
 	return &model.DeploymentKey{
 		ID:      model.Ident{ID: team, Type: "deployKey"},
-		Key:     new.Key,
-		Created: new.Created,
-		Expires: new.Expires,
+		Key:     deployKey.Key,
+		Created: deployKey.Created,
+		Expires: deployKey.Expires,
 	}, nil
 }
 
