@@ -233,6 +233,16 @@ type Inbound struct {
 	Rules []*Rule `json:"rules"`
 }
 
+type InboundAccessError struct {
+	Revision string     `json:"revision"`
+	Level    ErrorLevel `json:"level"`
+	Rule     *Rule      `json:"rule"`
+}
+
+func (InboundAccessError) IsStateError()             {}
+func (this InboundAccessError) GetRevision() string  { return this.Revision }
+func (this InboundAccessError) GetLevel() ErrorLevel { return this.Level }
+
 type Insights struct {
 	Enabled               bool `json:"enabled"`
 	QueryStringLength     int  `json:"queryStringLength"`
@@ -340,6 +350,16 @@ type Outbound struct {
 	External []*External `json:"external"`
 }
 
+type OutboundAccessError struct {
+	Revision string     `json:"revision"`
+	Level    ErrorLevel `json:"level"`
+	Rule     *Rule      `json:"rule"`
+}
+
+func (OutboundAccessError) IsStateError()             {}
+func (this OutboundAccessError) GetRevision() string  { return this.Revision }
+func (this OutboundAccessError) GetLevel() ErrorLevel { return this.Level }
+
 type Port struct {
 	Port int `json:"port"`
 }
@@ -358,6 +378,7 @@ type Rule struct {
 	Application string `json:"application"`
 	Namespace   string `json:"namespace"`
 	Cluster     string `json:"cluster"`
+	Mutual      bool   `json:"mutual"`
 }
 
 type SearchConnection struct {

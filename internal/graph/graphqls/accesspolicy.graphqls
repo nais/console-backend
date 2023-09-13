@@ -11,6 +11,7 @@ type Rule {
   application: String!
   namespace: String!
   cluster: String!
+  mutual: Boolean!
 }
 
 type Inbound {

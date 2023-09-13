@@ -107,6 +107,20 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		return nil, c.error(ctx, err, "converting to app")
 	}
 
+	for _, rule := range app.AccessPolicy.Outbound.Rules {
+		rule.Mutual, err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual")
+		}
+	}
+
+	for _, rule := range app.AccessPolicy.Inbound.Rules {
+		rule.Mutual, err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual")
+		}
+	}
+
 	topics, err := c.getTopics(ctx, name, team, env)
 	if err != nil {
 		return nil, c.error(ctx, err, "getting topics")
@@ -118,7 +132,106 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	}
 
 	app.Storage = storage
+
+	instances, err := c.Instances(ctx, team, env, name)
+	if err != nil {
+		return nil, c.error(ctx, err, "getting instances")
+	}
+
+	tmpApp := &naisv1alpha1.Application{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpApp); err != nil {
+		return nil, fmt.Errorf("converting to application: %w", err)
+	}
+
+	setStatus(app, *tmpApp.Status.Conditions, instances)
+
 	return app, nil
+}
+
+func (c *Client) setHasMutualOnOutbound(ctx context.Context, originatingApp, originatingTeam, originatingEnv string, rule *model.Rule) (bool, error) {
+	cluster := originatingEnv
+	if rule.Cluster != "" {
+		cluster = rule.Cluster
+	}
+	ns := originatingTeam
+	if rule.Namespace != "" {
+		ns = rule.Namespace
+	}
+	appName := rule.Application
+
+	_, ok := c.informers[cluster]
+	if !ok {
+		return false, fmt.Errorf("no informer for cluster %q", cluster)
+	}
+
+	obj, err := c.informers[cluster].AppInformer.Lister().ByNamespace(ns).Get(appName)
+	if err != nil {
+		c.log.Warn("getting application in setHasMutualOnInbound: ", err)
+		return false, nil
+	}
+
+	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), cluster)
+	if err != nil {
+		return false, c.error(ctx, err, "converting to app")
+	}
+
+	for _, inboundRule := range app.AccessPolicy.Inbound.Rules {
+		if inboundRule.Cluster != "" && rule.Cluster == inboundRule.Cluster {
+			continue
+		}
+		if inboundRule.Namespace != "" && rule.Namespace == inboundRule.Namespace {
+			continue
+		}
+		if inboundRule.Application == originatingApp {
+			rule.Mutual = true
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (c *Client) setHasMutualOnInbound(ctx context.Context, originatingApp, originatingTeam, originatingEnv string, rule *model.Rule) (bool, error) {
+	cluster := originatingEnv
+	if rule.Cluster != "" {
+		cluster = rule.Cluster
+	}
+	ns := originatingTeam
+	if rule.Namespace != "" {
+		ns = rule.Namespace
+	}
+	appName := rule.Application
+
+	_, ok := c.informers[cluster]
+	if !ok {
+		return false, fmt.Errorf("no informer for cluster %q", cluster)
+	}
+
+	obj, err := c.informers[cluster].AppInformer.Lister().ByNamespace(ns).Get(appName)
+	if err != nil {
+		c.log.Warn("getting application in setHasMutualOnInbound: ", err)
+		return false, nil
+	}
+
+	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), cluster)
+	if err != nil {
+		return false, c.error(ctx, err, "converting to app")
+	}
+
+	for _, outboundRule := range app.AccessPolicy.Outbound.Rules {
+		if outboundRule.Cluster != "" && rule.Cluster == outboundRule.Cluster {
+			continue
+		}
+		if outboundRule.Namespace != "" && rule.Namespace == outboundRule.Namespace {
+			continue
+		}
+		if outboundRule.Application == originatingApp {
+			rule.Mutual = true
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*model.Topic, error) {
@@ -400,12 +513,12 @@ func (c *Client) toApp(ctx context.Context, u *unstructured.Unstructured, env st
 		ret.Deployed = time.Unix(0, app.Status.RolloutCompleteTime)
 	}
 
-	instances, err := c.Instances(ctx, app.GetNamespace(), env, app.GetName())
+	/*instances, err := c.Instances(ctx, app.GetNamespace(), env, app.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("getting instances: %w", err)
 	}
 
-	setStatus(ret, *app.Status.Conditions, instances)
+	setStatus(ret, *app.Status.Conditions, instances)*/
 
 	return ret, nil
 }
@@ -526,6 +639,32 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 	if currentCondition == AppConditionRolloutComplete && failing == 0 {
 		if appState.State != model.StateFailing && appState.State != model.StateNotnais {
 			appState.State = model.StateNais
+		}
+	}
+
+	for _, rule := range app.AccessPolicy.Inbound.Rules {
+		if !rule.Mutual {
+			appState.Errors = append(appState.Errors, &model.InboundAccessError{
+				Revision: app.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if appState.State != model.StateFailing {
+				appState.State = model.StateNotnais
+			}
+		}
+	}
+
+	for _, rule := range app.AccessPolicy.Outbound.Rules {
+		if !rule.Mutual {
+			appState.Errors = append(appState.Errors, &model.OutboundAccessError{
+				Revision: app.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if appState.State != model.StateFailing {
+				appState.State = model.StateNotnais
+			}
 		}
 	}
 
