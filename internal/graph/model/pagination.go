@@ -1,5 +1,7 @@
 package model
 
+import "fmt"
+
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`
@@ -14,15 +16,16 @@ type Pagination struct {
 	before *Cursor
 }
 
-func NewPagination(first, last *int, after, before *Cursor) *Pagination {
-	p := &Pagination{
+func NewPagination(first, last *int, after, before *Cursor) (*Pagination, error) {
+	if first != nil && last != nil {
+		return nil, fmt.Errorf("using both `first` and `last` with pagination is not supported")
+	}
+	return &Pagination{
 		first:  first,
 		last:   last,
 		after:  after,
 		before: before,
-	}
-
-	return p
+	}, nil
 }
 
 func (p *Pagination) ForSlice(length int) (start, end int) {

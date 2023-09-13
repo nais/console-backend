@@ -38,7 +38,10 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
 
-	pagination := model.NewPagination(first, last, after, before)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
 	e := teamEdges(teams, pagination)
 
 	var startCursor *model.Cursor
@@ -85,7 +88,10 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 		return nil, fmt.Errorf("getting members from Teams: %w", err)
 	}
 
-	pagination := model.NewPagination(first, last, after, before)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
 	e := memberEdges(members, pagination)
 
 	var startCursor *model.Cursor
@@ -122,7 +128,10 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
-	pagination := model.NewPagination(first, last, after, before)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
 	a := appEdges(apps, obj.Name, pagination)
 
 	var startCursor *model.Cursor
@@ -159,7 +168,10 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
 	}
 
-	pagination := model.NewPagination(first, last, after, before)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
 	j := naisJobEdges(naisjobs, obj.Name, pagination)
 
 	var startCursor *model.Cursor
@@ -241,7 +253,10 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
 
-	pagination := model.NewPagination(first, last, after, before)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
 	e := deployEdges(deploys, pagination)
 
 	var startCursor *model.Cursor

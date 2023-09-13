@@ -23,7 +23,10 @@ func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, 
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
 
-	pagination := model.NewPagination(first, last, after, before)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
 	e := deployEdges(deploys, pagination)
 
 	var startCursor *model.Cursor

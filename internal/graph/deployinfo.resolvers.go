@@ -24,7 +24,10 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
-	pagination := model.NewPagination(first, last, after, before)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
 	e := deployEdges(deploys, pagination)
 
 	var startCursor *model.Cursor
