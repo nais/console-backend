@@ -134,10 +134,15 @@ type DeploymentEdge struct {
 	Node   *Deployment `json:"node"`
 }
 
+// Deployment key type.
 type DeploymentKey struct {
-	ID      Ident     `json:"id"`
-	Key     string    `json:"key"`
+	// The unique identifier of the deployment key.
+	ID Ident `json:"id"`
+	// The actual key.
+	Key string `json:"key"`
+	// The date the deployment key was created.
 	Created time.Time `json:"created"`
+	// The date the deployment key expires.
 	Expires time.Time `json:"expires"`
 }
 
@@ -193,19 +198,28 @@ type Flag struct {
 	Value string `json:"value"`
 }
 
+// GitHub repository type.
 type GithubRepository struct {
+	// The name of the GitHub repository.
 	Name string `json:"name"`
 }
 
+// GitHub repository connection type.
 type GithubRepositoryConnection struct {
-	TotalCount int                     `json:"totalCount"`
-	PageInfo   *PageInfo               `json:"pageInfo"`
-	Edges      []*GithubRepositoryEdge `json:"edges"`
+	// The total count of available GitHub repositories.
+	TotalCount int `json:"totalCount"`
+	// Pagination information.
+	PageInfo *PageInfo `json:"pageInfo"`
+	// A list of GitHub repository edges.
+	Edges []*GithubRepositoryEdge `json:"edges"`
 }
 
+// GitHub repository edge type.
 type GithubRepositoryEdge struct {
-	Cursor Cursor            `json:"cursor"`
-	Node   *GithubRepository `json:"node"`
+	// A cursor for use in pagination.
+	Cursor Cursor `json:"cursor"`
+	// The GitHub repository at the end of the edge.
+	Node *GithubRepository `json:"node"`
 }
 
 type Group struct {
@@ -409,9 +423,12 @@ type Sidecar struct {
 	Resources            *Resources `json:"resources"`
 }
 
+// Slack alerts channel type.
 type SlackAlertsChannel struct {
+	// The name of the Slack alerts channel.
 	Name string `json:"name"`
-	Env  string `json:"env"`
+	// The environment for the Slack alerts channel.
+	Env string `json:"env"`
 }
 
 type SQLInstance struct {

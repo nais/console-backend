@@ -36,6 +36,12 @@ func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, e
 			return nil, fmt.Errorf("getting user from Teams: %w", err)
 		}
 		return u, nil
+	case "team":
+		t, err := r.TeamsClient.GetTeam(ctx, id.ID)
+		if err != nil {
+			return nil, fmt.Errorf("getting team from Teams: %w", err)
+		}
+		return t, nil
 	}
 	return nil, fmt.Errorf("unknown type %q", id.Type)
 }

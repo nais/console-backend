@@ -104,37 +104,69 @@ type Team implements Node {
     viewerIsAdmin: Boolean!
 }
 
+"Deployment key type."
 type DeploymentKey implements Node {
+    "The unique identifier of the deployment key."
     id: ID!
+
+    "The actual key."
     key: String!
+
+    "The date the deployment key was created."
     created: Time!
+
+    "The date the deployment key expires."
     expires: Time!
 }
 
+"GitHub repository connection type."
 type GithubRepositoryConnection {
+    "The total count of available GitHub repositories."
     totalCount: Int!
+
+    "Pagination information."
     pageInfo: PageInfo!
+
+    "A list of GitHub repository edges."
     edges: [GithubRepositoryEdge!]!
 }
 
+"GitHub repository edge type."
 type GithubRepositoryEdge {
+    "A cursor for use in pagination."
     cursor: Cursor!
+
+    "The GitHub repository at the end of the edge."
     node: GithubRepository!
 }
 
+"GitHub repository type."
 type GithubRepository {
+    "The name of the GitHub repository."
     name: String!
 }
 
+"Slack alerts channel type."
 type SlackAlertsChannel {
+    "The name of the Slack alerts channel."
     name: String!
+
+    "The environment for the Slack alerts channel."
     env: String!
 }
 
+"Team member type."
 type TeamMember implements Node {
+    "The unique identifier of the team member."
     id: ID!
+
+    "The name of the team member."
     name: String!
+
+    "The email of the team member."
     email: String!
+
+    "The role of the team member."
     role: TeamRole!
 }
 
