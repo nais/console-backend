@@ -6,11 +6,25 @@ import (
 	"io"
 	"net/url"
 	"strconv"
+
+	"k8s.io/apimachinery/pkg/types"
+)
+
+type IdentType string
+
+const (
+	IdentTypeApp       IdentType = "app"
+	IdentTypeDeployKey IdentType = "deployKey"
+	IdentTypeEnv       IdentType = "env"
+	IdentTypeJob       IdentType = "job"
+	IdentTypePod       IdentType = "pod"
+	IdentTypeTeam      IdentType = "team"
+	IdentTypeUser      IdentType = "user"
 )
 
 type Ident struct {
 	ID   string
-	Type string
+	Type IdentType
 }
 
 func (i Ident) MarshalGQL(w io.Writer) {
@@ -19,7 +33,7 @@ func (i Ident) MarshalGQL(w io.Writer) {
 	}
 	v := url.Values{}
 	v.Set("id", i.ID)
-	v.Set("type", i.Type)
+	v.Set("type", string(i.Type))
 	_, err := w.Write([]byte(strconv.Quote(base64.URLEncoding.EncodeToString([]byte(v.Encode())))))
 	if err != nil {
 		panic(err)
@@ -43,7 +57,42 @@ func (i *Ident) UnmarshalGQL(v interface{}) error {
 	}
 
 	i.ID = m.Get("id")
-	i.Type = m.Get("type")
+	i.Type = IdentType(m.Get("type"))
 
 	return nil
+}
+
+func AppIdent(id string) Ident {
+	return newIdent(id, IdentTypeApp)
+}
+
+func DeployKeyIdent(id string) Ident {
+	return newIdent(id, IdentTypeDeployKey)
+}
+
+func EnvIdent(id string) Ident {
+	return newIdent(id, IdentTypeEnv)
+}
+
+func JobIdent(id string) Ident {
+	return newIdent(id, IdentTypeJob)
+}
+
+func PodIdent(id types.UID) Ident {
+	return newIdent(string(id), IdentTypePod)
+}
+
+func TeamIdent(id string) Ident {
+	return newIdent(id, IdentTypeTeam)
+}
+
+func UserIdent(id string) Ident {
+	return newIdent(id, IdentTypeUser)
+}
+
+func newIdent(id string, t IdentType) Ident {
+	return Ident{
+		ID:   id,
+		Type: t,
+	}
 }

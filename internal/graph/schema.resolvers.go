@@ -30,20 +30,20 @@ func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, er
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, error) {
 	switch id.Type {
-	case "user":
-		u, err := r.TeamsClient.GetUserByID(ctx, id.ID)
-		if err != nil {
-			return nil, fmt.Errorf("getting user from Teams: %w", err)
-		}
-		return u, nil
-	case "team":
+	case model.IdentTypeTeam:
 		t, err := r.TeamsClient.GetTeam(ctx, id.ID)
 		if err != nil {
 			return nil, fmt.Errorf("getting team from Teams: %w", err)
 		}
 		return t, nil
+	case model.IdentTypeUser:
+		u, err := r.TeamsClient.GetUserByID(ctx, id.ID)
+		if err != nil {
+			return nil, fmt.Errorf("getting user from Teams: %w", err)
+		}
+		return u, nil
 	}
-	return nil, fmt.Errorf("unknown type %q", id.Type)
+	return nil, fmt.Errorf("unsupported type %q in node query", id.Type)
 }
 
 // Mutation returns MutationResolver implementation.

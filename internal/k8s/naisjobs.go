@@ -139,7 +139,7 @@ func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run
 		}
 
 		ret = append(ret, &model.Run{
-			ID:             model.Ident{ID: job.Name, Type: "job"},
+			ID:             model.JobIdent(job.Name),
 			Name:           job.Name,
 			PodNames:       podNames,
 			StartTime:      startTime,
@@ -244,11 +244,11 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	}
 
 	ret := &model.NaisJob{}
-	ret.ID = model.Ident{ID: "job_" + env + "_" + naisjob.GetNamespace() + "_" + naisjob.GetName(), Type: "job"}
+	ret.ID = model.JobIdent("job_" + env + "_" + naisjob.GetNamespace() + "_" + naisjob.GetName())
 	ret.Name = naisjob.GetName()
 	ret.Env = &model.Env{
 		Name: env,
-		ID:   model.Ident{ID: env, Type: "env"},
+		ID:   model.EnvIdent(env),
 	}
 
 	ret.DeployInfo = &model.DeployInfo{

@@ -357,7 +357,7 @@ func Instance(pod *corev1.Pod, env string) *model.Instance {
 	}
 
 	ret := &model.Instance{
-		ID:       model.Ident{ID: string(pod.GetUID()), Type: "pod"},
+		ID:       model.PodIdent(pod.GetUID()),
 		Name:     pod.GetName(),
 		Image:    image,
 		Restarts: restarts,
@@ -426,12 +426,12 @@ func (c *Client) toApp(ctx context.Context, u *unstructured.Unstructured, env st
 	}
 
 	ret := &model.App{}
-	ret.ID = model.Ident{ID: "app_" + env + "_" + app.GetNamespace() + "_" + app.GetName(), Type: "app"}
+	ret.ID = model.AppIdent("app_" + env + "_" + app.GetNamespace() + "_" + app.GetName())
 	ret.Name = app.GetName()
 
 	ret.Env = &model.Env{
 		Name: env,
-		ID:   model.Ident{ID: env, Type: "env"},
+		ID:   model.EnvIdent(env),
 	}
 
 	appSynchState := app.GetStatus().SynchronizationState

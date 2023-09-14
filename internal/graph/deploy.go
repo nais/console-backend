@@ -15,10 +15,13 @@ func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []*model.Deploymen
 		edges = append(edges, &model.DeploymentEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.Deployment{
-				ID:         deploy.DeploymentInfo.ID,
-				Statuses:   mapStatuses(deploy.Statuses),
-				Resources:  mapResources(deploy.Resources),
-				Team:       &model.Team{Name: deploy.DeploymentInfo.Team, ID: model.Ident{ID: deploy.DeploymentInfo.Team, Type: "deploy_team"}},
+				ID:        deploy.DeploymentInfo.ID,
+				Statuses:  mapStatuses(deploy.Statuses),
+				Resources: mapResources(deploy.Resources),
+				Team: &model.Team{
+					Name: deploy.DeploymentInfo.Team,
+					ID:   model.TeamIdent(deploy.DeploymentInfo.Team),
+				},
 				Env:        deploy.DeploymentInfo.Cluster,
 				Created:    deploy.DeploymentInfo.Created,
 				Repository: deploy.DeploymentInfo.GithubRepository,

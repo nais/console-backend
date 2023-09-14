@@ -267,7 +267,7 @@ func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error
 	}
 
 	return &model.User{
-		ID:    model.Ident{ID: id, Type: "user"},
+		ID:    model.UserIdent(id),
 		Name:  respBody.Data.UserByID.Name,
 		Email: respBody.Data.UserByID.Email,
 	}, nil
@@ -373,10 +373,7 @@ func toModelTeams(teams []Team) []*model.Team {
 	models := make([]*model.Team, 0)
 	for _, team := range teams {
 		models = append(models, &model.Team{
-			ID: model.Ident{
-				ID:   team.Slug,
-				Type: "team",
-			},
+			ID:           model.TeamIdent(team.Slug),
 			Name:         team.Slug,
 			Description:  &team.Purpose,
 			SlackChannel: team.SlackChannel,

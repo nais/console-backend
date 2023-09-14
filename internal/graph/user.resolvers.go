@@ -23,7 +23,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 		return nil, fmt.Errorf("getting user from Teams: %w", err)
 	}
 	return &model.User{
-		ID:    model.Ident{ID: user.ID.String(), Type: "user"},
+		ID:    model.UserIdent(user.ID.String()),
 		Name:  user.Name,
 		Email: email,
 	}, nil

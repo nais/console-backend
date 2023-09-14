@@ -14,7 +14,7 @@ func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []*model.TeamE
 		edges = append(edges, &model.TeamEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.Team{
-				ID:           model.Ident{ID: team.Team.Slug, Type: "user_team"},
+				ID:           model.TeamIdent(team.Team.Slug),
 				Name:         team.Team.Slug,
 				Description:  &team.Team.Purpose,
 				SlackChannel: team.Team.SlackChannel,
