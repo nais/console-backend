@@ -19,6 +19,9 @@ type Query {
   node(id: ID!): Node
 }
 
+"The root query for implementing GraphQL mutations."
+type Mutation
+
 type Env implements Node {
   id: ID!
   name: String!

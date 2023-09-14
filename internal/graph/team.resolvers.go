@@ -350,11 +350,7 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 	return false, nil
 }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type mutationResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }

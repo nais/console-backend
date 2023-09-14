@@ -1,99 +1,148 @@
+extend type Query {
+    "Get a list of NAIS-teams, in alphabetical order."
+    teams(
+        "Returns the first n teams from the list."
+        first: Int,
+
+        "Returns the last n teams from the list."
+        last: Int,
+
+        "Get teams after the cursor."
+        after: Cursor,
+
+        "Get teams before the cursor."
+        before: Cursor
+    ): TeamConnection!
+
+    "Get a specific NAIS-team by the team name."
+    team(
+        "The name of the NAIS-team to get."
+        name: String!
+    ): Team!
+}
+
+extend type Mutation {
+    "Update the deploy key of a team. Returns the updated deploy key."
+    changeDeployKey(
+        "The name of the team to update the deploy key for."
+        team: String!
+    ): DeploymentKey!
+}
+
+"Team connection type."
 type TeamConnection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [TeamEdge!]!
+    "The total count of available teams."
+    totalCount: Int!
+
+    "Pagination information."
+    pageInfo: PageInfo!
+
+    "A list of team edges."
+    edges: [TeamEdge!]!
 }
 
+"Team edge type."
 type TeamEdge {
-  cursor: Cursor!
-  node: Team!
+    "A cursor for use in pagination."
+    cursor: Cursor!
+
+    "The team at the end of the edge."
+    node: Team!
 }
 
+"Team member connection type."
 type TeamMemberConnection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [TeamMemberEdge!]!
-}
-type TeamMemberEdge {
-  cursor: Cursor!
-  node: TeamMember!
+    "The total count of available team members."
+    totalCount: Int!
+
+    "Pagination information."
+    pageInfo: PageInfo!
+
+    "A list of team member edges."
+    edges: [TeamMemberEdge!]!
 }
 
+"Team member edge type."
+type TeamMemberEdge {
+    "A cursor for use in pagination."
+    cursor: Cursor!
+
+    "The team member at the end of the edge."
+    node: TeamMember!
+}
+
+"Team type."
 type Team implements Node {
-  id: ID!
-  name: String!
-  description: String
-  members(
-    first: Int
-    after: Cursor
-    last: Int
-    before: Cursor
-  ): TeamMemberConnection!
-  apps(first: Int, last: Int, after: Cursor, before: Cursor): AppConnection!
-  naisjobs(
-    first: Int
-    last: Int
-    after: Cursor
-    before: Cursor
-  ): NaisJobConnection!
-  githubRepositories(first: Int, after: Cursor): GithubRepositoryConnection!
-  slackChannel: String
-  slackAlertsChannels: [SlackAlertsChannel!]
-  deployments(
-    first: Int
-    last: Int
-    after: Cursor
-    before: Cursor
-    limit: Int
-  ): DeploymentConnection!
-  deployKey: DeploymentKey!
-  viewerIsMember: Boolean!
-  viewerIsAdmin: Boolean!
+    id: ID!
+    name: String!
+    description: String
+    members(
+        first: Int
+        after: Cursor
+        last: Int
+        before: Cursor
+    ): TeamMemberConnection!
+    apps(first: Int, last: Int, after: Cursor, before: Cursor): AppConnection!
+    naisjobs(
+        first: Int
+        last: Int
+        after: Cursor
+        before: Cursor
+    ): NaisJobConnection!
+    githubRepositories(first: Int, after: Cursor): GithubRepositoryConnection!
+    slackChannel: String
+    slackAlertsChannels: [SlackAlertsChannel!]
+    deployments(
+        first: Int
+        last: Int
+        after: Cursor
+        before: Cursor
+        limit: Int
+    ): DeploymentConnection!
+    deployKey: DeploymentKey!
+    viewerIsMember: Boolean!
+    viewerIsAdmin: Boolean!
 }
 
 type DeploymentKey implements Node {
-  id: ID!
-  key: String!
-  created: Time!
-  expires: Time!
+    id: ID!
+    key: String!
+    created: Time!
+    expires: Time!
 }
 
 type GithubRepositoryConnection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [GithubRepositoryEdge!]!
+    totalCount: Int!
+    pageInfo: PageInfo!
+    edges: [GithubRepositoryEdge!]!
 }
 
 type GithubRepositoryEdge {
-  cursor: Cursor!
-  node: GithubRepository!
+    cursor: Cursor!
+    node: GithubRepository!
 }
 
 type GithubRepository {
-  name: String!
+    name: String!
 }
 
 type SlackAlertsChannel {
-  name: String!
-  env: String!
+    name: String!
+    env: String!
 }
 
 type TeamMember implements Node {
-  id: ID!
-  name: String!
-  email: String!
-  role: TeamRole!
+    id: ID!
+    name: String!
+    email: String!
+    role: TeamRole!
 }
 
-extend type Query {
-  teams(first: Int, last: Int, after: Cursor, before: Cursor): TeamConnection!
-  team(name: String!): Team!
-}
-
-type Mutation {
-  changeDeployKey(team: String!): DeploymentKey!
-}
+"Team member roles."
 enum TeamRole {
-  MEMBER
-  OWNER
+    "A regular team member."
+    MEMBER
+
+    "A team owner/administrator."
+    OWNER
 }

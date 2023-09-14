@@ -430,26 +430,40 @@ type SQLInstance struct {
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
 
+// Team connection type.
 type TeamConnection struct {
-	TotalCount int         `json:"totalCount"`
-	PageInfo   *PageInfo   `json:"pageInfo"`
-	Edges      []*TeamEdge `json:"edges"`
+	// The total count of available teams.
+	TotalCount int `json:"totalCount"`
+	// Pagination information.
+	PageInfo *PageInfo `json:"pageInfo"`
+	// A list of team edges.
+	Edges []*TeamEdge `json:"edges"`
 }
 
+// Team edge type.
 type TeamEdge struct {
+	// A cursor for use in pagination.
 	Cursor Cursor `json:"cursor"`
-	Node   *Team  `json:"node"`
+	// The team at the end of the edge.
+	Node *Team `json:"node"`
 }
 
+// Team member connection type.
 type TeamMemberConnection struct {
-	TotalCount int               `json:"totalCount"`
-	PageInfo   *PageInfo         `json:"pageInfo"`
-	Edges      []*TeamMemberEdge `json:"edges"`
+	// The total count of available team members.
+	TotalCount int `json:"totalCount"`
+	// Pagination information.
+	PageInfo *PageInfo `json:"pageInfo"`
+	// A list of team member edges.
+	Edges []*TeamMemberEdge `json:"edges"`
 }
 
+// Team member edge type.
 type TeamMemberEdge struct {
-	Cursor Cursor      `json:"cursor"`
-	Node   *TeamMember `json:"node"`
+	// A cursor for use in pagination.
+	Cursor Cursor `json:"cursor"`
+	// The team member at the end of the edge.
+	Node *TeamMember `json:"node"`
 }
 
 type TokenX struct {
@@ -599,11 +613,14 @@ func (e State) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+// Team member roles.
 type TeamRole string
 
 const (
+	// A regular team member.
 	TeamRoleMember TeamRole = "MEMBER"
-	TeamRoleOwner  TeamRole = "OWNER"
+	// A team owner/administrator.
+	TeamRoleOwner TeamRole = "OWNER"
 )
 
 var AllTeamRole = []TeamRole{

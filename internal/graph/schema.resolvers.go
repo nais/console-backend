@@ -40,11 +40,15 @@ func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, e
 	return nil, fmt.Errorf("unknown type %q", id.Type)
 }
 
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
 // PageInfo returns PageInfoResolver implementation.
 func (r *Resolver) PageInfo() PageInfoResolver { return &pageInfoResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type pageInfoResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
