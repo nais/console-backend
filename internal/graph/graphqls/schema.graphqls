@@ -1,28 +1,45 @@
 directive @goField(
-  forceResolver: Boolean
-  name: String
+    forceResolver: Boolean
+    name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-interface Node {
-  id: ID!
-}
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: Cursor
-  endCursor: Cursor
-  from: Int!
-  to: Int!
-}
-
+"The query root for the console-backend GraphQL API."
 type Query {
-  node(id: ID!): Node
+    "Fetches an object given its ID."
+    node(
+        "The ID of an object."
+        id: ID!
+    ): Node
 }
 
 "The root query for implementing GraphQL mutations."
 type Mutation
 
+"Node interface."
+interface Node {
+    "The unique ID of an object."
+    id: ID!
+}
+
+"PageInfo is a type that contains pagination information in a Relay style."
+type PageInfo {
+    "When paginating forwards, are there more items?"
+    hasNextPage: Boolean!
+
+    "When paginating backwards, are there more items?"
+    hasPreviousPage: Boolean!
+
+    "A cursor corresponding to the first node in the connection."
+    startCursor: Cursor
+
+    "A cursor corresponding to the last node in the connection."
+    endCursor: Cursor
+
+    from: Int!
+    to: Int!
+}
+
 type Env implements Node {
-  id: ID!
-  name: String!
+    id: ID!
+    name: String!
 }

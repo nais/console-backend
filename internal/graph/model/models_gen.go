@@ -17,8 +17,10 @@ type DeploymentResponse interface {
 	IsDeploymentResponse()
 }
 
+// Node interface.
 type Node interface {
 	IsNode()
+	// The unique ID of an object.
 	GetID() Ident
 }
 
@@ -139,7 +141,9 @@ type DeploymentKey struct {
 	Expires time.Time `json:"expires"`
 }
 
-func (DeploymentKey) IsNode()           {}
+func (DeploymentKey) IsNode() {}
+
+// The unique ID of an object.
 func (this DeploymentKey) GetID() Ident { return this.ID }
 
 type DeprecatedIngressError struct {
@@ -170,7 +174,9 @@ type Env struct {
 	Name string `json:"name"`
 }
 
-func (Env) IsNode()           {}
+func (Env) IsNode() {}
+
+// The unique ID of an object.
 func (this Env) GetID() Ident { return this.ID }
 
 type Expose struct {
