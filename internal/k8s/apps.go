@@ -161,7 +161,8 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, originatingApp, ori
 
 	_, ok := c.informers[cluster]
 	if !ok {
-		return false, fmt.Errorf("no informer for cluster %q", cluster)
+		c.log.Warn("no informer for cluster ", cluster)
+		return false, nil
 	}
 
 	obj, err := c.informers[cluster].AppInformer.Lister().ByNamespace(ns).Get(appName)
@@ -204,7 +205,8 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, originatingApp, orig
 
 	_, ok := c.informers[cluster]
 	if !ok {
-		return false, fmt.Errorf("no informer for cluster %q", cluster)
+		c.log.Warn("no informer for cluster ", cluster)
+		return false, nil
 	}
 
 	obj, err := c.informers[cluster].AppInformer.Lister().ByNamespace(ns).Get(appName)
