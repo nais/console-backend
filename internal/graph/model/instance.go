@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strconv"
@@ -22,6 +23,9 @@ type Instance struct {
 	} `json:"-"`
 }
 
+func (Instance) IsNode()        {}
+func (i Instance) GetID() Ident { return i.ID }
+
 type InstanceState string
 
 const (
@@ -29,15 +33,6 @@ const (
 	InstanceStateUnknown InstanceState = "UNKNOWN"
 	InstanceStateRunning InstanceState = "RUNNING"
 )
-
-var AllInstanceState = []InstanceState{
-	InstanceStateRunning,
-	InstanceStateFailing,
-	InstanceStateUnknown,
-}
-
-func (Instance) IsNode()        {}
-func (i Instance) GetID() Ident { return i.ID }
 
 func (e InstanceState) IsValid() bool {
 	switch e {
@@ -51,19 +46,20 @@ func (e InstanceState) String() string {
 	return string(e)
 }
 
-func (e *InstanceState) UnmarshalGQL(v interface{}) error {
+func (e *InstanceState) UnmarshalGQLContext(_ context.Context, v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("enums must be strings")
+		return fmt.Errorf("instance state must be a string")
 	}
 
 	*e = InstanceState(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid InstanceState", str)
+		return fmt.Errorf("%q is not a valid InstanceState", str)
 	}
 	return nil
 }
 
-func (e InstanceState) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+func (e InstanceState) MarshalGQLContext(_ context.Context, w io.Writer) error {
+	_, err := fmt.Fprint(w, strconv.Quote(e.String()))
+	return err
 }

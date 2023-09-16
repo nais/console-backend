@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -12,20 +13,18 @@ type Cursor struct {
 	Offset int `json:"offset"`
 }
 
-func (c Cursor) MarshalGQL(w io.Writer) {
+func (c Cursor) MarshalGQLContext(_ context.Context, w io.Writer) error {
 	v := url.Values{}
 	v.Set("offset", strconv.Itoa(c.Offset))
 
 	_, err := w.Write([]byte(strconv.Quote(base64.URLEncoding.EncodeToString([]byte(v.Encode())))))
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
-func (c *Cursor) UnmarshalGQL(v interface{}) error {
+func (c *Cursor) UnmarshalGQLContext(_ context.Context, v interface{}) error {
 	s, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("Cursor must be a string")
+		return fmt.Errorf("cursor must be a string")
 	}
 
 	b, err := base64.URLEncoding.DecodeString(s)

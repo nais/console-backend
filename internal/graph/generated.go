@@ -25179,12 +25179,12 @@ func (ec *executionContext) marshalNConsumer2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 
 func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, v interface{}) (model.Cursor, error) {
 	var res model.Cursor
-	err := res.UnmarshalGQL(v)
+	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, sel ast.SelectionSet, v model.Cursor) graphql.Marshaler {
-	return v
+	return graphql.WrapContextMarshaler(ctx, v)
 }
 
 func (ec *executionContext) marshalNDatabase2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Database) graphql.Marshaler {
@@ -25835,12 +25835,12 @@ func (ec *executionContext) marshalNGroup2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbac
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx context.Context, v interface{}) (model.Ident, error) {
 	var res model.Ident
-	err := res.UnmarshalGQL(v)
+	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx context.Context, sel ast.SelectionSet, v model.Ident) graphql.Marshaler {
-	return v
+	return graphql.WrapContextMarshaler(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -25928,12 +25928,12 @@ func (ec *executionContext) marshalNInstance2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 
 func (ec *executionContext) unmarshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx context.Context, v interface{}) (model.InstanceState, error) {
 	var res model.InstanceState
-	err := res.UnmarshalGQL(v)
+	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx context.Context, sel ast.SelectionSet, v model.InstanceState) graphql.Marshaler {
-	return v
+	return graphql.WrapContextMarshaler(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
@@ -27110,7 +27110,7 @@ func (ec *executionContext) unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 		return nil, nil
 	}
 	var res = new(model.Cursor)
-	err := res.UnmarshalGQL(v)
+	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -27118,7 +27118,7 @@ func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	return graphql.WrapContextMarshaler(ctx, v)
 }
 
 func (ec *executionContext) marshalOIDPortenSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIDPortenSidecar(ctx context.Context, sel ast.SelectionSet, v *model.IDPortenSidecar) graphql.Marshaler {

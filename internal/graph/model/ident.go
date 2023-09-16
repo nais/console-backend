@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -27,37 +28,35 @@ type Ident struct {
 	Type IdentType
 }
 
-func (i Ident) MarshalGQL(w io.Writer) {
+func (i Ident) MarshalGQLContext(_ context.Context, w io.Writer) error {
 	if i.ID == "" || i.Type == "" {
-		panic(fmt.Errorf("id and type must be set"))
+		return fmt.Errorf("id and type must be set")
 	}
 	v := url.Values{}
 	v.Set("id", i.ID)
 	v.Set("type", string(i.Type))
 	_, err := w.Write([]byte(strconv.Quote(base64.URLEncoding.EncodeToString([]byte(v.Encode())))))
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
-func (i *Ident) UnmarshalGQL(v interface{}) error {
-	s, ok := v.(string)
+func (i *Ident) UnmarshalGQLContext(_ context.Context, v interface{}) error {
+	ident, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("id must be a string")
+		return fmt.Errorf("ident must be a string")
 	}
 
-	b, err := base64.URLEncoding.DecodeString(s)
+	bytes, err := base64.URLEncoding.DecodeString(ident)
 	if err != nil {
 		return err
 	}
 
-	m, err := url.ParseQuery(string(b))
+	values, err := url.ParseQuery(string(bytes))
 	if err != nil {
 		return err
 	}
 
-	i.ID = m.Get("id")
-	i.Type = IdentType(m.Get("type"))
+	i.ID = values.Get("id")
+	i.Type = IdentType(values.Get("type"))
 
 	return nil
 }
