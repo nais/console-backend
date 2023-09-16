@@ -148,43 +148,48 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	return app, nil
 }
 
-func (c *Client) setHasMutualOnOutbound(ctx context.Context, originatingApp, originatingTeam, originatingEnv string, rule *model.Rule) (bool, error) {
-	cluster := originatingEnv
-	if rule.Cluster != "" {
-		cluster = rule.Cluster
+func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv string, outboundRule *model.Rule) (bool, error) {
+	outboundEnv := oEnv
+	if outboundRule.Cluster != "" {
+		outboundEnv = outboundRule.Cluster
 	}
-	ns := originatingTeam
-	if rule.Namespace != "" {
-		ns = rule.Namespace
+	outboundTeam := oTeam
+	if outboundRule.Namespace != "" {
+		outboundTeam = outboundRule.Namespace
 	}
-	appName := rule.Application
 
-	_, ok := c.informers[cluster]
+	_, ok := c.informers[outboundEnv]
 	if !ok {
-		c.log.Warn("no informer for cluster ", cluster)
+		c.log.Warn("no informers for cluster ", outboundEnv)
 		return false, nil
 	}
 
-	obj, err := c.informers[cluster].AppInformer.Lister().ByNamespace(ns).Get(appName)
+	if c.informers[outboundEnv].AppInformer == nil {
+		c.log.Warn("no app informer for cluster ", outboundEnv)
+		return false, nil
+	}
+
+	obj, err := c.informers[outboundEnv].AppInformer.Lister().ByNamespace(outboundTeam).Get(outboundRule.Application)
 	if err != nil {
-		c.log.Warn("getting application in setHasMutualOnInbound: ", err)
+		c.log.Warnf("get application %s:%s in %s: %v", outboundTeam, outboundRule.Application, outboundEnv, err)
 		return false, nil
 	}
 
-	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), cluster)
+	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), outboundEnv)
 	if err != nil {
 		return false, c.error(ctx, err, "converting to app")
 	}
 
-	for _, inboundRule := range app.AccessPolicy.Inbound.Rules {
-		if inboundRule.Cluster != "" && rule.Cluster == inboundRule.Cluster {
+	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
+		if inboundRuleOnOutboundApp.Cluster != "" && oEnv != inboundRuleOnOutboundApp.Cluster {
 			continue
 		}
-		if inboundRule.Namespace != "" && rule.Namespace == inboundRule.Namespace {
+
+		if inboundRuleOnOutboundApp.Namespace != "" && oTeam != inboundRuleOnOutboundApp.Namespace {
 			continue
 		}
-		if inboundRule.Application == originatingApp {
-			rule.Mutual = true
+		if inboundRuleOnOutboundApp.Application == oApp {
+			outboundRule.Mutual = true
 			return true, nil
 		}
 	}
@@ -192,43 +197,47 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, originatingApp, ori
 	return false, nil
 }
 
-func (c *Client) setHasMutualOnInbound(ctx context.Context, originatingApp, originatingTeam, originatingEnv string, rule *model.Rule) (bool, error) {
-	cluster := originatingEnv
-	if rule.Cluster != "" {
-		cluster = rule.Cluster
+func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule *model.Rule) (bool, error) {
+	inboundEnv := oEnv
+	if inboundRule.Cluster != "" {
+		inboundEnv = inboundRule.Cluster
 	}
-	ns := originatingTeam
-	if rule.Namespace != "" {
-		ns = rule.Namespace
+	inboundTeam := oTeam
+	if inboundRule.Namespace != "" {
+		inboundTeam = inboundRule.Namespace
 	}
-	appName := rule.Application
 
-	_, ok := c.informers[cluster]
+	_, ok := c.informers[inboundEnv]
 	if !ok {
-		c.log.Warn("no informer for cluster ", cluster)
+		c.log.Warn("no informers for cluster ", inboundEnv)
 		return false, nil
 	}
 
-	obj, err := c.informers[cluster].AppInformer.Lister().ByNamespace(ns).Get(appName)
+	if c.informers[inboundEnv].AppInformer == nil {
+		c.log.Warn("no app informer for cluster ", inboundEnv)
+		return false, nil
+	}
+
+	obj, err := c.informers[inboundEnv].AppInformer.Lister().ByNamespace(inboundTeam).Get(inboundRule.Application)
 	if err != nil {
-		c.log.Warn("getting application in setHasMutualOnInbound: ", err)
+		c.log.Warnf("get application %s:%s in %s: %v", inboundTeam, inboundRule.Application, inboundEnv, err)
 		return false, nil
 	}
 
-	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), cluster)
+	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), inboundEnv)
 	if err != nil {
 		return false, c.error(ctx, err, "converting to app")
 	}
 
-	for _, outboundRule := range app.AccessPolicy.Outbound.Rules {
-		if outboundRule.Cluster != "" && rule.Cluster == outboundRule.Cluster {
+	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
+		if outboundRuleOnInboundApp.Cluster != "" && oEnv != outboundRuleOnInboundApp.Cluster {
 			continue
 		}
-		if outboundRule.Namespace != "" && rule.Namespace == outboundRule.Namespace {
+		if outboundRuleOnInboundApp.Namespace != "" && oTeam != outboundRuleOnInboundApp.Namespace {
 			continue
 		}
-		if outboundRule.Application == originatingApp {
-			rule.Mutual = true
+		if outboundRuleOnInboundApp.Application == oApp {
+			inboundRule.Mutual = true
 			return true, nil
 		}
 	}
