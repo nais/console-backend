@@ -161,17 +161,20 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 	_, ok := c.informers[outboundEnv]
 	if !ok {
 		c.log.Warn("no informers for cluster ", outboundEnv)
+		outboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
 		return false, nil
 	}
 
 	if c.informers[outboundEnv].AppInformer == nil {
 		c.log.Warn("no app informer for cluster ", outboundEnv)
+		outboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
 		return false, nil
 	}
 
 	obj, err := c.informers[outboundEnv].AppInformer.Lister().ByNamespace(outboundTeam).Get(outboundRule.Application)
 	if err != nil {
 		c.log.Warnf("get application %s:%s in %s: %v", outboundTeam, outboundRule.Application, outboundEnv, err)
+		outboundRule.MutualExplanation = "APP_NOT_FOUND"
 		return false, nil
 	}
 
@@ -182,10 +185,11 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 
 	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
 		if inboundRuleOnOutboundApp.Cluster != "" && oEnv != inboundRuleOnOutboundApp.Cluster {
+			outboundRule.MutualExplanation = "CLUSTER_MISMATCH"
 			continue
 		}
-
 		if inboundRuleOnOutboundApp.Namespace != "" && oTeam != inboundRuleOnOutboundApp.Namespace {
+			outboundRule.MutualExplanation = "TEAM_MISMATCH"
 			continue
 		}
 		if inboundRuleOnOutboundApp.Application == oApp {
@@ -210,17 +214,20 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 	_, ok := c.informers[inboundEnv]
 	if !ok {
 		c.log.Warn("no informers for cluster ", inboundEnv)
+		inboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
 		return false, nil
 	}
 
 	if c.informers[inboundEnv].AppInformer == nil {
 		c.log.Warn("no app informer for cluster ", inboundEnv)
+		inboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
 		return false, nil
 	}
 
 	obj, err := c.informers[inboundEnv].AppInformer.Lister().ByNamespace(inboundTeam).Get(inboundRule.Application)
 	if err != nil {
 		c.log.Warnf("get application %s:%s in %s: %v", inboundTeam, inboundRule.Application, inboundEnv, err)
+		inboundRule.MutualExplanation = "APP_NOT_FOUND"
 		return false, nil
 	}
 
@@ -231,9 +238,11 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 
 	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
 		if outboundRuleOnInboundApp.Cluster != "" && oEnv != outboundRuleOnInboundApp.Cluster {
+			inboundRule.MutualExplanation = "CLUSTER_MISMATCH"
 			continue
 		}
 		if outboundRuleOnInboundApp.Namespace != "" && oTeam != outboundRuleOnInboundApp.Namespace {
+			inboundRule.MutualExplanation = "TEAM_MISMATCH"
 			continue
 		}
 		if outboundRuleOnInboundApp.Application == oApp {

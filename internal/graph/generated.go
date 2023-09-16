@@ -455,10 +455,11 @@ type ComplexityRoot struct {
 	}
 
 	Rule struct {
-		Application func(childComplexity int) int
-		Cluster     func(childComplexity int) int
-		Mutual      func(childComplexity int) int
-		Namespace   func(childComplexity int) int
+		Application       func(childComplexity int) int
+		Cluster           func(childComplexity int) int
+		Mutual            func(childComplexity int) int
+		MutualExplanation func(childComplexity int) int
+		Namespace         func(childComplexity int) int
 	}
 
 	Run struct {
@@ -2234,6 +2235,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Rule.Mutual(childComplexity), true
+
+	case "Rule.mutualExplanation":
+		if e.complexity.Rule.MutualExplanation == nil {
+			break
+		}
+
+		return e.complexity.Rule.MutualExplanation(childComplexity), true
 
 	case "Rule.namespace":
 		if e.complexity.Rule.Namespace == nil {
@@ -9708,6 +9716,8 @@ func (ec *executionContext) fieldContext_Inbound_rules(ctx context.Context, fiel
 				return ec.fieldContext_Rule_cluster(ctx, field)
 			case "mutual":
 				return ec.fieldContext_Rule_mutual(ctx, field)
+			case "mutualExplanation":
+				return ec.fieldContext_Rule_mutualExplanation(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
 		},
@@ -9850,6 +9860,8 @@ func (ec *executionContext) fieldContext_InboundAccessError_rule(ctx context.Con
 				return ec.fieldContext_Rule_cluster(ctx, field)
 			case "mutual":
 				return ec.fieldContext_Rule_mutual(ctx, field)
+			case "mutualExplanation":
+				return ec.fieldContext_Rule_mutualExplanation(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
 		},
@@ -12595,6 +12607,8 @@ func (ec *executionContext) fieldContext_Outbound_rules(ctx context.Context, fie
 				return ec.fieldContext_Rule_cluster(ctx, field)
 			case "mutual":
 				return ec.fieldContext_Rule_mutual(ctx, field)
+			case "mutualExplanation":
+				return ec.fieldContext_Rule_mutualExplanation(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
 		},
@@ -12787,6 +12801,8 @@ func (ec *executionContext) fieldContext_OutboundAccessError_rule(ctx context.Co
 				return ec.fieldContext_Rule_cluster(ctx, field)
 			case "mutual":
 				return ec.fieldContext_Rule_mutual(ctx, field)
+			case "mutualExplanation":
+				return ec.fieldContext_Rule_mutualExplanation(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Rule", field.Name)
 		},
@@ -14140,6 +14156,50 @@ func (ec *executionContext) fieldContext_Rule_mutual(ctx context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Rule_mutualExplanation(ctx context.Context, field graphql.CollectedField, obj *model.Rule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Rule_mutualExplanation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MutualExplanation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Rule_mutualExplanation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Rule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23297,6 +23357,11 @@ func (ec *executionContext) _Rule(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "mutual":
 			out.Values[i] = ec._Rule_mutual(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mutualExplanation":
+			out.Values[i] = ec._Rule_mutualExplanation(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

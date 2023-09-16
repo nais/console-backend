@@ -395,10 +395,11 @@ type Resources struct {
 }
 
 type Rule struct {
-	Application string `json:"application"`
-	Namespace   string `json:"namespace"`
-	Cluster     string `json:"cluster"`
-	Mutual      bool   `json:"mutual"`
+	Application       string `json:"application"`
+	Namespace         string `json:"namespace"`
+	Cluster           string `json:"cluster"`
+	Mutual            bool   `json:"mutual"`
+	MutualExplanation string `json:"mutualExplanation"`
 }
 
 type SearchConnection struct {
