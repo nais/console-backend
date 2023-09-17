@@ -235,6 +235,7 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 	if inboundRule.Cluster != "" {
 		inboundEnv = inboundRule.Cluster
 	}
+
 	inboundTeam := oTeam
 	if inboundRule.Namespace != "" {
 		inboundTeam = inboundRule.Namespace
@@ -287,15 +288,13 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 
 	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
 		if outboundRuleOnInboundApp.Cluster != "" {
-			if outboundRuleOnInboundApp.Cluster != "*" || oEnv != outboundRuleOnInboundApp.Cluster {
-				inboundRule.MutualExplanation = "MUTUAL_OUTBOUND_MISSING"
+			if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
 				continue
 			}
 		}
 
 		if outboundRuleOnInboundApp.Namespace != "" {
-			if outboundRuleOnInboundApp.Namespace != "*" || oTeam != outboundRuleOnInboundApp.Namespace {
-				inboundRule.MutualExplanation = "MUTUAL_OUTBOUND_MISSING"
+			if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
 				continue
 			}
 		}
