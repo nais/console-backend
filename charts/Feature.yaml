@@ -1,5 +1,8 @@
 environmentKinds:
   - management
+dependencies:
+  - allOf:
+      - fqdn-policy
 values:
   kubernetes.static:
     displayName: static cluster
