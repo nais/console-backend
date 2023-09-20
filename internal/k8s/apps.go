@@ -175,7 +175,7 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 		return nil
 	}
 
-	_, ok := c.informers[outboundEnv]
+	inf, ok := c.informers[outboundEnv]
 	if !ok {
 		c.log.Warn("no informers for cluster ", outboundEnv)
 		outboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
@@ -183,14 +183,14 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 		return nil
 	}
 
-	if c.informers[outboundEnv].AppInformer == nil {
+	if inf.AppInformer == nil {
 		c.log.Warn("no app informer for cluster ", outboundEnv)
 		outboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
 		outboundRule.Mutual = false
 		return nil
 	}
 
-	obj, err := c.informers[outboundEnv].AppInformer.Lister().ByNamespace(outboundTeam).Get(outboundRule.Application)
+	obj, err := inf.AppInformer.Lister().ByNamespace(outboundTeam).Get(outboundRule.Application)
 	if err != nil {
 		c.log.Warnf("get application %s:%s in %s: %v", outboundTeam, outboundRule.Application, outboundEnv, err)
 		outboundRule.MutualExplanation = "APP_NOT_FOUND"
@@ -258,7 +258,7 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 		return nil
 	}
 
-	_, ok := c.informers[inboundEnv]
+	inf, ok := c.informers[inboundEnv]
 	if !ok {
 		c.log.Warn("no informers for cluster ", inboundEnv)
 		inboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
@@ -266,14 +266,14 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 		return nil
 	}
 
-	if c.informers[inboundEnv].AppInformer == nil {
+	if inf.AppInformer == nil {
 		c.log.Warn("no app informer for cluster ", inboundEnv)
 		inboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
 		inboundRule.Mutual = true
 		return nil
 	}
 
-	obj, err := c.informers[inboundEnv].AppInformer.Lister().ByNamespace(inboundTeam).Get(inboundRule.Application)
+	obj, err := inf.AppInformer.Lister().ByNamespace(inboundTeam).Get(inboundRule.Application)
 	if err != nil {
 		c.log.Warnf("get application %s:%s in %s: %v", inboundTeam, inboundRule.Application, inboundEnv, err)
 		inboundRule.MutualExplanation = "APP_NOT_FOUND"
