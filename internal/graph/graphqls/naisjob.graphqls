@@ -1,4 +1,4 @@
-type NaisJobConnection {
+type NaisJobConnection implements Connection {
   edges: [NaisJobEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!

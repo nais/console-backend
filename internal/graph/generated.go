@@ -19571,10 +19571,70 @@ func (ec *executionContext) _Authz(ctx context.Context, sel ast.SelectionSet, ob
 	}
 }
 
+func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSet, obj model.Connection) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.AppConnection:
+		return ec._AppConnection(ctx, sel, &obj)
+	case *model.AppConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AppConnection(ctx, sel, obj)
+	case model.DeploymentConnection:
+		return ec._DeploymentConnection(ctx, sel, &obj)
+	case *model.DeploymentConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DeploymentConnection(ctx, sel, obj)
+	case model.NaisJobConnection:
+		return ec._NaisJobConnection(ctx, sel, &obj)
+	case *model.NaisJobConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._NaisJobConnection(ctx, sel, obj)
+	case model.SearchConnection:
+		return ec._SearchConnection(ctx, sel, &obj)
+	case *model.SearchConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SearchConnection(ctx, sel, obj)
+	case model.TeamConnection:
+		return ec._TeamConnection(ctx, sel, &obj)
+	case *model.TeamConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TeamConnection(ctx, sel, obj)
+	case model.TeamMemberConnection:
+		return ec._TeamMemberConnection(ctx, sel, &obj)
+	case *model.TeamMemberConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TeamMemberConnection(ctx, sel, obj)
+	case model.GithubRepositoryConnection:
+		return ec._GithubRepositoryConnection(ctx, sel, &obj)
+	case *model.GithubRepositoryConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._GithubRepositoryConnection(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 func (ec *executionContext) _DeploymentResponse(ctx context.Context, sel ast.SelectionSet, obj model.DeploymentResponse) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case model.DeploymentConnection:
+		return ec._DeploymentConnection(ctx, sel, &obj)
 	case *model.DeploymentConnection:
 		if obj == nil {
 			return graphql.Null
@@ -20098,7 +20158,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
-var appConnectionImplementors = []string{"AppConnection"}
+var appConnectionImplementors = []string{"AppConnection", "Connection"}
 
 func (ec *executionContext) _AppConnection(ctx context.Context, sel ast.SelectionSet, obj *model.AppConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, appConnectionImplementors)
@@ -20867,7 +20927,7 @@ func (ec *executionContext) _Deployment(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var deploymentConnectionImplementors = []string{"DeploymentConnection", "DeploymentResponse"}
+var deploymentConnectionImplementors = []string{"DeploymentConnection", "Connection", "DeploymentResponse"}
 
 func (ec *executionContext) _DeploymentConnection(ctx context.Context, sel ast.SelectionSet, obj *model.DeploymentConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deploymentConnectionImplementors)
@@ -21516,7 +21576,7 @@ func (ec *executionContext) _GithubRepository(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var githubRepositoryConnectionImplementors = []string{"GithubRepositoryConnection"}
+var githubRepositoryConnectionImplementors = []string{"GithubRepositoryConnection", "Connection"}
 
 func (ec *executionContext) _GithubRepositoryConnection(ctx context.Context, sel ast.SelectionSet, obj *model.GithubRepositoryConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, githubRepositoryConnectionImplementors)
@@ -22536,7 +22596,7 @@ func (ec *executionContext) _NaisJob(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var naisJobConnectionImplementors = []string{"NaisJobConnection"}
+var naisJobConnectionImplementors = []string{"NaisJobConnection", "Connection"}
 
 func (ec *executionContext) _NaisJobConnection(ctx context.Context, sel ast.SelectionSet, obj *model.NaisJobConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, naisJobConnectionImplementors)
@@ -23461,7 +23521,7 @@ func (ec *executionContext) _Run(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
-var searchConnectionImplementors = []string{"SearchConnection"}
+var searchConnectionImplementors = []string{"SearchConnection", "Connection"}
 
 func (ec *executionContext) _SearchConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SearchConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, searchConnectionImplementors)
@@ -24119,7 +24179,7 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var teamConnectionImplementors = []string{"TeamConnection"}
+var teamConnectionImplementors = []string{"TeamConnection", "Connection"}
 
 func (ec *executionContext) _TeamConnection(ctx context.Context, sel ast.SelectionSet, obj *model.TeamConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, teamConnectionImplementors)
@@ -24266,7 +24326,7 @@ func (ec *executionContext) _TeamMember(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var teamMemberConnectionImplementors = []string{"TeamMemberConnection"}
+var teamMemberConnectionImplementors = []string{"TeamMemberConnection", "Connection"}
 
 func (ec *executionContext) _TeamMemberConnection(ctx context.Context, sel ast.SelectionSet, obj *model.TeamMemberConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, teamMemberConnectionImplementors)

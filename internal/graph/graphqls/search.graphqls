@@ -1,4 +1,4 @@
-type SearchConnection {
+type SearchConnection implements Connection {
   edges: [SearchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!

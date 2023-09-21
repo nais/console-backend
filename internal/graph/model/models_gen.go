@@ -13,6 +13,15 @@ type Authz interface {
 	IsAuthz()
 }
 
+// Connection interface.
+type Connection interface {
+	IsConnection()
+	// The total count of items in the connection.
+	GetTotalCount() int
+	// Pagination information.
+	GetPageInfo() *PageInfo
+}
+
 type DeploymentResponse interface {
 	IsDeploymentResponse()
 }
@@ -50,6 +59,14 @@ type AppConnection struct {
 	PageInfo   *PageInfo  `json:"pageInfo"`
 	Edges      []*AppEdge `json:"edges"`
 }
+
+func (AppConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this AppConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this AppConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
 type AppEdge struct {
 	Cursor Cursor `json:"cursor"`
@@ -128,6 +145,22 @@ type Database struct {
 type DatabaseUser struct {
 	Name string `json:"name"`
 }
+
+type DeploymentConnection struct {
+	TotalCount int               `json:"totalCount"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	Edges      []*DeploymentEdge `json:"edges"`
+}
+
+func (DeploymentConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this DeploymentConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this DeploymentConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+
+func (DeploymentConnection) IsDeploymentResponse() {}
 
 type DeploymentEdge struct {
 	Cursor Cursor      `json:"cursor"`
@@ -213,6 +246,14 @@ type GithubRepositoryConnection struct {
 	// A list of GitHub repository edges.
 	Edges []*GithubRepositoryEdge `json:"edges"`
 }
+
+func (GithubRepositoryConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this GithubRepositoryConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this GithubRepositoryConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
 // GitHub repository edge type.
 type GithubRepositoryEdge struct {
@@ -332,6 +373,14 @@ type NaisJobConnection struct {
 	TotalCount int            `json:"totalCount"`
 }
 
+func (NaisJobConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this NaisJobConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this NaisJobConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+
 type NaisJobEdge struct {
 	Cursor Cursor   `json:"cursor"`
 	Node   *NaisJob `json:"node"`
@@ -408,6 +457,14 @@ type SearchConnection struct {
 	TotalCount int           `json:"totalCount"`
 }
 
+func (SearchConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this SearchConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this SearchConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+
 type SearchEdge struct {
 	Node   SearchNode `json:"node"`
 	Cursor Cursor     `json:"cursor"`
@@ -464,6 +521,14 @@ type TeamConnection struct {
 	Edges []*TeamEdge `json:"edges"`
 }
 
+func (TeamConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this TeamConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this TeamConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+
 // Team edge type.
 type TeamEdge struct {
 	// A cursor for use in pagination.
@@ -481,6 +546,14 @@ type TeamMemberConnection struct {
 	// A list of team member edges.
 	Edges []*TeamMemberEdge `json:"edges"`
 }
+
+func (TeamMemberConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this TeamMemberConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this TeamMemberConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
 // Team member edge type.
 type TeamMemberEdge struct {

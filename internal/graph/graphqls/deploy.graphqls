@@ -1,4 +1,4 @@
-type DeploymentConnection {
+type DeploymentConnection implements Connection {
   totalCount: Int!
   pageInfo: PageInfo!
   edges: [DeploymentEdge!]!

@@ -1,4 +1,4 @@
-type AppConnection {
+type AppConnection implements Connection {
   totalCount: Int!
   pageInfo: PageInfo!
   edges: [AppEdge!]!

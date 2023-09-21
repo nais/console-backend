@@ -30,7 +30,7 @@ extend type Mutation {
 }
 
 "Team connection type."
-type TeamConnection {
+type TeamConnection implements Connection {
     "The total count of available teams."
     totalCount: Int!
 
@@ -51,7 +51,7 @@ type TeamEdge {
 }
 
 "Team member connection type."
-type TeamMemberConnection {
+type TeamMemberConnection implements Connection {
     "The total count of available team members."
     totalCount: Int!
 
@@ -120,7 +120,7 @@ type DeploymentKey implements Node {
 }
 
 "GitHub repository connection type."
-type GithubRepositoryConnection {
+type GithubRepositoryConnection implements Connection {
     "The total count of available GitHub repositories."
     totalCount: Int!
 

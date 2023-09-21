@@ -15,14 +15,6 @@ type Deployment struct {
 	Repository string                `json:"repository"`
 }
 
-type DeploymentConnection struct {
-	TotalCount int               `json:"totalCount"`
-	PageInfo   *PageInfo         `json:"pageInfo"`
-	Edges      []*DeploymentEdge `json:"edges"`
-}
-
-func (d *DeploymentConnection) IsDeploymentResponse() {}
-
 type DeploymentResource struct {
 	ID        string `json:"id"`
 	Group     string `json:"group"`

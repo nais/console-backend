@@ -16,6 +16,15 @@ interface Node {
     id: ID!
 }
 
+"Connection interface."
+interface Connection {
+    "The total count of items in the connection."
+    totalCount: Int!
+
+    "Pagination information."
+    pageInfo: PageInfo!
+}
+
 "PageInfo is a type that contains pagination information in a Relay style."
 type PageInfo {
     "When paginating forwards, are there more items?"
