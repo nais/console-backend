@@ -4,15 +4,12 @@ import (
 	"net/http"
 )
 
-type Transport struct {
-	PSK string
+type httpClient struct {
+	client *http.Client
+	psk    string
 }
 
-func (t Transport) Client() *http.Client {
-	return &http.Client{Transport: t}
-}
-
-func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("X-PSK", t.PSK)
-	return http.DefaultTransport.RoundTrip(req)
+func (c *httpClient) Do(req *http.Request) (*http.Response, error) {
+	req.Header.Set("X-PSK", c.psk)
+	return c.client.Do(req)
 }

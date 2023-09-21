@@ -17,20 +17,21 @@ import (
 )
 
 type Client struct {
-	psk        string
 	endpoint   string
-	httpClient *http.Client
+	httpClient *httpClient
 	log        *logrus.Entry
 	errors     api.Int64Counter
 }
 
 func New(psk, endpoint string, errors api.Int64Counter, log *logrus.Entry) *Client {
 	return &Client{
-		psk:        psk,
-		endpoint:   endpoint,
-		httpClient: Transport{PSK: psk}.Client(),
-		log:        log,
-		errors:     errors,
+		endpoint: endpoint,
+		httpClient: &httpClient{
+			client: &http.Client{},
+			psk:    psk,
+		},
+		log:    log,
+		errors: errors,
 	}
 }
 
