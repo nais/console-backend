@@ -212,7 +212,7 @@ func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error)
 }
 
 func (c *Client) error(ctx context.Context, err error, msg string) error {
-	c.errors.Add(context.Background(), 1, api.WithAttributes(attribute.String("component", "hookd-client")))
+	c.errors.Add(ctx, 1, api.WithAttributes(attribute.String("component", "hookd-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
 }

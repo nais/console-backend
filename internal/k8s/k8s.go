@@ -303,8 +303,8 @@ func convert(m any, target any) error {
 	return nil
 }
 
-func (c *Client) error(_ context.Context, err error, msg string) error {
-	c.errors.Add(context.Background(), 1, metric.WithAttributes(attribute.String("component", "k8s-client")))
+func (c *Client) error(ctx context.Context, err error, msg string) error {
+	c.errors.Add(ctx, 1, metric.WithAttributes(attribute.String("component", "k8s-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
 }
