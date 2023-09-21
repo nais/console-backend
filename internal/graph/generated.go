@@ -327,6 +327,11 @@ type ComplexityRoot struct {
 		Revision func(childComplexity int) int
 	}
 
+	JobState struct {
+		Errors func(childComplexity int) int
+		State  func(childComplexity int) int
+	}
+
 	Kafka struct {
 		Name    func(childComplexity int) int
 		Streams func(childComplexity int) int
@@ -371,6 +376,7 @@ type ComplexityRoot struct {
 		Env          func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Image        func(childComplexity int) int
+		JobState     func(childComplexity int) int
 		Manifest     func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Parallelism  func(childComplexity int) int
@@ -1706,6 +1712,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.InvalidNaisYamlError.Revision(childComplexity), true
 
+	case "JobState.errors":
+		if e.complexity.JobState.Errors == nil {
+			break
+		}
+
+		return e.complexity.JobState.Errors(childComplexity), true
+
+	case "JobState.state":
+		if e.complexity.JobState.State == nil {
+			break
+		}
+
+		return e.complexity.JobState.State(childComplexity), true
+
 	case "Kafka.name":
 		if e.complexity.Kafka.Name == nil {
 			break
@@ -1864,6 +1884,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.NaisJob.Image(childComplexity), true
+
+	case "NaisJob.jobState":
+		if e.complexity.NaisJob.JobState == nil {
+			break
+		}
+
+		return e.complexity.NaisJob.JobState(childComplexity), true
 
 	case "NaisJob.manifest":
 		if e.complexity.NaisJob.Manifest == nil {
@@ -10485,6 +10512,94 @@ func (ec *executionContext) fieldContext_InvalidNaisYamlError_detail(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _JobState_state(ctx context.Context, field graphql.CollectedField, obj *model.JobState) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobState_state(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.State, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.State)
+	fc.Result = res
+	return ec.marshalNState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobState_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobState",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type State does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobState_errors(ctx context.Context, field graphql.CollectedField, obj *model.JobState) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobState_errors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Errors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.StateError)
+	fc.Result = res
+	return ec.marshalNStateError2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐStateErrorᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobState_errors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobState",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Kafka_name(ctx context.Context, field graphql.CollectedField, obj *model.Kafka) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Kafka_name(ctx, field)
 	if err != nil {
@@ -11978,6 +12093,56 @@ func (ec *executionContext) fieldContext_NaisJob_retries(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _NaisJob_jobState(ctx context.Context, field graphql.CollectedField, obj *model.NaisJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NaisJob_jobState(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobState, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.JobState)
+	fc.Result = res
+	return ec.marshalNJobState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐJobState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NaisJob_jobState(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NaisJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "state":
+				return ec.fieldContext_JobState_state(ctx, field)
+			case "errors":
+				return ec.fieldContext_JobState_errors(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JobState", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _NaisJobConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.NaisJobConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NaisJobConnection_totalCount(ctx, field)
 	if err != nil {
@@ -12245,6 +12410,8 @@ func (ec *executionContext) fieldContext_NaisJobEdge_node(ctx context.Context, f
 				return ec.fieldContext_NaisJob_parallelism(ctx, field)
 			case "retries":
 				return ec.fieldContext_NaisJob_retries(ctx, field)
+			case "jobState":
+				return ec.fieldContext_NaisJob_jobState(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NaisJob", field.Name)
 		},
@@ -13387,6 +13554,8 @@ func (ec *executionContext) fieldContext_Query_naisjob(ctx context.Context, fiel
 				return ec.fieldContext_NaisJob_parallelism(ctx, field)
 			case "retries":
 				return ec.fieldContext_NaisJob_retries(ctx, field)
+			case "jobState":
+				return ec.fieldContext_NaisJob_jobState(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NaisJob", field.Name)
 		},
@@ -22124,6 +22293,50 @@ func (ec *executionContext) _InvalidNaisYamlError(ctx context.Context, sel ast.S
 	return out
 }
 
+var jobStateImplementors = []string{"JobState"}
+
+func (ec *executionContext) _JobState(ctx context.Context, sel ast.SelectionSet, obj *model.JobState) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jobStateImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobState")
+		case "state":
+			out.Values[i] = ec._JobState_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errors":
+			out.Values[i] = ec._JobState_errors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var kafkaImplementors = []string{"Kafka", "Storage"}
 
 func (ec *executionContext) _Kafka(ctx context.Context, sel ast.SelectionSet, obj *model.Kafka) graphql.Marshaler {
@@ -22628,6 +22841,11 @@ func (ec *executionContext) _NaisJob(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "retries":
 			out.Values[i] = ec._NaisJob_retries(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "jobState":
+			out.Values[i] = ec._NaisJob_jobState(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -26132,6 +26350,10 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNJobState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐJobState(ctx context.Context, sel ast.SelectionSet, v model.JobState) graphql.Marshaler {
+	return ec._JobState(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNLimits2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐLimits(ctx context.Context, sel ast.SelectionSet, v *model.Limits) graphql.Marshaler {

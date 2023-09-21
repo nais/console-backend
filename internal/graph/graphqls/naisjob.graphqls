@@ -21,6 +21,11 @@ type Run implements Node {
   failed: Boolean!
 }
 
+type JobState {
+  state: State!
+  errors: [StateError!]!
+}
+
 type NaisJob implements Node {
   id: ID!
   accessPolicy: AccessPolicy!
@@ -38,6 +43,7 @@ type NaisJob implements Node {
   completions: Int!
   parallelism: Int!
   retries: Int!
+  jobState: JobState!
 }
 
 extend type Query {

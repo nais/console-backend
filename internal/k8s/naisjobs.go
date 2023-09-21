@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -11,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +34,20 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 		return nil, c.error(ctx, err, "converting to job")
 	}
 
+	for _, rule := range job.AccessPolicy.Outbound.Rules {
+		err = c.setJobHasMutualOnOutbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual")
+		}
+	}
+
+	for _, rule := range job.AccessPolicy.Inbound.Rules {
+		err = c.setJobHasMutualOnInbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual")
+		}
+	}
+
 	topics, err := c.getTopics(ctx, name, team, env)
 	if err != nil {
 		return nil, c.error(ctx, err, "getting topics")
@@ -44,7 +60,223 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 
 	job.Storage = storage
 
+	runs, err := c.Runs(ctx, team, env, name)
+	if err != nil {
+		return nil, c.error(ctx, err, "getting runs")
+	}
+
+	tmpJob := &naisv1.Naisjob{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpJob); err != nil {
+		return nil, fmt.Errorf("converting to application: %w", err)
+	}
+
+	setJobStatus(job, *tmpJob.Status.Conditions, runs)
+
 	return job, nil
+}
+
+func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv string, outboundRule *model.Rule) error {
+	outboundEnv := oEnv
+	if outboundRule.Cluster != "" {
+		outboundEnv = outboundRule.Cluster
+	}
+	outboundTeam := oTeam
+	if outboundRule.Namespace != "" {
+		outboundTeam = outboundRule.Namespace
+	}
+
+	if outboundRule.Application == "*" {
+		outboundRule.Mutual = true
+		return nil
+	}
+
+	noZeroTrust := checkNoZeroTrust(oEnv, outboundRule)
+	if noZeroTrust {
+		return nil
+	}
+
+	inf := c.getAppInformer(outboundEnv, outboundRule)
+	if inf == nil {
+		return nil
+	}
+
+	app, err := c.getApp(ctx, inf, outboundTeam, outboundRule, outboundEnv)
+	if app == nil {
+		return err
+	}
+
+	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
+		if inboundRuleOnOutboundApp.Cluster != "" {
+			if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
+				continue
+			}
+		}
+
+		if inboundRuleOnOutboundApp.Namespace != "" {
+			if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
+				continue
+			}
+		}
+
+		if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
+			outboundRule.Mutual = true
+			return nil
+		}
+	}
+
+	outboundRule.Mutual = false
+	outboundRule.MutualExplanation = "RULE_NOT_FOUND"
+
+	return nil
+}
+
+func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule *model.Rule) error {
+	inboundEnv := oEnv
+	if inboundRule.Cluster != "" {
+		inboundEnv = inboundRule.Cluster
+	}
+
+	inboundTeam := oTeam
+	if inboundRule.Namespace != "" {
+		inboundTeam = inboundRule.Namespace
+	}
+
+	if inboundRule.Application == "*" {
+		inboundRule.Mutual = true
+		return nil
+	}
+
+	noZeroTrust := checkNoZeroTrust(oEnv, inboundRule)
+	if noZeroTrust {
+		return nil
+	}
+
+	inf := c.getAppInformer(inboundEnv, inboundRule)
+	if inf == nil {
+		return nil
+	}
+
+	app, err := c.getApp(ctx, inf, inboundTeam, inboundRule, inboundEnv)
+	if app == nil {
+		return err
+	}
+
+	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
+		if outboundRuleOnInboundApp.Cluster != "" {
+			if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
+				continue
+			}
+		}
+
+		if outboundRuleOnInboundApp.Namespace != "" {
+			if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
+				continue
+			}
+		}
+
+		if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
+			inboundRule.Mutual = true
+			return nil
+		}
+	}
+
+	inboundRule.Mutual = false
+	inboundRule.MutualExplanation = "RULE_NOT_FOUND"
+	return nil
+}
+
+func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*model.Run) {
+	currentCondition := getCurrentCondition(conditions)
+	failing := failedJobs(runs)
+	jobState := model.JobState{
+		State:  model.StateNais,
+		Errors: []model.StateError{},
+	}
+
+	switch currentCondition {
+	case AppConditionFailedSynchronization:
+		jobState.Errors = append(jobState.Errors, &model.InvalidNaisYamlError{
+			Revision: job.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelWarning,
+			Detail:   "Invalid nais.yaml",
+		})
+		jobState.State = model.StateNotnais
+
+	}
+
+	if len(runs) == 0 || failing == len(runs) {
+		jobState.Errors = append(jobState.Errors, &model.NoRunningInstancesError{
+			Revision: job.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelError,
+		})
+		jobState.State = model.StateFailing
+	}
+
+	if !strings.Contains(job.Image, "europe-north1-docker.pkg.dev") {
+		parts := strings.Split(job.Image, ":")
+		tag := "unknown"
+		if len(parts) > 1 {
+			tag = parts[1]
+		}
+		parts = strings.Split(parts[0], "/")
+		registry := parts[0]
+		name := parts[len(parts)-1]
+		repository := ""
+		if len(parts) > 2 {
+			repository = strings.Join(parts[1:len(parts)-1], "/")
+		} else {
+			repository = "confusus"
+		}
+		jobState.Errors = append(jobState.Errors, &model.DeprecatedRegistryError{
+			Revision:   job.DeployInfo.CommitSha,
+			Level:      model.ErrorLevelWarning,
+			Registry:   registry,
+			Name:       name,
+			Tag:        tag,
+			Repository: repository,
+		})
+		if jobState.State != model.StateFailing {
+			jobState.State = model.StateNotnais
+		}
+	}
+
+	for _, rule := range job.AccessPolicy.Inbound.Rules {
+		if !rule.Mutual {
+			jobState.Errors = append(jobState.Errors, &model.InboundAccessError{
+				Revision: job.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if jobState.State != model.StateFailing {
+				jobState.State = model.StateNotnais
+			}
+		}
+	}
+
+	for _, rule := range job.AccessPolicy.Outbound.Rules {
+		if !rule.Mutual {
+			jobState.Errors = append(jobState.Errors, &model.OutboundAccessError{
+				Revision: job.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if jobState.State != model.StateFailing {
+				jobState.State = model.StateNotnais
+			}
+		}
+	}
+
+	job.JobState = jobState
+}
+
+func failedJobs(runs []*model.Run) int {
+	ret := 0
+	for _, run := range runs {
+		if run.Failed {
+			ret++
+		}
+	}
+	return ret
 }
 
 func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, error) {

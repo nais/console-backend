@@ -381,6 +381,11 @@ func (InvalidNaisYamlError) IsStateError()             {}
 func (this InvalidNaisYamlError) GetRevision() string  { return this.Revision }
 func (this InvalidNaisYamlError) GetLevel() ErrorLevel { return this.Level }
 
+type JobState struct {
+	State  State        `json:"state"`
+	Errors []StateError `json:"errors"`
+}
+
 type Kafka struct {
 	// The kafka pool name
 	Name    string   `json:"name"`

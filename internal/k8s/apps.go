@@ -683,6 +683,7 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 		}
 	}
 
+	// Fjerne denna?
 	if currentCondition == AppConditionRolloutComplete && failing == 0 {
 		if appState.State != model.StateFailing && appState.State != model.StateNotnais {
 			appState.State = model.StateNais
