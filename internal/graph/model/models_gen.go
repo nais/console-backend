@@ -20,10 +20,19 @@ type Connection interface {
 	GetTotalCount() int
 	// Pagination information.
 	GetPageInfo() *PageInfo
+	// A list of edges.
+	GetEdges() []Edge
 }
 
 type DeploymentResponse interface {
 	IsDeploymentResponse()
+}
+
+// Edge interface.
+type Edge interface {
+	IsEdge()
+	// A cursor for use in pagination.
+	GetCursor() Cursor
 }
 
 // Node interface.
@@ -68,10 +77,27 @@ func (this AppConnection) GetTotalCount() int { return this.TotalCount }
 // Pagination information.
 func (this AppConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
+// A list of edges.
+func (this AppConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
 type AppEdge struct {
 	Cursor Cursor `json:"cursor"`
 	Node   *App   `json:"node"`
 }
+
+func (AppEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this AppEdge) GetCursor() Cursor { return this.Cursor }
 
 type AppState struct {
 	State  State        `json:"state"`
@@ -160,12 +186,29 @@ func (this DeploymentConnection) GetTotalCount() int { return this.TotalCount }
 // Pagination information.
 func (this DeploymentConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
+// A list of edges.
+func (this DeploymentConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
 func (DeploymentConnection) IsDeploymentResponse() {}
 
 type DeploymentEdge struct {
 	Cursor Cursor      `json:"cursor"`
 	Node   *Deployment `json:"node"`
 }
+
+func (DeploymentEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this DeploymentEdge) GetCursor() Cursor { return this.Cursor }
 
 // Deployment key type.
 type DeploymentKey struct {
@@ -255,6 +298,18 @@ func (this GithubRepositoryConnection) GetTotalCount() int { return this.TotalCo
 // Pagination information.
 func (this GithubRepositoryConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
+// A list of edges.
+func (this GithubRepositoryConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
 // GitHub repository edge type.
 type GithubRepositoryEdge struct {
 	// A cursor for use in pagination.
@@ -262,6 +317,11 @@ type GithubRepositoryEdge struct {
 	// The GitHub repository at the end of the edge.
 	Node *GithubRepository `json:"node"`
 }
+
+func (GithubRepositoryEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this GithubRepositoryEdge) GetCursor() Cursor { return this.Cursor }
 
 type Group struct {
 	ID string `json:"id"`
@@ -368,9 +428,9 @@ type MaskinportenScope struct {
 }
 
 type NaisJobConnection struct {
-	Edges      []*NaisJobEdge `json:"edges"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount int            `json:"totalCount"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	Edges      []*NaisJobEdge `json:"edges"`
 }
 
 func (NaisJobConnection) IsConnection() {}
@@ -381,10 +441,27 @@ func (this NaisJobConnection) GetTotalCount() int { return this.TotalCount }
 // Pagination information.
 func (this NaisJobConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
+// A list of edges.
+func (this NaisJobConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
 type NaisJobEdge struct {
 	Cursor Cursor   `json:"cursor"`
 	Node   *NaisJob `json:"node"`
 }
+
+func (NaisJobEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this NaisJobEdge) GetCursor() Cursor { return this.Cursor }
 
 type NewInstancesFailingError struct {
 	Revision         string     `json:"revision"`
@@ -452,9 +529,9 @@ type Rule struct {
 }
 
 type SearchConnection struct {
-	Edges      []*SearchEdge `json:"edges"`
-	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
+	Edges      []*SearchEdge `json:"edges"`
 }
 
 func (SearchConnection) IsConnection() {}
@@ -465,11 +542,28 @@ func (this SearchConnection) GetTotalCount() int { return this.TotalCount }
 // Pagination information.
 func (this SearchConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
+// A list of edges.
+func (this SearchConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
 type SearchEdge struct {
 	Node   SearchNode `json:"node"`
 	Cursor Cursor     `json:"cursor"`
 	Rank   int        `json:"-"`
 }
+
+func (SearchEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this SearchEdge) GetCursor() Cursor { return this.Cursor }
 
 type SearchFilter struct {
 	Type *SearchType `json:"type,omitempty"`
@@ -529,6 +623,18 @@ func (this TeamConnection) GetTotalCount() int { return this.TotalCount }
 // Pagination information.
 func (this TeamConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
+// A list of edges.
+func (this TeamConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
 // Team edge type.
 type TeamEdge struct {
 	// A cursor for use in pagination.
@@ -536,6 +642,11 @@ type TeamEdge struct {
 	// The team at the end of the edge.
 	Node *Team `json:"node"`
 }
+
+func (TeamEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this TeamEdge) GetCursor() Cursor { return this.Cursor }
 
 // Team member connection type.
 type TeamMemberConnection struct {
@@ -555,6 +666,18 @@ func (this TeamMemberConnection) GetTotalCount() int { return this.TotalCount }
 // Pagination information.
 func (this TeamMemberConnection) GetPageInfo() *PageInfo { return this.PageInfo }
 
+// A list of edges.
+func (this TeamMemberConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
 // Team member edge type.
 type TeamMemberEdge struct {
 	// A cursor for use in pagination.
@@ -562,6 +685,11 @@ type TeamMemberEdge struct {
 	// The team member at the end of the edge.
 	Node *TeamMember `json:"node"`
 }
+
+func (TeamMemberEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this TeamMemberEdge) GetCursor() Cursor { return this.Cursor }
 
 type TokenX struct {
 	MountSecretsAsFilesOnly bool `json:"mountSecretsAsFilesOnly"`

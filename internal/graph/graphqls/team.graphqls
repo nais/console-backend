@@ -42,7 +42,7 @@ type TeamConnection implements Connection {
 }
 
 "Team edge type."
-type TeamEdge {
+type TeamEdge implements Edge {
     "A cursor for use in pagination."
     cursor: Cursor!
 
@@ -63,7 +63,7 @@ type TeamMemberConnection implements Connection {
 }
 
 "Team member edge type."
-type TeamMemberEdge {
+type TeamMemberEdge implements Edge {
     "A cursor for use in pagination."
     cursor: Cursor!
 
@@ -132,7 +132,7 @@ type GithubRepositoryConnection implements Connection {
 }
 
 "GitHub repository edge type."
-type GithubRepositoryEdge {
+type GithubRepositoryEdge implements Edge {
     "A cursor for use in pagination."
     cursor: Cursor!
 

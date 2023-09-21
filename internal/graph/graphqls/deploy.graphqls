@@ -4,7 +4,7 @@ type DeploymentConnection implements Connection {
   edges: [DeploymentEdge!]!
 }
 
-type DeploymentEdge {
+type DeploymentEdge implements Edge {
   cursor: Cursor!
   node: Deployment!
 }

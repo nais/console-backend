@@ -1,10 +1,10 @@
 type NaisJobConnection implements Connection {
-  edges: [NaisJobEdge!]!
-  pageInfo: PageInfo!
   totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [NaisJobEdge!]!
 }
 
-type NaisJobEdge {
+type NaisJobEdge implements Edge {
   cursor: Cursor!
   node: NaisJob!
 }

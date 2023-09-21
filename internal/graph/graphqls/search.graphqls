@@ -1,10 +1,10 @@
 type SearchConnection implements Connection {
-  edges: [SearchEdge!]!
-  pageInfo: PageInfo!
   totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [SearchEdge!]!
 }
 
-type SearchEdge {
+type SearchEdge implements Edge {
   node: SearchNode!
   cursor: Cursor!
 }

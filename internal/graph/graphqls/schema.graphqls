@@ -23,6 +23,15 @@ interface Connection {
 
     "Pagination information."
     pageInfo: PageInfo!
+
+    "A list of edges."
+    edges: [Edge]!
+}
+
+"Edge interface."
+interface Edge {
+    "A cursor for use in pagination."
+    cursor: Cursor!
 }
 
 "PageInfo is a type that contains pagination information in a Relay style."

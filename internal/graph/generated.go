@@ -11978,8 +11978,8 @@ func (ec *executionContext) fieldContext_NaisJob_retries(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _NaisJobConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.NaisJobConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NaisJobConnection_edges(ctx, field)
+func (ec *executionContext) _NaisJobConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.NaisJobConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NaisJobConnection_totalCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11992,7 +11992,7 @@ func (ec *executionContext) _NaisJobConnection_edges(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12004,25 +12004,19 @@ func (ec *executionContext) _NaisJobConnection_edges(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.NaisJobEdge)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNNaisJobEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NaisJobConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NaisJobConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NaisJobConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_NaisJobEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_NaisJobEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NaisJobEdge", field.Name)
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12086,8 +12080,8 @@ func (ec *executionContext) fieldContext_NaisJobConnection_pageInfo(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _NaisJobConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.NaisJobConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NaisJobConnection_totalCount(ctx, field)
+func (ec *executionContext) _NaisJobConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.NaisJobConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NaisJobConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12100,7 +12094,7 @@ func (ec *executionContext) _NaisJobConnection_totalCount(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCount, nil
+		return obj.Edges, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12112,19 +12106,25 @@ func (ec *executionContext) _NaisJobConnection_totalCount(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.([]*model.NaisJobEdge)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNaisJobEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NaisJobConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NaisJobConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NaisJobConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_NaisJobEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_NaisJobEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NaisJobEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -13444,12 +13444,12 @@ func (ec *executionContext) fieldContext_Query_search(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "edges":
-				return ec.fieldContext_SearchConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_SearchConnection_pageInfo(ctx, field)
 			case "totalCount":
 				return ec.fieldContext_SearchConnection_totalCount(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_SearchConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_SearchConnection_edges(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SearchConnection", field.Name)
 		},
@@ -14595,8 +14595,8 @@ func (ec *executionContext) fieldContext_Run_failed(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchConnection_edges(ctx, field)
+func (ec *executionContext) _SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchConnection_totalCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14609,7 +14609,7 @@ func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14621,25 +14621,19 @@ func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SearchEdge)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SearchConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_SearchEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_SearchEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SearchEdge", field.Name)
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14703,8 +14697,8 @@ func (ec *executionContext) fieldContext_SearchConnection_pageInfo(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchConnection_totalCount(ctx, field)
+func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14717,7 +14711,7 @@ func (ec *executionContext) _SearchConnection_totalCount(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCount, nil
+		return obj.Edges, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14729,19 +14723,25 @@ func (ec *executionContext) _SearchConnection_totalCount(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.([]*model.SearchEdge)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SearchConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_SearchEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_SearchEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SearchEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -16166,12 +16166,12 @@ func (ec *executionContext) fieldContext_Team_naisjobs(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "edges":
-				return ec.fieldContext_NaisJobConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_NaisJobConnection_pageInfo(ctx, field)
 			case "totalCount":
 				return ec.fieldContext_NaisJobConnection_totalCount(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_NaisJobConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_NaisJobConnection_edges(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NaisJobConnection", field.Name)
 		},
@@ -19650,6 +19650,64 @@ func (ec *executionContext) _DeploymentResponse(ctx context.Context, sel ast.Sel
 	}
 }
 
+func (ec *executionContext) _Edge(ctx context.Context, sel ast.SelectionSet, obj model.Edge) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.AppEdge:
+		return ec._AppEdge(ctx, sel, &obj)
+	case *model.AppEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._AppEdge(ctx, sel, obj)
+	case model.DeploymentEdge:
+		return ec._DeploymentEdge(ctx, sel, &obj)
+	case *model.DeploymentEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DeploymentEdge(ctx, sel, obj)
+	case model.NaisJobEdge:
+		return ec._NaisJobEdge(ctx, sel, &obj)
+	case *model.NaisJobEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._NaisJobEdge(ctx, sel, obj)
+	case model.SearchEdge:
+		return ec._SearchEdge(ctx, sel, &obj)
+	case *model.SearchEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SearchEdge(ctx, sel, obj)
+	case model.TeamEdge:
+		return ec._TeamEdge(ctx, sel, &obj)
+	case *model.TeamEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TeamEdge(ctx, sel, obj)
+	case model.TeamMemberEdge:
+		return ec._TeamMemberEdge(ctx, sel, &obj)
+	case *model.TeamMemberEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TeamMemberEdge(ctx, sel, obj)
+	case model.GithubRepositoryEdge:
+		return ec._GithubRepositoryEdge(ctx, sel, &obj)
+	case *model.GithubRepositoryEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._GithubRepositoryEdge(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj model.Node) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -20207,7 +20265,7 @@ func (ec *executionContext) _AppConnection(ctx context.Context, sel ast.Selectio
 	return out
 }
 
-var appEdgeImplementors = []string{"AppEdge"}
+var appEdgeImplementors = []string{"AppEdge", "Edge"}
 
 func (ec *executionContext) _AppEdge(ctx context.Context, sel ast.SelectionSet, obj *model.AppEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, appEdgeImplementors)
@@ -20976,7 +21034,7 @@ func (ec *executionContext) _DeploymentConnection(ctx context.Context, sel ast.S
 	return out
 }
 
-var deploymentEdgeImplementors = []string{"DeploymentEdge"}
+var deploymentEdgeImplementors = []string{"DeploymentEdge", "Edge"}
 
 func (ec *executionContext) _DeploymentEdge(ctx context.Context, sel ast.SelectionSet, obj *model.DeploymentEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deploymentEdgeImplementors)
@@ -21625,7 +21683,7 @@ func (ec *executionContext) _GithubRepositoryConnection(ctx context.Context, sel
 	return out
 }
 
-var githubRepositoryEdgeImplementors = []string{"GithubRepositoryEdge"}
+var githubRepositoryEdgeImplementors = []string{"GithubRepositoryEdge", "Edge"}
 
 func (ec *executionContext) _GithubRepositoryEdge(ctx context.Context, sel ast.SelectionSet, obj *model.GithubRepositoryEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, githubRepositoryEdgeImplementors)
@@ -22607,8 +22665,8 @@ func (ec *executionContext) _NaisJobConnection(ctx context.Context, sel ast.Sele
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NaisJobConnection")
-		case "edges":
-			out.Values[i] = ec._NaisJobConnection_edges(ctx, field, obj)
+		case "totalCount":
+			out.Values[i] = ec._NaisJobConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22617,8 +22675,8 @@ func (ec *executionContext) _NaisJobConnection(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "totalCount":
-			out.Values[i] = ec._NaisJobConnection_totalCount(ctx, field, obj)
+		case "edges":
+			out.Values[i] = ec._NaisJobConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22645,7 +22703,7 @@ func (ec *executionContext) _NaisJobConnection(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var naisJobEdgeImplementors = []string{"NaisJobEdge"}
+var naisJobEdgeImplementors = []string{"NaisJobEdge", "Edge"}
 
 func (ec *executionContext) _NaisJobEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NaisJobEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, naisJobEdgeImplementors)
@@ -23532,8 +23590,8 @@ func (ec *executionContext) _SearchConnection(ctx context.Context, sel ast.Selec
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SearchConnection")
-		case "edges":
-			out.Values[i] = ec._SearchConnection_edges(ctx, field, obj)
+		case "totalCount":
+			out.Values[i] = ec._SearchConnection_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -23542,8 +23600,8 @@ func (ec *executionContext) _SearchConnection(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "totalCount":
-			out.Values[i] = ec._SearchConnection_totalCount(ctx, field, obj)
+		case "edges":
+			out.Values[i] = ec._SearchConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -23570,7 +23628,7 @@ func (ec *executionContext) _SearchConnection(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var searchEdgeImplementors = []string{"SearchEdge"}
+var searchEdgeImplementors = []string{"SearchEdge", "Edge"}
 
 func (ec *executionContext) _SearchEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SearchEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, searchEdgeImplementors)
@@ -24228,7 +24286,7 @@ func (ec *executionContext) _TeamConnection(ctx context.Context, sel ast.Selecti
 	return out
 }
 
-var teamEdgeImplementors = []string{"TeamEdge"}
+var teamEdgeImplementors = []string{"TeamEdge", "Edge"}
 
 func (ec *executionContext) _TeamEdge(ctx context.Context, sel ast.SelectionSet, obj *model.TeamEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, teamEdgeImplementors)
@@ -24375,7 +24433,7 @@ func (ec *executionContext) _TeamMemberConnection(ctx context.Context, sel ast.S
 	return out
 }
 
-var teamMemberEdgeImplementors = []string{"TeamMemberEdge"}
+var teamMemberEdgeImplementors = []string{"TeamMemberEdge", "Edge"}
 
 func (ec *executionContext) _TeamMemberEdge(ctx context.Context, sel ast.SelectionSet, obj *model.TeamMemberEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, teamMemberEdgeImplementors)
