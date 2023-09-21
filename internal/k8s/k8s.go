@@ -74,9 +74,9 @@ func New(clusters, static []string, tenant, fieldSelector string, errors metric.
 		dinf := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, 4*time.Hour, "", func(options *metav1.ListOptions) {
 			options.FieldSelector = fieldSelector
 		})
-		inf := informers.NewFilteredSharedInformerFactory(clientSet, 4*time.Hour, "", func(options *metav1.ListOptions) {
+		inf := informers.NewSharedInformerFactoryWithOptions(clientSet, 4*time.Hour, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
 			options.FieldSelector = fieldSelector
-		})
+		}))
 
 		infs[cluster].PodInformer = inf.Core().V1().Pods()
 		infs[cluster].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
