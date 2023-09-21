@@ -136,46 +136,19 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 		return nil
 	}
 
-	// HACK: dev-fss and prod-fss does not implement zero-trust
-	if strings.Contains(oEnv, "-fss") {
-		outboundRule.MutualExplanation = "NO_ZERO_TRUST"
-		outboundRule.Mutual = true
-		return nil
-	}
-	if strings.Contains(outboundRule.Cluster, "-fss") {
-		outboundRule.MutualExplanation = "NO_ZERO_TRUST"
-		outboundRule.Mutual = true
+	noZeroTrust := checkNoZeroTrust(oEnv, outboundRule)
+	if noZeroTrust {
 		return nil
 	}
 
-	inf, ok := c.informers[outboundEnv]
-	if !ok {
-		c.log.Warn("no informers for cluster ", outboundEnv)
-		outboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
-		outboundRule.Mutual = false
+	inf := c.getAppInformer(outboundEnv, outboundRule)
+	if inf == nil {
 		return nil
 	}
 
-	if inf.AppInformer == nil {
-		c.log.Warn("no app informer for cluster ", outboundEnv)
-		outboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
-		outboundRule.Mutual = false
-		return nil
-	}
-
-	obj, err := inf.AppInformer.Lister().ByNamespace(outboundTeam).Get(outboundRule.Application)
-	if err != nil {
-		c.log.Warnf("get application %s:%s in %s: %v", outboundTeam, outboundRule.Application, outboundEnv, err)
-		outboundRule.MutualExplanation = "APP_NOT_FOUND"
-		outboundRule.Mutual = false
-		return nil
-	}
-
-	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), outboundEnv)
-	if err != nil {
-		outboundRule.MutualExplanation = "APP_NOT_FOUND"
-		outboundRule.Mutual = false
-		return c.error(ctx, err, "converting to app")
+	app, err := c.getApp(ctx, inf, outboundTeam, outboundRule, outboundEnv)
+	if app == nil {
+		return err
 	}
 
 	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
@@ -219,44 +192,19 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 		return nil
 	}
 
-	// HACK: dev-fss and prod-fss does not implement zero-trust
-	if strings.Contains(oEnv, "-fss") {
-		inboundRule.MutualExplanation = "NO_ZERO_TRUST"
-		inboundRule.Mutual = true
-		return nil
-	}
-	if strings.Contains(inboundRule.Cluster, "-fss") {
-		inboundRule.MutualExplanation = "NO_ZERO_TRUST"
-		inboundRule.Mutual = true
+	noZeroTrust := checkNoZeroTrust(oEnv, inboundRule)
+	if noZeroTrust {
 		return nil
 	}
 
-	inf, ok := c.informers[inboundEnv]
-	if !ok {
-		c.log.Warn("no informers for cluster ", inboundEnv)
-		inboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
-		inboundRule.Mutual = true
+	inf := c.getAppInformer(inboundEnv, inboundRule)
+	if inf == nil {
 		return nil
 	}
 
-	if inf.AppInformer == nil {
-		c.log.Warn("no app informer for cluster ", inboundEnv)
-		inboundRule.MutualExplanation = "CLUSTER_NOT_FOUND"
-		inboundRule.Mutual = true
-		return nil
-	}
-
-	obj, err := inf.AppInformer.Lister().ByNamespace(inboundTeam).Get(inboundRule.Application)
-	if err != nil {
-		c.log.Warnf("get application %s:%s in %s: %v", inboundTeam, inboundRule.Application, inboundEnv, err)
-		inboundRule.MutualExplanation = "APP_NOT_FOUND"
-		inboundRule.Mutual = false
-		return nil
-	}
-
-	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), inboundEnv)
-	if err != nil {
-		return c.error(ctx, err, "converting to app")
+	app, err := c.getApp(ctx, inf, inboundTeam, inboundRule, inboundEnv)
+	if app == nil {
+		return err
 	}
 
 	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
@@ -281,6 +229,56 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 	inboundRule.Mutual = false
 	inboundRule.MutualExplanation = "RULE_NOT_FOUND"
 	return nil
+}
+
+func (c *Client) getAppInformer(outboundEnv string, rule *model.Rule) *Informers {
+	inf, ok := c.informers[outboundEnv]
+	if !ok {
+		c.log.Warn("no informers for cluster ", outboundEnv)
+		rule.MutualExplanation = "CLUSTER_NOT_FOUND"
+		rule.Mutual = false
+		return nil
+	}
+
+	if inf.AppInformer == nil {
+		c.log.Warn("no app informer for cluster ", outboundEnv)
+		rule.MutualExplanation = "CLUSTER_NOT_FOUND"
+		rule.Mutual = false
+		return nil
+	}
+	return inf
+}
+
+func checkNoZeroTrust(env string, rule *model.Rule) bool {
+	if strings.Contains(env, "-fss") {
+		rule.MutualExplanation = "NO_ZERO_TRUST"
+		rule.Mutual = true
+		return true
+	}
+	if strings.Contains(rule.Cluster, "-fss") {
+		rule.MutualExplanation = "NO_ZERO_TRUST"
+		rule.Mutual = true
+		return true
+	}
+	return false
+}
+
+func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule *model.Rule, env string) (*model.App, error) {
+	obj, err := inf.AppInformer.Lister().ByNamespace(team).Get(rule.Application)
+	if err != nil {
+		c.log.Warnf("get application %s:%s in %s: %v", team, rule.Application, env, err)
+		rule.MutualExplanation = "APP_NOT_FOUND"
+		rule.Mutual = false
+		return nil, c.error(ctx, err, "application not found")
+	}
+
+	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
+	if err != nil {
+		rule.MutualExplanation = "APP_NOT_FOUND"
+		rule.Mutual = false
+		return nil, c.error(ctx, err, "converting to app")
+	}
+	return app, nil
 }
 
 func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*model.Topic, error) {
