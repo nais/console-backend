@@ -36,6 +36,7 @@ type NaisJob struct {
 	Completions  int           `json:"completions"`
 	Parallelism  int           `json:"parallelism"`
 	Retries      int           `json:"retries"`
+	JobState     JobState      `json:"jobState"`
 	GQLVars      struct {
 		Team string
 	} `json:"-"`

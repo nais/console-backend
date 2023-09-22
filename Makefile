@@ -12,10 +12,10 @@ linux-binary:
 	GOOS=linux GOARCH=amd64 go build -o bin/console-backend ./cmd/console-backend/main.go
 
 portforward-hookd:
-	kubectl port-forward -n nais-system --context nav-management-v2 svc/hookd 8282:80
+	kubectl port-forward -n nais-system --context nav-management svc/hookd 8282:80
 
 portforward-teams:
-	kubectl port-forward -n nais-system --context nav-management-v2 svc/teams-backend 8181:80
+	kubectl port-forward -n nais-system --context nav-management svc/teams-backend 8181:80
 
 local-nav:
 	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nav-management -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 --decode)" \
