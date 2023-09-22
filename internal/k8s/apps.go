@@ -83,14 +83,14 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	for _, rule := range app.AccessPolicy.Outbound.Rules {
 		err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
 		if err != nil {
-			return nil, c.error(ctx, err, "setting hasMutual")
+			return nil, c.error(ctx, err, "setting hasMutual on outbound")
 		}
 	}
 
 	for _, rule := range app.AccessPolicy.Inbound.Rules {
 		err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
 		if err != nil {
-			return nil, c.error(ctx, err, "setting hasMutual")
+			return nil, c.error(ctx, err, "setting hasMutual on inbound")
 		}
 	}
 
@@ -148,7 +148,10 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 
 	app, err := c.getApp(ctx, inf, outboundTeam, outboundRule, outboundEnv)
 	if app == nil {
-		return err
+		c.log.Warn("no app found for inbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
+		outboundRule.Mutual = false
+		outboundRule.MutualExplanation = "APP_NOT_FOUND"
+		return nil
 	}
 
 	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
@@ -204,7 +207,10 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 
 	app, err := c.getApp(ctx, inf, inboundTeam, inboundRule, inboundEnv)
 	if app == nil {
-		return err
+		c.log.Warn("no app found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
+		inboundRule.Mutual = false
+		inboundRule.MutualExplanation = "APP_NOT_FOUND"
+		return nil
 	}
 
 	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
@@ -255,11 +261,19 @@ func checkNoZeroTrust(env string, rule *model.Rule) bool {
 		rule.Mutual = true
 		return true
 	}
+
 	if strings.Contains(rule.Cluster, "-fss") {
 		rule.MutualExplanation = "NO_ZERO_TRUST"
 		rule.Mutual = true
 		return true
 	}
+
+	if rule.Namespace == "nais-system" {
+		rule.MutualExplanation = "NO_ZERO_TRUST"
+		rule.Mutual = true
+		return true
+	}
+
 	return false
 }
 
@@ -357,6 +371,32 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 			if err != nil {
 				return nil, c.error(ctx, err, "converting to app")
 			}
+
+			for _, rule := range app.AccessPolicy.Outbound.Rules {
+				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on outbound")
+				}
+			}
+
+			for _, rule := range app.AccessPolicy.Inbound.Rules {
+				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on inbound")
+				}
+			}
+
+			instances, err := c.Instances(ctx, team, env, app.Name)
+			if err != nil {
+				return nil, c.error(ctx, err, "getting instances")
+			}
+
+			tmpApp := &naisv1alpha1.Application{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpApp); err != nil {
+				return nil, fmt.Errorf("converting to application: %w", err)
+			}
+
+			setStatus(app, *tmpApp.Status.Conditions, instances)
 			ret = append(ret, app)
 		}
 	}
@@ -628,6 +668,7 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 			}(),
 		})
 		appState.State = model.StateNotnais
+
 	}
 
 	if len(instances) == 0 || failing == len(instances) {

@@ -37,14 +37,14 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 	for _, rule := range job.AccessPolicy.Outbound.Rules {
 		err = c.setJobHasMutualOnOutbound(ctx, name, team, env, rule)
 		if err != nil {
-			return nil, c.error(ctx, err, "setting hasMutual")
+			return nil, c.error(ctx, err, "setting hasMutual on outbound")
 		}
 	}
 
 	for _, rule := range job.AccessPolicy.Inbound.Rules {
 		err = c.setJobHasMutualOnInbound(ctx, name, team, env, rule)
 		if err != nil {
-			return nil, c.error(ctx, err, "setting hasMutual")
+			return nil, c.error(ctx, err, "setting hasMutual on inbound")
 		}
 	}
 
@@ -75,7 +75,7 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 	return job, nil
 }
 
-func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv string, outboundRule *model.Rule) error {
+func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oJob, oTeam, oEnv string, outboundRule *model.Rule) error {
 	outboundEnv := oEnv
 	if outboundRule.Cluster != "" {
 		outboundEnv = outboundRule.Cluster
@@ -118,7 +118,7 @@ func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEn
 			}
 		}
 
-		if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
+		if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oJob {
 			outboundRule.Mutual = true
 			return nil
 		}
@@ -204,12 +204,21 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 
 	}
 
-	if len(runs) == 0 || failing == len(runs) {
+	/*if len(runs) == 0 || failing == len(runs) {
 		jobState.Errors = append(jobState.Errors, &model.NoRunningInstancesError{
 			Revision: job.DeployInfo.CommitSha,
 			Level:    model.ErrorLevelError,
 		})
 		jobState.State = model.StateFailing
+	}*/
+
+	if failing > 0 {
+		jobState.Errors = append(jobState.Errors, &model.FailingInstancesError{
+			Revision: job.DeployInfo.CommitSha,
+			Level:    model.ErrorLevelWarning,
+			Count:    len(runs),
+		})
+		jobState.State = model.StateNotnais
 	}
 
 	if !strings.Contains(job.Image, "europe-north1-docker.pkg.dev") {
@@ -292,6 +301,19 @@ func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, e
 			if err != nil {
 				return nil, c.error(ctx, err, "converting to job")
 			}
+
+			runs, err := c.Runs(ctx, team, env, job.Name)
+			if err != nil {
+				return nil, c.error(ctx, err, "getting runs")
+			}
+
+			tmpJob := &naisv1.Naisjob{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpJob); err != nil {
+				return nil, fmt.Errorf("converting to naisjob: %w", err)
+			}
+
+			setJobStatus(job, *tmpJob.Status.Conditions, runs)
+
 			ret = append(ret, job)
 		}
 	}

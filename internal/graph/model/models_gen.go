@@ -269,6 +269,16 @@ type Expose struct {
 	Product             string      `json:"product"`
 }
 
+type FailingInstancesError struct {
+	Revision string     `json:"revision"`
+	Level    ErrorLevel `json:"level"`
+	Count    int        `json:"count"`
+}
+
+func (FailingInstancesError) IsStateError()             {}
+func (this FailingInstancesError) GetRevision() string  { return this.Revision }
+func (this FailingInstancesError) GetLevel() ErrorLevel { return this.Level }
+
 type Flag struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
