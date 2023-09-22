@@ -106,7 +106,10 @@ func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oJob, oTeam, oEn
 
 	app, err := c.getApp(ctx, inf, outboundTeam, outboundRule, outboundEnv)
 	if app == nil {
-		return err
+		c.log.Debug("no app found for outbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
+		outboundRule.Mutual = false
+		outboundRule.MutualExplanation = "APP_NOT_FOUND"
+		return nil
 	}
 
 	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
@@ -162,7 +165,10 @@ func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv
 
 	app, err := c.getApp(ctx, inf, inboundTeam, inboundRule, inboundEnv)
 	if app == nil {
-		return err
+		c.log.Debug("no app found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
+		inboundRule.Mutual = false
+		inboundRule.MutualExplanation = "APP_NOT_FOUND"
+		return nil
 	}
 
 	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {

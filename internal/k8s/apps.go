@@ -148,7 +148,7 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 
 	app, err := c.getApp(ctx, inf, outboundTeam, outboundRule, outboundEnv)
 	if app == nil {
-		c.log.Warn("no app found for inbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
+		c.log.Debug("no app found for inbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
 		outboundRule.Mutual = false
 		outboundRule.MutualExplanation = "APP_NOT_FOUND"
 		return nil
@@ -207,7 +207,7 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 
 	app, err := c.getApp(ctx, inf, inboundTeam, inboundRule, inboundEnv)
 	if app == nil {
-		c.log.Warn("no app found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
+		c.log.Debug("no app found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
 		inboundRule.Mutual = false
 		inboundRule.MutualExplanation = "APP_NOT_FOUND"
 		return nil
