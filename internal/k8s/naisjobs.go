@@ -65,6 +65,10 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 		return nil, c.error(ctx, err, "getting runs")
 	}
 
+	fmt.Println(len(runs))
+	for _, run := range runs {
+		fmt.Println(run.Name)
+	}
 	tmpJob := &naisv1.Naisjob{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpJob); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
@@ -187,7 +191,6 @@ func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv
 
 func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*model.Run) {
 	currentCondition := getCurrentCondition(conditions)
-	failing := failedJobs(runs)
 	jobState := model.JobState{
 		State:  model.StateNais,
 		Errors: []model.StateError{},
@@ -204,21 +207,27 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 
 	}
 
-	/*if len(runs) == 0 || failing == len(runs) {
-		jobState.Errors = append(jobState.Errors, &model.NoRunningInstancesError{
-			Revision: job.DeployInfo.CommitSha,
-			Level:    model.ErrorLevelError,
-		})
-		jobState.State = model.StateFailing
-	}*/
+	var tmpTime time.Time
+	var tmpRun *model.Run
+	for _, run := range runs {
+		if run.StartTime != nil && run.StartTime.After(tmpTime) {
+			tmpTime = *run.StartTime
+			tmpRun = run
+		} else {
+			continue
+		}
+	}
 
-	if failing > 0 {
-		jobState.Errors = append(jobState.Errors, &model.FailingInstancesError{
-			Revision: job.DeployInfo.CommitSha,
-			Level:    model.ErrorLevelWarning,
-			Count:    len(runs),
-		})
-		jobState.State = model.StateNotnais
+	if tmpRun != nil {
+		if tmpRun.Failed {
+			jobState.Errors = append(jobState.Errors, &model.FailedRunError{
+				Revision:   job.DeployInfo.CommitSha,
+				Level:      model.ErrorLevelWarning,
+				RunMessage: tmpRun.Message,
+				RunName:    tmpRun.Name,
+			})
+			jobState.State = model.StateFailing
+		}
 	}
 
 	if !strings.Contains(job.Image, "europe-north1-docker.pkg.dev") {
@@ -276,16 +285,6 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 	}
 
 	job.JobState = jobState
-}
-
-func failedJobs(runs []*model.Run) int {
-	ret := 0
-	for _, run := range runs {
-		if run.Failed {
-			ret++
-		}
-	}
-	return ret
 }
 
 func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, error) {

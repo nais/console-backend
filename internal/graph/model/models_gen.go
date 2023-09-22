@@ -269,15 +269,16 @@ type Expose struct {
 	Product             string      `json:"product"`
 }
 
-type FailingInstancesError struct {
-	Revision string     `json:"revision"`
-	Level    ErrorLevel `json:"level"`
-	Count    int        `json:"count"`
+type FailedRunError struct {
+	Revision   string     `json:"revision"`
+	Level      ErrorLevel `json:"level"`
+	RunMessage string     `json:"runMessage"`
+	RunName    string     `json:"runName"`
 }
 
-func (FailingInstancesError) IsStateError()             {}
-func (this FailingInstancesError) GetRevision() string  { return this.Revision }
-func (this FailingInstancesError) GetLevel() ErrorLevel { return this.Level }
+func (FailedRunError) IsStateError()             {}
+func (this FailedRunError) GetRevision() string  { return this.Revision }
+func (this FailedRunError) GetLevel() ErrorLevel { return this.Level }
 
 type Flag struct {
 	Name  string `json:"name"`

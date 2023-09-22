@@ -26,10 +26,11 @@ type JobState {
   errors: [StateError!]!
 }
 
-type FailingInstancesError implements StateError {
+type FailedRunError implements StateError {
   revision: String!
   level: ErrorLevel!
-  count: Int!
+  runMessage: String!
+  runName: String!
 }
 
 type NaisJob implements Node {

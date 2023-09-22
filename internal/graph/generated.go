@@ -249,10 +249,11 @@ type ComplexityRoot struct {
 		Ports func(childComplexity int) int
 	}
 
-	FailingInstancesError struct {
-		Count    func(childComplexity int) int
-		Level    func(childComplexity int) int
-		Revision func(childComplexity int) int
+	FailedRunError struct {
+		Level      func(childComplexity int) int
+		Revision   func(childComplexity int) int
+		RunMessage func(childComplexity int) int
+		RunName    func(childComplexity int) int
 	}
 
 	Flag struct {
@@ -1424,26 +1425,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.External.Ports(childComplexity), true
 
-	case "FailingInstancesError.count":
-		if e.complexity.FailingInstancesError.Count == nil {
+	case "FailedRunError.level":
+		if e.complexity.FailedRunError.Level == nil {
 			break
 		}
 
-		return e.complexity.FailingInstancesError.Count(childComplexity), true
+		return e.complexity.FailedRunError.Level(childComplexity), true
 
-	case "FailingInstancesError.level":
-		if e.complexity.FailingInstancesError.Level == nil {
+	case "FailedRunError.revision":
+		if e.complexity.FailedRunError.Revision == nil {
 			break
 		}
 
-		return e.complexity.FailingInstancesError.Level(childComplexity), true
+		return e.complexity.FailedRunError.Revision(childComplexity), true
 
-	case "FailingInstancesError.revision":
-		if e.complexity.FailingInstancesError.Revision == nil {
+	case "FailedRunError.runMessage":
+		if e.complexity.FailedRunError.RunMessage == nil {
 			break
 		}
 
-		return e.complexity.FailingInstancesError.Revision(childComplexity), true
+		return e.complexity.FailedRunError.RunMessage(childComplexity), true
+
+	case "FailedRunError.runName":
+		if e.complexity.FailedRunError.RunName == nil {
+			break
+		}
+
+		return e.complexity.FailedRunError.RunName(childComplexity), true
 
 	case "Flag.name":
 		if e.complexity.Flag.Name == nil {
@@ -8668,8 +8676,8 @@ func (ec *executionContext) fieldContext_External_ports(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _FailingInstancesError_revision(ctx context.Context, field graphql.CollectedField, obj *model.FailingInstancesError) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_FailingInstancesError_revision(ctx, field)
+func (ec *executionContext) _FailedRunError_revision(ctx context.Context, field graphql.CollectedField, obj *model.FailedRunError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FailedRunError_revision(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8699,9 +8707,9 @@ func (ec *executionContext) _FailingInstancesError_revision(ctx context.Context,
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_FailingInstancesError_revision(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FailedRunError_revision(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "FailingInstancesError",
+		Object:     "FailedRunError",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -8712,8 +8720,8 @@ func (ec *executionContext) fieldContext_FailingInstancesError_revision(ctx cont
 	return fc, nil
 }
 
-func (ec *executionContext) _FailingInstancesError_level(ctx context.Context, field graphql.CollectedField, obj *model.FailingInstancesError) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_FailingInstancesError_level(ctx, field)
+func (ec *executionContext) _FailedRunError_level(ctx context.Context, field graphql.CollectedField, obj *model.FailedRunError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FailedRunError_level(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8743,9 +8751,9 @@ func (ec *executionContext) _FailingInstancesError_level(ctx context.Context, fi
 	return ec.marshalNErrorLevel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐErrorLevel(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_FailingInstancesError_level(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FailedRunError_level(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "FailingInstancesError",
+		Object:     "FailedRunError",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -8756,8 +8764,8 @@ func (ec *executionContext) fieldContext_FailingInstancesError_level(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _FailingInstancesError_count(ctx context.Context, field graphql.CollectedField, obj *model.FailingInstancesError) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_FailingInstancesError_count(ctx, field)
+func (ec *executionContext) _FailedRunError_runMessage(ctx context.Context, field graphql.CollectedField, obj *model.FailedRunError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FailedRunError_runMessage(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8770,7 +8778,7 @@ func (ec *executionContext) _FailingInstancesError_count(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Count, nil
+		return obj.RunMessage, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8782,19 +8790,63 @@ func (ec *executionContext) _FailingInstancesError_count(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_FailingInstancesError_count(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_FailedRunError_runMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "FailingInstancesError",
+		Object:     "FailedRunError",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FailedRunError_runName(ctx context.Context, field graphql.CollectedField, obj *model.FailedRunError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_FailedRunError_runName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RunName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_FailedRunError_runName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FailedRunError",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -20191,13 +20243,13 @@ func (ec *executionContext) _StateError(ctx context.Context, sel ast.SelectionSe
 			return graphql.Null
 		}
 		return ec._OutboundAccessError(ctx, sel, obj)
-	case model.FailingInstancesError:
-		return ec._FailingInstancesError(ctx, sel, &obj)
-	case *model.FailingInstancesError:
+	case model.FailedRunError:
+		return ec._FailedRunError(ctx, sel, &obj)
+	case *model.FailedRunError:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._FailingInstancesError(ctx, sel, obj)
+		return ec._FailedRunError(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -21886,29 +21938,34 @@ func (ec *executionContext) _External(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var failingInstancesErrorImplementors = []string{"FailingInstancesError", "StateError"}
+var failedRunErrorImplementors = []string{"FailedRunError", "StateError"}
 
-func (ec *executionContext) _FailingInstancesError(ctx context.Context, sel ast.SelectionSet, obj *model.FailingInstancesError) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, failingInstancesErrorImplementors)
+func (ec *executionContext) _FailedRunError(ctx context.Context, sel ast.SelectionSet, obj *model.FailedRunError) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, failedRunErrorImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("FailingInstancesError")
+			out.Values[i] = graphql.MarshalString("FailedRunError")
 		case "revision":
-			out.Values[i] = ec._FailingInstancesError_revision(ctx, field, obj)
+			out.Values[i] = ec._FailedRunError_revision(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "level":
-			out.Values[i] = ec._FailingInstancesError_level(ctx, field, obj)
+			out.Values[i] = ec._FailedRunError_level(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "count":
-			out.Values[i] = ec._FailingInstancesError_count(ctx, field, obj)
+		case "runMessage":
+			out.Values[i] = ec._FailedRunError_runMessage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "runName":
+			out.Values[i] = ec._FailedRunError_runName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
