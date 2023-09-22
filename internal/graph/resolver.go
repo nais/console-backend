@@ -5,6 +5,7 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
+	"github.com/nais/console-backend/pkg/database"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,4 +19,5 @@ type Resolver struct {
 	K8s         *k8s.Client
 	Searcher    *search.Searcher
 	Log         *logrus.Logger
+	Repo        *database.Repo
 }

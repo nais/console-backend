@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Audience                 string
 	BindHost                 string
+	DBConnectionDSN          string
 	FieldSelector            string
 	HookdEndpoint            string
 	HookdPSK                 string
@@ -29,6 +30,7 @@ func New() *Config {
 
 	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
 	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
+	flag.StringVar(&cfg.DBConnectionDSN, "db-connection-dsn", getEnv("CONSOLE_DBCONN_STRING", "postgres://postgres:postgres@127.0.0.1:5432/console?sslmode=disable"), "database connection DSN")
 	flag.StringVar(&cfg.TeamsEndpoint, "teams-endpoint", envOrDefault("TEAMS_ENDPOINT", "http://teams-backend/query"), "Teams endpoint")
 	flag.StringVar(&cfg.TeamsToken, "teams-token", envOrDefault("TEAMS_TOKEN", "secret-admin-api-key"), "Teams token")
 	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd"), "Hookd endpoint")
@@ -58,4 +60,11 @@ func splitEnv(key, sep string) []string {
 		return strings.Split(value, sep)
 	}
 	return nil
+}
+
+func getEnv(key, fallback string) string {
+	if env := os.Getenv(key); env != "" {
+		return env
+	}
+	return fallback
 }

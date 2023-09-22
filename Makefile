@@ -1,4 +1,34 @@
 .PHONY: all
+SQLC_VERSION ?= "v1.21.0"
+
+
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+	GOBIN=$(shell go env GOPATH)/bin
+else
+	GOBIN=$(shell go env GOBIN)
+endif
+
+install-sqlc:
+	@if [ "$(shell sqlc version)" != "$(SQLC_VERSION)" ]; then \
+		echo "Installing sqlc $(SQLC_VERSION)"; \
+		go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION); \
+		if command -v asdf > /dev/null; then\
+			asdf reshim golang;\
+		fi;\
+	else \
+		echo "sqlc $(SQLC_VERSION) already installed"; \
+	fi
+
+generate-sql: install-sqlc sqlc-vet
+	$(GOBIN)/sqlc generate
+
+sqlc-vet:
+	$(GOBIN)/sqlc vet
+
+mocks:
+	mockery --case underscore --name Repo --dir pkg/database/ --outpkg mocks --output pkg/database/mocks
+	mockery --case underscore --name Querier --dir pkg/database/ --outpkg mocks --output pkg/database/mocks
 
 all: generate-graphql test check linux-binary
 

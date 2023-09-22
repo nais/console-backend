@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -20,6 +22,7 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
+	"github.com/nais/console-backend/pkg/database"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -65,6 +68,34 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		return fmt.Errorf("create error counter: %w", err)
 	}
 
+	log.Info("starting database client")
+	dbDriver := "pgx"
+	if !strings.Contains(cfg.DBConnectionDSN, "://") {
+		dbDriver = "cloudsql-postgres"
+	}
+
+	extraDSN := ""
+	if runtime.NumCPU() < 5 {
+		extraDSN = " pool_max_conns=5"
+	}
+
+	db, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN+extraDSN, dbDriver != "pgx")
+	if err != nil {
+		log.WithError(err).Fatal("setting up database")
+	}
+	defer func() {
+		if err := closers.Close(); err != nil {
+			log.WithError(err).Errorf("closing database: %v", err)
+		}
+	}()
+
+	if err := database.Migrate(dbDriver, cfg.DBConnectionDSN, log.WithField("subsystem", "migrate")); err != nil {
+		log.WithError(err).Fatal("migrating database")
+	}
+
+	repo := database.New(db, log.WithField("subsystem", "repo"))
+	log.Info("-- successfully started database client")
+
 	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
 		return fmt.Errorf("create k8s client: %w", err)
@@ -82,6 +113,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
+			Repo:        &repo,
 		},
 	}
 
