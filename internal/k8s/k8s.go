@@ -225,7 +225,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 	ret := []*search.Result{}
 
 	for env, infs := range c.informers {
-		if isFilterNaisjob(filter) {
+		if isFilterNaisjobOrNoFilter(filter) {
 			jobs, err := infs.NaisjobInformer.Lister().List(labels.Everything())
 			if err != nil {
 				c.error(ctx, err, "listing jobs")
@@ -251,7 +251,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 			}
 		}
 
-		if isFilterApp(filter) {
+		if isFilterAppOrNoFilter(filter) {
 			apps, err := infs.AppInformer.Lister().List(labels.Everything())
 			if err != nil {
 				c.error(ctx, err, "listing applications")
@@ -313,37 +313,37 @@ func (c *Client) error(ctx context.Context, err error, msg string) error {
 	return fmt.Errorf("%s: %w", msg, err)
 }
 
-func isFilterOrNoFilter(filter *model.SearchFilter) bool {
+func isFilter(filter *model.SearchFilter) bool {
 	if filter == nil {
-		return true
+		return false
 	}
 
 	if filter.Type == nil {
+		return false
+	}
+
+	return true
+}
+
+func isFilterOrNoFilter(filter *model.SearchFilter) bool {
+	if !isFilter(filter) {
 		return true
 	}
 
 	return *filter.Type == model.SearchTypeApp || *filter.Type == model.SearchTypeNaisjob
 }
 
-func isFilterApp(filter *model.SearchFilter) bool {
-	if filter == nil {
-		return false
-	}
-
-	if filter.Type == nil {
-		return false
+func isFilterAppOrNoFilter(filter *model.SearchFilter) bool {
+	if !isFilter(filter) {
+		return true
 	}
 
 	return *filter.Type == model.SearchTypeApp
 }
 
-func isFilterNaisjob(filter *model.SearchFilter) bool {
-	if filter == nil {
-		return false
-	}
-
-	if filter.Type == nil {
-		return false
+func isFilterNaisjobOrNoFilter(filter *model.SearchFilter) bool {
+	if !isFilter(filter) {
+		return true
 	}
 
 	return *filter.Type == model.SearchTypeNaisjob
