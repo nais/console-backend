@@ -44,5 +44,4 @@ type NaisJob struct {
 
 func (NaisJob) IsNode()        {}
 func (j NaisJob) GetID() Ident { return j.ID }
-
-func (NaisJob) IsSearchNode() {}
+func (NaisJob) IsSearchNode()  {}
