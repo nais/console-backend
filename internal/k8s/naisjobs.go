@@ -65,10 +65,6 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 		return nil, c.error(ctx, err, "getting runs")
 	}
 
-	fmt.Println(len(runs))
-	for _, run := range runs {
-		fmt.Println(run.Name)
-	}
 	tmpJob := &naisv1.Naisjob{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpJob); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
