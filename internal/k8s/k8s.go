@@ -218,59 +218,63 @@ func (c *Client) Log(ctx context.Context, cluster, namespace, pod, container str
 }
 
 func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.Result {
-	// early exit if we're not searching for apps
-	if filter != nil && filter.Type != nil && *filter.Type != model.SearchTypeApp {
+	if !isFilterOrNoFilter(filter) {
 		return nil
 	}
 
 	ret := []*search.Result{}
 
 	for env, infs := range c.informers {
-		jobs, err := infs.NaisjobInformer.Lister().List(labels.Everything())
-		if err != nil {
-			c.error(ctx, err, "listing jobs")
-			return nil
-		}
-		objs, err := infs.AppInformer.Lister().List(labels.Everything())
-		if err != nil {
-			c.error(ctx, err, "listing applications")
-			return nil
-		}
-
-		for _, obj := range jobs {
-			u := obj.(*unstructured.Unstructured)
-			rank := search.Match(q, u.GetName())
-			if rank == -1 {
-				continue
-			}
-			job, err := toNaisJob(u, env)
+		if isFilterNaisjob(filter) {
+			jobs, err := infs.NaisjobInformer.Lister().List(labels.Everything())
 			if err != nil {
-				c.error(ctx, err, "converting to job")
+				c.error(ctx, err, "listing jobs")
 				return nil
 			}
 
-			ret = append(ret, &search.Result{
-				Node: job,
-				Rank: rank,
-			})
+			for _, obj := range jobs {
+				u := obj.(*unstructured.Unstructured)
+				rank := search.Match(q, u.GetName())
+				if rank == -1 {
+					continue
+				}
+				job, err := toNaisJob(u, env)
+				if err != nil {
+					c.error(ctx, err, "converting to job")
+					return nil
+				}
+
+				ret = append(ret, &search.Result{
+					Node: job,
+					Rank: rank,
+				})
+			}
 		}
 
-		for _, obj := range objs {
-			u := obj.(*unstructured.Unstructured)
-			rank := search.Match(q, u.GetName())
-			if rank == -1 {
-				continue
-			}
-			app, err := c.toApp(ctx, u, env)
+		if isFilterApp(filter) {
+			apps, err := infs.AppInformer.Lister().List(labels.Everything())
 			if err != nil {
-				c.error(ctx, err, "converting to app")
+				c.error(ctx, err, "listing applications")
 				return nil
 			}
 
-			ret = append(ret, &search.Result{
-				Node: app,
-				Rank: rank,
-			})
+			for _, obj := range apps {
+				u := obj.(*unstructured.Unstructured)
+				rank := search.Match(q, u.GetName())
+				if rank == -1 {
+					continue
+				}
+				app, err := c.toApp(ctx, u, env)
+				if err != nil {
+					c.error(ctx, err, "converting to app")
+					return nil
+				}
+
+				ret = append(ret, &search.Result{
+					Node: app,
+					Rank: rank,
+				})
+			}
 		}
 
 	}
@@ -307,4 +311,40 @@ func (c *Client) error(ctx context.Context, err error, msg string) error {
 	c.errors.Add(ctx, 1, metric.WithAttributes(attribute.String("component", "k8s-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
+}
+
+func isFilterOrNoFilter(filter *model.SearchFilter) bool {
+	if filter == nil {
+		return true
+	}
+
+	if filter.Type == nil {
+		return true
+	}
+
+	return *filter.Type == model.SearchTypeApp || *filter.Type == model.SearchTypeNaisjob
+}
+
+func isFilterApp(filter *model.SearchFilter) bool {
+	if filter == nil {
+		return false
+	}
+
+	if filter.Type == nil {
+		return false
+	}
+
+	return *filter.Type == model.SearchTypeApp
+}
+
+func isFilterNaisjob(filter *model.SearchFilter) bool {
+	if filter == nil {
+		return false
+	}
+
+	if filter.Type == nil {
+		return false
+	}
+
+	return *filter.Type == model.SearchTypeNaisjob
 }
