@@ -13,6 +13,6 @@ type Cost struct {
 	Team               *string
 	App                *string
 	ServiceDescription string
-	Dato               pgtype.Date
+	Date               pgtype.Date
 	Cost               float32
 }

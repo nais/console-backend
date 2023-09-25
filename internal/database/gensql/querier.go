@@ -6,9 +6,12 @@ package gensql
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	CostLastDate(ctx context.Context) (pgtype.Date, error)
 	GetCost(ctx context.Context) ([]*Cost, error)
 }
 

@@ -13,7 +13,7 @@ import (
 	cloudsqlpgx "cloud.google.com/go/cloudsqlconn/postgres/pgxv4"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nais/console-backend/pkg/database/gensql"
+	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/metric"

@@ -7,10 +7,24 @@ package gensql
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const costLastDate = `-- name: CostLastDate :one
+SELECT MAX(date)::DATE AS "date"
+FROM cost
+`
+
+func (q *Queries) CostLastDate(ctx context.Context) (pgtype.Date, error) {
+	row := q.db.QueryRow(ctx, costLastDate)
+	var date pgtype.Date
+	err := row.Scan(&date)
+	return date, err
+}
+
 const getCost = `-- name: GetCost :many
-SELECT env, team, app, service_description, dato, cost FROM cost
+SELECT env, team, app, service_description, date, cost FROM cost
 `
 
 func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
@@ -27,7 +41,7 @@ func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
 			&i.Team,
 			&i.App,
 			&i.ServiceDescription,
-			&i.Dato,
+			&i.Date,
 			&i.Cost,
 		); err != nil {
 			return nil, err

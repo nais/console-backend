@@ -17,12 +17,12 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/config"
+	"github.com/nais/console-backend/internal/database"
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
-	"github.com/nais/console-backend/pkg/database"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -95,6 +95,13 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 
 	repo := database.New(db, log.WithField("subsystem", "repo"))
 	log.Info("-- successfully started database client")
+
+	// costUpdater, err := workers.NewCostUpdater(ctx, repo, log.WithField("subsystem", "cost_updater"))
+	// if err != nil {
+	// 	log.WithError(err).Error("setting up cost updater. You might need to run `gcloud auth --update-adc` if running locally")
+	// } else {
+	// 	go costUpdater.Run(ctx, 1*time.Hour)
+	// }
 
 	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
