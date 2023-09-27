@@ -1,6 +1,4 @@
 .PHONY: all
-SQLC_VERSION ?= "v1.21.0"
-
 
 all: generate test check linux-binary
 
