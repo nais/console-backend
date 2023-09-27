@@ -2,6 +2,8 @@ package cost
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -13,31 +15,31 @@ import (
 )
 
 const (
-	gcpProject = "nais-io"
-	query      = `
-SELECT *
-FROM
-  ` + "`nais-io.console_data.console_nav`" + `
-WHERE
-  date >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL 3 DAY)`
+	gcpProject    = "nais-io"
+	bigQueryTable = "nais-io.console_data.console_nav"
+	daysToFetch   = 5
 )
 
-type CostUpdater struct {
+type Updater struct {
 	log     logrus.FieldLogger
 	queries *gensql.Queries
 	client  *bigquery.Client
 }
 
-func NewCostUpdater(ctx context.Context, queries *gensql.Queries, log logrus.FieldLogger) (*CostUpdater, error) {
+// NewCostUpdater creates a new cost updater
+func NewCostUpdater(ctx context.Context, queries *gensql.Queries, log logrus.FieldLogger) (*Updater, error) {
 	client, err := bigquery.NewClient(ctx, gcpProject)
 	if err != nil {
 		return nil, err
 	}
+
 	client.Location = "EU"
 	it := client.Datasets(ctx)
+
+	// what is the meaning of this loop?
 	for {
 		_, err := it.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
@@ -45,14 +47,15 @@ func NewCostUpdater(ctx context.Context, queries *gensql.Queries, log logrus.Fie
 		}
 	}
 
-	return &CostUpdater{
+	return &Updater{
 		queries: queries,
 		client:  client,
 		log:     log,
 	}, nil
 }
 
-func (c *CostUpdater) Run(ctx context.Context, schedule time.Duration) {
+// Run will update the costs
+func (c *Updater) Run(ctx context.Context, schedule time.Duration) {
 	ticker := time.NewTicker(schedule)
 	for {
 		if err := c.updateCosts(ctx); err != nil {
@@ -69,7 +72,7 @@ func (c *CostUpdater) Run(ctx context.Context, schedule time.Duration) {
 // updateCosts will insert the latest cost data into the database
 // it will only do so if the current date is newer than the latest date in the database +1 day
 // and the time is after 05:00
-func (c *CostUpdater) updateCosts(ctx context.Context) error {
+func (c *Updater) updateCosts(ctx context.Context) error {
 	lastDate, err := c.queries.CostLastDate(ctx)
 	if err != nil {
 		return err
@@ -80,8 +83,13 @@ func (c *CostUpdater) updateCosts(ctx context.Context) error {
 		return nil
 	}
 
-	q := c.client.Query(query)
-	it, err := q.Read(ctx)
+	sql := fmt.Sprintf(
+		"SELECT * FROM `%s` WHERE `date` >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL %d DAY)",
+		bigQueryTable,
+		daysToFetch,
+	)
+	query := c.client.Query(sql)
+	it, err := query.Read(ctx)
 	if err != nil {
 		return err
 	}
@@ -98,14 +106,13 @@ func (c *CostUpdater) updateCosts(ctx context.Context) error {
 	start := time.Now()
 	rows := make([]gensql.CostUpsertParams, 0)
 	for {
-
 		var r Row
 		err := it.Next(&r)
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
-			if err == context.Canceled {
+			if errors.Is(err, context.Canceled) {
 				return err
 			}
 
@@ -114,9 +121,9 @@ func (c *CostUpdater) updateCosts(ctx context.Context) error {
 		}
 
 		rows = append(rows, gensql.CostUpsertParams{
-			Env:      nullToPointerString(r.Env),
-			Team:     nullToPointerString(r.Team),
-			App:      nullToPointerString(r.App),
+			Env:      nullToStringPointer(r.Env),
+			Team:     nullToStringPointer(r.Team),
+			App:      nullToStringPointer(r.App),
 			Date:     pgtype.Date{Time: r.Date.In(time.UTC), Valid: true},
 			Cost:     r.Cost,
 			CostType: r.CostType,
@@ -129,12 +136,16 @@ func (c *CostUpdater) updateCosts(ctx context.Context) error {
 		}
 	})
 
-	c.log.WithField("duration", time.Since(start).String()).WithField("num_inserts", len(rows)).Info("inserted costs")
+	c.log.
+		WithField("duration", time.Since(start).String()).
+		WithField("num_inserts", len(rows)).
+		Info("updated cost data")
 
 	return nil
 }
 
-func nullToPointerString(s bigquery.NullString) *string {
+// nullToStringPointer converts a bigquery.NullString to a *string
+func nullToStringPointer(s bigquery.NullString) *string {
 	if s.Valid {
 		return &s.StringVal
 	}

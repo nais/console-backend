@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
@@ -18,5 +19,5 @@ type Resolver struct {
 	K8s         *k8s.Client
 	Searcher    *search.Searcher
 	Log         *logrus.Logger
-	// Repo        *database.Repo
+	Queries     *gensql.Queries
 }

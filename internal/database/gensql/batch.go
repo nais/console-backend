@@ -18,22 +18,10 @@ var (
 )
 
 const costUpsert = `-- name: CostUpsert :batchexec
-INSERT INTO cost (
-  env,
-  team,
-  app,
-  cost_type,
-  date,
-  cost
-) VALUES (
-  $1,
-  $2,
-  $3,
-  $4,
-  $5,
-  $6
-) ON CONFLICT (env, team, app, cost_type, date) DO UPDATE SET
-  cost = EXCLUDED.cost
+INSERT INTO cost (env, team, app, cost_type, date, cost)
+VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (env, team, app, cost_type, date) DO
+    UPDATE SET cost = EXCLUDED.cost
 `
 
 type CostUpsertBatchResults struct {

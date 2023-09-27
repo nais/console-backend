@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"runtime"
 	"strings"
 
 	"github.com/nais/console-backend/internal/database/gensql"
@@ -33,19 +34,30 @@ func (c closeFuncs) Close() error {
 //go:embed migrations/0*.sql
 var embedMigrations embed.FS
 
-func NewDB(ctx context.Context, dbConnDSN string, cloudsql bool) (*gensql.Queries, closeFuncs, error) {
+// NewDB creates a new database connection and runs migrations
+func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries, closeFuncs, error) {
+	dbDriver := "pgx"
+	if !strings.Contains(dsn, "://") {
+		dbDriver = "cloudsql-postgres"
+	}
+
+	if runtime.NumCPU() < 5 {
+		dsn += " pool_max_conns=5"
+	}
+
+	cloudsql := dbDriver != "pgx"
 	cloudsqlHost := ""
 	if cloudsql {
-		vals, err := url.ParseQuery(strings.ReplaceAll(dbConnDSN, " ", "&"))
+		vals, err := url.ParseQuery(strings.ReplaceAll(dsn, " ", "&"))
 		if err != nil {
 			return nil, nil, err
 		}
 		cloudsqlHost = vals.Get("host")
 		delete(vals, "host")
-		dbConnDSN = strings.ReplaceAll(vals.Encode(), "&", " ")
+		dsn = strings.ReplaceAll(vals.Encode(), "&", " ")
 	}
 
-	config, err := pgxpool.ParseConfig(dbConnDSN)
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse pgx config: %w", err)
 	}
@@ -53,16 +65,13 @@ func NewDB(ctx context.Context, dbConnDSN string, cloudsql bool) (*gensql.Querie
 	closers := closeFuncs{}
 
 	if cloudsql {
-		// Create a new dialer with any options
-		d, err := cloudsqlconn.NewDialer(ctx)
+		dialer, err := cloudsqlconn.NewDialer(ctx)
 		if err != nil {
 			return nil, closers, fmt.Errorf("failed to initialize dialer: %w", err)
 		}
-		closers = append(closers, d.Close)
-
-		// Tell the driver to use the Cloud SQL Go Connector to create connections
-		config.ConnConfig.DialFunc = func(ctx context.Context, _ string, instance string) (net.Conn, error) {
-			return d.Dial(ctx, cloudsqlHost)
+		closers = append(closers, dialer.Close)
+		config.ConnConfig.DialFunc = func(ctx context.Context, _, instance string) (net.Conn, error) {
+			return dialer.Dial(ctx, cloudsqlHost)
 		}
 
 		cleanup, err := cloudsqlpgx.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
@@ -72,8 +81,11 @@ func NewDB(ctx context.Context, dbConnDSN string, cloudsql bool) (*gensql.Querie
 		closers = append(closers, cleanup)
 	}
 
-	// Interact with the dirver directly as you normally would
-	conn, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err := migrateDatabaseSchema(dbDriver, dsn, log); err != nil {
+		return nil, closers, err
+	}
+
+	conn, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, closers, fmt.Errorf("failed to connect: %w", err)
 	}
@@ -81,17 +93,24 @@ func NewDB(ctx context.Context, dbConnDSN string, cloudsql bool) (*gensql.Querie
 	return gensql.New(conn), closers, nil
 }
 
-func Migrate(driver, dsn string, log *logrus.Entry) error {
+// migrateDatabaseSchema runs database migrations
+func migrateDatabaseSchema(driver, dsn string, log *logrus.Entry) error {
 	goose.SetBaseFS(embedMigrations)
 	goose.SetLogger(log)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return err
+	}
 
 	db, err := sql.Open(driver, dsn)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-	if err := goose.Up(db, "migrations"); err != nil {
-		return fmt.Errorf("goose up: %w", err)
-	}
-	return nil
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.WithError(err).Error("closing database migration connection")
+		}
+	}()
+
+	return goose.Up(db, "migrations")
 }

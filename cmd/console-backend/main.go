@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"runtime"
-	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -33,6 +31,7 @@ import (
 )
 
 const (
+	costUpdateSchedule  = 1 * time.Hour
 	exitCodeSuccess     = 0
 	exitCodeLoggerError = 1
 	exitCodeRunError    = 2
@@ -70,20 +69,10 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		return fmt.Errorf("create error counter: %w", err)
 	}
 
-	log.Info("starting database client")
-	dbDriver := "pgx"
-	if !strings.Contains(cfg.DBConnectionDSN, "://") {
-		dbDriver = "cloudsql-postgres"
-	}
-
-	extraDSN := ""
-	if runtime.NumCPU() < 5 {
-		extraDSN = " pool_max_conns=5"
-	}
-
-	queries, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN+extraDSN, dbDriver != "pgx")
+	log.Info("connecting to database")
+	queries, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
 	if err != nil {
-		log.WithError(err).Fatal("setting up database")
+		return fmt.Errorf("setting up database")
 	}
 	defer func() {
 		if err := closers.Close(); err != nil {
@@ -91,15 +80,11 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		}
 	}()
 
-	if err := database.Migrate(dbDriver, cfg.DBConnectionDSN, log.WithField("subsystem", "migrate")); err != nil {
-		log.WithError(err).Fatal("migrating database")
-	}
-
 	costUpdater, err := cost.NewCostUpdater(ctx, queries, log.WithField("subsystem", "cost_updater"))
 	if err != nil {
 		log.WithError(err).Error("setting up cost updater. You might need to run `gcloud auth --update-adc` if running locally")
 	} else {
-		go costUpdater.Run(ctx, 1*time.Hour)
+		go costUpdater.Run(ctx, costUpdateSchedule)
 	}
 
 	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
@@ -119,7 +104,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
-			// Repo:        &repo,
+			Queries:     queries,
 		},
 	}
 
