@@ -1,9 +1,10 @@
 package model_test
 
 import (
+	"testing"
+
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_NewPagination(t *testing.T) {

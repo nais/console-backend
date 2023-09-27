@@ -119,7 +119,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
-			//Repo:        &repo,
+			// Repo:        &repo,
 		},
 	}
 
