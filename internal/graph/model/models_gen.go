@@ -162,6 +162,29 @@ type Consumer struct {
 	Orgno string `json:"orgno"`
 }
 
+type Cost struct {
+	From   time.Time     `json:"from"`
+	To     time.Time     `json:"to"`
+	Series []*CostSeries `json:"series"`
+}
+
+type CostFilter struct {
+	// Start date for costs
+	// Defaults to 7 days ago
+	StartDate *time.Time `json:"startDate,omitempty"`
+	// End date for costs
+	// Defaults to today
+	EndDate *time.Time `json:"endDate,omitempty"`
+	Team    string     `json:"team"`
+	App     string     `json:"app"`
+	Env     string     `json:"env"`
+}
+
+type CostSeries struct {
+	CostType string    `json:"costType"`
+	Data     []float64 `json:"data"`
+}
+
 type Database struct {
 	EnvVarPrefix string          `json:"envVarPrefix"`
 	Name         string          `json:"name"`

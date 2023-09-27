@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -17,6 +18,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/config"
+	"github.com/nais/console-backend/internal/cost"
 	"github.com/nais/console-backend/internal/database"
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
@@ -79,7 +81,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		extraDSN = " pool_max_conns=5"
 	}
 
-	db, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN+extraDSN, dbDriver != "pgx")
+	queries, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN+extraDSN, dbDriver != "pgx")
 	if err != nil {
 		log.WithError(err).Fatal("setting up database")
 	}
@@ -93,15 +95,12 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		log.WithError(err).Fatal("migrating database")
 	}
 
-	repo := database.New(db, log.WithField("subsystem", "repo"))
-	log.Info("-- successfully started database client")
-
-	// costUpdater, err := workers.NewCostUpdater(ctx, repo, log.WithField("subsystem", "cost_updater"))
-	// if err != nil {
-	// 	log.WithError(err).Error("setting up cost updater. You might need to run `gcloud auth --update-adc` if running locally")
-	// } else {
-	// 	go costUpdater.Run(ctx, 1*time.Hour)
-	// }
+	costUpdater, err := cost.NewCostUpdater(ctx, queries, log.WithField("subsystem", "cost_updater"))
+	if err != nil {
+		log.WithError(err).Error("setting up cost updater. You might need to run `gcloud auth --update-adc` if running locally")
+	} else {
+		go costUpdater.Run(ctx, 1*time.Hour)
+	}
 
 	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
@@ -120,7 +119,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
-			Repo:        &repo,
+			//Repo:        &repo,
 		},
 	}
 

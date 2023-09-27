@@ -6,9 +6,7 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/civil"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/nais/console-backend/internal/database"
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
@@ -21,17 +19,16 @@ SELECT *
 FROM
   ` + "`nais-io.console_data.console_nav`" + `
 WHERE
-  dato >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL 3 DAY)
-`
+  date >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL 3 DAY)`
 )
 
 type CostUpdater struct {
-	log    logrus.FieldLogger
-	repo   database.Repo
-	client *bigquery.Client
+	log     logrus.FieldLogger
+	queries *gensql.Queries
+	client  *bigquery.Client
 }
 
-func NewCostUpdater(ctx context.Context, repo database.Repo, log logrus.FieldLogger) (*CostUpdater, error) {
+func NewCostUpdater(ctx context.Context, queries *gensql.Queries, log logrus.FieldLogger) (*CostUpdater, error) {
 	client, err := bigquery.NewClient(ctx, gcpProject)
 	if err != nil {
 		return nil, err
@@ -49,9 +46,9 @@ func NewCostUpdater(ctx context.Context, repo database.Repo, log logrus.FieldLog
 	}
 
 	return &CostUpdater{
-		repo:   repo,
-		client: client,
-		log:    log,
+		queries: queries,
+		client:  client,
+		log:     log,
 	}, nil
 }
 
@@ -73,13 +70,13 @@ func (c *CostUpdater) Run(ctx context.Context, schedule time.Duration) {
 // it will only do so if the current date is newer than the latest date in the database +1 day
 // and the time is after 05:00
 func (c *CostUpdater) updateCosts(ctx context.Context) error {
-	lastDate, err := c.repo.CostLastDate(ctx)
+	lastDate, err := c.queries.CostLastDate(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Only run if the latest date recorded isn't today, and the time is after 05:00
-	if lastDate.Day()+1 == time.Now().Day() && time.Now().Hour() < 5 {
+	if lastDate.Time.Day()+1 == time.Now().Day() && time.Now().Hour() < 5 {
 		return nil
 	}
 
@@ -89,15 +86,19 @@ func (c *CostUpdater) updateCosts(ctx context.Context) error {
 		return err
 	}
 
-	rows := []gensql.CostUpsertParams{}
-
 	type Row struct {
-		TenantName string     `bigquery:"tenant"`
-		EnvName    string     `bigquery:"env"`
-		Date       civil.Date `bigquery:"dato"`
-		Cost       float32    `bigquery:"total"`
+		Env      bigquery.NullString `bigquery:"env"`
+		Team     bigquery.NullString `bigquery:"team"`
+		App      bigquery.NullString `bigquery:"app"`
+		CostType string              `bigquery:"cost_type"`
+		Date     civil.Date          `bigquery:"date"`
+		Cost     float32             `bigquery:"total"`
 	}
+
+	start := time.Now()
+	rows := make([]gensql.CostUpsertParams, 0)
 	for {
+
 		var r Row
 		err := it.Next(&r)
 		if err == iterator.Done {
@@ -112,55 +113,30 @@ func (c *CostUpdater) updateCosts(ctx context.Context) error {
 			continue
 		}
 
-		tenant, ok := tenantEnvs[r.TenantName]
-		if !ok {
-			c.log.WithField("tenant", r.TenantName).Debug("no tenant found")
-			continue
-		}
-
-		env, ok := tenant.envs[r.EnvName]
-		if !ok {
-			c.log.WithField("tenant", r.TenantName).WithField("env", r.EnvName).Debug("no env found")
-			continue
-		}
-
 		rows = append(rows, gensql.CostUpsertParams{
-			EnvID:    env,
-			TenantID: tenant.id,
+			Env:      nullToPointerString(r.Env),
+			Team:     nullToPointerString(r.Team),
+			App:      nullToPointerString(r.App),
 			Date:     pgtype.Date{Time: r.Date.In(time.UTC), Valid: true},
 			Cost:     r.Cost,
+			CostType: r.CostType,
 		})
 	}
 
-	if len(rows) == 0 {
-		return nil
-	}
-
-	return c.repo.CostUpsert(ctx, rows)
-}
-
-type tenantEnvMap struct {
-	envs map[string]uuid.UUID
-	id   uuid.UUID
-}
-
-func (c *CostUpdater) tenantEnvs(ctx context.Context) (tenants map[string]tenantEnvMap, err error) {
-	te, err := c.repo.TenantEnvironments(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-
-	tenants = make(map[string]tenantEnvMap, len(te))
-	for _, t := range te {
-		if _, ok := tenants[t.TenantName]; !ok {
-			tenants[t.TenantName] = tenantEnvMap{
-				envs: map[string]uuid.UUID{},
-				id:   t.TenantID,
-			}
+	c.queries.CostUpsert(ctx, rows).Exec(func(i int, err error) {
+		if err != nil {
+			c.log.WithError(err).Errorf("failed to upsert cost: index %v", i)
 		}
+	})
 
-		tenants[t.TenantName].envs[t.Name] = t.ID
+	c.log.WithField("duration", time.Since(start).String()).WithField("num_inserts", len(rows)).Info("inserted costs")
+
+	return nil
+}
+
+func nullToPointerString(s bigquery.NullString) *string {
+	if s.Valid {
+		return &s.StringVal
 	}
-
-	return tenants, nil
+	return nil
 }

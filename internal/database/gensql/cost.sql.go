@@ -24,7 +24,7 @@ func (q *Queries) CostLastDate(ctx context.Context) (pgtype.Date, error) {
 }
 
 const getCost = `-- name: GetCost :many
-SELECT env, team, app, service_description, date, cost FROM cost
+SELECT id, env, team, app, cost_type, date, cost FROM cost
 `
 
 func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
@@ -37,10 +37,11 @@ func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
 	for rows.Next() {
 		var i Cost
 		if err := rows.Scan(
+			&i.ID,
 			&i.Env,
 			&i.Team,
 			&i.App,
-			&i.ServiceDescription,
+			&i.CostType,
 			&i.Date,
 			&i.Cost,
 		); err != nil {

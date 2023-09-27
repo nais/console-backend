@@ -9,14 +9,13 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/nais/console-backend/internal/database/gensql"
+
 	"cloud.google.com/go/cloudsqlconn"
 	cloudsqlpgx "cloud.google.com/go/cloudsqlconn/postgres/pgxv4"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/metric"
 )
 
 type (
@@ -37,75 +36,7 @@ func (c closeFuncs) Close() error {
 //go:embed migrations/0*.sql
 var embedMigrations embed.FS
 
-type TXFunc func(repo Repo) error
-
-type Repo interface {
-	CostRepo
-
-	Transaction
-
-	Close()
-	Metrics(meter metric.Meter) error
-	WithTx(ctx context.Context) (Repo, pgx.Tx, error)
-}
-
-type Transaction interface {
-	TxFunc(ctx context.Context, fn TXFunc) error
-}
-
-type repo struct {
-	querier Querier
-	db      *pgxpool.Pool
-	log     *logrus.Entry
-
-	auditErrorCount metric.Int64Counter
-}
-
-func (r *repo) Metrics(meter metric.Meter) (err error) {
-	r.auditErrorCount, err = meter.Int64Counter("audit_errors", metric.WithDescription("Number of audit errors"))
-	if err != nil {
-		return fmt.Errorf("failed to create audit_errors counter: %w", err)
-	}
-
-	return nil
-}
-
-type Querier interface {
-	gensql.Querier
-	WithTx(tx pgx.Tx) *gensql.Queries
-}
-
-func New(db *pgxpool.Pool, log *logrus.Entry) Repo {
-	return &repo{
-		querier: gensql.New(db),
-		db:      db,
-		log:     log,
-	}
-}
-
-func (r *repo) WithTx(ctx context.Context) (Repo, pgx.Tx, error) {
-	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
-	return &repo{
-		querier: r.querier.WithTx(tx),
-		db:      r.db,
-		log:     r.log,
-	}, tx, nil
-}
-
-func (r *repo) TxFunc(ctx context.Context, fn TXFunc) error {
-	return pgx.BeginFunc(ctx, r.db, func(tx pgx.Tx) error {
-		return fn(&repo{
-			querier: r.querier.WithTx(tx),
-			db:      r.db,
-			log:     r.log,
-		})
-	})
-}
-
-func NewDB(ctx context.Context, dbConnDSN string, cloudsql bool) (*pgxpool.Pool, closeFuncs, error) {
+func NewDB(ctx context.Context, dbConnDSN string, cloudsql bool) (*gensql.Queries, closeFuncs, error) {
 	cloudsqlHost := ""
 	if cloudsql {
 		vals, err := url.ParseQuery(strings.ReplaceAll(dbConnDSN, " ", "&"))
@@ -149,7 +80,8 @@ func NewDB(ctx context.Context, dbConnDSN string, cloudsql bool) (*pgxpool.Pool,
 	if err != nil {
 		return nil, closers, fmt.Errorf("failed to connect: %w", err)
 	}
-	return conn, closers, nil
+
+	return gensql.New(conn), closers, nil
 }
 
 func Migrate(driver, dsn string, log *logrus.Entry) error {
@@ -165,8 +97,4 @@ func Migrate(driver, dsn string, log *logrus.Entry) error {
 		return fmt.Errorf("goose up: %w", err)
 	}
 	return nil
-}
-
-func (r *repo) Close() {
-	r.db.Close()
 }

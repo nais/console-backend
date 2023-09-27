@@ -1,0 +1,32 @@
+input CostFilter {
+    """
+    Start date for costs
+    Defaults to 7 days ago
+    """
+    startDate: Time
+
+    """
+    End date for costs
+    Defaults to today
+    """
+    endDate: Time
+
+    team: String!
+    app: String!
+    env: String!
+}
+
+type Cost {
+    from: Time!
+    to: Time!
+    series: [CostSeries!]!
+}
+
+type CostSeries {
+    costType: String!
+    data: [Float!]!
+}
+
+extend type Query {
+    cost(filter: CostFilter): Cost!
+}

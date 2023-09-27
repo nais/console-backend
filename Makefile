@@ -9,22 +9,9 @@ else
 	GOBIN=$(shell go env GOBIN)
 endif
 
-install-sqlc:
-	@if [ "$(shell sqlc version)" != "$(SQLC_VERSION)" ]; then \
-		echo "Installing sqlc $(SQLC_VERSION)"; \
-		go install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION); \
-		if command -v asdf > /dev/null; then\
-			asdf reshim golang;\
-		fi;\
-	else \
-		echo "sqlc $(SQLC_VERSION) already installed"; \
-	fi
-
-generate-sql: install-sqlc sqlc-vet
-	$(GOBIN)/sqlc generate
-
-sqlc-vet:
-	$(GOBIN)/sqlc vet
+generate-sql:
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc generate
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc vet
 
 all: generate-graphql test check linux-binary
 
@@ -38,14 +25,14 @@ linux-binary:
 	GOOS=linux GOARCH=amd64 go build -o bin/console-backend ./cmd/console-backend/main.go
 
 portforward-hookd:
-	kubectl port-forward -n nais-system --context nav-management svc/hookd 8282:80
+	kubectl port-forward -n nais-system --context nav-management-v2 svc/hookd 8282:80
 
 portforward-teams:
-	kubectl port-forward -n nais-system --context nav-management svc/teams-backend 8181:80
+	kubectl port-forward -n nais-system --context nav-management-v2 svc/teams-backend 8181:80
 
 local-nav:
-	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nav-management -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 --decode)" \
-	HOOKD_PSK="$(shell kubectl get secret console-backend --context nav-management -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \
+	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 --decode)" \
+	HOOKD_PSK="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \
 	KUBERNETES_CLUSTERS_STATIC="dev-fss|apiserver.dev-fss.nais.io|$(shell kubectl get secret --context dev-fss --namespace nais-system console-backend -ojsonpath='{ .data.token }' | base64 --decode)" \
 	go run ./cmd/console-backend/main.go --bind-host 127.0.0.1 --port 4242 --kubernetes-clusters "dev-gcp,prod-gcp" --run-as-user johnny.horvi@nav.no --teams-endpoint="http://localhost:8181/query" --hookd-endpoint="http://localhost:8282" --tenant="nav" --field-selector "metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny,metadata.namespace!=nais"
 
@@ -58,3 +45,6 @@ test:
 check:
 	go run honnef.co/go/tools/cmd/staticcheck ./...
 	go run golang.org/x/vuln/cmd/govulncheck ./...
+
+fmt:
+	go run mvdan.cc/gofumpt -w ./

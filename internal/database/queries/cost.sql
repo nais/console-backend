@@ -11,7 +11,7 @@ INSERT INTO cost (
   env,
   team,
   app,
-  cost_type
+  cost_type,
   date,
   cost
 ) VALUES (
@@ -21,6 +21,6 @@ INSERT INTO cost (
   $4,
   $5,
   $6
-) ON CONFLICT (tenant_id, env_id, date) DO UPDATE SET
+) ON CONFLICT (env, team, app, cost_type, date) DO UPDATE SET
   cost = EXCLUDED.cost
 ;

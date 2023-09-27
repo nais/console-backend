@@ -9,10 +9,11 @@ import (
 )
 
 type Cost struct {
-	Env                *string
-	Team               *string
-	App                *string
-	ServiceDescription string
-	Date               pgtype.Date
-	Cost               float32
+	ID       int32
+	Env      *string
+	Team     *string
+	App      *string
+	CostType string
+	Date     pgtype.Date
+	Cost     float32
 }
