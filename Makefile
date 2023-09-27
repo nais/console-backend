@@ -2,18 +2,14 @@
 SQLC_VERSION ?= "v1.21.0"
 
 
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-	GOBIN=$(shell go env GOPATH)/bin
-else
-	GOBIN=$(shell go env GOBIN)
-endif
+all: generate test check linux-binary
+
+generate: generate-sql generate-graphql
 
 generate-sql:
 	go run github.com/sqlc-dev/sqlc/cmd/sqlc generate
 	go run github.com/sqlc-dev/sqlc/cmd/sqlc vet
 
-all: generate-graphql test check linux-binary
 
 generate-graphql:
 	go run github.com/99designs/gqlgen generate

@@ -18,10 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type (
-	ctxKey     string
-	closeFuncs []func() error
-)
+type closeFuncs []func() error
 
 func (c closeFuncs) Close() error {
 	var err error

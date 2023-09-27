@@ -35,7 +35,7 @@ require (
 	github.com/apache/arrow/go/v12 v12.0.0 // indirect
 	github.com/apache/thrift v0.16.0 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
-	github.com/bytecodealliance/wasmtime-go/v12 v12.0.0 // indirect
+	github.com/bytecodealliance/wasmtime-go/v13 v13.0.0 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
