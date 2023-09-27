@@ -83,7 +83,7 @@ func New(token, endpoint string, errors metric.Int64Counter, log *logrus.Entry) 
 
 // Search searches for teams matching the query
 func (c *Client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result {
-	if !isTeamFilter(filter) {
+	if !isTeamFilterOrNoFilter(filter) {
 		return nil
 	}
 
@@ -392,14 +392,14 @@ func toModelTeams(teams []Team) []*model.Team {
 	return models
 }
 
-// isTeamFilter returns true if the filter is a team filter
-func isTeamFilter(filter *model.SearchFilter) bool {
+// isTeamFilterOrNoFilter returns true if the filter is a team filter or no filter is provided
+func isTeamFilterOrNoFilter(filter *model.SearchFilter) bool {
 	if filter == nil {
-		return false
+		return true
 	}
 
 	if filter.Type == nil {
-		return false
+		return true
 	}
 
 	return *filter.Type == model.SearchTypeTeam

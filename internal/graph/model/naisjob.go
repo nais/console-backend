@@ -36,6 +36,7 @@ type NaisJob struct {
 	Completions  int           `json:"completions"`
 	Parallelism  int           `json:"parallelism"`
 	Retries      int           `json:"retries"`
+	JobState     JobState      `json:"jobState"`
 	GQLVars      struct {
 		Team string
 	} `json:"-"`
@@ -43,5 +44,4 @@ type NaisJob struct {
 
 func (NaisJob) IsNode()        {}
 func (j NaisJob) GetID() Ident { return j.ID }
-
-func (NaisJob) IsSearchNode() {}
+func (NaisJob) IsSearchNode()  {}

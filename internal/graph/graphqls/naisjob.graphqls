@@ -21,6 +21,18 @@ type Run implements Node {
   failed: Boolean!
 }
 
+type JobState {
+  state: State!
+  errors: [StateError!]!
+}
+
+type FailedRunError implements StateError {
+  revision: String!
+  level: ErrorLevel!
+  runMessage: String!
+  runName: String!
+}
+
 type NaisJob implements Node {
   id: ID!
   accessPolicy: AccessPolicy!
@@ -38,6 +50,7 @@ type NaisJob implements Node {
   completions: Int!
   parallelism: Int!
   retries: Int!
+  jobState: JobState!
 }
 
 extend type Query {
