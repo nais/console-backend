@@ -19,5 +19,5 @@ type Resolver struct {
 	K8s         *k8s.Client
 	Searcher    *search.Searcher
 	Log         *logrus.Logger
-	Queries     *gensql.Queries
+	Queries     gensql.Querier
 }

@@ -35,7 +35,7 @@ func (c closeFuncs) Close() error {
 var embedMigrations embed.FS
 
 // NewDB creates a new database connection and runs migrations
-func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries, closeFuncs, error) {
+func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (gensql.Querier, closeFuncs, error) {
 	dbDriver := "pgx"
 	if !strings.Contains(dsn, "://") {
 		dbDriver = "cloudsql-postgres"

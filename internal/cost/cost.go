@@ -22,12 +22,12 @@ const (
 
 type Updater struct {
 	log     logrus.FieldLogger
-	queries *gensql.Queries
+	queries gensql.Querier
 	client  *bigquery.Client
 }
 
 // NewCostUpdater creates a new cost updater
-func NewCostUpdater(ctx context.Context, queries *gensql.Queries, log logrus.FieldLogger) (*Updater, error) {
+func NewCostUpdater(ctx context.Context, queries gensql.Querier, log logrus.FieldLogger) (*Updater, error) {
 	client, err := bigquery.NewClient(ctx, gcpProject)
 	if err != nil {
 		return nil, err
