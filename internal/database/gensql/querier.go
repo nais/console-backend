@@ -11,9 +11,12 @@ import (
 )
 
 type Querier interface {
+	CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost, error)
 	CostLastDate(ctx context.Context) (pgtype.Date, error)
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults
 	GetCost(ctx context.Context) ([]*Cost, error)
+	TotalCostForApp(ctx context.Context, arg TotalCostForAppParams) ([]*TotalCostForAppRow, error)
+	TotalCostForTeam(ctx context.Context, arg TotalCostForTeamParams) ([]*TotalCostForTeamRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

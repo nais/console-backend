@@ -17,7 +17,7 @@ import (
 const (
 	gcpProject    = "nais-io"
 	bigQueryTable = "nais-io.console_data.console_nav"
-	daysToFetch   = 10
+	daysToFetch   = 5
 )
 
 type Updater struct {
@@ -34,18 +34,6 @@ func NewCostUpdater(ctx context.Context, queries gensql.Querier, log logrus.Fiel
 	}
 
 	client.Location = "EU"
-	it := client.Datasets(ctx)
-
-	// what is the meaning of this loop?
-	for {
-		_, err := it.Next()
-		if errors.Is(err, iterator.Done) {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	return &Updater{
 		queries: queries,

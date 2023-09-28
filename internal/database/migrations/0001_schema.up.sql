@@ -9,3 +9,4 @@ CREATE TABLE cost (
     cost real NOT NULL,
     UNIQUE NULLS NOT DISTINCT (env, team, app, cost_type, date)
 );
+

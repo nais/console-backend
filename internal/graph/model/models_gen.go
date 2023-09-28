@@ -181,8 +181,16 @@ type CostFilter struct {
 }
 
 type CostSeries struct {
-	CostType string    `json:"costType"`
-	Data     []float64 `json:"data"`
+	CostType string       `json:"costType"`
+	App      string       `json:"app"`
+	Env      string       `json:"env"`
+	Team     string       `json:"team"`
+	Data     []*DailyCost `json:"data"`
+}
+
+type DailyCost struct {
+	Date time.Time `json:"date"`
+	Cost float64   `json:"cost"`
 }
 
 type Database struct {
