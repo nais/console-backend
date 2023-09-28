@@ -17,7 +17,7 @@ import (
 const (
 	gcpProject    = "nais-io"
 	bigQueryTable = "nais-io.console_data.console_nav"
-	daysToFetch   = 5
+	daysToFetch   = 10
 )
 
 type Updater struct {
@@ -100,7 +100,7 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 		App      bigquery.NullString `bigquery:"app"`
 		CostType string              `bigquery:"cost_type"`
 		Date     civil.Date          `bigquery:"date"`
-		Cost     float32             `bigquery:"total"`
+		Cost     float32             `bigquery:"cost"`
 	}
 
 	start := time.Now()
