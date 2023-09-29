@@ -3,10 +3,11 @@ package model_test
 import (
 	"bytes"
 	"context"
-	"github.com/nais/console-backend/internal/graph/model"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/stretchr/testify/assert"
 )
 
 var tm = time.Date(2020, time.April, 20, 0, 0, 0, 0, time.UTC)
@@ -18,7 +19,7 @@ func TestDate_NewDate(t *testing.T) {
 
 func TestDate_PgDate(t *testing.T) {
 	date := model.NewDate(tm)
-	assert.Equal(t, "2020-04-20", date.PgDate().Time.Format(model.YYYYMMDD))
+	assert.Equal(t, "2020-04-20", date.PgDate().Time.Format(model.DateFormat))
 }
 
 func TestDate_MarshalGQLContext(t *testing.T) {

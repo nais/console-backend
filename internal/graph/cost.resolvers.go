@@ -20,49 +20,46 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 		filter.From = &start
 	}
 
+	today := model.NewDate(time.Now())
 	if filter.To == nil {
-		end := model.NewDate(time.Now())
-		filter.To = &end
+		filter.To = &today
+	}
+
+	if *filter.From > *filter.To {
+		return nil, fmt.Errorf("from date cannot be after to date")
+	} else if *filter.To > today {
+		return nil, fmt.Errorf("to date cannot be in the future")
 	}
 
 	if filter.App != "" && filter.Env != "" && filter.Team != "" && filter.From != nil && filter.To != nil {
-		params := gensql.CostForAppParams{
+		rows, err := r.Queries.CostForApp(ctx, gensql.CostForAppParams{
 			App:      &filter.App,
 			Team:     &filter.Team,
 			Env:      &filter.Env,
 			FromDate: filter.From.PgDate(),
 			ToDate:   filter.To.PgDate(),
-		}
-
-		rows, err := r.Queries.CostForApp(ctx, params)
+		})
 		if err != nil {
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
-		mapTypeDailyCost := make(map[string][]*model.DailyCost)
-		for _, row := range rows {
-			mapTypeDailyCost[row.CostType] = append(mapTypeDailyCost[row.CostType], &model.DailyCost{
-				Date: model.NewDate(row.Date.Time),
-				Cost: float64(row.Cost),
-			})
-		}
-
-		cost := &model.Cost{
-			From: *filter.From,
-			To:   *filter.To,
-		}
-
-		for costType, dailyCost := range mapTypeDailyCost {
-			cost.Series = append(cost.Series, &model.CostSeries{
+		costs := DailyCostsFromDatabaseRows(*filter.From, *filter.To, rows)
+		series := make([]*model.CostSeries, 0)
+		for costType, data := range costs {
+			series = append(series, &model.CostSeries{
 				CostType: costType,
-				Data:     dailyCost,
+				Data:     data,
 				App:      filter.App,
 				Team:     filter.Team,
 				Env:      filter.Env,
 			})
 		}
 
-		return cost, nil
+		return &model.Cost{
+			From:   *filter.From,
+			To:     *filter.To,
+			Series: series,
+		}, nil
 	} /*else if filter.Env != "" && filter.Team != "" && filter.StartDate != nil && filter.EndDate != nil {
 		params := gensql.CostForAppParams{}
 		params.Team = &filter.Team

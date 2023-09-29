@@ -3,13 +3,14 @@ package model
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgtype"
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const YYYYMMDD = "2006-01-02"
+const DateFormat = "2006-01-02"
 
 type Date string
 
@@ -33,7 +34,7 @@ func (d *Date) UnmarshalGQLContext(_ context.Context, v interface{}) error {
 
 // NewDate returns a Date from a time.Time
 func NewDate(t time.Time) Date {
-	return Date(t.UTC().Format(YYYYMMDD))
+	return Date(t.UTC().Format(DateFormat))
 }
 
 // String returns the Date as a string
