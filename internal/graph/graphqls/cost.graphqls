@@ -1,40 +1,69 @@
-input CostFilter {
-  """
-  Start date for costs
-  Defaults to 7 days ago
-  """
-  startDate: Time
-
-  """
-  End date for costs
-  Defaults to today
-  """
-  endDate: Time
-
-  team: String!
-  app: String!
-  env: String!
-}
-
-type Cost {
-  from: Time!
-  to: Time!
-  series: [CostSeries!]!
-}
-
-type CostSeries {
-  costType: String!
-  app: String!
-  env: String!
-  team: String!
-  data: [DailyCost!]!
-}
-
-type DailyCost {
-  date: Time!
-  cost: Float!
-}
-
 extend type Query {
-  cost(filter: CostFilter): Cost!
+    "Get costs."
+    cost(filter: CostFilter): Cost!
+}
+
+"Cost filter type."
+input CostFilter {
+    """
+    Start date for the cost series, inclusive.
+
+    Defaults to 7 days ago.
+    """
+    from: Date
+
+    """
+    End date for cost series, inclusive.
+
+    Defaults to the current date.
+    """
+    to: Date
+
+    "The name of the team to get costs for."
+    team: String!
+
+    "The name of the application to get costs for."
+    app: String!
+
+    "The name of the environment to get costs for."
+    env: String!
+}
+
+"Cost type."
+type Cost {
+    "The start date for the cost data."
+    from: Date!
+
+    "The end date for the cost data."
+    to: Date!
+
+    "The cost series."
+    series: [CostSeries!]!
+}
+
+"Cost series type."
+type CostSeries {
+    "The type of cost."
+    costType: String!
+
+    "The name of the application."
+    app: String!
+
+    "The name of the environment."
+    env: String!
+
+    "The name of the team."
+    team: String!
+
+    "The cost data."
+    data: [DailyCost!]!
+}
+
+"Daily cost type."
+type DailyCost {
+    "The date for the cost data."
+    date: Date!
+
+    "The actual cost in euros."
+    cost: Float!
 }

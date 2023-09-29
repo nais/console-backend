@@ -69,3 +69,6 @@ models:
     extraFields:
       Rank:
         type: int
+  Date:
+    model:
+      - github.com/nais/console-backend/internal/graph/model.Date

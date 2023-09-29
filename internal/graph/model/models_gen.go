@@ -162,35 +162,54 @@ type Consumer struct {
 	Orgno string `json:"orgno"`
 }
 
+// Cost type.
 type Cost struct {
-	From   time.Time     `json:"from"`
-	To     time.Time     `json:"to"`
+	// The start date for the cost data.
+	From Date `json:"from"`
+	// The end date for the cost data.
+	To Date `json:"to"`
+	// The cost series.
 	Series []*CostSeries `json:"series"`
 }
 
+// Cost filter type.
 type CostFilter struct {
-	// Start date for costs
-	// Defaults to 7 days ago
-	StartDate *time.Time `json:"startDate,omitempty"`
-	// End date for costs
-	// Defaults to today
-	EndDate *time.Time `json:"endDate,omitempty"`
-	Team    string     `json:"team"`
-	App     string     `json:"app"`
-	Env     string     `json:"env"`
+	// Start date for the cost series, inclusive.
+	//
+	// Defaults to 7 days ago.
+	From *Date `json:"from,omitempty"`
+	// End date for cost series, inclusive.
+	//
+	// Defaults to the current date.
+	To *Date `json:"to,omitempty"`
+	// The name of the team to get costs for.
+	Team string `json:"team"`
+	// The name of the application to get costs for.
+	App string `json:"app"`
+	// The name of the environment to get costs for.
+	Env string `json:"env"`
 }
 
+// Cost series type.
 type CostSeries struct {
-	CostType string       `json:"costType"`
-	App      string       `json:"app"`
-	Env      string       `json:"env"`
-	Team     string       `json:"team"`
-	Data     []*DailyCost `json:"data"`
+	// The type of cost.
+	CostType string `json:"costType"`
+	// The name of the application.
+	App string `json:"app"`
+	// The name of the environment.
+	Env string `json:"env"`
+	// The name of the team.
+	Team string `json:"team"`
+	// The cost data.
+	Data []*DailyCost `json:"data"`
 }
 
+// Daily cost type.
 type DailyCost struct {
-	Date time.Time `json:"date"`
-	Cost float64   `json:"cost"`
+	// The date for the cost data.
+	Date Date `json:"date"`
+	// The actual cost in euros.
+	Cost float64 `json:"cost"`
 }
 
 type Database struct {

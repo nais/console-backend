@@ -19,42 +19,41 @@ func (r *queryResolver) Cost(ctx context.Context, filter *model.CostFilter) (*mo
 		return nil, fmt.Errorf("cost filter is nil")
 	}
 
-	if filter.StartDate == nil {
-		start := time.Now().Add(time.Duration(-7 * time.Hour * 24))
-		filter.StartDate = &start
+	if filter.From == nil {
+		start := model.NewDate(time.Now().Add(-7 * time.Hour * 24))
+		filter.From = &start
 	}
 
-	if filter.EndDate == nil {
-		end := time.Now()
-		filter.EndDate = &end
+	if filter.To == nil {
+		end := model.NewDate(time.Now())
+		filter.To = &end
 	}
 
-	if filter.App != "" && filter.Env != "" && filter.Team != "" && filter.StartDate != nil && filter.EndDate != nil {
-		params := gensql.CostForAppParams{}
-		params.App = &filter.App
-		params.Team = &filter.Team
-		params.Env = &filter.Env
-		params.FromDate.Time = filter.StartDate.UTC()
-		params.FromDate.Valid = true
-		params.ToDate.Time = filter.EndDate.UTC()
-		params.ToDate.Valid = true
+	if filter.App != "" && filter.Env != "" && filter.Team != "" && filter.From != nil && filter.To != nil {
+		params := gensql.CostForAppParams{
+			App:      &filter.App,
+			Team:     &filter.Team,
+			Env:      &filter.Env,
+			FromDate: filter.From.PgDate(),
+			ToDate:   filter.To.PgDate(),
+		}
+
 		rows, err := r.Queries.CostForApp(ctx, params)
 		if err != nil {
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
 		mapTypeDailyCost := make(map[string][]*model.DailyCost)
-
 		for _, row := range rows {
 			mapTypeDailyCost[row.CostType] = append(mapTypeDailyCost[row.CostType], &model.DailyCost{
-				Date: row.Date.Time,
+				Date: model.NewDate(row.Date.Time),
 				Cost: float64(row.Cost),
 			})
 		}
 
 		cost := &model.Cost{
-			From: *filter.StartDate,
-			To:   *filter.EndDate,
+			From: *filter.From,
+			To:   *filter.To,
 		}
 
 		for costType, dailyCost := range mapTypeDailyCost {

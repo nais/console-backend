@@ -76,6 +76,7 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 		bigQueryTable,
 		daysToFetch,
 	)
+	c.log.WithField("query", sql).Debugf("fetch data from bigquery")
 	query := c.client.Query(sql)
 	it, err := query.Read(ctx)
 	if err != nil {
@@ -91,15 +92,16 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 		Cost     float32             `bigquery:"cost"`
 	}
 
-	start := time.Now()
+	c.log.Debugf("collect cost data")
 	rows := make([]gensql.CostUpsertParams, 0)
+	start := time.Now()
 	for {
 		var r Row
-		err := it.Next(&r)
-		if errors.Is(err, iterator.Done) {
-			break
-		}
-		if err != nil {
+		if err := it.Next(&r); err != nil {
+			if errors.Is(err, iterator.Done) {
+				break
+			}
+
 			if errors.Is(err, context.Canceled) {
 				return err
 			}
@@ -112,12 +114,18 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 			Env:      nullToStringPointer(r.Env),
 			Team:     nullToStringPointer(r.Team),
 			App:      nullToStringPointer(r.App),
+			CostType: r.CostType,
 			Date:     pgtype.Date{Time: r.Date.In(time.UTC), Valid: true},
 			Cost:     r.Cost,
-			CostType: r.CostType,
 		})
 	}
+	c.log.
+		WithField("duration", time.Since(start).String()).
+		WithField("rows", len(rows)).
+		Info("collected data")
 
+	start = time.Now()
+	c.log.Debugf("start upserting cost data")
 	c.queries.CostUpsert(ctx, rows).Exec(func(i int, err error) {
 		if err != nil {
 			c.log.WithError(err).Errorf("failed to upsert cost: index %v", i)
