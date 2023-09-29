@@ -467,7 +467,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		App         func(childComplexity int, name string, team string, env string) int
-		Cost        func(childComplexity int, filter *model.CostFilter) int
+		Cost        func(childComplexity int, filter model.CostFilter) int
 		Deployments func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) int
 		Naisjob     func(childComplexity int, name string, team string, env string) int
 		Node        func(childComplexity int, id model.Ident) int
@@ -644,7 +644,7 @@ type PageInfoResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id model.Ident) (model.Node, error)
 	App(ctx context.Context, name string, team string, env string) (*model.App, error)
-	Cost(ctx context.Context, filter *model.CostFilter) (*model.Cost, error)
+	Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error)
 	Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error)
@@ -2271,7 +2271,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Cost(childComplexity, args["filter"].(*model.CostFilter)), true
+		return e.complexity.Query.Cost(childComplexity, args["filter"].(model.CostFilter)), true
 
 	case "Query.deployments":
 		if e.complexity.Query.Deployments == nil {
@@ -3232,10 +3232,10 @@ func (ec *executionContext) field_Query_app_args(ctx context.Context, rawArgs ma
 func (ec *executionContext) field_Query_cost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.CostFilter
+	var arg0 model.CostFilter
 	if tmp, ok := rawArgs["filter"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-		arg0, err = ec.unmarshalOCostFilter2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostFilter(ctx, tmp)
+		arg0, err = ec.unmarshalNCostFilter2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -14223,7 +14223,7 @@ func (ec *executionContext) _Query_cost(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Cost(rctx, fc.Args["filter"].(*model.CostFilter))
+		return ec.resolvers.Query().Cost(rctx, fc.Args["filter"].(model.CostFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -26744,6 +26744,11 @@ func (ec *executionContext) marshalNCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑback
 	return ec._Cost(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCostFilter2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostFilter(ctx context.Context, v interface{}) (model.CostFilter, error) {
+	res, err := ec.unmarshalInputCostFilter(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNCostSeries2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeriesᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CostSeries) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -28807,14 +28812,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
-}
-
-func (ec *executionContext) unmarshalOCostFilter2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostFilter(ctx context.Context, v interface{}) (*model.CostFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputCostFilter(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, v interface{}) (*model.Cursor, error) {

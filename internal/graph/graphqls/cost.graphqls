@@ -1,6 +1,6 @@
 extend type Query {
     "Get costs."
-    cost(filter: CostFilter): Cost!
+    cost(filter: CostFilter!): Cost!
 }
 
 "Cost filter type."

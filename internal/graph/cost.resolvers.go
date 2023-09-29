@@ -14,11 +14,7 @@ import (
 )
 
 // Cost is the resolver for the cost field.
-func (r *queryResolver) Cost(ctx context.Context, filter *model.CostFilter) (*model.Cost, error) {
-	if filter == nil {
-		return nil, fmt.Errorf("cost filter is nil")
-	}
-
+func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error) {
 	if filter.From == nil {
 		start := model.NewDate(time.Now().Add(-7 * time.Hour * 24))
 		filter.From = &start
