@@ -13,6 +13,26 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+// Sum is the resolver for the sum field.
+func (r *costResolver) Sum(ctx context.Context, obj *model.Cost) (float64, error) {
+	sum := 0.0
+	for _, series := range obj.Series {
+		for _, cost := range series.Data {
+			sum += cost.Cost
+		}
+	}
+	return sum, nil
+}
+
+// Sum is the resolver for the sum field.
+func (r *costSeriesResolver) Sum(ctx context.Context, obj *model.CostSeries) (float64, error) {
+	sum := 0.0
+	for _, cost := range obj.Data {
+		sum += cost.Cost
+	}
+	return sum, nil
+}
+
 // Cost is the resolver for the cost field.
 func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error) {
 	if filter.From == nil {
@@ -90,3 +110,14 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 	*/
 	return nil, fmt.Errorf("not implemented")
 }
+
+// Cost returns CostResolver implementation.
+func (r *Resolver) Cost() CostResolver { return &costResolver{r} }
+
+// CostSeries returns CostSeriesResolver implementation.
+func (r *Resolver) CostSeries() CostSeriesResolver { return &costSeriesResolver{r} }
+
+type (
+	costResolver       struct{ *Resolver }
+	costSeriesResolver struct{ *Resolver }
+)

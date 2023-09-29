@@ -1,11 +1,11 @@
 package graph
 
 import (
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/nais/console-backend/internal/database/gensql"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -84,6 +84,5 @@ func TestDailyCostsFromDatabaseRows(t *testing.T) {
 		assert.Equal(t, "2020-04-30", string(costs["type2"][2].Date))
 		assert.Equal(t, "2020-05-01", string(costs["type2"][3].Date))
 		assert.Equal(t, "2020-05-02", string(costs["type2"][4].Date))
-
 	})
 }

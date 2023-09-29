@@ -55,6 +55,8 @@ func (r *Resolver) PageInfo() PageInfoResolver { return &pageInfoResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type pageInfoResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	pageInfoResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

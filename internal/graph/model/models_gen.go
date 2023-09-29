@@ -168,6 +168,8 @@ type Cost struct {
 	From Date `json:"from"`
 	// The end date for the cost data.
 	To Date `json:"to"`
+	// The sum of all costs in the cost series in euros.
+	Sum float64 `json:"sum"`
 	// The cost series.
 	Series []*CostSeries `json:"series"`
 }
@@ -200,6 +202,8 @@ type CostSeries struct {
 	Env string `json:"env"`
 	// The name of the team.
 	Team string `json:"team"`
+	// The sum of all daily costs in the series for this cost type in euros.
+	Sum float64 `json:"sum"`
 	// The cost data.
 	Data []*DailyCost `json:"data"`
 }

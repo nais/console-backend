@@ -37,6 +37,9 @@ type Cost {
     "The end date for the cost data."
     to: Date!
 
+    "The sum of all costs in the cost series in euros."
+    sum: Float! @goField(forceResolver: true)
+
     "The cost series."
     series: [CostSeries!]!
 }
@@ -54,6 +57,9 @@ type CostSeries {
 
     "The name of the team."
     team: String!
+
+    "The sum of all daily costs in the series for this cost type in euros."
+    sum: Float! @goField(forceResolver: true)
 
     "The cost data."
     data: [DailyCost!]!
