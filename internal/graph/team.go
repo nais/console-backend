@@ -19,7 +19,7 @@ func teamEdges(teams []t.Team, p *model.Pagination) []*model.TeamEdge {
 			Node: &model.Team{
 				ID:           model.TeamIdent(team.Slug),
 				Name:         team.Slug,
-				Description:  &team.Purpose,
+				Description:  team.Purpose,
 				SlackChannel: team.SlackChannel,
 				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {
 					ret := []model.SlackAlertsChannel{}
