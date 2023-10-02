@@ -375,7 +375,7 @@ func toModelTeams(teams []Team) []*model.Team {
 		models = append(models, &model.Team{
 			ID:           model.TeamIdent(team.Slug),
 			Name:         team.Slug,
-			Description:  &team.Purpose,
+			Description:  team.Purpose,
 			SlackChannel: team.SlackChannel,
 			SlackAlertsChannels: func(channels []SlackAlertsChannel) []model.SlackAlertsChannel {
 				models := make([]model.SlackAlertsChannel, 0)

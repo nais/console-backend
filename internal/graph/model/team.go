@@ -3,7 +3,7 @@ package model
 type Team struct {
 	ID                  Ident                `json:"id"`
 	Name                string               `json:"name"`
-	Description         *string              `json:"description,omitempty"`
+	Description         string               `json:"description,omitempty"`
 	SlackChannel        string               `json:"slackChannel"`
 	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
 }
