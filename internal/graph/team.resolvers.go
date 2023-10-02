@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
@@ -318,7 +319,7 @@ func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (boo
 	}
 
 	for _, m := range members {
-		if m.User.Email == email {
+		if strings.EqualFold(m.User.Email, email) {
 			if m.Role == "OWNER" || m.Role == "MEMBER" {
 				return true, nil
 			}
@@ -341,7 +342,7 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 	}
 
 	for _, m := range members {
-		if m.User.Email == email {
+		if strings.EqualFold(m.User.Email, email) {
 			if m.Role == "OWNER" {
 				return true, nil
 			}
