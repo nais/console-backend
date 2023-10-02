@@ -13,7 +13,12 @@ import (
 
 const costForApp = `-- name: CostForApp :many
 SELECT id, env, team, app, cost_type, date, cost FROM cost
-WHERE date >= $4::DATE AND date <= $5::DATE AND env = $1 AND team = $2 AND app = $3
+WHERE
+    date >= $4::date
+    AND date <= $5::date
+    AND env = $1
+    AND team = $2
+    AND app = $3
 GROUP by id, team, app, cost_type, date
 ORDER BY date ASC
 `
@@ -61,7 +66,7 @@ func (q *Queries) CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost
 }
 
 const costLastDate = `-- name: CostLastDate :one
-SELECT MAX(date)::DATE AS "date"
+SELECT MAX(date)::date AS "date"
 FROM cost
 `
 
@@ -104,102 +109,30 @@ func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
 	return items, nil
 }
 
-const totalCostForApp = `-- name: TotalCostForApp :many
-SELECT app, env, team, cost_type, SUM(cost)::REAL as cost FROM cost
-WHERE date >= $4::DATE AND date <= $5::DATE AND env = $1 AND team = $2 AND app = $3
-GROUP by team, app, cost_type
+const monthlyCostForTeam = `-- name: MonthlyCostForTeam :many
+SELECT team, date_trunc('month', date) AS month, SUM(cost)::real AS cost FROM cost
+WHERE team = $1
+GROUP BY team, month
+ORDER BY month DESC
+LIMIT 3
 `
 
-type TotalCostForAppParams struct {
-	Env      *string
-	Team     *string
-	App      *string
-	FromDate pgtype.Date
-	ToDate   pgtype.Date
+type MonthlyCostForTeamRow struct {
+	Team  *string
+	Month pgtype.Interval
+	Cost  float32
 }
 
-type TotalCostForAppRow struct {
-	App      *string
-	Env      *string
-	Team     *string
-	CostType string
-	Cost     float32
-}
-
-func (q *Queries) TotalCostForApp(ctx context.Context, arg TotalCostForAppParams) ([]*TotalCostForAppRow, error) {
-	rows, err := q.db.Query(ctx, totalCostForApp,
-		arg.Env,
-		arg.Team,
-		arg.App,
-		arg.FromDate,
-		arg.ToDate,
-	)
+func (q *Queries) MonthlyCostForTeam(ctx context.Context, team *string) ([]*MonthlyCostForTeamRow, error) {
+	rows, err := q.db.Query(ctx, monthlyCostForTeam, team)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*TotalCostForAppRow
+	var items []*MonthlyCostForTeamRow
 	for rows.Next() {
-		var i TotalCostForAppRow
-		if err := rows.Scan(
-			&i.App,
-			&i.Env,
-			&i.Team,
-			&i.CostType,
-			&i.Cost,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const totalCostForTeam = `-- name: TotalCostForTeam :many
-SELECT app, env, team, cost_type, SUM(cost)::REAL as cost FROM cost
-WHERE date >= $3::DATE AND date <= $4::DATE AND env = $1 AND team = $2
-GROUP by team, app, cost_type
-`
-
-type TotalCostForTeamParams struct {
-	Env      *string
-	Team     *string
-	FromDate pgtype.Date
-	ToDate   pgtype.Date
-}
-
-type TotalCostForTeamRow struct {
-	App      *string
-	Env      *string
-	Team     *string
-	CostType string
-	Cost     float32
-}
-
-func (q *Queries) TotalCostForTeam(ctx context.Context, arg TotalCostForTeamParams) ([]*TotalCostForTeamRow, error) {
-	rows, err := q.db.Query(ctx, totalCostForTeam,
-		arg.Env,
-		arg.Team,
-		arg.FromDate,
-		arg.ToDate,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*TotalCostForTeamRow
-	for rows.Next() {
-		var i TotalCostForTeamRow
-		if err := rows.Scan(
-			&i.App,
-			&i.Env,
-			&i.Team,
-			&i.CostType,
-			&i.Cost,
-		); err != nil {
+		var i MonthlyCostForTeamRow
+		if err := rows.Scan(&i.Team, &i.Month, &i.Cost); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
