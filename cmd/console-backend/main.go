@@ -72,7 +72,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	log.Info("connecting to database")
 	queries, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
 	if err != nil {
-		return fmt.Errorf("setting up database")
+		return fmt.Errorf("setting up database: %w", err)
 	}
 	defer func() {
 		if err := closers.Close(); err != nil {
