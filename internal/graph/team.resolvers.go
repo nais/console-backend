@@ -83,7 +83,7 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 }
 
 // Members is the resolver for the members field.
-func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamMemberConnection, error) {
+func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamMemberConnection, error) {
 	members, err := r.TeamsClient.GetTeamMembers(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting members from Teams: %w", err)
