@@ -6,6 +6,7 @@ extend type Query {
     monthlyCost(filter: MonthlyCostFilter!): MonthlyCost!
 }
 
+"Monthly cost filter input type."
 input MonthlyCostFilter {
     "The name of the team to get costs for."
     team: String!
@@ -17,7 +18,7 @@ input MonthlyCostFilter {
     env: String!
 }
 
-"Cost filter type."
+"Cost filter input type."
 input CostFilter {
     """
     Start date for the cost series, inclusive.
@@ -43,8 +44,12 @@ input CostFilter {
     env: String!
 }
 
+"Montly cost type."
 type MonthlyCost {
+    "Sum for all months in the series."
     sum: Float!
+
+    "A list of monthly cost entries."
     cost: [CostEntry!]!
 }
 

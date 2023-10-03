@@ -182,7 +182,7 @@ type CostEntry struct {
 	Cost float64 `json:"cost"`
 }
 
-// Cost filter type.
+// Cost filter input type.
 type CostFilter struct {
 	// Start date for the cost series, inclusive.
 	//
@@ -497,11 +497,15 @@ type MaskinportenScope struct {
 	Exposes  []*Expose  `json:"exposes"`
 }
 
+// Montly cost type.
 type MonthlyCost struct {
-	Sum  float64      `json:"sum"`
+	// Sum for all months in the series.
+	Sum float64 `json:"sum"`
+	// A list of monthly cost entries.
 	Cost []*CostEntry `json:"cost"`
 }
 
+// Monthly cost filter input type.
 type MonthlyCostFilter struct {
 	// The name of the team to get costs for.
 	Team string `json:"team"`
