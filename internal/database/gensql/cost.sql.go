@@ -110,21 +110,31 @@ func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
 }
 
 const monthlyCostForTeam = `-- name: MonthlyCostForTeam :many
-SELECT team, date_trunc('month', date) AS month, SUM(cost)::real AS cost FROM cost
+SELECT team, app, env, date_trunc('month', date)::date AS month, SUM(cost)::real AS cost FROM cost
 WHERE team = $1
-GROUP BY team, month
+AND app = $2
+AND env = $3
+GROUP BY team, app, env, month
 ORDER BY month DESC
-LIMIT 3
+LIMIT 12
 `
+
+type MonthlyCostForTeamParams struct {
+	Team *string
+	App  *string
+	Env  *string
+}
 
 type MonthlyCostForTeamRow struct {
 	Team  *string
-	Month pgtype.Interval
+	App   *string
+	Env   *string
+	Month pgtype.Date
 	Cost  float32
 }
 
-func (q *Queries) MonthlyCostForTeam(ctx context.Context, team *string) ([]*MonthlyCostForTeamRow, error) {
-	rows, err := q.db.Query(ctx, monthlyCostForTeam, team)
+func (q *Queries) MonthlyCostForTeam(ctx context.Context, arg MonthlyCostForTeamParams) ([]*MonthlyCostForTeamRow, error) {
+	rows, err := q.db.Query(ctx, monthlyCostForTeam, arg.Team, arg.App, arg.Env)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +142,13 @@ func (q *Queries) MonthlyCostForTeam(ctx context.Context, team *string) ([]*Mont
 	var items []*MonthlyCostForTeamRow
 	for rows.Next() {
 		var i MonthlyCostForTeamRow
-		if err := rows.Scan(&i.Team, &i.Month, &i.Cost); err != nil {
+		if err := rows.Scan(
+			&i.Team,
+			&i.App,
+			&i.Env,
+			&i.Month,
+			&i.Cost,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

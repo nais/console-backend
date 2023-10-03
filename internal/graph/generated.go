@@ -158,6 +158,11 @@ type ComplexityRoot struct {
 		To     func(childComplexity int) int
 	}
 
+	CostEntry struct {
+		Cost func(childComplexity int) int
+		Date func(childComplexity int) int
+	}
+
 	CostSeries struct {
 		App      func(childComplexity int) int
 		CostType func(childComplexity int) int
@@ -165,11 +170,6 @@ type ComplexityRoot struct {
 		Env      func(childComplexity int) int
 		Sum      func(childComplexity int) int
 		Team     func(childComplexity int) int
-	}
-
-	DailyCost struct {
-		Cost func(childComplexity int) int
-		Date func(childComplexity int) int
 	}
 
 	Database struct {
@@ -394,6 +394,11 @@ type ComplexityRoot struct {
 		Exposes  func(childComplexity int) int
 	}
 
+	MonthlyCost struct {
+		Cost func(childComplexity int) int
+		Sum  func(childComplexity int) int
+	}
+
 	Mutation struct {
 		ChangeDeployKey func(childComplexity int, team string) int
 	}
@@ -473,6 +478,7 @@ type ComplexityRoot struct {
 		App         func(childComplexity int, name string, team string, env string) int
 		Cost        func(childComplexity int, filter model.CostFilter) int
 		Deployments func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) int
+		MonthlyCost func(childComplexity int, filter model.MonthlyCostFilter) int
 		Naisjob     func(childComplexity int, name string, team string, env string) int
 		Node        func(childComplexity int, id model.Ident) int
 		Search      func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) int
@@ -655,6 +661,7 @@ type QueryResolver interface {
 	Node(ctx context.Context, id model.Ident) (model.Node, error)
 	App(ctx context.Context, name string, team string, env string) (*model.App, error)
 	Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error)
+	MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error)
 	Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error)
@@ -1094,6 +1101,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cost.To(childComplexity), true
 
+	case "CostEntry.cost":
+		if e.complexity.CostEntry.Cost == nil {
+			break
+		}
+
+		return e.complexity.CostEntry.Cost(childComplexity), true
+
+	case "CostEntry.date":
+		if e.complexity.CostEntry.Date == nil {
+			break
+		}
+
+		return e.complexity.CostEntry.Date(childComplexity), true
+
 	case "CostSeries.app":
 		if e.complexity.CostSeries.App == nil {
 			break
@@ -1135,20 +1156,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CostSeries.Team(childComplexity), true
-
-	case "DailyCost.cost":
-		if e.complexity.DailyCost.Cost == nil {
-			break
-		}
-
-		return e.complexity.DailyCost.Cost(childComplexity), true
-
-	case "DailyCost.date":
-		if e.complexity.DailyCost.Date == nil {
-			break
-		}
-
-		return e.complexity.DailyCost.Date(childComplexity), true
 
 	case "Database.envVarPrefix":
 		if e.complexity.Database.EnvVarPrefix == nil {
@@ -1974,6 +1981,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MaskinportenScope.Exposes(childComplexity), true
 
+	case "MonthlyCost.cost":
+		if e.complexity.MonthlyCost.Cost == nil {
+			break
+		}
+
+		return e.complexity.MonthlyCost.Cost(childComplexity), true
+
+	case "MonthlyCost.sum":
+		if e.complexity.MonthlyCost.Sum == nil {
+			break
+		}
+
+		return e.complexity.MonthlyCost.Sum(childComplexity), true
+
 	case "Mutation.changeDeployKey":
 		if e.complexity.Mutation.ChangeDeployKey == nil {
 			break
@@ -2308,6 +2329,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor), args["limit"].(*int)), true
+
+	case "Query.monthlyCost":
+		if e.complexity.Query.MonthlyCost == nil {
+			break
+		}
+
+		args, err := ec.field_Query_monthlyCost_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.MonthlyCost(childComplexity, args["filter"].(model.MonthlyCostFilter)), true
 
 	case "Query.naisjob":
 		if e.complexity.Query.Naisjob == nil {
@@ -2988,6 +3021,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCostFilter,
 		ec.unmarshalInputLogSubscriptionInput,
+		ec.unmarshalInputMonthlyCostFilter,
 		ec.unmarshalInputSearchFilter,
 	)
 	first := true
@@ -3317,6 +3351,21 @@ func (ec *executionContext) field_Query_deployments_args(ctx context.Context, ra
 		}
 	}
 	args["limit"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_monthlyCost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.MonthlyCostFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg0, err = ec.unmarshalNMonthlyCostFilter2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMonthlyCostFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg0
 	return args, nil
 }
 
@@ -6487,6 +6536,94 @@ func (ec *executionContext) fieldContext_Cost_series(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _CostEntry_date(ctx context.Context, field graphql.CollectedField, obj *model.CostEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CostEntry_date(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Date, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Date)
+	fc.Result = res
+	return ec.marshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CostEntry_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CostEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CostEntry_cost(ctx context.Context, field graphql.CollectedField, obj *model.CostEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CostEntry_cost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CostEntry_cost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CostEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CostSeries_costType(ctx context.Context, field graphql.CollectedField, obj *model.CostSeries) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CostSeries_costType(ctx, field)
 	if err != nil {
@@ -6733,9 +6870,9 @@ func (ec *executionContext) _CostSeries_data(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.DailyCost)
+	res := resTmp.([]*model.CostEntry)
 	fc.Result = res
-	return ec.marshalNDailyCost2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDailyCostᚄ(ctx, field.Selections, res)
+	return ec.marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CostSeries_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6747,99 +6884,11 @@ func (ec *executionContext) fieldContext_CostSeries_data(ctx context.Context, fi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "date":
-				return ec.fieldContext_DailyCost_date(ctx, field)
+				return ec.fieldContext_CostEntry_date(ctx, field)
 			case "cost":
-				return ec.fieldContext_DailyCost_cost(ctx, field)
+				return ec.fieldContext_CostEntry_cost(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DailyCost", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DailyCost_date(ctx context.Context, field graphql.CollectedField, obj *model.DailyCost) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DailyCost_date(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Date, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.Date)
-	fc.Result = res
-	return ec.marshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DailyCost_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DailyCost",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Date does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DailyCost_cost(ctx context.Context, field graphql.CollectedField, obj *model.DailyCost) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DailyCost_cost(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cost, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(float64)
-	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DailyCost_cost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DailyCost",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			return nil, fmt.Errorf("no field named %q was found under type CostEntry", field.Name)
 		},
 	}
 	return fc, nil
@@ -12150,6 +12199,100 @@ func (ec *executionContext) fieldContext_MaskinportenScope_exposes(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _MonthlyCost_sum(ctx context.Context, field graphql.CollectedField, obj *model.MonthlyCost) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MonthlyCost_sum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sum, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MonthlyCost_sum(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MonthlyCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MonthlyCost_cost(ctx context.Context, field graphql.CollectedField, obj *model.MonthlyCost) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MonthlyCost_cost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.CostEntry)
+	fc.Result = res
+	return ec.marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MonthlyCost_cost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MonthlyCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "date":
+				return ec.fieldContext_CostEntry_date(ctx, field)
+			case "cost":
+				return ec.fieldContext_CostEntry_cost(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CostEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_changeDeployKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_changeDeployKey(ctx, field)
 	if err != nil {
@@ -14383,6 +14526,67 @@ func (ec *executionContext) fieldContext_Query_cost(ctx context.Context, field g
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_cost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_monthlyCost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_monthlyCost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MonthlyCost(rctx, fc.Args["filter"].(model.MonthlyCostFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.MonthlyCost)
+	fc.Result = res
+	return ec.marshalNMonthlyCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMonthlyCost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_monthlyCost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "sum":
+				return ec.fieldContext_MonthlyCost_sum(ctx, field)
+			case "cost":
+				return ec.fieldContext_MonthlyCost_cost(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MonthlyCost", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_monthlyCost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -20707,6 +20911,53 @@ func (ec *executionContext) unmarshalInputLogSubscriptionInput(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputMonthlyCostFilter(ctx context.Context, obj interface{}) (model.MonthlyCostFilter, error) {
+	var it model.MonthlyCostFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"team", "app", "env"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "team":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Team = data
+		case "app":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.App = data
+		case "env":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Env = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSearchFilter(ctx context.Context, obj interface{}) (model.SearchFilter, error) {
 	var it model.SearchFilter
 	asMap := map[string]interface{}{}
@@ -22042,6 +22293,50 @@ func (ec *executionContext) _Cost(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var costEntryImplementors = []string{"CostEntry"}
+
+func (ec *executionContext) _CostEntry(ctx context.Context, sel ast.SelectionSet, obj *model.CostEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, costEntryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CostEntry")
+		case "date":
+			out.Values[i] = ec._CostEntry_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cost":
+			out.Values[i] = ec._CostEntry_cost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var costSeriesImplementors = []string{"CostSeries"}
 
 func (ec *executionContext) _CostSeries(ctx context.Context, sel ast.SelectionSet, obj *model.CostSeries) graphql.Marshaler {
@@ -22113,50 +22408,6 @@ func (ec *executionContext) _CostSeries(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._CostSeries_data(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var dailyCostImplementors = []string{"DailyCost"}
-
-func (ec *executionContext) _DailyCost(ctx context.Context, sel ast.SelectionSet, obj *model.DailyCost) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, dailyCostImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DailyCost")
-		case "date":
-			out.Values[i] = ec._DailyCost_date(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "cost":
-			out.Values[i] = ec._DailyCost_cost(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -23933,6 +24184,50 @@ func (ec *executionContext) _MaskinportenScope(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var monthlyCostImplementors = []string{"MonthlyCost"}
+
+func (ec *executionContext) _MonthlyCost(ctx context.Context, sel ast.SelectionSet, obj *model.MonthlyCost) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, monthlyCostImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MonthlyCost")
+		case "sum":
+			out.Values[i] = ec._MonthlyCost_sum(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cost":
+			out.Values[i] = ec._MonthlyCost_cost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -24746,6 +25041,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_cost(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "monthlyCost":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_monthlyCost(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -26939,6 +27256,60 @@ func (ec *executionContext) marshalNCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑback
 	return ec._Cost(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CostEntry) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCostEntry2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCostEntry2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntry(ctx context.Context, sel ast.SelectionSet, v *model.CostEntry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CostEntry(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCostFilter2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostFilter(ctx context.Context, v interface{}) (model.CostFilter, error) {
 	res, err := ec.unmarshalInputCostFilter(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -27006,60 +27377,6 @@ func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbac
 
 func (ec *executionContext) marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, sel ast.SelectionSet, v model.Cursor) graphql.Marshaler {
 	return graphql.WrapContextMarshaler(ctx, v)
-}
-
-func (ec *executionContext) marshalNDailyCost2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDailyCostᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DailyCost) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDailyCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDailyCost(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNDailyCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDailyCost(ctx context.Context, sel ast.SelectionSet, v *model.DailyCost) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DailyCost(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDatabase2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Database) graphql.Marshaler {
@@ -27897,6 +28214,25 @@ func (ec *executionContext) marshalNMaskinportenScope2ᚖgithubᚗcomᚋnaisᚋc
 		return graphql.Null
 	}
 	return ec._MaskinportenScope(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMonthlyCost2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMonthlyCost(ctx context.Context, sel ast.SelectionSet, v model.MonthlyCost) graphql.Marshaler {
+	return ec._MonthlyCost(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMonthlyCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMonthlyCost(ctx context.Context, sel ast.SelectionSet, v *model.MonthlyCost) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MonthlyCost(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNMonthlyCostFilter2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMonthlyCostFilter(ctx context.Context, v interface{}) (model.MonthlyCostFilter, error) {
+	res, err := ec.unmarshalInputMonthlyCostFilter(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNNaisJob2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJob(ctx context.Context, sel ast.SelectionSet, v model.NaisJob) graphql.Marshaler {

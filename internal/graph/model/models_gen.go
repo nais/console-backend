@@ -174,6 +174,14 @@ type Cost struct {
 	Series []*CostSeries `json:"series"`
 }
 
+// Cost entry type.
+type CostEntry struct {
+	// The date for the entry.
+	Date Date `json:"date"`
+	// The cost in euros.
+	Cost float64 `json:"cost"`
+}
+
 // Cost filter type.
 type CostFilter struct {
 	// Start date for the cost series, inclusive.
@@ -205,15 +213,7 @@ type CostSeries struct {
 	// The sum of all daily costs in the series for this cost type in euros.
 	Sum float64 `json:"sum"`
 	// The cost data.
-	Data []*DailyCost `json:"data"`
-}
-
-// Daily cost type.
-type DailyCost struct {
-	// The date for the cost data.
-	Date Date `json:"date"`
-	// The actual cost in euros.
-	Cost float64 `json:"cost"`
+	Data []*CostEntry `json:"data"`
 }
 
 type Database struct {
@@ -495,6 +495,20 @@ func (Maskinporten) IsAuthz() {}
 type MaskinportenScope struct {
 	Consumes []*Consume `json:"consumes"`
 	Exposes  []*Expose  `json:"exposes"`
+}
+
+type MonthlyCost struct {
+	Sum  float64      `json:"sum"`
+	Cost []*CostEntry `json:"cost"`
+}
+
+type MonthlyCostFilter struct {
+	// The name of the team to get costs for.
+	Team string `json:"team"`
+	// The name of the application to get costs for.
+	App string `json:"app"`
+	// The name of the environment to get costs for.
+	Env string `json:"env"`
 }
 
 type NaisJobConnection struct {

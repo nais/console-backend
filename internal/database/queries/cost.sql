@@ -6,11 +6,13 @@ SELECT MAX(date)::date AS "date"
 FROM cost;
 
 -- name: MonthlyCostForTeam :many
-SELECT team, date_trunc('month', date) AS month, SUM(cost)::real AS cost FROM cost
+SELECT team, app, env, date_trunc('month', date)::date AS month, SUM(cost)::real AS cost FROM cost
 WHERE team = $1
-GROUP BY team, month
+AND app = $2
+AND env = $3
+GROUP BY team, app, env, month
 ORDER BY month DESC
-LIMIT 3;
+LIMIT 12;
 
 -- name: CostUpsert :batchexec
 INSERT INTO cost (env, team, app, cost_type, date, cost)

@@ -111,6 +111,32 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 	return nil, fmt.Errorf("not implemented")
 }
 
+// MonthlyCost is the resolver for the monthlyCost field.
+func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error) {
+	rows, err := r.Queries.MonthlyCostForTeam(ctx, gensql.MonthlyCostForTeamParams{
+		Team: &filter.Team,
+		App:  &filter.App,
+		Env:  &filter.Env,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	sum := 0.0
+	cost := make([]*model.CostEntry, len(rows))
+	for idx, row := range rows {
+		sum += float64(row.Cost)
+		cost[idx] = &model.CostEntry{
+			Date: model.NewDate(row.Month.Time),
+			Cost: float64(row.Cost),
+		}
+	}
+	return &model.MonthlyCost{
+		Sum:  sum,
+		Cost: cost,
+	}, nil
+}
+
 // Cost returns CostResolver implementation.
 func (r *Resolver) Cost() CostResolver { return &costResolver{r} }
 

@@ -25,14 +25,14 @@ func Test_costResolver_Sum(t *testing.T) {
 		sum, err := costResolver.Sum(ctx, &model.Cost{
 			Series: []*model.CostSeries{
 				{
-					Data: []*model.DailyCost{
+					Data: []*model.CostEntry{
 						{Cost: 1.0},
 						{Cost: 3.0},
 						{Cost: 5.5},
 					},
 				},
 				{
-					Data: []*model.DailyCost{
+					Data: []*model.CostEntry{
 						{Cost: 2.0},
 						{Cost: 4.0},
 					},
@@ -58,7 +58,7 @@ func Test_costSeriesResolver_Sum(t *testing.T) {
 
 	t.Run("non-empty cost", func(t *testing.T) {
 		sum, err := costSeriesResolver.Sum(ctx, &model.CostSeries{
-			Data: []*model.DailyCost{
+			Data: []*model.CostEntry{
 				{Cost: 1.0},
 				{Cost: 2.0},
 				{Cost: 3.0},
