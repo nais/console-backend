@@ -192,6 +192,11 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 		teams {
 			slug
 			purpose
+			slackChannel
+			slackAlertsChannels {
+				channelName
+				environment
+			}
 		}
 	}`
 
