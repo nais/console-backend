@@ -110,10 +110,25 @@ func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
 }
 
 const monthlyCostForTeam = `-- name: MonthlyCostForTeam :many
-SELECT team, app, env, date_trunc('month', date)::date AS month, SUM(cost)::real AS cost FROM cost
-WHERE team = $1
-AND app = $2
-AND env = $3
+WITH last_run AS (
+    SELECT MAX(date)::date AS "last_run"
+    FROM cost
+)
+SELECT 
+    team, 
+    app, 
+    env, 
+    date_trunc('month', date)::date AS month,
+    MAX(CASE 
+        WHEN date_trunc('month', date) < date_trunc('month', last_run) THEN date_trunc('month', date) + interval '1 month' - interval '1 day'
+        ELSE date_trunc('day', last_run)
+    END)::date AS last_recorded_date,
+    SUM(cost)::real AS cost 
+FROM cost c 
+LEFT JOIN last_run ON true
+WHERE c.team = $1
+AND c.app = $2
+AND c.env = $3
 GROUP BY team, app, env, month
 ORDER BY month DESC
 LIMIT 12
@@ -126,11 +141,12 @@ type MonthlyCostForTeamParams struct {
 }
 
 type MonthlyCostForTeamRow struct {
-	Team  *string
-	App   *string
-	Env   *string
-	Month pgtype.Date
-	Cost  float32
+	Team             *string
+	App              *string
+	Env              *string
+	Month            pgtype.Date
+	LastRecordedDate pgtype.Date
+	Cost             float32
 }
 
 func (q *Queries) MonthlyCostForTeam(ctx context.Context, arg MonthlyCostForTeamParams) ([]*MonthlyCostForTeamRow, error) {
@@ -147,6 +163,7 @@ func (q *Queries) MonthlyCostForTeam(ctx context.Context, arg MonthlyCostForTeam
 			&i.App,
 			&i.Env,
 			&i.Month,
+			&i.LastRecordedDate,
 			&i.Cost,
 		); err != nil {
 			return nil, err

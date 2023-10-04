@@ -126,8 +126,10 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 	cost := make([]*model.CostEntry, len(rows))
 	for idx, row := range rows {
 		sum += float64(row.Cost)
+		// make date variable equal last day in month of row.LastRecordedDate
+
 		cost[idx] = &model.CostEntry{
-			Date: model.NewDate(row.Month.Time),
+			Date: model.NewDate(row.LastRecordedDate.Time),
 			Cost: float64(row.Cost),
 		}
 	}

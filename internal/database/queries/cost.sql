@@ -6,10 +6,27 @@ SELECT MAX(date)::date AS "date"
 FROM cost;
 
 -- name: MonthlyCostForTeam :many
-SELECT team, app, env, date_trunc('month', date)::date AS month, SUM(cost)::real AS cost FROM cost
-WHERE team = $1
-AND app = $2
-AND env = $3
+WITH last_run AS (
+    SELECT MAX(date)::date AS "last_run"
+    FROM cost
+)
+SELECT 
+    team, 
+    app, 
+    env, 
+    date_trunc('month', date)::date AS month,
+    -- Extract last day of known cost samples for the month, or the last recorded date
+    -- This helps with estimation etc
+    MAX(CASE 
+        WHEN date_trunc('month', date) < date_trunc('month', last_run) THEN date_trunc('month', date) + interval '1 month' - interval '1 day'
+        ELSE date_trunc('day', last_run)
+    END)::date AS last_recorded_date,
+    SUM(cost)::real AS cost 
+FROM cost c 
+LEFT JOIN last_run ON true
+WHERE c.team = $1
+AND c.app = $2
+AND c.env = $3
 GROUP BY team, app, env, month
 ORDER BY month DESC
 LIMIT 12;
