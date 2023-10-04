@@ -80,34 +80,37 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			To:     *filter.To,
 			Series: series,
 		}, nil
-	} /*else if filter.Env != "" && filter.Team != "" && filter.StartDate != nil && filter.EndDate != nil {
-		params := gensql.CostForAppParams{}
-		params.Team = &filter.Team
-		params.Env = &filter.Env
-		params.FromDate.Time = filter.StartDate.UTC()
-		params.FromDate.Valid = true
-		params.ToDate.Time = filter.EndDate.UTC()
-		params.ToDate.Valid = true
-		rows, err := r.Queries.CostForApp(ctx, params)
+	} else if filter.App == "" && filter.Env == "" && filter.Team != "" && filter.From != nil && filter.To != nil {
+		rows, err := r.Queries.CostForTeam(ctx, gensql.CostForTeamParams{
+			Team:     &filter.Team,
+			FromDate: filter.From.PgDate(),
+			ToDate:   filter.To.PgDate(),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
-		cost := &model.Cost{}
-		cost.Series = make([]*model.CostSeries, 0)
+		costs := DailyCostsForTeamFromDatabaseRows(*filter.From, *filter.To, rows)
+		series := make([]*model.CostSeries, 0)
 
-		for _, row := range rows {
-			cost.Series = append(cost.Series, &model.CostSeries{
-				CostType: row.CostType,
-				Data:     []float64{float64(row.Cost)},
-				App:      *row.App,
-				Team:     *row.Team,
-				Env:      *row.Env,
+		for costType, data := range costs {
+			series = append(series, &model.CostSeries{
+				CostType: costType,
+				Data:     data,
+				App:      filter.App,
+				Team:     filter.Team,
+				Env:      filter.Env,
 			})
-
 		}
+
+		return &model.Cost{
+			From:   *filter.From,
+			To:     *filter.To,
+			Series: series,
+		}, nil
+
 	}
-	*/
+
 	return nil, fmt.Errorf("not implemented")
 }
 

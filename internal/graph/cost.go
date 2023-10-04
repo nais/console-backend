@@ -25,6 +25,27 @@ func DailyCostsFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.C
 	return normalizeDailyCosts(from, to, daily)
 }
 
+func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.Cost) sortedDailyCosts {
+	daily := dailyCosts{}
+	for _, row := range rows {
+		// TODO: hack to filter out unknown apps (ie aiven costs). Remove when we have a better solution for aiven costs.
+		if row.App != nil && *row.App == "<unknown>" {
+			continue
+		}
+		if _, exists := daily[row.CostType]; !exists {
+			daily[row.CostType] = make(map[model.Date]float64)
+		}
+		date := model.NewDate(row.Date.Time)
+		if _, exists := daily[row.CostType][date]; !exists {
+			daily[row.CostType][date] = float64(row.Cost)
+		} else {
+			daily[row.CostType][date] += float64(row.Cost)
+		}
+	}
+
+	return normalizeDailyCosts(from, to, daily)
+}
+
 // normalizeDailyCosts will make sure all dates in the "from -> to" range are present in the returned map for all cost
 // types. The dates will also be sorted in ascending order.
 func normalizeDailyCosts(from, to model.Date, costs dailyCosts) sortedDailyCosts {

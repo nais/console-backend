@@ -69,3 +69,12 @@ WHERE
     AND app = $3
 GROUP by id, team, app, cost_type, date
 ORDER BY date ASC;
+
+-- name: CostForTeam :many
+SELECT * FROM cost
+WHERE
+    date >= sqlc.arg('from_date')::date
+    AND date <= sqlc.arg('to_date')::date
+    AND team = $1
+GROUP by id, team, cost_type, date
+ORDER BY date ASC;

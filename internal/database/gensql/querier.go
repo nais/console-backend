@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost, error)
+	CostForTeam(ctx context.Context, arg CostForTeamParams) ([]*Cost, error)
 	CostLastDate(ctx context.Context) (pgtype.Date, error)
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults
 	GetCost(ctx context.Context) ([]*Cost, error)
