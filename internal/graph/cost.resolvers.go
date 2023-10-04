@@ -113,30 +113,53 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 
 // MonthlyCost is the resolver for the monthlyCost field.
 func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error) {
-	rows, err := r.Queries.MonthlyCostForTeam(ctx, gensql.MonthlyCostForTeamParams{
-		Team: &filter.Team,
-		App:  &filter.App,
-		Env:  &filter.Env,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	sum := 0.0
-	cost := make([]*model.CostEntry, len(rows))
-	for idx, row := range rows {
-		sum += float64(row.Cost)
-		// make date variable equal last day in month of row.LastRecordedDate
-
-		cost[idx] = &model.CostEntry{
-			Date: model.NewDate(row.LastRecordedDate.Time),
-			Cost: float64(row.Cost),
+	if filter.App != "" && filter.Env != "" && filter.Team != "" {
+		rows, err := r.Queries.MonthlyCostForApp(ctx, gensql.MonthlyCostForAppParams{
+			Team: &filter.Team,
+			App:  &filter.App,
+			Env:  &filter.Env,
+		})
+		if err != nil {
+			return nil, err
 		}
+		sum := 0.0
+		cost := make([]*model.CostEntry, len(rows))
+		for idx, row := range rows {
+			sum += float64(row.Cost)
+			// make date variable equal last day in month of row.LastRecordedDate
+
+			cost[idx] = &model.CostEntry{
+				Date: model.NewDate(row.LastRecordedDate.Time),
+				Cost: float64(row.Cost),
+			}
+		}
+		return &model.MonthlyCost{
+			Sum:  sum,
+			Cost: cost,
+		}, nil
+
+	} else if filter.App == "" && filter.Env == "" && filter.Team != "" {
+		rows, err := r.Queries.MonthlyCostForTeam(ctx, &filter.Team)
+		if err != nil {
+			return nil, err
+		}
+		sum := 0.0
+		cost := make([]*model.CostEntry, len(rows))
+		for idx, row := range rows {
+			sum += float64(row.Cost)
+			// make date variable equal last day in month of row.LastRecordedDate
+
+			cost[idx] = &model.CostEntry{
+				Date: model.NewDate(row.LastRecordedDate.Time),
+				Cost: float64(row.Cost),
+			}
+		}
+		return &model.MonthlyCost{
+			Sum:  sum,
+			Cost: cost,
+		}, nil
 	}
-	return &model.MonthlyCost{
-		Sum:  sum,
-		Cost: cost,
-	}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 // Cost returns CostResolver implementation.
