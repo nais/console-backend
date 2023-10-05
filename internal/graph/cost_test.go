@@ -28,35 +28,35 @@ func TestDailyCostsFromDatabaseRows(t *testing.T) {
 
 		existingCosts2 := []*gensql.Cost{
 			{
-				CostType: "type",
-				Date:     pgtype.Date{Time: fromTime, Valid: true},
-				Cost:     float32(1.1),
+				CostType:  "type",
+				Date:      pgtype.Date{Time: fromTime, Valid: true},
+				DailyCost: float32(1.1),
 			},
 			{
-				CostType: "type",
-				Date:     pgtype.Date{Time: fromTime.AddDate(0, 0, 1), Valid: true},
-				Cost:     float32(2.1),
+				CostType:  "type",
+				Date:      pgtype.Date{Time: fromTime.AddDate(0, 0, 1), Valid: true},
+				DailyCost: float32(2.1),
 			},
 			{
-				CostType: "type",
-				Date:     pgtype.Date{Time: fromTime.AddDate(0, 0, 2), Valid: true},
-				Cost:     float32(3.1),
+				CostType:  "type",
+				Date:      pgtype.Date{Time: fromTime.AddDate(0, 0, 2), Valid: true},
+				DailyCost: float32(3.1),
 			},
 			{
-				CostType: "type",
-				Date:     pgtype.Date{Time: fromTime.AddDate(0, 0, 4), Valid: true},
-				Cost:     float32(5.1),
+				CostType:  "type",
+				Date:      pgtype.Date{Time: fromTime.AddDate(0, 0, 4), Valid: true},
+				DailyCost: float32(5.1),
 			},
 
 			{
-				CostType: "type2",
-				Date:     pgtype.Date{Time: fromTime.AddDate(0, 0, 4), Valid: true},
-				Cost:     float32(5.2),
+				CostType:  "type2",
+				Date:      pgtype.Date{Time: fromTime.AddDate(0, 0, 4), Valid: true},
+				DailyCost: float32(5.2),
 			},
 			{
-				CostType: "type2",
-				Date:     pgtype.Date{Time: fromTime.AddDate(0, 0, 2), Valid: true},
-				Cost:     float32(3.2),
+				CostType:  "type2",
+				Date:      pgtype.Date{Time: fromTime.AddDate(0, 0, 2), Valid: true},
+				DailyCost: float32(3.2),
 			},
 		}
 		costs, sum := DailyCostsFromDatabaseRows(from, to, existingCosts2)

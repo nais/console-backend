@@ -108,12 +108,12 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 		sum := 0.0
 		cost := make([]*model.CostEntry, len(rows))
 		for idx, row := range rows {
-			sum += float64(row.Cost)
+			sum += float64(row.DailyCost)
 			// make date variable equal last day in month of row.LastRecordedDate
 
 			cost[idx] = &model.CostEntry{
 				Date: model.NewDate(row.LastRecordedDate.Time),
-				Cost: float64(row.Cost),
+				Cost: float64(row.DailyCost),
 			}
 		}
 		return &model.MonthlyCost{
@@ -128,12 +128,12 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 		sum := 0.0
 		cost := make([]*model.CostEntry, len(rows))
 		for idx, row := range rows {
-			sum += float64(row.Cost)
+			sum += float64(row.DailyCost)
 			// make date variable equal last day in month of row.LastRecordedDate
 
 			cost[idx] = &model.CostEntry{
 				Date: model.NewDate(row.LastRecordedDate.Time),
-				Cost: float64(row.Cost),
+				Cost: float64(row.DailyCost),
 			}
 		}
 		return &model.MonthlyCost{

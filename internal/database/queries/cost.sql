@@ -21,7 +21,7 @@ SELECT
         WHEN date_trunc('month', date) < date_trunc('month', last_run) THEN date_trunc('month', date) + interval '1 month' - interval '1 day'
         ELSE date_trunc('day', last_run)
     END)::date AS last_recorded_date,
-    SUM(cost)::real AS cost 
+    SUM(daily_cost)::real AS daily_cost
 FROM cost c 
 LEFT JOIN last_run ON true
 WHERE c.team = $1
@@ -36,7 +36,7 @@ SELECT
     team,
     app,
     date,
-    SUM(cost)::real AS cost
+    SUM(daily_cost)::real AS daily_cost
 FROM cost
 WHERE
     date >= sqlc.arg('from_date')::date
@@ -60,7 +60,7 @@ SELECT
         WHEN date_trunc('month', date) < date_trunc('month', last_run) THEN date_trunc('month', date) + interval '1 month' - interval '1 day'
         ELSE date_trunc('day', last_run)
     END)::date AS last_recorded_date,
-    SUM(cost)::real AS cost
+    SUM(daily_cost)::real AS daily_cost
 FROM cost c
 LEFT JOIN last_run ON true
 WHERE c.team = $1
@@ -69,10 +69,10 @@ ORDER BY month DESC
 LIMIT 12;
 
 -- name: CostUpsert :batchexec
-INSERT INTO cost (env, team, app, cost_type, date, cost)
+INSERT INTO cost (env, team, app, cost_type, date, daily_cost)
 VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (env, team, app, cost_type, date) DO
-    UPDATE SET cost = EXCLUDED.cost;
+    UPDATE SET daily_cost = EXCLUDED.daily_cost;
 
 -- name: CostForApp :many
 SELECT * FROM cost

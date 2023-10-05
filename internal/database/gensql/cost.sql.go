@@ -12,7 +12,7 @@ import (
 )
 
 const costForApp = `-- name: CostForApp :many
-SELECT id, env, team, app, cost_type, date, cost FROM cost
+SELECT id, env, team, app, cost_type, date, daily_cost FROM cost
 WHERE
     date >= $4::date
     AND date <= $5::date
@@ -53,7 +53,7 @@ func (q *Queries) CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost
 			&i.App,
 			&i.CostType,
 			&i.Date,
-			&i.Cost,
+			&i.DailyCost,
 		); err != nil {
 			return nil, err
 		}
@@ -66,7 +66,7 @@ func (q *Queries) CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost
 }
 
 const costForTeam = `-- name: CostForTeam :many
-SELECT id, env, team, app, cost_type, date, cost FROM cost
+SELECT id, env, team, app, cost_type, date, daily_cost FROM cost
 WHERE
     date >= $2::date
     AND date <= $3::date
@@ -97,7 +97,7 @@ func (q *Queries) CostForTeam(ctx context.Context, arg CostForTeamParams) ([]*Co
 			&i.App,
 			&i.CostType,
 			&i.Date,
-			&i.Cost,
+			&i.DailyCost,
 		); err != nil {
 			return nil, err
 		}
@@ -126,7 +126,7 @@ SELECT
     team,
     app,
     date,
-    SUM(cost)::real AS cost
+    SUM(daily_cost)::real AS daily_cost
 FROM cost
 WHERE
     date >= $3::date
@@ -145,10 +145,10 @@ type EnvCostForTeamParams struct {
 }
 
 type EnvCostForTeamRow struct {
-	Team *string
-	App  *string
-	Date pgtype.Date
-	Cost float32
+	Team      *string
+	App       *string
+	Date      pgtype.Date
+	DailyCost float32
 }
 
 func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) ([]*EnvCostForTeamRow, error) {
@@ -169,7 +169,7 @@ func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) 
 			&i.Team,
 			&i.App,
 			&i.Date,
-			&i.Cost,
+			&i.DailyCost,
 		); err != nil {
 			return nil, err
 		}
@@ -182,7 +182,7 @@ func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) 
 }
 
 const getCost = `-- name: GetCost :many
-SELECT id, env, team, app, cost_type, date, cost FROM cost
+SELECT id, env, team, app, cost_type, date, daily_cost FROM cost
 `
 
 func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
@@ -201,7 +201,7 @@ func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
 			&i.App,
 			&i.CostType,
 			&i.Date,
-			&i.Cost,
+			&i.DailyCost,
 		); err != nil {
 			return nil, err
 		}
@@ -229,7 +229,7 @@ SELECT
         WHEN date_trunc('month', date) < date_trunc('month', last_run) THEN date_trunc('month', date) + interval '1 month' - interval '1 day'
         ELSE date_trunc('day', last_run)
     END)::date AS last_recorded_date,
-    SUM(cost)::real AS cost 
+    SUM(daily_cost)::real AS daily_cost
 FROM cost c 
 LEFT JOIN last_run ON true
 WHERE c.team = $1
@@ -252,7 +252,7 @@ type MonthlyCostForAppRow struct {
 	Env              *string
 	Month            pgtype.Date
 	LastRecordedDate pgtype.Date
-	Cost             float32
+	DailyCost        float32
 }
 
 func (q *Queries) MonthlyCostForApp(ctx context.Context, arg MonthlyCostForAppParams) ([]*MonthlyCostForAppRow, error) {
@@ -270,7 +270,7 @@ func (q *Queries) MonthlyCostForApp(ctx context.Context, arg MonthlyCostForAppPa
 			&i.Env,
 			&i.Month,
 			&i.LastRecordedDate,
-			&i.Cost,
+			&i.DailyCost,
 		); err != nil {
 			return nil, err
 		}
@@ -296,7 +296,7 @@ SELECT
         WHEN date_trunc('month', date) < date_trunc('month', last_run) THEN date_trunc('month', date) + interval '1 month' - interval '1 day'
         ELSE date_trunc('day', last_run)
     END)::date AS last_recorded_date,
-    SUM(cost)::real AS cost
+    SUM(daily_cost)::real AS daily_cost
 FROM cost c
 LEFT JOIN last_run ON true
 WHERE c.team = $1
@@ -309,7 +309,7 @@ type MonthlyCostForTeamRow struct {
 	Team             *string
 	Month            pgtype.Date
 	LastRecordedDate pgtype.Date
-	Cost             float32
+	DailyCost        float32
 }
 
 func (q *Queries) MonthlyCostForTeam(ctx context.Context, team *string) ([]*MonthlyCostForTeamRow, error) {
@@ -325,7 +325,7 @@ func (q *Queries) MonthlyCostForTeam(ctx context.Context, team *string) ([]*Mont
 			&i.Team,
 			&i.Month,
 			&i.LastRecordedDate,
-			&i.Cost,
+			&i.DailyCost,
 		); err != nil {
 			return nil, err
 		}

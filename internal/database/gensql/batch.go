@@ -18,10 +18,10 @@ var (
 )
 
 const costUpsert = `-- name: CostUpsert :batchexec
-INSERT INTO cost (env, team, app, cost_type, date, cost)
+INSERT INTO cost (env, team, app, cost_type, date, daily_cost)
 VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (env, team, app, cost_type, date) DO
-    UPDATE SET cost = EXCLUDED.cost
+    UPDATE SET daily_cost = EXCLUDED.daily_cost
 `
 
 type CostUpsertBatchResults struct {
@@ -31,12 +31,12 @@ type CostUpsertBatchResults struct {
 }
 
 type CostUpsertParams struct {
-	Env      *string
-	Team     *string
-	App      *string
-	CostType string
-	Date     pgtype.Date
-	Cost     float32
+	Env       *string
+	Team      *string
+	App       *string
+	CostType  string
+	Date      pgtype.Date
+	DailyCost float32
 }
 
 func (q *Queries) CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults {
@@ -48,7 +48,7 @@ func (q *Queries) CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostU
 			a.App,
 			a.CostType,
 			a.Date,
-			a.Cost,
+			a.DailyCost,
 		}
 		batch.Queue(costUpsert, vals...)
 	}

@@ -21,8 +21,8 @@ func DailyCostsFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.C
 		if _, exists := daily[row.CostType]; !exists {
 			daily[row.CostType] = make(map[model.Date]float64)
 		}
-		daily[row.CostType][model.NewDate(row.Date.Time)] = float64(row.Cost)
-		sum += float64(row.Cost)
+		daily[row.CostType][model.NewDate(row.Date.Time)] = float64(row.DailyCost)
+		sum += float64(row.DailyCost)
 	}
 
 	return normalizeDailyCosts(from, to, daily), sum
@@ -43,8 +43,8 @@ func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*g
 			daily[row.CostType][date] = 0.0
 		}
 
-		daily[row.CostType][date] += float64(row.Cost)
-		sum += float64(row.Cost)
+		daily[row.CostType][date] += float64(row.DailyCost)
+		sum += float64(row.DailyCost)
 	}
 
 	return normalizeDailyCosts(from, to, daily), sum
@@ -60,8 +60,8 @@ func DailyCostsForTeamPerEnvFromDatabaseRows(from model.Date, to model.Date, row
 		if _, exists := daily[*row.App]; !exists {
 			daily[*row.App] = make(map[model.Date]float64)
 		}
-		daily[*row.App][model.NewDate(row.Date.Time)] = float64(row.Cost)
-		sum += float64(row.Cost)
+		daily[*row.App][model.NewDate(row.Date.Time)] = float64(row.DailyCost)
+		sum += float64(row.DailyCost)
 	}
 
 	return normalizeDailyCosts(from, to, daily), sum
