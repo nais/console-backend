@@ -1,6 +1,6 @@
 .PHONY: all
 
-all: generate test check linux-binary
+all: generate fmt test check linux-binary
 
 generate: generate-sql generate-graphql
 
