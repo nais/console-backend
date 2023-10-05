@@ -20,19 +20,11 @@ input MonthlyCostFilter {
 
 "Cost filter input type."
 input CostFilter {
-    """
-    Start date for the cost series, inclusive.
+    "Start date for the cost series, inclusive."
+    from: Date!
 
-    Defaults to 7 days ago.
-    """
-    from: Date
-
-    """
-    End date for cost series, inclusive.
-
-    Defaults to the current date.
-    """
-    to: Date
+    "End date for cost series, inclusive."
+    to: Date!
 
     "The name of the team to get costs for."
     team: String!

@@ -20,4 +20,5 @@ type Resolver struct {
 	Searcher    *search.Searcher
 	Log         *logrus.Logger
 	Queries     gensql.Querier
+	Clusters    []string
 }

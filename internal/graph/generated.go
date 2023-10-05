@@ -20799,7 +20799,7 @@ func (ec *executionContext) unmarshalInputCostFilter(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-			data, err := ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, v)
+			data, err := ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -20808,7 +20808,7 @@ func (ec *executionContext) unmarshalInputCostFilter(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-			data, err := ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, v)
+			data, err := ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -29355,22 +29355,6 @@ func (ec *executionContext) unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 }
 
 func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, sel ast.SelectionSet, v *model.Cursor) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return graphql.WrapContextMarshaler(ctx, v)
-}
-
-func (ec *executionContext) unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx context.Context, v interface{}) (*model.Date, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(model.Date)
-	err := res.UnmarshalGQLContext(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx context.Context, sel ast.SelectionSet, v *model.Date) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

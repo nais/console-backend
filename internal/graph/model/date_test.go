@@ -39,6 +39,12 @@ func TestDate_UnmarshalGQLContext(t *testing.T) {
 		assert.EqualError(t, err, "date must be a string")
 	})
 
+	t.Run("empty string", func(t *testing.T) {
+		date := model.NewDate(tm)
+		err := date.UnmarshalGQLContext(ctx, "")
+		assert.EqualError(t, err, "date must not be empty")
+	})
+
 	t.Run("valid", func(t *testing.T) {
 		date := model.NewDate(time.Now())
 		err := date.UnmarshalGQLContext(ctx, "2020-04-20")

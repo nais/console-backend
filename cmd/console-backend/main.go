@@ -105,6 +105,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 			Searcher:    searcher,
 			Log:         log,
 			Queries:     queries,
+			Clusters:    cfg.KubernetesClusters,
 		},
 	}
 

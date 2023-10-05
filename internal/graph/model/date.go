@@ -28,6 +28,10 @@ func (d *Date) UnmarshalGQLContext(_ context.Context, v interface{}) error {
 		return fmt.Errorf("date must be a string")
 	}
 
+	if date == "" {
+		return fmt.Errorf("date must not be empty")
+	}
+
 	*d = Date(date)
 	return nil
 }

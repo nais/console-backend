@@ -185,13 +185,9 @@ type CostEntry struct {
 // Cost filter input type.
 type CostFilter struct {
 	// Start date for the cost series, inclusive.
-	//
-	// Defaults to 7 days ago.
-	From *Date `json:"from,omitempty"`
+	From Date `json:"from"`
 	// End date for cost series, inclusive.
-	//
-	// Defaults to the current date.
-	To *Date `json:"to,omitempty"`
+	To Date `json:"to"`
 	// The name of the team to get costs for.
 	Team string `json:"team"`
 	// The name of the application to get costs for.

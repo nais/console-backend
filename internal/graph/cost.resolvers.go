@@ -35,23 +35,14 @@ func (r *costSeriesResolver) Sum(ctx context.Context, obj *model.CostSeries) (fl
 
 // Cost is the resolver for the cost field.
 func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error) {
-	if filter.From == nil {
-		start := model.NewDate(time.Now().Add(-7 * time.Hour * 24))
-		filter.From = &start
-	}
-
 	today := model.NewDate(time.Now())
-	if filter.To == nil {
-		filter.To = &today
-	}
-
-	if *filter.From > *filter.To {
+	if filter.From > filter.To {
 		return nil, fmt.Errorf("from date cannot be after to date")
-	} else if *filter.To > today {
+	} else if filter.To > today {
 		return nil, fmt.Errorf("to date cannot be in the future")
 	}
 
-	if filter.App != "" && filter.Env != "" && filter.Team != "" && filter.From != nil && filter.To != nil {
+	if filter.App != "" && filter.Env != "" && filter.Team != "" {
 		rows, err := r.Queries.CostForApp(ctx, gensql.CostForAppParams{
 			App:      &filter.App,
 			Team:     &filter.Team,
@@ -63,7 +54,7 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
-		costs := DailyCostsFromDatabaseRows(*filter.From, *filter.To, rows)
+		costs := DailyCostsFromDatabaseRows(filter.From, filter.To, rows)
 		series := make([]*model.CostSeries, 0)
 		for costType, data := range costs {
 			series = append(series, &model.CostSeries{
@@ -76,11 +67,11 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 		}
 
 		return &model.Cost{
-			From:   *filter.From,
-			To:     *filter.To,
+			From:   filter.From,
+			To:     filter.To,
 			Series: series,
 		}, nil
-	} else if filter.App == "" && filter.Env == "" && filter.Team != "" && filter.From != nil && filter.To != nil {
+	} else if filter.App == "" && filter.Env == "" && filter.Team != "" {
 		rows, err := r.Queries.CostForTeam(ctx, gensql.CostForTeamParams{
 			Team:     &filter.Team,
 			FromDate: filter.From.PgDate(),
@@ -90,7 +81,7 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
-		costs := DailyCostsForTeamFromDatabaseRows(*filter.From, *filter.To, rows)
+		costs := DailyCostsForTeamFromDatabaseRows(filter.From, filter.To, rows)
 		series := make([]*model.CostSeries, 0)
 
 		for costType, data := range costs {
@@ -104,8 +95,8 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 		}
 
 		return &model.Cost{
-			From:   *filter.From,
-			To:     *filter.To,
+			From:   filter.From,
+			To:     filter.To,
 			Series: series,
 		}, nil
 
