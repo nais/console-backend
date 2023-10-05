@@ -68,6 +68,8 @@ GROUP BY team, month
 ORDER BY month DESC
 LIMIT 12;
 
+-- CostUpsert will insert or update a cost record. If there is a conflict on the daily_cost_key constrant, the
+-- daily_cost column will be updated.
 -- name: CostUpsert :batchexec
 INSERT INTO cost (env, team, app, cost_type, date, daily_cost)
 VALUES ($1, $2, $3, $4, $5, $6)

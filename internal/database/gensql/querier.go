@@ -11,6 +11,8 @@ import (
 )
 
 type Querier interface {
+	// CostUpsert will insert or update a cost record. If there is a conflict on the daily_cost_key constrant, the
+	// daily_cost column will be updated.
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults
 	// DailyCostForApp will fetch the daily cost for a specific team app in a specific environment, across all cost types
 	// in a date range.
