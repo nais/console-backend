@@ -1,6 +1,3 @@
--- name: GetCost :many
-SELECT * FROM cost;
-
 -- name: CostLastDate :one
 SELECT MAX(date)::date AS "date"
 FROM cost;

@@ -16,7 +16,6 @@ type Querier interface {
 	CostLastDate(ctx context.Context) (pgtype.Date, error)
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults
 	EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) ([]*EnvCostForTeamRow, error)
-	GetCost(ctx context.Context) ([]*Cost, error)
 	MonthlyCostForApp(ctx context.Context, arg MonthlyCostForAppParams) ([]*MonthlyCostForAppRow, error)
 	MonthlyCostForTeam(ctx context.Context, team *string) ([]*MonthlyCostForTeamRow, error)
 }

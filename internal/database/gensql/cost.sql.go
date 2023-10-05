@@ -181,38 +181,6 @@ func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) 
 	return items, nil
 }
 
-const getCost = `-- name: GetCost :many
-SELECT id, env, team, app, cost_type, date, daily_cost FROM cost
-`
-
-func (q *Queries) GetCost(ctx context.Context) ([]*Cost, error) {
-	rows, err := q.db.Query(ctx, getCost)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Cost
-	for rows.Next() {
-		var i Cost
-		if err := rows.Scan(
-			&i.ID,
-			&i.Env,
-			&i.Team,
-			&i.App,
-			&i.CostType,
-			&i.Date,
-			&i.DailyCost,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const monthlyCostForApp = `-- name: MonthlyCostForApp :many
 WITH last_run AS (
     SELECT MAX(date)::date AS "last_run"
