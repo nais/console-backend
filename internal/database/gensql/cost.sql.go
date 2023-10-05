@@ -118,38 +118,42 @@ func (q *Queries) DailyCostForTeam(ctx context.Context, arg DailyCostForTeamPara
 	return items, nil
 }
 
-const envCostForTeam = `-- name: EnvCostForTeam :many
+const dailyEnvCostForTeam = `-- name: DailyEnvCostForTeam :many
 SELECT
     team,
     app,
     date,
     SUM(daily_cost)::real AS daily_cost
-FROM cost
+FROM
+    cost
 WHERE
     date >= $3::date
     AND date <= $4::date
     AND env = $1
     AND team = $2
-GROUP by team, app, date
-ORDER BY date, app ASC
+GROUP BY
+    team, app, date
+ORDER BY
+    date, app ASC
 `
 
-type EnvCostForTeamParams struct {
+type DailyEnvCostForTeamParams struct {
 	Env      *string
 	Team     *string
 	FromDate pgtype.Date
 	ToDate   pgtype.Date
 }
 
-type EnvCostForTeamRow struct {
+type DailyEnvCostForTeamRow struct {
 	Team      *string
 	App       *string
 	Date      pgtype.Date
 	DailyCost float32
 }
 
-func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) ([]*EnvCostForTeamRow, error) {
-	rows, err := q.db.Query(ctx, envCostForTeam,
+// DailyEnvCostForTeam will fetch the daily cost for a specific team and env across all apps in a date range.
+func (q *Queries) DailyEnvCostForTeam(ctx context.Context, arg DailyEnvCostForTeamParams) ([]*DailyEnvCostForTeamRow, error) {
+	rows, err := q.db.Query(ctx, dailyEnvCostForTeam,
 		arg.Env,
 		arg.Team,
 		arg.FromDate,
@@ -159,9 +163,9 @@ func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) 
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*EnvCostForTeamRow
+	var items []*DailyEnvCostForTeamRow
 	for rows.Next() {
-		var i EnvCostForTeamRow
+		var i DailyEnvCostForTeamRow
 		if err := rows.Scan(
 			&i.Team,
 			&i.App,

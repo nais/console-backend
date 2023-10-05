@@ -154,7 +154,7 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 	ret := make([]*model.EnvCost, len(r.Clusters))
 	for idx, cluster := range r.Clusters {
 		appsCost := make([]*model.AppCost, 0)
-		rows, err := r.Queries.EnvCostForTeam(ctx, gensql.EnvCostForTeamParams{
+		rows, err := r.Queries.DailyEnvCostForTeam(ctx, gensql.DailyEnvCostForTeamParams{
 			Team:     &filter.Team,
 			Env:      &cluster,
 			FromDate: filter.From.PgDate(),

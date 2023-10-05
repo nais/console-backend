@@ -31,21 +31,6 @@ GROUP BY team, app, env, month
 ORDER BY month DESC
 LIMIT 12;
 
--- name: EnvCostForTeam :many
-SELECT
-    team,
-    app,
-    date,
-    SUM(daily_cost)::real AS daily_cost
-FROM cost
-WHERE
-    date >= sqlc.arg('from_date')::date
-    AND date <= sqlc.arg('to_date')::date
-    AND env = $1
-    AND team = $2
-GROUP by team, app, date
-ORDER BY date, app ASC;
-
 -- name: MonthlyCostForTeam :many
 WITH last_run AS (
     SELECT MAX(date)::date AS "last_run"
@@ -104,3 +89,22 @@ WHERE
     AND team = $1
 ORDER BY
     date, env, app, cost_type ASC;
+
+-- DailyEnvCostForTeam will fetch the daily cost for a specific team and env across all apps in a date range.
+-- name: DailyEnvCostForTeam :many
+SELECT
+    team,
+    app,
+    date,
+    SUM(daily_cost)::real AS daily_cost
+FROM
+    cost
+WHERE
+    date >= sqlc.arg('from_date')::date
+    AND date <= sqlc.arg('to_date')::date
+    AND env = $1
+    AND team = $2
+GROUP BY
+    team, app, date
+ORDER BY
+    date, app ASC;

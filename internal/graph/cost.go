@@ -50,7 +50,7 @@ func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*g
 	return normalizeDailyCosts(from, to, daily), sum
 }
 
-func DailyCostsForTeamPerEnvFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.EnvCostForTeamRow) (sortedDailyCosts, float64) {
+func DailyCostsForTeamPerEnvFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.DailyEnvCostForTeamRow) (sortedDailyCosts, float64) {
 	sum := 0.0
 	daily := dailyCosts{}
 	for _, row := range rows {
