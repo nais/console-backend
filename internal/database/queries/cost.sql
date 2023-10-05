@@ -82,11 +82,15 @@ WHERE
 GROUP by id, team, app, cost_type, date
 ORDER BY date ASC;
 
--- name: CostForTeam :many
-SELECT * FROM cost
+-- DailyCostForTeam will fetch the daily cost for a specific team across all apps and envs in a date range.
+-- name: DailyCostForTeam :many
+SELECT
+    *
+FROM
+    cost
 WHERE
     date >= sqlc.arg('from_date')::date
     AND date <= sqlc.arg('to_date')::date
     AND team = $1
-GROUP by id, team, cost_type, date
-ORDER BY date ASC;
+ORDER BY
+    date, app, env ASC;

@@ -56,7 +56,7 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			Sum:    sum,
 		}, nil
 	} else if filter.App == "" && filter.Env == "" && filter.Team != "" {
-		rows, err := r.Queries.CostForTeam(ctx, gensql.CostForTeamParams{
+		rows, err := r.Queries.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
 			Team:     &filter.Team,
 			FromDate: filter.From.PgDate(),
 			ToDate:   filter.To.PgDate(),

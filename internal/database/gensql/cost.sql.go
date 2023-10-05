@@ -65,24 +65,40 @@ func (q *Queries) CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost
 	return items, nil
 }
 
-const costForTeam = `-- name: CostForTeam :many
-SELECT id, env, team, app, cost_type, date, daily_cost FROM cost
+const costLastDate = `-- name: CostLastDate :one
+SELECT MAX(date)::date AS "date"
+FROM cost
+`
+
+func (q *Queries) CostLastDate(ctx context.Context) (pgtype.Date, error) {
+	row := q.db.QueryRow(ctx, costLastDate)
+	var date pgtype.Date
+	err := row.Scan(&date)
+	return date, err
+}
+
+const dailyCostForTeam = `-- name: DailyCostForTeam :many
+SELECT
+    id, env, team, app, cost_type, date, daily_cost
+FROM
+    cost
 WHERE
     date >= $2::date
     AND date <= $3::date
     AND team = $1
-GROUP by id, team, cost_type, date
-ORDER BY date ASC
+ORDER BY
+    date, app, env ASC
 `
 
-type CostForTeamParams struct {
+type DailyCostForTeamParams struct {
 	Team     *string
 	FromDate pgtype.Date
 	ToDate   pgtype.Date
 }
 
-func (q *Queries) CostForTeam(ctx context.Context, arg CostForTeamParams) ([]*Cost, error) {
-	rows, err := q.db.Query(ctx, costForTeam, arg.Team, arg.FromDate, arg.ToDate)
+// DailyCostForTeam will fetch the daily cost for a specific team across all apps and envs in a date range.
+func (q *Queries) DailyCostForTeam(ctx context.Context, arg DailyCostForTeamParams) ([]*Cost, error) {
+	rows, err := q.db.Query(ctx, dailyCostForTeam, arg.Team, arg.FromDate, arg.ToDate)
 	if err != nil {
 		return nil, err
 	}
@@ -107,18 +123,6 @@ func (q *Queries) CostForTeam(ctx context.Context, arg CostForTeamParams) ([]*Co
 		return nil, err
 	}
 	return items, nil
-}
-
-const costLastDate = `-- name: CostLastDate :one
-SELECT MAX(date)::date AS "date"
-FROM cost
-`
-
-func (q *Queries) CostLastDate(ctx context.Context) (pgtype.Date, error) {
-	row := q.db.QueryRow(ctx, costLastDate)
-	var date pgtype.Date
-	err := row.Scan(&date)
-	return date, err
 }
 
 const envCostForTeam = `-- name: EnvCostForTeam :many
