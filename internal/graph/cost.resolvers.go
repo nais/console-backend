@@ -192,3 +192,46 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 
 	return ret, nil
 }
+
+// DailyCostForApp is the resolver for the dailyCostForApp field.
+func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCostForApp, error) {
+	err := ValidateDateInterval(from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Queries.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
+		App:      &app,
+		Team:     &team,
+		Env:      &env,
+		FromDate: from.PgDate(),
+		ToDate:   to.PgDate(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cost query: %w", err)
+	}
+
+	costs, sum := DailyCostsFromDatabaseRows(from, to, rows)
+	series := make([]*model.DailyCostForAppSeries, 0)
+	for costType, data := range costs {
+		costTypeSum := 0.0
+		for _, cost := range data {
+			costTypeSum += cost.Cost
+		}
+		series = append(series, &model.DailyCostForAppSeries{
+			CostType: costType,
+			Data:     data,
+			Sum:      costTypeSum,
+		})
+	}
+
+	return &model.DailyCostForApp{
+		Team:   team,
+		App:    app,
+		Env:    env,
+		From:   from,
+		To:     to,
+		Series: series,
+		Sum:    sum,
+	}, nil
+}

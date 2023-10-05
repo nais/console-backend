@@ -7,6 +7,24 @@ extend type Query {
 
     "Get env cost for a team."
     envCost(filter: EnvCostFilter!): [EnvCost!]!
+
+    "Get the daily cost for a team application in a specific environment."
+    dailyCostForApp(
+        "The name of the team that owns the application."
+        team: String!
+
+        "The name of the application to get costs for."
+        app: String!
+
+        "The environment that the application runs in."
+        env: String!
+
+        "Start date for the cost series, inclusive."
+        from: Date!
+
+        "End date for cost series, inclusive."
+        to: Date!
+    ): DailyCostForApp!
 }
 
 "Env cost filter input type."
@@ -97,6 +115,42 @@ type Cost {
 
     "The cost series."
     series: [CostSeries!]!
+}
+
+"Daily cost for app type."
+type DailyCostForApp {
+    "The name of the team."
+    team: String!
+
+    "The name of the application."
+    app: String!
+
+    "The name of the environment."
+    env: String!
+
+    "The start date for the cost data."
+    from: Date!
+
+    "The end date for the cost data."
+    to: Date!
+
+    "The sum of all costs in the cost series in euros."
+    sum: Float!
+
+    "The cost series."
+    series: [DailyCostForAppSeries!]!
+}
+
+"Daily cost for app series type."
+type DailyCostForAppSeries {
+    "The type of cost."
+    costType: String!
+
+    "The sum of all daily costs in the series for this cost type in euros."
+    sum: Float!
+
+    "The cost data."
+    data: [CostEntry!]!
 }
 
 "Cost series type."
