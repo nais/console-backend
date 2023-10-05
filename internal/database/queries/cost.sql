@@ -74,16 +74,21 @@ VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT ON CONSTRAINT daily_cost_key DO
     UPDATE SET daily_cost = EXCLUDED.daily_cost;
 
--- name: CostForApp :many
-SELECT * FROM cost
+-- DailyCostForApp will fetch the daily cost for a specific team app in a specific environment, across all cost types
+-- in a date range.
+-- name: DailyCostForApp :many
+SELECT
+    *
+FROM
+    cost
 WHERE
     date >= sqlc.arg('from_date')::date
     AND date <= sqlc.arg('to_date')::date
     AND env = $1
     AND team = $2
     AND app = $3
-GROUP by id, team, app, cost_type, date
-ORDER BY date ASC;
+ORDER BY
+    date, cost_type ASC;
 
 -- DailyCostForTeam will fetch the daily cost for a specific team across all apps and envs in a date range.
 -- name: DailyCostForTeam :many
@@ -96,4 +101,4 @@ WHERE
     AND date <= sqlc.arg('to_date')::date
     AND team = $1
 ORDER BY
-    date, app, env ASC;
+    date, env, app, cost_type ASC;

@@ -21,7 +21,7 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 	}
 
 	if filter.App != "" && filter.Env != "" && filter.Team != "" {
-		rows, err := r.Queries.CostForApp(ctx, gensql.CostForAppParams{
+		rows, err := r.Queries.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
 			App:      &filter.App,
 			Team:     &filter.Team,
 			Env:      &filter.Env,

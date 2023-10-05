@@ -11,8 +11,10 @@ import (
 )
 
 type Querier interface {
-	CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost, error)
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults
+	// DailyCostForApp will fetch the daily cost for a specific team app in a specific environment, across all cost types
+	// in a date range.
+	DailyCostForApp(ctx context.Context, arg DailyCostForAppParams) ([]*Cost, error)
 	// DailyCostForTeam will fetch the daily cost for a specific team across all apps and envs in a date range.
 	DailyCostForTeam(ctx context.Context, arg DailyCostForTeamParams) ([]*Cost, error)
 	EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) ([]*EnvCostForTeamRow, error)

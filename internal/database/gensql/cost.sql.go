@@ -11,19 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const costForApp = `-- name: CostForApp :many
-SELECT id, env, team, app, cost_type, date, daily_cost FROM cost
+const dailyCostForApp = `-- name: DailyCostForApp :many
+SELECT
+    id, env, team, app, cost_type, date, daily_cost
+FROM
+    cost
 WHERE
     date >= $4::date
     AND date <= $5::date
     AND env = $1
     AND team = $2
     AND app = $3
-GROUP by id, team, app, cost_type, date
-ORDER BY date ASC
+ORDER BY
+    date, cost_type ASC
 `
 
-type CostForAppParams struct {
+type DailyCostForAppParams struct {
 	Env      *string
 	Team     *string
 	App      *string
@@ -31,8 +34,10 @@ type CostForAppParams struct {
 	ToDate   pgtype.Date
 }
 
-func (q *Queries) CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost, error) {
-	rows, err := q.db.Query(ctx, costForApp,
+// DailyCostForApp will fetch the daily cost for a specific team app in a specific environment, across all cost types
+// in a date range.
+func (q *Queries) DailyCostForApp(ctx context.Context, arg DailyCostForAppParams) ([]*Cost, error) {
+	rows, err := q.db.Query(ctx, dailyCostForApp,
 		arg.Env,
 		arg.Team,
 		arg.App,
@@ -75,7 +80,7 @@ WHERE
     AND date <= $3::date
     AND team = $1
 ORDER BY
-    date, app, env ASC
+    date, env, app, cost_type ASC
 `
 
 type DailyCostForTeamParams struct {
