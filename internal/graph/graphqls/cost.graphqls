@@ -4,7 +4,27 @@ extend type Query {
 
     "Get monthly costs."
     monthlyCost(filter: MonthlyCostFilter!): MonthlyCost!
+
+    envCost(filter: EnvCostFilter!): [EnvCost!]!
 }
+
+input EnvCostFilter {
+    team: String!
+    from: Date!
+    to: Date!
+}
+
+type EnvCost {
+    env: String!
+    apps: [AppCost!]!
+}
+
+type AppCost {
+    app: String!
+    sum: Float!
+    cost: [CostEntry!]!
+}
+
 
 "Monthly cost filter input type."
 input MonthlyCostFilter {

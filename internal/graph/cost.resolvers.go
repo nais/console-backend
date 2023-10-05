@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/nais/console-backend/internal/database/gensql"
@@ -154,6 +155,56 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 		}, nil
 	}
 	return nil, fmt.Errorf("not implemented")
+}
+
+// EnvCost is the resolver for the envCost field.
+func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]*model.EnvCost, error) {
+	today := model.NewDate(time.Now())
+	if filter.From > filter.To {
+		return nil, fmt.Errorf("from date cannot be after to date")
+	} else if filter.To > today {
+		return nil, fmt.Errorf("to date cannot be in the future")
+	}
+
+	ret := make([]*model.EnvCost, len(r.Clusters))
+	for idx, cluster := range r.Clusters {
+		appsCost := make([]*model.AppCost, 0)
+		rows, err := r.Queries.EnvCostForTeam(ctx, gensql.EnvCostForTeamParams{
+			Team:     &filter.Team,
+			Env:      &cluster,
+			FromDate: filter.From.PgDate(),
+			ToDate:   filter.To.PgDate(),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("cost query: %w", err)
+		}
+
+		costs := DailyCostsForTeamPerEnvFromDatabaseRows(filter.From, filter.To, rows)
+
+		for app, appCosts := range costs {
+			sum := 0.0
+			for _, c := range appCosts {
+				sum += c.Cost
+			}
+			appsCost = append(appsCost, &model.AppCost{
+				App:  app,
+				Sum:  sum,
+				Cost: appCosts,
+			})
+		}
+
+		// sort appsCost by sum by using sort.Slice
+		sort.Slice(appsCost, func(i, j int) bool {
+			return appsCost[i].Sum > appsCost[j].Sum
+		})
+
+		ret[idx] = &model.EnvCost{
+			Env:  cluster,
+			Apps: appsCost,
+		}
+	}
+
+	return ret, nil
 }
 
 // Cost returns CostResolver implementation.

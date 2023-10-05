@@ -121,6 +121,66 @@ func (q *Queries) CostLastDate(ctx context.Context) (pgtype.Date, error) {
 	return date, err
 }
 
+const envCostForTeam = `-- name: EnvCostForTeam :many
+SELECT
+    team,
+    app,
+    date,
+    SUM(cost)::real AS cost
+FROM cost
+WHERE
+    date >= $3::date
+    AND date <= $4::date
+    AND env = $1
+    AND team = $2
+GROUP by team, app, date
+ORDER BY date, app ASC
+`
+
+type EnvCostForTeamParams struct {
+	Env      *string
+	Team     *string
+	FromDate pgtype.Date
+	ToDate   pgtype.Date
+}
+
+type EnvCostForTeamRow struct {
+	Team *string
+	App  *string
+	Date pgtype.Date
+	Cost float32
+}
+
+func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) ([]*EnvCostForTeamRow, error) {
+	rows, err := q.db.Query(ctx, envCostForTeam,
+		arg.Env,
+		arg.Team,
+		arg.FromDate,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*EnvCostForTeamRow
+	for rows.Next() {
+		var i EnvCostForTeamRow
+		if err := rows.Scan(
+			&i.Team,
+			&i.App,
+			&i.Date,
+			&i.Cost,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCost = `-- name: GetCost :many
 SELECT id, env, team, app, cost_type, date, cost FROM cost
 `

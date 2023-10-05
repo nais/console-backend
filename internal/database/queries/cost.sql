@@ -31,6 +31,21 @@ GROUP BY team, app, env, month
 ORDER BY month DESC
 LIMIT 12;
 
+-- name: EnvCostForTeam :many
+SELECT
+    team,
+    app,
+    date,
+    SUM(cost)::real AS cost
+FROM cost
+WHERE
+    date >= sqlc.arg('from_date')::date
+    AND date <= sqlc.arg('to_date')::date
+    AND env = $1
+    AND team = $2
+GROUP by team, app, date
+ORDER BY date, app ASC;
+
 -- name: MonthlyCostForTeam :many
 WITH last_run AS (
     SELECT MAX(date)::date AS "last_run"

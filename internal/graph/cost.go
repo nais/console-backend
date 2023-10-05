@@ -46,6 +46,21 @@ func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*g
 	return normalizeDailyCosts(from, to, daily)
 }
 
+func DailyCostsForTeamPerEnvFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.EnvCostForTeamRow) sortedDailyCosts {
+	daily := dailyCosts{}
+	for _, row := range rows {
+		if *row.App == "<unknown>" {
+			continue
+		}
+		if _, exists := daily[*row.App]; !exists {
+			daily[*row.App] = make(map[model.Date]float64)
+		}
+		daily[*row.App][model.NewDate(row.Date.Time)] = float64(row.Cost)
+	}
+
+	return normalizeDailyCosts(from, to, daily)
+}
+
 // normalizeDailyCosts will make sure all dates in the "from -> to" range are present in the returned map for all cost
 // types. The dates will also be sorted in ascending order.
 func normalizeDailyCosts(from, to model.Date, costs dailyCosts) sortedDailyCosts {

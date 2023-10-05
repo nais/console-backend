@@ -89,6 +89,12 @@ func (this AppConnection) GetEdges() []Edge {
 	return interfaceSlice
 }
 
+type AppCost struct {
+	App  string       `json:"app"`
+	Sum  float64      `json:"sum"`
+	Cost []*CostEntry `json:"cost"`
+}
+
 type AppEdge struct {
 	Cursor Cursor `json:"cursor"`
 	Node   *App   `json:"node"`
@@ -309,6 +315,17 @@ func (Env) IsNode() {}
 
 // The unique ID of an object.
 func (this Env) GetID() Ident { return this.ID }
+
+type EnvCost struct {
+	Env  string     `json:"env"`
+	Apps []*AppCost `json:"apps"`
+}
+
+type EnvCostFilter struct {
+	Team string `json:"team"`
+	From Date   `json:"from"`
+	To   Date   `json:"to"`
+}
 
 type Expose struct {
 	AllowedIntegrations []string    `json:"allowedIntegrations"`
