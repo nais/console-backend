@@ -40,8 +40,6 @@ type Config struct {
 
 type ResolverRoot interface {
 	App() AppResolver
-	Cost() CostResolver
-	CostSeries() CostSeriesResolver
 	DeployInfo() DeployInfoResolver
 	Mutation() MutationResolver
 	NaisJob() NaisJobResolver
@@ -263,6 +261,7 @@ type ComplexityRoot struct {
 	EnvCost struct {
 		Apps func(childComplexity int) int
 		Env  func(childComplexity int) int
+		Sum  func(childComplexity int) int
 	}
 
 	Error struct {
@@ -646,12 +645,6 @@ type AppResolver interface {
 
 	Manifest(ctx context.Context, obj *model.App) (string, error)
 	Team(ctx context.Context, obj *model.App) (*model.Team, error)
-}
-type CostResolver interface {
-	Sum(ctx context.Context, obj *model.Cost) (float64, error)
-}
-type CostSeriesResolver interface {
-	Sum(ctx context.Context, obj *model.CostSeries) (float64, error)
 }
 type DeployInfoResolver interface {
 	History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *model.Cursor, before *model.Cursor) (model.DeploymentResponse, error)
@@ -1531,6 +1524,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EnvCost.Env(childComplexity), true
+
+	case "EnvCost.sum":
+		if e.complexity.EnvCost.Sum == nil {
+			break
+		}
+
+		return e.complexity.EnvCost.Sum(childComplexity), true
 
 	case "Error.message":
 		if e.complexity.Error.Message == nil {
@@ -6662,7 +6662,7 @@ func (ec *executionContext) _Cost_sum(ctx context.Context, field graphql.Collect
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Cost().Sum(rctx, obj)
+		return obj.Sum, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6683,8 +6683,8 @@ func (ec *executionContext) fieldContext_Cost_sum(ctx context.Context, field gra
 	fc = &graphql.FieldContext{
 		Object:     "Cost",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -7028,7 +7028,7 @@ func (ec *executionContext) _CostSeries_sum(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CostSeries().Sum(rctx, obj)
+		return obj.Sum, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7049,8 +7049,8 @@ func (ec *executionContext) fieldContext_CostSeries_sum(ctx context.Context, fie
 	fc = &graphql.FieldContext{
 		Object:     "CostSeries",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -9265,6 +9265,50 @@ func (ec *executionContext) fieldContext_EnvCost_env(ctx context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EnvCost_sum(ctx context.Context, field graphql.CollectedField, obj *model.EnvCost) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EnvCost_sum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sum, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_EnvCost_sum(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EnvCost",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14944,6 +14988,8 @@ func (ec *executionContext) fieldContext_Query_envCost(ctx context.Context, fiel
 			switch field.Name {
 			case "env":
 				return ec.fieldContext_EnvCost_env(ctx, field)
+			case "sum":
+				return ec.fieldContext_EnvCost_sum(ctx, field)
 			case "apps":
 				return ec.fieldContext_EnvCost_apps(ctx, field)
 			}
@@ -21224,22 +21270,13 @@ func (ec *executionContext) unmarshalInputEnvCostFilter(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"team", "from", "to"}
+	fieldsInOrder := [...]string{"from", "to", "team"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "team":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Team = data
 		case "from":
 			var err error
 
@@ -21258,6 +21295,15 @@ func (ec *executionContext) unmarshalInputEnvCostFilter(ctx context.Context, obj
 				return it, err
 			}
 			it.To = data
+		case "team":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Team = data
 		}
 	}
 
@@ -22689,53 +22735,22 @@ func (ec *executionContext) _Cost(ctx context.Context, sel ast.SelectionSet, obj
 		case "from":
 			out.Values[i] = ec._Cost_from(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "to":
 			out.Values[i] = ec._Cost_to(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "sum":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Cost_sum(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Cost_sum(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "series":
 			out.Values[i] = ec._Cost_series(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -22818,63 +22833,32 @@ func (ec *executionContext) _CostSeries(ctx context.Context, sel ast.SelectionSe
 		case "costType":
 			out.Values[i] = ec._CostSeries_costType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "app":
 			out.Values[i] = ec._CostSeries_app(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "env":
 			out.Values[i] = ec._CostSeries_env(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "team":
 			out.Values[i] = ec._CostSeries_team(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "sum":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CostSeries_sum(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._CostSeries_sum(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "data":
 			out.Values[i] = ec._CostSeries_data(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -23572,6 +23556,11 @@ func (ec *executionContext) _EnvCost(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = graphql.MarshalString("EnvCost")
 		case "env":
 			out.Values[i] = ec._EnvCost_env(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sum":
+			out.Values[i] = ec._EnvCost_sum(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

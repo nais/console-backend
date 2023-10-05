@@ -14,26 +14,6 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-// Sum is the resolver for the sum field.
-func (r *costResolver) Sum(ctx context.Context, obj *model.Cost) (float64, error) {
-	sum := 0.0
-	for _, series := range obj.Series {
-		for _, cost := range series.Data {
-			sum += cost.Cost
-		}
-	}
-	return sum, nil
-}
-
-// Sum is the resolver for the sum field.
-func (r *costSeriesResolver) Sum(ctx context.Context, obj *model.CostSeries) (float64, error) {
-	sum := 0.0
-	for _, cost := range obj.Data {
-		sum += cost.Cost
-	}
-	return sum, nil
-}
-
 // Cost is the resolver for the cost field.
 func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error) {
 	today := model.NewDate(time.Now())
@@ -55,15 +35,20 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
-		costs := DailyCostsFromDatabaseRows(filter.From, filter.To, rows)
+		costs, sum := DailyCostsFromDatabaseRows(filter.From, filter.To, rows)
 		series := make([]*model.CostSeries, 0)
 		for costType, data := range costs {
+			costTypeSum := 0.0
+			for _, cost := range data {
+				costTypeSum += cost.Cost
+			}
 			series = append(series, &model.CostSeries{
 				CostType: costType,
 				Data:     data,
 				App:      filter.App,
 				Team:     filter.Team,
 				Env:      filter.Env,
+				Sum:      costTypeSum,
 			})
 		}
 
@@ -71,6 +56,7 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			From:   filter.From,
 			To:     filter.To,
 			Series: series,
+			Sum:    sum,
 		}, nil
 	} else if filter.App == "" && filter.Env == "" && filter.Team != "" {
 		rows, err := r.Queries.CostForTeam(ctx, gensql.CostForTeamParams{
@@ -82,16 +68,21 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
-		costs := DailyCostsForTeamFromDatabaseRows(filter.From, filter.To, rows)
+		costs, sum := DailyCostsForTeamFromDatabaseRows(filter.From, filter.To, rows)
 		series := make([]*model.CostSeries, 0)
 
 		for costType, data := range costs {
+			costTypeSum := 0.0
+			for _, cost := range data {
+				costTypeSum += cost.Cost
+			}
 			series = append(series, &model.CostSeries{
 				CostType: costType,
 				Data:     data,
 				App:      filter.App,
 				Team:     filter.Team,
 				Env:      filter.Env,
+				Sum:      costTypeSum,
 			})
 		}
 
@@ -99,8 +90,8 @@ func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*mod
 			From:   filter.From,
 			To:     filter.To,
 			Series: series,
+			Sum:    sum,
 		}, nil
-
 	}
 
 	return nil, fmt.Errorf("not implemented")
@@ -132,7 +123,6 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 			Sum:  sum,
 			Cost: cost,
 		}, nil
-
 	} else if filter.App == "" && filter.Env == "" && filter.Team != "" {
 		rows, err := r.Queries.MonthlyCostForTeam(ctx, &filter.Team)
 		if err != nil {
@@ -179,16 +169,16 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 			return nil, fmt.Errorf("cost query: %w", err)
 		}
 
-		costs := DailyCostsForTeamPerEnvFromDatabaseRows(filter.From, filter.To, rows)
+		costs, sum := DailyCostsForTeamPerEnvFromDatabaseRows(filter.From, filter.To, rows)
 
 		for app, appCosts := range costs {
-			sum := 0.0
+			appSum := 0.0
 			for _, c := range appCosts {
-				sum += c.Cost
+				appSum += c.Cost
 			}
 			appsCost = append(appsCost, &model.AppCost{
 				App:  app,
-				Sum:  sum,
+				Sum:  appSum,
 				Cost: appCosts,
 			})
 		}
@@ -201,19 +191,9 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 		ret[idx] = &model.EnvCost{
 			Env:  cluster,
 			Apps: appsCost,
+			Sum:  sum,
 		}
 	}
 
 	return ret, nil
 }
-
-// Cost returns CostResolver implementation.
-func (r *Resolver) Cost() CostResolver { return &costResolver{r} }
-
-// CostSeries returns CostSeriesResolver implementation.
-func (r *Resolver) CostSeries() CostSeriesResolver { return &costSeriesResolver{r} }
-
-type (
-	costResolver       struct{ *Resolver }
-	costSeriesResolver struct{ *Resolver }
-)

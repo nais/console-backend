@@ -89,9 +89,13 @@ func (this AppConnection) GetEdges() []Edge {
 	return interfaceSlice
 }
 
+// App cost type.
 type AppCost struct {
-	App  string       `json:"app"`
-	Sum  float64      `json:"sum"`
+	// The name of the application.
+	App string `json:"app"`
+	// The sum of all cost entries for the application in euros.
+	Sum float64 `json:"sum"`
+	// A list of cost entries for the application.
 	Cost []*CostEntry `json:"cost"`
 }
 
@@ -316,15 +320,24 @@ func (Env) IsNode() {}
 // The unique ID of an object.
 func (this Env) GetID() Ident { return this.ID }
 
+// Env cost type.
 type EnvCost struct {
-	Env  string     `json:"env"`
+	// The name of the environment.
+	Env string `json:"env"`
+	// The sum of all app costs for the environment in euros.
+	Sum float64 `json:"sum"`
+	// A list of app costs in the environment.
 	Apps []*AppCost `json:"apps"`
 }
 
+// Env cost filter input type.
 type EnvCostFilter struct {
+	// Start date for the cost series, inclusive.
+	From Date `json:"from"`
+	// End date for cost series, inclusive.
+	To Date `json:"to"`
+	// The name of the team to get costs for.
 	Team string `json:"team"`
-	From Date   `json:"from"`
-	To   Date   `json:"to"`
 }
 
 type Expose struct {
@@ -512,7 +525,7 @@ type MaskinportenScope struct {
 
 // Montly cost type.
 type MonthlyCost struct {
-	// Sum for all months in the series.
+	// Sum for all months in the series in euros.
 	Sum float64 `json:"sum"`
 	// A list of monthly cost entries.
 	Cost []*CostEntry `json:"cost"`

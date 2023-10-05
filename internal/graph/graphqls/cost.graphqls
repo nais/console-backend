@@ -5,26 +5,21 @@ extend type Query {
     "Get monthly costs."
     monthlyCost(filter: MonthlyCostFilter!): MonthlyCost!
 
+    "Get env cost for a team."
     envCost(filter: EnvCostFilter!): [EnvCost!]!
 }
 
+"Env cost filter input type."
 input EnvCostFilter {
-    team: String!
+    "Start date for the cost series, inclusive."
     from: Date!
+
+    "End date for cost series, inclusive."
     to: Date!
-}
 
-type EnvCost {
-    env: String!
-    apps: [AppCost!]!
+    "The name of the team to get costs for."
+    team: String!
 }
-
-type AppCost {
-    app: String!
-    sum: Float!
-    cost: [CostEntry!]!
-}
-
 
 "Monthly cost filter input type."
 input MonthlyCostFilter {
@@ -56,9 +51,33 @@ input CostFilter {
     env: String!
 }
 
+"Env cost type."
+type EnvCost {
+    "The name of the environment."
+    env: String!
+
+    "The sum of all app costs for the environment in euros."
+    sum: Float!
+
+    "A list of app costs in the environment."
+    apps: [AppCost!]!
+}
+
+"App cost type."
+type AppCost {
+    "The name of the application."
+    app: String!
+
+    "The sum of all cost entries for the application in euros."
+    sum: Float!
+
+    "A list of cost entries for the application."
+    cost: [CostEntry!]!
+}
+
 "Montly cost type."
 type MonthlyCost {
-    "Sum for all months in the series."
+    "Sum for all months in the series in euros."
     sum: Float!
 
     "A list of monthly cost entries."
@@ -74,7 +93,7 @@ type Cost {
     to: Date!
 
     "The sum of all costs in the cost series in euros."
-    sum: Float! @goField(forceResolver: true)
+    sum: Float!
 
     "The cost series."
     series: [CostSeries!]!
@@ -95,7 +114,7 @@ type CostSeries {
     team: String!
 
     "The sum of all daily costs in the series for this cost type in euros."
-    sum: Float! @goField(forceResolver: true)
+    sum: Float!
 
     "The cost data."
     data: [CostEntry!]!

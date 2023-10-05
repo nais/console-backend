@@ -13,23 +13,25 @@ type (
 )
 
 // DailyCostsFromDatabaseRows will convert a slice of cost rows from the database to a sortedDailyCosts map.
-func DailyCostsFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.Cost) sortedDailyCosts {
+func DailyCostsFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.Cost) (sortedDailyCosts, float64) {
+	sum := 0.0
 	daily := dailyCosts{}
 	for _, row := range rows {
 		if _, exists := daily[row.CostType]; !exists {
 			daily[row.CostType] = make(map[model.Date]float64)
 		}
 		daily[row.CostType][model.NewDate(row.Date.Time)] = float64(row.Cost)
+		sum += float64(row.Cost)
 	}
 
-	return normalizeDailyCosts(from, to, daily)
+	return normalizeDailyCosts(from, to, daily), sum
 }
 
-func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.Cost) sortedDailyCosts {
+func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.Cost) (sortedDailyCosts, float64) {
+	sum := 0.0
 	daily := dailyCosts{}
 	for _, row := range rows {
-		// TODO: hack to filter out unknown apps (ie aiven costs). Remove when we have a better solution for aiven costs.
-		if row.App != nil && *row.App == "<unknown>" {
+		if row.App == nil || *row.App == "<unknown>" {
 			continue
 		}
 		if _, exists := daily[row.CostType]; !exists {
@@ -37,28 +39,31 @@ func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*g
 		}
 		date := model.NewDate(row.Date.Time)
 		if _, exists := daily[row.CostType][date]; !exists {
-			daily[row.CostType][date] = float64(row.Cost)
-		} else {
-			daily[row.CostType][date] += float64(row.Cost)
+			daily[row.CostType][date] = 0.0
 		}
+
+		daily[row.CostType][date] += float64(row.Cost)
+		sum += float64(row.Cost)
 	}
 
-	return normalizeDailyCosts(from, to, daily)
+	return normalizeDailyCosts(from, to, daily), sum
 }
 
-func DailyCostsForTeamPerEnvFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.EnvCostForTeamRow) sortedDailyCosts {
+func DailyCostsForTeamPerEnvFromDatabaseRows(from model.Date, to model.Date, rows []*gensql.EnvCostForTeamRow) (sortedDailyCosts, float64) {
+	sum := 0.0
 	daily := dailyCosts{}
 	for _, row := range rows {
-		if *row.App == "<unknown>" {
+		if row.App == nil || *row.App == "<unknown>" {
 			continue
 		}
 		if _, exists := daily[*row.App]; !exists {
 			daily[*row.App] = make(map[model.Date]float64)
 		}
 		daily[*row.App][model.NewDate(row.Date.Time)] = float64(row.Cost)
+		sum += float64(row.Cost)
 	}
 
-	return normalizeDailyCosts(from, to, daily)
+	return normalizeDailyCosts(from, to, daily), sum
 }
 
 // normalizeDailyCosts will make sure all dates in the "from -> to" range are present in the returned map for all cost
