@@ -20,7 +20,7 @@ var (
 const costUpsert = `-- name: CostUpsert :batchexec
 INSERT INTO cost (env, team, app, cost_type, date, daily_cost)
 VALUES ($1, $2, $3, $4, $5, $6)
-ON CONFLICT (env, team, app, cost_type, date) DO
+ON CONFLICT ON CONSTRAINT daily_cost_key DO
     UPDATE SET daily_cost = EXCLUDED.daily_cost
 `
 
