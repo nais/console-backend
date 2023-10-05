@@ -1,10 +1,4 @@
 extend type Query {
-    "Get monthly costs."
-    monthlyCost(filter: MonthlyCostFilter!): MonthlyCost!
-
-    "Get env cost for a team."
-    envCost(filter: EnvCostFilter!): [EnvCost!]!
-
     "Get the daily cost for a team application in a specific environment."
     dailyCostForApp(
         "The name of the team that owns the application."
@@ -34,6 +28,12 @@ extend type Query {
         "End date for cost series, inclusive."
         to: Date!
     ): DailyCostForTeam!
+
+    "Get monthly costs."
+    monthlyCost(filter: MonthlyCostFilter!): MonthlyCost!
+
+    "Get env cost for a team."
+    envCost(filter: EnvCostFilter!): [EnvCost!]!
 }
 
 "Env cost filter input type."

@@ -13,6 +13,89 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
+// DailyCostForApp is the resolver for the dailyCostForApp field.
+func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCostForApp, error) {
+	err := ValidateDateInterval(from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Queries.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
+		App:      &app,
+		Team:     &team,
+		Env:      &env,
+		FromDate: from.PgDate(),
+		ToDate:   to.PgDate(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cost query: %w", err)
+	}
+
+	costs, sum := DailyCostsFromDatabaseRows(from, to, rows)
+	series := make([]*model.DailyCostForAppSeries, 0)
+	for costType, data := range costs {
+		costTypeSum := 0.0
+		for _, cost := range data {
+			costTypeSum += cost.Cost
+		}
+		series = append(series, &model.DailyCostForAppSeries{
+			CostType: costType,
+			Data:     data,
+			Sum:      costTypeSum,
+		})
+	}
+
+	return &model.DailyCostForApp{
+		Team:   team,
+		App:    app,
+		Env:    env,
+		From:   from,
+		To:     to,
+		Sum:    sum,
+		Series: series,
+	}, nil
+}
+
+// DailyCostForTeam is the resolver for the dailyCostForTeam field.
+func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCostForTeam, error) {
+	err := ValidateDateInterval(from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Queries.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
+		Team:     &team,
+		FromDate: from.PgDate(),
+		ToDate:   to.PgDate(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cost query: %w", err)
+	}
+
+	costs, sum := DailyCostsForTeamFromDatabaseRows(from, to, rows)
+	series := make([]*model.DailyCostForTeamSeries, 0)
+
+	for costType, data := range costs {
+		costTypeSum := 0.0
+		for _, cost := range data {
+			costTypeSum += cost.Cost
+		}
+		series = append(series, &model.DailyCostForTeamSeries{
+			CostType: costType,
+			Data:     data,
+			Sum:      costTypeSum,
+		})
+	}
+
+	return &model.DailyCostForTeam{
+		Team:   team,
+		From:   from,
+		To:     to,
+		Sum:    sum,
+		Series: series,
+	}, nil
+}
+
 // MonthlyCost is the resolver for the monthlyCost field.
 func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error) {
 	if filter.App != "" && filter.Env != "" && filter.Team != "" {
@@ -109,87 +192,4 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 	}
 
 	return ret, nil
-}
-
-// DailyCostForApp is the resolver for the dailyCostForApp field.
-func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCostForApp, error) {
-	err := ValidateDateInterval(from, to)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := r.Queries.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
-		App:      &app,
-		Team:     &team,
-		Env:      &env,
-		FromDate: from.PgDate(),
-		ToDate:   to.PgDate(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cost query: %w", err)
-	}
-
-	costs, sum := DailyCostsFromDatabaseRows(from, to, rows)
-	series := make([]*model.DailyCostForAppSeries, 0)
-	for costType, data := range costs {
-		costTypeSum := 0.0
-		for _, cost := range data {
-			costTypeSum += cost.Cost
-		}
-		series = append(series, &model.DailyCostForAppSeries{
-			CostType: costType,
-			Data:     data,
-			Sum:      costTypeSum,
-		})
-	}
-
-	return &model.DailyCostForApp{
-		Team:   team,
-		App:    app,
-		Env:    env,
-		From:   from,
-		To:     to,
-		Sum:    sum,
-		Series: series,
-	}, nil
-}
-
-// DailyCostForTeam is the resolver for the dailyCostForTeam field.
-func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCostForTeam, error) {
-	err := ValidateDateInterval(from, to)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := r.Queries.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
-		Team:     &team,
-		FromDate: from.PgDate(),
-		ToDate:   to.PgDate(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cost query: %w", err)
-	}
-
-	costs, sum := DailyCostsForTeamFromDatabaseRows(from, to, rows)
-	series := make([]*model.DailyCostForTeamSeries, 0)
-
-	for costType, data := range costs {
-		costTypeSum := 0.0
-		for _, cost := range data {
-			costTypeSum += cost.Cost
-		}
-		series = append(series, &model.DailyCostForTeamSeries{
-			CostType: costType,
-			Data:     data,
-			Sum:      costTypeSum,
-		})
-	}
-
-	return &model.DailyCostForTeam{
-		Team:   team,
-		From:   from,
-		To:     to,
-		Sum:    sum,
-		Series: series,
-	}, nil
 }
