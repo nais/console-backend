@@ -172,18 +172,6 @@ type Consumer struct {
 	Orgno string `json:"orgno"`
 }
 
-// Cost type.
-type Cost struct {
-	// The start date for the cost data.
-	From Date `json:"from"`
-	// The end date for the cost data.
-	To Date `json:"to"`
-	// The sum of all costs in the cost series in euros.
-	Sum float64 `json:"sum"`
-	// The cost series.
-	Series []*CostSeries `json:"series"`
-}
-
 // Cost entry type.
 type CostEntry struct {
 	// The date for the entry.
@@ -196,12 +184,6 @@ type CostEntry struct {
 type CostSeries struct {
 	// The type of cost.
 	CostType string `json:"costType"`
-	// The name of the application.
-	App string `json:"app"`
-	// The name of the environment.
-	Env string `json:"env"`
-	// The name of the team.
-	Team string `json:"team"`
 	// The sum of all daily costs in the series for this cost type in euros.
 	Sum float64 `json:"sum"`
 	// The cost data.
@@ -223,17 +205,7 @@ type DailyCostForApp struct {
 	// The sum of all costs in the cost series in euros.
 	Sum float64 `json:"sum"`
 	// The cost series.
-	Series []*DailyCostForAppSeries `json:"series"`
-}
-
-// Daily cost for app series type.
-type DailyCostForAppSeries struct {
-	// The type of cost.
-	CostType string `json:"costType"`
-	// The sum of all daily costs in the series for this cost type in euros.
-	Sum float64 `json:"sum"`
-	// The cost data.
-	Data []*CostEntry `json:"data"`
+	Series []*CostSeries `json:"series"`
 }
 
 // Daily cost for team type.
@@ -247,17 +219,7 @@ type DailyCostForTeam struct {
 	// The sum of all costs in the cost series in euros.
 	Sum float64 `json:"sum"`
 	// The cost series.
-	Series []*DailyCostForTeamSeries `json:"series"`
-}
-
-// Daily cost for team series type.
-type DailyCostForTeamSeries struct {
-	// The type of cost.
-	CostType string `json:"costType"`
-	// The sum of all daily costs in the series for this cost type in euros.
-	Sum float64 `json:"sum"`
-	// The cost data.
-	Data []*CostEntry `json:"data"`
+	Series []*CostSeries `json:"series"`
 }
 
 type Database struct {

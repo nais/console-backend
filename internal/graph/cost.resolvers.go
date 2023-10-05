@@ -32,16 +32,16 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 	}
 
 	costs, sum := DailyCostsFromDatabaseRows(from, to, rows)
-	series := make([]*model.DailyCostForAppSeries, 0)
+	series := make([]*model.CostSeries, 0)
 	for costType, data := range costs {
 		costTypeSum := 0.0
 		for _, cost := range data {
 			costTypeSum += cost.Cost
 		}
-		series = append(series, &model.DailyCostForAppSeries{
+		series = append(series, &model.CostSeries{
 			CostType: costType,
-			Data:     data,
 			Sum:      costTypeSum,
+			Data:     data,
 		})
 	}
 
@@ -73,17 +73,17 @@ func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from 
 	}
 
 	costs, sum := DailyCostsForTeamFromDatabaseRows(from, to, rows)
-	series := make([]*model.DailyCostForTeamSeries, 0)
+	series := make([]*model.CostSeries, 0)
 
 	for costType, data := range costs {
 		costTypeSum := 0.0
 		for _, cost := range data {
 			costTypeSum += cost.Cost
 		}
-		series = append(series, &model.DailyCostForTeamSeries{
+		series = append(series, &model.CostSeries{
 			CostType: costType,
-			Data:     data,
 			Sum:      costTypeSum,
+			Data:     data,
 		})
 	}
 
