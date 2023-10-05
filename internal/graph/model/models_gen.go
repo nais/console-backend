@@ -192,20 +192,6 @@ type CostEntry struct {
 	Cost float64 `json:"cost"`
 }
 
-// Cost filter input type.
-type CostFilter struct {
-	// Start date for the cost series, inclusive.
-	From Date `json:"from"`
-	// End date for cost series, inclusive.
-	To Date `json:"to"`
-	// The name of the team to get costs for.
-	Team string `json:"team"`
-	// The name of the application to get costs for.
-	App string `json:"app"`
-	// The name of the environment to get costs for.
-	Env string `json:"env"`
-}
-
 // Cost series type.
 type CostSeries struct {
 	// The type of cost.
@@ -242,6 +228,30 @@ type DailyCostForApp struct {
 
 // Daily cost for app series type.
 type DailyCostForAppSeries struct {
+	// The type of cost.
+	CostType string `json:"costType"`
+	// The sum of all daily costs in the series for this cost type in euros.
+	Sum float64 `json:"sum"`
+	// The cost data.
+	Data []*CostEntry `json:"data"`
+}
+
+// Daily cost for team type.
+type DailyCostForTeam struct {
+	// The name of the team.
+	Team string `json:"team"`
+	// The start date for the cost data.
+	From Date `json:"from"`
+	// The end date for the cost data.
+	To Date `json:"to"`
+	// The sum of all costs in the cost series in euros.
+	Sum float64 `json:"sum"`
+	// The cost series.
+	Series []*DailyCostForTeamSeries `json:"series"`
+}
+
+// Daily cost for team series type.
+type DailyCostForTeamSeries struct {
 	// The type of cost.
 	CostType string `json:"costType"`
 	// The sum of all daily costs in the series for this cost type in euros.

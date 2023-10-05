@@ -13,87 +13,6 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-// Cost is the resolver for the cost field.
-func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error) {
-	err := ValidateDateInterval(filter.From, filter.To)
-	if err != nil {
-		return nil, err
-	}
-
-	if filter.App != "" && filter.Env != "" && filter.Team != "" {
-		rows, err := r.Queries.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
-			App:      &filter.App,
-			Team:     &filter.Team,
-			Env:      &filter.Env,
-			FromDate: filter.From.PgDate(),
-			ToDate:   filter.To.PgDate(),
-		})
-		if err != nil {
-			return nil, fmt.Errorf("cost query: %w", err)
-		}
-
-		costs, sum := DailyCostsFromDatabaseRows(filter.From, filter.To, rows)
-		series := make([]*model.CostSeries, 0)
-		for costType, data := range costs {
-			costTypeSum := 0.0
-			for _, cost := range data {
-				costTypeSum += cost.Cost
-			}
-			series = append(series, &model.CostSeries{
-				CostType: costType,
-				Data:     data,
-				App:      filter.App,
-				Team:     filter.Team,
-				Env:      filter.Env,
-				Sum:      costTypeSum,
-			})
-		}
-
-		return &model.Cost{
-			From:   filter.From,
-			To:     filter.To,
-			Series: series,
-			Sum:    sum,
-		}, nil
-	} else if filter.App == "" && filter.Env == "" && filter.Team != "" {
-		rows, err := r.Queries.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
-			Team:     &filter.Team,
-			FromDate: filter.From.PgDate(),
-			ToDate:   filter.To.PgDate(),
-		})
-		if err != nil {
-			return nil, fmt.Errorf("cost query: %w", err)
-		}
-
-		costs, sum := DailyCostsForTeamFromDatabaseRows(filter.From, filter.To, rows)
-		series := make([]*model.CostSeries, 0)
-
-		for costType, data := range costs {
-			costTypeSum := 0.0
-			for _, cost := range data {
-				costTypeSum += cost.Cost
-			}
-			series = append(series, &model.CostSeries{
-				CostType: costType,
-				Data:     data,
-				App:      filter.App,
-				Team:     filter.Team,
-				Env:      filter.Env,
-				Sum:      costTypeSum,
-			})
-		}
-
-		return &model.Cost{
-			From:   filter.From,
-			To:     filter.To,
-			Series: series,
-			Sum:    sum,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("not implemented")
-}
-
 // MonthlyCost is the resolver for the monthlyCost field.
 func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error) {
 	if filter.App != "" && filter.Env != "" && filter.Team != "" {
@@ -178,7 +97,6 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 			})
 		}
 
-		// sort appsCost by sum by using sort.Slice
 		sort.Slice(appsCost, func(i, j int) bool {
 			return appsCost[i].Sum < appsCost[j].Sum
 		})
@@ -231,7 +149,47 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 		Env:    env,
 		From:   from,
 		To:     to,
-		Series: series,
 		Sum:    sum,
+		Series: series,
+	}, nil
+}
+
+// DailyCostForTeam is the resolver for the dailyCostForTeam field.
+func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCostForTeam, error) {
+	err := ValidateDateInterval(from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Queries.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
+		Team:     &team,
+		FromDate: from.PgDate(),
+		ToDate:   to.PgDate(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cost query: %w", err)
+	}
+
+	costs, sum := DailyCostsForTeamFromDatabaseRows(from, to, rows)
+	series := make([]*model.DailyCostForTeamSeries, 0)
+
+	for costType, data := range costs {
+		costTypeSum := 0.0
+		for _, cost := range data {
+			costTypeSum += cost.Cost
+		}
+		series = append(series, &model.DailyCostForTeamSeries{
+			CostType: costType,
+			Data:     data,
+			Sum:      costTypeSum,
+		})
+	}
+
+	return &model.DailyCostForTeam{
+		Team:   team,
+		From:   from,
+		To:     to,
+		Sum:    sum,
+		Series: series,
 	}, nil
 }

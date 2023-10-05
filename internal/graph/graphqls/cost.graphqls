@@ -1,7 +1,4 @@
 extend type Query {
-    "Get costs."
-    cost(filter: CostFilter!): Cost!
-
     "Get monthly costs."
     monthlyCost(filter: MonthlyCostFilter!): MonthlyCost!
 
@@ -25,6 +22,18 @@ extend type Query {
         "End date for cost series, inclusive."
         to: Date!
     ): DailyCostForApp!
+
+    "Get the daily cost for a team across all apps and environments."
+    dailyCostForTeam(
+        "The name of the team that owns the application."
+        team: String!
+
+        "Start date for the cost series, inclusive."
+        from: Date!
+
+        "End date for cost series, inclusive."
+        to: Date!
+    ): DailyCostForTeam!
 }
 
 "Env cost filter input type."
@@ -41,24 +50,6 @@ input EnvCostFilter {
 
 "Monthly cost filter input type."
 input MonthlyCostFilter {
-    "The name of the team to get costs for."
-    team: String!
-
-    "The name of the application to get costs for."
-    app: String!
-
-    "The name of the environment to get costs for."
-    env: String!
-}
-
-"Cost filter input type."
-input CostFilter {
-    "Start date for the cost series, inclusive."
-    from: Date!
-
-    "End date for cost series, inclusive."
-    to: Date!
-
     "The name of the team to get costs for."
     team: String!
 
@@ -141,8 +132,38 @@ type DailyCostForApp {
     series: [DailyCostForAppSeries!]!
 }
 
+"Daily cost for team type."
+type DailyCostForTeam {
+    "The name of the team."
+    team: String!
+
+    "The start date for the cost data."
+    from: Date!
+
+    "The end date for the cost data."
+    to: Date!
+
+    "The sum of all costs in the cost series in euros."
+    sum: Float!
+
+    "The cost series."
+    series: [DailyCostForTeamSeries!]!
+}
+
 "Daily cost for app series type."
 type DailyCostForAppSeries {
+    "The type of cost."
+    costType: String!
+
+    "The sum of all daily costs in the series for this cost type in euros."
+    sum: Float!
+
+    "The cost data."
+    data: [CostEntry!]!
+}
+
+"Daily cost for team series type."
+type DailyCostForTeamSeries {
     "The type of cost."
     costType: String!
 
