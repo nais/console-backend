@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
@@ -16,11 +15,9 @@ import (
 
 // Cost is the resolver for the cost field.
 func (r *queryResolver) Cost(ctx context.Context, filter model.CostFilter) (*model.Cost, error) {
-	today := model.NewDate(time.Now())
-	if filter.From > filter.To {
-		return nil, fmt.Errorf("from date cannot be after to date")
-	} else if filter.To > today {
-		return nil, fmt.Errorf("to date cannot be in the future")
+	err := ValidateDateInterval(filter.From, filter.To)
+	if err != nil {
+		return nil, err
 	}
 
 	if filter.App != "" && filter.Env != "" && filter.Team != "" {
@@ -149,11 +146,9 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 
 // EnvCost is the resolver for the envCost field.
 func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]*model.EnvCost, error) {
-	today := model.NewDate(time.Now())
-	if filter.From > filter.To {
-		return nil, fmt.Errorf("from date cannot be after to date")
-	} else if filter.To > today {
-		return nil, fmt.Errorf("to date cannot be in the future")
+	err := ValidateDateInterval(filter.From, filter.To)
+	if err != nil {
+		return nil, err
 	}
 
 	ret := make([]*model.EnvCost, len(r.Clusters))

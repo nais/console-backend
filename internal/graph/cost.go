@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/nais/console-backend/internal/database/gensql"
@@ -91,4 +92,16 @@ func normalizeDailyCosts(from, to model.Date, costs dailyCosts) sortedDailyCosts
 	}
 
 	return sortedDailyCost
+}
+
+// ValidateDateInterval will validate a from => to date interval used for querying costs.
+func ValidateDateInterval(from, to model.Date) error {
+	today := model.NewDate(time.Now())
+	if from > to {
+		return fmt.Errorf("from date cannot be after to date")
+	} else if to > today {
+		return fmt.Errorf("to date cannot be in the future")
+	}
+
+	return nil
 }

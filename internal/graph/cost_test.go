@@ -18,8 +18,9 @@ func TestDailyCostsFromDatabaseRows(t *testing.T) {
 
 	t.Run("no cost types present", func(t *testing.T) {
 		existingCosts := make([]*gensql.Cost, 0)
-		costs := DailyCostsFromDatabaseRows(from, to, existingCosts)
+		costs, sum := DailyCostsFromDatabaseRows(from, to, existingCosts)
 		assert.Len(t, costs, 0)
+		assert.Equal(t, 0.0, sum)
 	})
 
 	t.Run("add missing and sort dates", func(t *testing.T) {
@@ -58,8 +59,9 @@ func TestDailyCostsFromDatabaseRows(t *testing.T) {
 				Cost:     float32(3.2),
 			},
 		}
-		costs := DailyCostsFromDatabaseRows(from, to, existingCosts2)
+		costs, sum := DailyCostsFromDatabaseRows(from, to, existingCosts2)
 		assert.Len(t, costs, 2)
+		assert.InDelta(t, 19.79999, sum, 0.1)
 
 		assert.Len(t, costs["type"], 5)
 		assert.InDelta(t, 1.1, costs["type"][0].Cost, allowedDelta)
@@ -84,5 +86,25 @@ func TestDailyCostsFromDatabaseRows(t *testing.T) {
 		assert.Equal(t, "2020-04-30", string(costs["type2"][2].Date))
 		assert.Equal(t, "2020-05-01", string(costs["type2"][3].Date))
 		assert.Equal(t, "2020-05-02", string(costs["type2"][4].Date))
+	})
+}
+
+func TestValidateDateInterval(t *testing.T) {
+	t.Run("valid", func(t *testing.T) {
+		from := time.Date(2020, time.April, 1, 0, 0, 0, 0, time.UTC)
+		to := time.Date(2020, time.May, 1, 0, 0, 0, 0, time.UTC)
+		assert.NoError(t, ValidateDateInterval(model.NewDate(from), model.NewDate(to)))
+	})
+
+	t.Run("from date after to date", func(t *testing.T) {
+		from := time.Date(2020, time.May, 1, 0, 0, 0, 0, time.UTC)
+		to := time.Date(2020, time.April, 1, 0, 0, 0, 0, time.UTC)
+		assert.EqualError(t, ValidateDateInterval(model.NewDate(from), model.NewDate(to)), "from date cannot be after to date")
+	})
+
+	t.Run("to date in the future", func(t *testing.T) {
+		from := time.Date(2020, time.April, 1, 0, 0, 0, 0, time.UTC)
+		to := time.Now().AddDate(0, 0, 1)
+		assert.EqualError(t, ValidateDateInterval(model.NewDate(from), model.NewDate(to)), "to date cannot be in the future")
 	})
 }
