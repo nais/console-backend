@@ -61,7 +61,7 @@ func (c *Updater) Run(ctx context.Context, schedule time.Duration) {
 // it will only do so if the current date is newer than the latest date in the database +1 day
 // and the time is after 05:00
 func (c *Updater) updateCosts(ctx context.Context) error {
-	lastDate, err := c.queries.CostLastDate(ctx)
+	lastDate, err := c.queries.LastCostDate(ctx)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,9 @@
--- name: CostLastDate :one
-SELECT MAX(date)::date AS "date"
-FROM cost;
+-- LastCostDate will return the last date that has a cost.
+-- name: LastCostDate :one
+SELECT
+    MAX(date)::date AS date
+FROM
+    cost;
 
 -- name: MonthlyCostForApp :many
 WITH last_run AS (

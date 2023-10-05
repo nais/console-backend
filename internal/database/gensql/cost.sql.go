@@ -65,18 +65,6 @@ func (q *Queries) CostForApp(ctx context.Context, arg CostForAppParams) ([]*Cost
 	return items, nil
 }
 
-const costLastDate = `-- name: CostLastDate :one
-SELECT MAX(date)::date AS "date"
-FROM cost
-`
-
-func (q *Queries) CostLastDate(ctx context.Context) (pgtype.Date, error) {
-	row := q.db.QueryRow(ctx, costLastDate)
-	var date pgtype.Date
-	err := row.Scan(&date)
-	return date, err
-}
-
 const dailyCostForTeam = `-- name: DailyCostForTeam :many
 SELECT
     id, env, team, app, cost_type, date, daily_cost
@@ -183,6 +171,21 @@ func (q *Queries) EnvCostForTeam(ctx context.Context, arg EnvCostForTeamParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const lastCostDate = `-- name: LastCostDate :one
+SELECT
+    MAX(date)::date AS date
+FROM
+    cost
+`
+
+// LastCostDate will return the last date that has a cost.
+func (q *Queries) LastCostDate(ctx context.Context) (pgtype.Date, error) {
+	row := q.db.QueryRow(ctx, lastCostDate)
+	var date pgtype.Date
+	err := row.Scan(&date)
+	return date, err
 }
 
 const monthlyCostForApp = `-- name: MonthlyCostForApp :many
