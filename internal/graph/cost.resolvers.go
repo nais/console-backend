@@ -180,7 +180,7 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 
 		// sort appsCost by sum by using sort.Slice
 		sort.Slice(appsCost, func(i, j int) bool {
-			return appsCost[i].Sum > appsCost[j].Sum
+			return appsCost[i].Sum < appsCost[j].Sum
 		})
 
 		ret[idx] = &model.EnvCost{
