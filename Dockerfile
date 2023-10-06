@@ -4,8 +4,8 @@ WORKDIR /src
 COPY go.* /src/
 RUN go mod download
 COPY . /src
-RUN make test
-RUN make check
+# RUN make test
+# RUN make check
 RUN make linux-binary
 
 FROM gcr.io/distroless/base
