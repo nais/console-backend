@@ -190,32 +190,8 @@ type CostSeries struct {
 	Data []*CostEntry `json:"data"`
 }
 
-// Daily cost for app type.
-type DailyCostForApp struct {
-	// The name of the team.
-	Team string `json:"team"`
-	// The name of the application.
-	App string `json:"app"`
-	// The name of the environment.
-	Env string `json:"env"`
-	// The start date for the cost data.
-	From Date `json:"from"`
-	// The end date for the cost data.
-	To Date `json:"to"`
-	// The sum of all costs in the cost series in euros.
-	Sum float64 `json:"sum"`
-	// The cost series.
-	Series []*CostSeries `json:"series"`
-}
-
-// Daily cost for team type.
-type DailyCostForTeam struct {
-	// The name of the team.
-	Team string `json:"team"`
-	// The start date for the cost data.
-	From Date `json:"from"`
-	// The end date for the cost data.
-	To Date `json:"to"`
+// Daily cost type.
+type DailyCost struct {
 	// The sum of all costs in the cost series in euros.
 	Sum float64 `json:"sum"`
 	// The cost series.

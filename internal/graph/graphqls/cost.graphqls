@@ -15,7 +15,7 @@ extend type Query {
 
         "End date for cost series, inclusive."
         to: Date!
-    ): DailyCostForApp!
+    ): DailyCost!
 
     "Get the daily cost for a team across all apps and environments."
     dailyCostForTeam(
@@ -27,7 +27,7 @@ extend type Query {
 
         "End date for cost series, inclusive."
         to: Date!
-    ): DailyCostForTeam!
+    ): DailyCost!
 
     "Get monthly costs."
     monthlyCost(filter: MonthlyCostFilter!): MonthlyCost!
@@ -93,41 +93,8 @@ type MonthlyCost {
     cost: [CostEntry!]!
 }
 
-"Daily cost for app type."
-type DailyCostForApp {
-    "The name of the team."
-    team: String!
-
-    "The name of the application."
-    app: String!
-
-    "The name of the environment."
-    env: String!
-
-    "The start date for the cost data."
-    from: Date!
-
-    "The end date for the cost data."
-    to: Date!
-
-    "The sum of all costs in the cost series in euros."
-    sum: Float!
-
-    "The cost series."
-    series: [CostSeries!]!
-}
-
-"Daily cost for team type."
-type DailyCostForTeam {
-    "The name of the team."
-    team: String!
-
-    "The start date for the cost data."
-    from: Date!
-
-    "The end date for the cost data."
-    to: Date!
-
+"Daily cost type."
+type DailyCost {
     "The sum of all costs in the cost series in euros."
     sum: Float!
 

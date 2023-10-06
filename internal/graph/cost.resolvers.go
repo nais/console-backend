@@ -14,7 +14,7 @@ import (
 )
 
 // DailyCostForApp is the resolver for the dailyCostForApp field.
-func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCostForApp, error) {
+func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCost, error) {
 	err := ValidateDateInterval(from, to)
 	if err != nil {
 		return nil, err
@@ -45,19 +45,14 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 		})
 	}
 
-	return &model.DailyCostForApp{
-		Team:   team,
-		App:    app,
-		Env:    env,
-		From:   from,
-		To:     to,
+	return &model.DailyCost{
 		Sum:    sum,
 		Series: series,
 	}, nil
 }
 
 // DailyCostForTeam is the resolver for the dailyCostForTeam field.
-func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCostForTeam, error) {
+func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCost, error) {
 	err := ValidateDateInterval(from, to)
 	if err != nil {
 		return nil, err
@@ -87,10 +82,7 @@ func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from 
 		})
 	}
 
-	return &model.DailyCostForTeam{
-		Team:   team,
-		From:   from,
-		To:     to,
+	return &model.DailyCost{
 		Sum:    sum,
 		Series: series,
 	}, nil
