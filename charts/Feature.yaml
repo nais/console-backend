@@ -15,7 +15,7 @@ values:
   database.user:
     displayName: Database user
     computed:
-      template: '"{{.Management.console_backend_serviceaccount_email}}"'
+      template: '"{{.Management.console_backend_db_user}}"'
   kubernetes.static:
     displayName: static cluster
     description: Comma-separated list of clusters with static credentials on the format 'name|apiserverHost|token'
