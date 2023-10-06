@@ -36,6 +36,7 @@ var embedMigrations embed.FS
 
 // NewDB creates a new database connection and runs migrations
 func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (gensql.Querier, closeFuncs, error) {
+	dsnFromConfig := dsn
 	dbDriver := "pgx"
 	isUrl := strings.Contains(dsn, "://")
 	if !isUrl {
@@ -86,7 +87,7 @@ func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (gensql.Querier, 
 		closers = append(closers, cleanup)
 	}
 
-	if err := migrateDatabaseSchema(dbDriver, dsn, log); err != nil {
+	if err := migrateDatabaseSchema(dbDriver, dsnFromConfig, log); err != nil {
 		return nil, closers, err
 	}
 
