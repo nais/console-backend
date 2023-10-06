@@ -1,4 +1,5 @@
 -- +goose Up
+
 CREATE TABLE cost (
     id serial PRIMARY KEY,
     env text,
@@ -7,7 +8,7 @@ CREATE TABLE cost (
     cost_type text NOT NULL,
     date date NOT NULL,
     daily_cost real NOT NULL,
-    CONSTRAINT daily_cost_key UNIQUE NULLS NOT DISTINCT (env, team, app, cost_type, date)
+    CONSTRAINT daily_cost_key UNIQUE (env, team, app, cost_type, date)
 );
 
 CREATE INDEX cost_env_idx ON cost (env);
