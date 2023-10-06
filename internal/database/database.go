@@ -75,7 +75,7 @@ func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (gensql.Querier, 
 			return nil, closers, fmt.Errorf("failed to initialize dialer: %w", err)
 		}
 		closers = append(closers, dialer.Close)
-		config.ConnConfig.DialFunc = func(ctx context.Context, _, instance string) (net.Conn, error) {
+		config.ConnConfig.DialFunc = func(ctx context.Context, _, _ string) (net.Conn, error) {
 			return dialer.Dial(ctx, cloudsqlHost)
 		}
 
