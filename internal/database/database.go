@@ -37,12 +37,17 @@ var embedMigrations embed.FS
 // NewDB creates a new database connection and runs migrations
 func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (gensql.Querier, closeFuncs, error) {
 	dbDriver := "pgx"
-	if !strings.Contains(dsn, "://") {
+	isUrl := strings.Contains(dsn, "://")
+	if !isUrl {
 		dbDriver = "cloudsql-postgres"
 	}
 
 	if runtime.NumCPU() < 5 {
-		dsn += " pool_max_conns=5"
+		if isUrl {
+			dsn += "&pool_max_conns=5"
+		} else {
+			dsn += " pool_max_conns=5"
+		}
 	}
 
 	cloudsql := dbDriver != "pgx"
