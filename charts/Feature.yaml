@@ -4,6 +4,18 @@ dependencies:
   - allOf:
       - fqdn-policy
 values:
+  database.instance:
+    displayName: Database instance
+    computed:
+      template: '"{{.Management.console_database_instance}}"'
+  database.name:
+    displayName: Database name
+    computed:
+      template: '"{{.Management.console_database_name}}"'
+  database.user:
+    displayName: Database user
+    computed:
+      template: '"{{.Management.console_database_user}}"'
   kubernetes.static:
     displayName: static cluster
     description: Comma-separated list of clusters with static credentials on the format 'name|apiserverHost|token'

@@ -30,6 +30,8 @@ spec:
               value: "{{ .Values.fasit.tenant.name }}"
             - name: FIELD_SELECTOR
               value: "{{ .Values.fieldSelector }}"
+            - name: CONSOLE_DATABASE_URL
+              value: "user={{.Values.database.user}} dbname={{.Values.database.name}} sslmode=disable"
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"
