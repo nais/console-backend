@@ -166,7 +166,6 @@ func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, co
 			}
 
 			c.log.Infof("Logs done, err: %v", sc.Err())
-
 		}(wg)
 	}
 	go func() {

@@ -3,3 +3,6 @@ scalar Time
 
 "Cursor is a string that can be used to paginate through a list of objects. It is opaque to the client and may change at any time."
 scalar Cursor
+
+"Date type in YYYY-MM-DD format."
+scalar Date

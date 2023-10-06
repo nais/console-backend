@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -15,6 +16,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/config"
+	"github.com/nais/console-backend/internal/cost"
+	"github.com/nais/console-backend/internal/database"
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
@@ -28,6 +31,7 @@ import (
 )
 
 const (
+	costUpdateSchedule  = 1 * time.Hour
 	exitCodeSuccess     = 0
 	exitCodeLoggerError = 1
 	exitCodeRunError    = 2
@@ -65,6 +69,24 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		return fmt.Errorf("create error counter: %w", err)
 	}
 
+	log.Info("connecting to database")
+	queries, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
+	if err != nil {
+		return fmt.Errorf("setting up database: %w", err)
+	}
+	defer func() {
+		if err := closers.Close(); err != nil {
+			log.WithError(err).Errorf("closing database: %v", err)
+		}
+	}()
+
+	costUpdater, err := cost.NewCostUpdater(ctx, queries, cfg.Tenant, log.WithField("subsystem", "cost_updater"))
+	if err != nil {
+		log.WithError(err).Error("setting up cost updater. You might need to run `gcloud auth --update-adc` if running locally")
+	} else {
+		go costUpdater.Run(ctx, costUpdateSchedule)
+	}
+
 	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
 		return fmt.Errorf("create k8s client: %w", err)
@@ -82,6 +104,8 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
+			Queries:     queries,
+			Clusters:    cfg.KubernetesClusters,
 		},
 	}
 

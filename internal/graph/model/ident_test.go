@@ -64,5 +64,4 @@ func TestIdent_UnmarshalGQLContext(t *testing.T) {
 		assert.Equal(t, "some-id", ident.ID)
 		assert.Equal(t, model.IdentTypeTeam, ident.Type)
 	})
-
 }

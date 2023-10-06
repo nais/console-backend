@@ -41,7 +41,8 @@ func TestSetStatus(t *testing.T) {
 				&model.NoRunningInstancesError{
 					Revision: "1",
 					Level:    model.ErrorLevelError,
-				}},
+				},
+			},
 		},
 		{
 			name:           "app failed synchronization and has running instances",
@@ -54,7 +55,8 @@ func TestSetStatus(t *testing.T) {
 				&model.InvalidNaisYamlError{
 					Revision: "1",
 					Level:    model.ErrorLevelError,
-				}},
+				},
+			},
 		},
 		{
 			name:           "app failed synchronization and has failing instances",
@@ -70,7 +72,8 @@ func TestSetStatus(t *testing.T) {
 				}, &model.InvalidNaisYamlError{
 					Revision: "1",
 					Level:    model.ErrorLevelError,
-				}},
+				},
+			},
 		},
 		{
 			name:           "app is synchronized and has running and failing instances",
@@ -83,7 +86,8 @@ func TestSetStatus(t *testing.T) {
 				&model.NewInstancesFailingError{
 					Revision: "1",
 					Level:    model.ErrorLevelError,
-				}},
+				},
+			},
 		},
 		{
 			name:           "app is synchronized and has multiple failing instances",
@@ -99,7 +103,8 @@ func TestSetStatus(t *testing.T) {
 				}, &model.NoRunningInstancesError{
 					Revision: "1",
 					Level:    model.ErrorLevelError,
-				}},
+				},
+			},
 		},
 		{
 			name:           "app is rolloutcomplete and has no instances",

@@ -206,7 +206,6 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 			Detail:   "Invalid nais.yaml",
 		})
 		jobState.State = model.StateNotnais
-
 	}
 
 	var tmpTime time.Time

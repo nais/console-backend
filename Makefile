@@ -1,9 +1,18 @@
 .PHONY: all
 
-all: generate-graphql test check linux-binary
+all: generate fmt test check linux-binary
+
+generate: generate-sql generate-graphql
+
+generate-sql:
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc generate
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc vet
+	go run mvdan.cc/gofumpt -w ./internal/database/gensql
+
 
 generate-graphql:
 	go run github.com/99designs/gqlgen generate
+	go run mvdan.cc/gofumpt -w ./internal/graph
 
 setup: 
 	gcloud secrets versions access latest --secret=console-backend-kubeconfig --project aura-dev-d9f5 > kubeconfig
@@ -27,7 +36,7 @@ local:
 	go run ./cmd/console-backend/main.go --bind-host 127.0.0.1 --port 4242 --kubernetes-clusters "ci,dev" --run-as-user devuser@console.no --teams-endpoint="http://teams.local.nais.io/query" --hookd-endpoint="http://hookd.local.nais.io" --field-selector "metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny"
 
 test:
-	go test ./... -v
+	go test ./...
 
 check:
 	go run honnef.co/go/tools/cmd/staticcheck ./...
