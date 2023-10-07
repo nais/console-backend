@@ -53,7 +53,7 @@ func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries,
 		closeFuncs = append(closeFuncs, dialer.Close)
 
 		var instanceConnectionName string
-		dsn, instanceConnectionName, err = ExtractInstanceConnectionNameFromDsn(dsn)
+		instanceConnectionName, err = GetInstanceConnectionNameFromDsn(dsn)
 		if err != nil {
 			return nil, closeFuncs, err
 		}
@@ -84,24 +84,17 @@ func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries,
 	return gensql.New(conn), closeFuncs, nil
 }
 
-// ExtractInstanceConnectionNameFromDsn will extract the instance connection name from the dsn and return the modified
-// dsn, the instance connection name and a potential error. On error, the first two return values are both empty strings.
-func ExtractInstanceConnectionNameFromDsn(dsn string) (string, string, error) {
+// GetInstanceConnectionNameFromDsn will get the instance connection name from the dsn.
+func GetInstanceConnectionNameFromDsn(dsn string) (string, error) {
 	parts, err := url.ParseQuery(strings.ReplaceAll(dsn, " ", "&"))
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	instanceConnectionName := parts.Get("host")
 	if instanceConnectionName == "" {
-		return "", "", fmt.Errorf("dsn does not have a host field: %q", dsn)
+		return "", fmt.Errorf("dsn does not have a host field: %q", dsn)
 	}
-	delete(parts, "host")
-	s, err := url.PathUnescape(parts.Encode())
-	if err != nil {
-		return "", "", err
-	}
-	updatedDsn := strings.ReplaceAll(s, "&", " ")
-	return updatedDsn, instanceConnectionName, nil
+	return instanceConnectionName, nil
 }
 
 // migrateDatabaseSchema runs database migrations
