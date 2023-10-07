@@ -61,7 +61,7 @@ func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries,
 			return dialer.Dial(ctx, instanceConnectionName)
 		}
 
-		cleanup, err := cloudsqlpgx.RegisterDriver("cloudsql-postgres")
+		cleanup, err := cloudsqlpgx.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
 		if err != nil {
 			return nil, closeFuncs, err
 		}
