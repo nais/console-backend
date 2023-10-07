@@ -37,26 +37,26 @@ var embedMigrations embed.FS
 // NewDB runs migrations and returns a new database connection
 func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries, CloseConnectionFuncs, error) {
 	var closeFuncs CloseConnectionFuncs
+	var config *pgxpool.Config
+	var err error
+
 	databaseDriver := "pgx"
-
-	config, err := pgxpool.ParseConfig(dsn)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse dsn config: %w", err)
-	}
-
 	if !strings.HasPrefix(dsn, "postgres://") {
 		databaseDriver = "cloudsql-postgres"
+		dsnWithoutInstanceConnectionName, instanceConnectionName, err := ExtractInstanceConnectionNameFromDsn(dsn)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		config, err = pgxpool.ParseConfig(dsnWithoutInstanceConnectionName)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse dsn config: %w", err)
+		}
 		dialer, err := cloudsqlconn.NewDialer(ctx)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to initialize dialer: %w", err)
 		}
 		closeFuncs = append(closeFuncs, dialer.Close)
-
-		var instanceConnectionName string
-		dsn, instanceConnectionName, err = ExtractInstanceConnectionNameFromDsn(dsn)
-		if err != nil {
-			return nil, closeFuncs, err
-		}
 		config.ConnConfig.DialFunc = func(ctx context.Context, _, _ string) (net.Conn, error) {
 			return dialer.Dial(ctx, instanceConnectionName)
 		}
@@ -66,6 +66,11 @@ func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries,
 			return nil, closeFuncs, err
 		}
 		closeFuncs = append(closeFuncs, cleanup)
+	} else {
+		config, err = pgxpool.ParseConfig(dsn)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse dsn config: %w", err)
+		}
 	}
 
 	if err := migrateDatabaseSchema(databaseDriver, dsn, log); err != nil {
