@@ -1,5 +1,4 @@
 -- +goose Up
-
 CREATE TABLE cost (
     id serial PRIMARY KEY,
     env text,
