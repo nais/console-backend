@@ -14,20 +14,18 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-const (
-	gcpProject  = "nais-io"
-	daysToFetch = 1165
-)
+const gcpProject = "nais-io"
 
 type Updater struct {
 	log           logrus.FieldLogger
 	queries       gensql.Querier
 	client        *bigquery.Client
 	bigQueryTable string
+	daysToFetch   int
 }
 
 // NewCostUpdater creates a new cost updater
-func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName string, log logrus.FieldLogger) (*Updater, error) {
+func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName string, daysToFetch int, log logrus.FieldLogger) (*Updater, error) {
 	client, err := bigquery.NewClient(ctx, gcpProject)
 	if err != nil {
 		return nil, err
@@ -40,6 +38,7 @@ func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName stri
 		client:        client,
 		log:           log,
 		bigQueryTable: fmt.Sprintf("nais-io.console_data.console_backend_%s", tenantName),
+		daysToFetch:   daysToFetch,
 	}, nil
 }
 
@@ -75,7 +74,7 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 	sql := fmt.Sprintf(
 		"SELECT * FROM `%s` WHERE `date` >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL %d DAY)",
 		c.bigQueryTable,
-		daysToFetch,
+		c.daysToFetch,
 	)
 	c.log.WithField("query", sql).Debugf("fetch data from bigquery")
 	query := c.client.Query(sql)
