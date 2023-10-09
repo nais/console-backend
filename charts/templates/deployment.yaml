@@ -15,6 +15,9 @@ spec:
         app: "{{ .Release.Name }}"
     spec:
       serviceAccountName: "{{ .Release.Name }}"
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: cloud-sql-proxy
           image: gcr.io/cloudsql-docker/gce-proxy:1.33.11 # make sure the use the latest version
@@ -63,8 +66,6 @@ spec:
             runAsNonRoot: true
             runAsUser: 1069
             allowPrivilegeEscalation: false
-            seccompProfile:
-              type: RuntimeDefault
           image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Chart.Version }}"
           ports:
             - name: http
