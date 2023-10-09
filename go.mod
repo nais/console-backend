@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	cloud.google.com/go v0.110.8
-	github.com/99designs/gqlgen v0.17.38
+	github.com/99designs/gqlgen v0.17.39
 	github.com/google/uuid v1.3.1
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/lithammer/fuzzysearch v1.1.8
@@ -69,6 +69,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/riza-io/grpc-go v0.2.0 // indirect
+	github.com/sosodev/duration v1.1.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
