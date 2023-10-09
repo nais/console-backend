@@ -54,7 +54,8 @@ spec:
             - name: FIELD_SELECTOR
               value: "{{ .Values.fieldSelector }}"
             - name: CONSOLE_DATABASE_URL
-              value: "host={{.Values.database.instance}} user={{.Values.database.user}} dbname={{.Values.database.name}} sslmode=disable"
+              value: "postgres://{{ .Values.database.user }}@127.0.0.1:5432/{{ .Values.database.name }}?sslmode=disable"
+
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"
