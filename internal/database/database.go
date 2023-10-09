@@ -5,108 +5,32 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"net"
-	"net/url"
-	"strings"
 
-	"cloud.google.com/go/cloudsqlconn"
-	cloudsqlpgx "cloud.google.com/go/cloudsqlconn/postgres/pgxv4"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"
 )
-
-// CloseConnectionFuncs is a list of database connection close functions
-type CloseConnectionFuncs []func() error
-
-// Close will run all registered close functions and return the last error
-func (fns CloseConnectionFuncs) Close() error {
-	var err error
-	for _, fn := range fns {
-		if e := fn(); e != nil {
-			err = e
-		}
-	}
-	return err
-}
 
 //go:embed migrations/0*.sql
 var embedMigrations embed.FS
 
 // NewDB runs migrations and returns a new database connection
-func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*gensql.Queries, CloseConnectionFuncs, error) {
-	var closeFuncs CloseConnectionFuncs
-	var config *pgxpool.Config
-	var err error
-
-	databaseDriver := "pgx"
-	if !strings.HasPrefix(dsn, "postgres://") {
-		databaseDriver = "cloudsql-postgres"
-		dsnWithoutInstanceConnectionName, instanceConnectionName, err := ExtractInstanceConnectionNameFromDsn(dsn)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		config, err = pgxpool.ParseConfig(dsnWithoutInstanceConnectionName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse dsn config: %w", err)
-		}
-		dialer, err := cloudsqlconn.NewDialer(ctx)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to initialize dialer: %w", err)
-		}
-		closeFuncs = append(closeFuncs, dialer.Close)
-		config.ConnConfig.DialFunc = func(ctx context.Context, _, _ string) (net.Conn, error) {
-			return dialer.Dial(ctx, instanceConnectionName)
-		}
-
-		cleanup, err := cloudsqlpgx.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
-		if err != nil {
-			return nil, closeFuncs, err
-		}
-		closeFuncs = append(closeFuncs, cleanup)
-	} else {
-		config, err = pgxpool.ParseConfig(dsn)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse dsn config: %w", err)
-		}
+func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*pgxpool.Pool, error) {
+	config, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse dsn config: %w", err)
 	}
 
-	if err := migrateDatabaseSchema(databaseDriver, dsn, log); err != nil {
-		return nil, closeFuncs, err
+	if err := migrateDatabaseSchema("pgx", dsn, log); err != nil {
+		return nil, err
 	}
 
 	conn, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return nil, closeFuncs, fmt.Errorf("failed to connect: %w", err)
+		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
-	closeFuncs = append(closeFuncs, func() error {
-		conn.Close()
-		return nil
-	})
 
-	return gensql.New(conn), closeFuncs, nil
-}
-
-// ExtractInstanceConnectionNameFromDsn will extract the instance connection name from the dsn and return the modified
-// dsn, the instance connection name and a potential error. On error, the first two return values are both empty strings.
-func ExtractInstanceConnectionNameFromDsn(dsn string) (string, string, error) {
-	parts, err := url.ParseQuery(strings.ReplaceAll(dsn, " ", "&"))
-	if err != nil {
-		return "", "", err
-	}
-	instanceConnectionName := parts.Get("host")
-	if instanceConnectionName == "" {
-		return "", "", fmt.Errorf("dsn does not have a host field: %q", dsn)
-	}
-	delete(parts, "host")
-	s, err := url.PathUnescape(parts.Encode())
-	if err != nil {
-		return "", "", err
-	}
-	updatedDsn := strings.ReplaceAll(s, "&", " ")
-	return updatedDsn, instanceConnectionName, nil
+	return conn, nil
 }
 
 // migrateDatabaseSchema runs database migrations

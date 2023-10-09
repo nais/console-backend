@@ -16,6 +16,26 @@ spec:
     spec:
       serviceAccountName: "{{ .Release.Name }}"
       containers:
+        - name: cloud-sql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.33.11 # make sure the use the latest version
+          command:
+            - "/cloud_sql_proxy"
+            - "-log_debug_stdout"
+            - "-instances={{ .Values.database.instance }}=tcp:5432"
+            - "-enable_iam_login"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "0.22"
         - name: "{{ .Chart.Name }}"
           env:
             - name: KUBERNETES_CLUSTERS

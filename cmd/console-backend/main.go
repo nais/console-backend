@@ -18,6 +18,7 @@ import (
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/cost"
 	"github.com/nais/console-backend/internal/database"
+	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
@@ -70,16 +71,13 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	}
 
 	log.Info("connecting to database")
-	queries, closers, err := database.NewDB(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
+	pool, err := database.NewDB(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
 	if err != nil {
 		return fmt.Errorf("setting up database: %w", err)
 	}
-	defer func() {
-		if err := closers.Close(); err != nil {
-			log.WithError(err).Errorf("closing database: %v", err)
-		}
-	}()
+	defer pool.Close()
 
+	queries := gensql.New(pool)
 	costUpdater, err := cost.NewCostUpdater(ctx, queries, cfg.Tenant, log.WithField("subsystem", "cost_updater"))
 	if err != nil {
 		log.WithError(err).Error("setting up cost updater. You might need to run `gcloud auth --update-adc` if running locally")
