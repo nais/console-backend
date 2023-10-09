@@ -16,7 +16,7 @@ import (
 
 const (
 	gcpProject  = "nais-io"
-	daysToFetch = 5
+	daysToFetch = 1165
 )
 
 type Updater struct {
