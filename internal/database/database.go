@@ -2,11 +2,11 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"embed"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -42,7 +42,7 @@ func migrateDatabaseSchema(driver, dsn string, log *logrus.Entry) error {
 		return err
 	}
 
-	db, err := sql.Open(driver, dsn)
+	db, err := goose.OpenDBWithDriver(driver, dsn)
 	if err != nil {
 		return err
 	}
