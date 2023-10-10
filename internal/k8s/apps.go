@@ -280,10 +280,11 @@ func checkNoZeroTrust(env string, rule *model.Rule) bool {
 func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule *model.Rule, env string) (*model.App, error) {
 	obj, err := inf.AppInformer.Lister().ByNamespace(team).Get(rule.Application)
 	if err != nil {
-		c.log.Debugf("get application %s:%s in %s: %v", team, rule.Application, env, err)
+		c.log.Infof("get application %s:%s in %s: %v", team, rule.Application, env, err)
 		rule.MutualExplanation = "APP_NOT_FOUND"
 		rule.Mutual = false
-		return nil, c.error(ctx, err, "application not found")
+
+		return nil, nil
 	}
 
 	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
