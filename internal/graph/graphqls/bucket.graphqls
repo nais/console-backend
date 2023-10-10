@@ -1,7 +1,0 @@
-type Bucket implements Storage {
-  cascadingDelete: Boolean!
-  name: String!
-  publicAccessPrevention: Boolean!
-  retentionPeriodDays: Int!
-  uniformBucketLevelAccess: Boolean!
-}

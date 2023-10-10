@@ -840,6 +840,23 @@ func appStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.St
 
 		ret = append(ret, kafka)
 	}
+
+	if len(app.Spec.Redis) > 0 {
+		for _, v := range app.Spec.Redis {
+			redis := model.Redis{
+				Name:   v.Instance,
+				Access: v.Access,
+			}
+			ret = append(ret, redis)
+		}
+	}
+
+	if app.Spec.Influx != nil {
+		influx := model.InfluxDb{
+			Name: app.Spec.Influx.Instance,
+		}
+		ret = append(ret, influx)
+	}
 	return ret, nil
 }
 

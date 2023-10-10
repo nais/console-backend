@@ -431,6 +431,13 @@ func (InboundAccessError) IsStateError()             {}
 func (this InboundAccessError) GetRevision() string  { return this.Revision }
 func (this InboundAccessError) GetLevel() ErrorLevel { return this.Level }
 
+type InfluxDb struct {
+	Name string `json:"name"`
+}
+
+func (InfluxDb) IsStorage()           {}
+func (this InfluxDb) GetName() string { return this.Name }
+
 type Insights struct {
 	Enabled               bool `json:"enabled"`
 	QueryStringLength     int  `json:"queryStringLength"`
@@ -599,6 +606,14 @@ func (this OutboundAccessError) GetLevel() ErrorLevel { return this.Level }
 type Port struct {
 	Port int `json:"port"`
 }
+
+type Redis struct {
+	Name   string `json:"name"`
+	Access string `json:"access"`
+}
+
+func (Redis) IsStorage()           {}
+func (this Redis) GetName() string { return this.Name }
 
 type Requests struct {
 	CPU    string `json:"cpu"`

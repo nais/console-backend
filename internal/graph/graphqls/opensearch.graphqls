@@ -1,7 +1,0 @@
-type OpenSearch implements Storage {
-  """
-  The opensearch instance name
-  """
-  name: String!
-  access: String!
-}

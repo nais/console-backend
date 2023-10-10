@@ -1,6 +1,0 @@
-type BigQueryDataset implements Storage {
-  cascadingDelete: Boolean!
-  description: String!
-  name: String!
-  permission: String!
-}

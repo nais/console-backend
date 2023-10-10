@@ -341,6 +341,10 @@ type ComplexityRoot struct {
 		Rule     func(childComplexity int) int
 	}
 
+	InfluxDb struct {
+		Name func(childComplexity int) int
+	}
+
 	Insights struct {
 		Enabled               func(childComplexity int) int
 		QueryStringLength     func(childComplexity int) int
@@ -494,6 +498,11 @@ type ComplexityRoot struct {
 		Team             func(childComplexity int, name string) int
 		Teams            func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		User             func(childComplexity int) int
+	}
+
+	Redis struct {
+		Access func(childComplexity int) int
+		Name   func(childComplexity int) int
 	}
 
 	Requests struct {
@@ -1787,6 +1796,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.InboundAccessError.Rule(childComplexity), true
 
+	case "InfluxDb.name":
+		if e.complexity.InfluxDb.Name == nil {
+			break
+		}
+
+		return e.complexity.InfluxDb.Name(childComplexity), true
+
 	case "Insights.enabled":
 		if e.complexity.Insights.Enabled == nil {
 			break
@@ -2448,6 +2464,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.User(childComplexity), true
+
+	case "Redis.access":
+		if e.complexity.Redis.Access == nil {
+			break
+		}
+
+		return e.complexity.Redis.Access(childComplexity), true
+
+	case "Redis.name":
+		if e.complexity.Redis.Name == nil {
+			break
+		}
+
+		return e.complexity.Redis.Name(childComplexity), true
 
 	case "Requests.cpu":
 		if e.complexity.Requests.CPU == nil {
@@ -3176,7 +3206,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "graphqls/accesspolicy.graphqls" "graphqls/app.graphqls" "graphqls/authz.graphqls" "graphqls/autoscaling.graphqls" "graphqls/azuread.graphqls" "graphqls/bigquerydataset.graphqls" "graphqls/bucket.graphqls" "graphqls/cost.graphqls" "graphqls/deploy.graphqls" "graphqls/deployinfo.graphqls" "graphqls/directives.graphqls" "graphqls/idporten.graphqls" "graphqls/instance.graphqls" "graphqls/kafka.graphqls" "graphqls/log.graphqls" "graphqls/maskinporten.graphqls" "graphqls/naisjob.graphqls" "graphqls/opensearch.graphqls" "graphqls/resources.graphqls" "graphqls/scalars.graphqls" "graphqls/schema.graphqls" "graphqls/search.graphqls" "graphqls/sqlinstance.graphqls" "graphqls/storage.graphqls" "graphqls/team.graphqls" "graphqls/tokenx.graphqls" "graphqls/user.graphqls" "graphqls/variable.graphqls"
+//go:embed "graphqls/accesspolicy.graphqls" "graphqls/app.graphqls" "graphqls/authz.graphqls" "graphqls/autoscaling.graphqls" "graphqls/azuread.graphqls" "graphqls/cost.graphqls" "graphqls/deploy.graphqls" "graphqls/deployinfo.graphqls" "graphqls/directives.graphqls" "graphqls/idporten.graphqls" "graphqls/instance.graphqls" "graphqls/log.graphqls" "graphqls/maskinporten.graphqls" "graphqls/naisjob.graphqls" "graphqls/resources.graphqls" "graphqls/scalars.graphqls" "graphqls/schema.graphqls" "graphqls/search.graphqls" "graphqls/storage.graphqls" "graphqls/team.graphqls" "graphqls/tokenx.graphqls" "graphqls/user.graphqls" "graphqls/variable.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -3193,24 +3223,19 @@ var sources = []*ast.Source{
 	{Name: "graphqls/authz.graphqls", Input: sourceData("graphqls/authz.graphqls"), BuiltIn: false},
 	{Name: "graphqls/autoscaling.graphqls", Input: sourceData("graphqls/autoscaling.graphqls"), BuiltIn: false},
 	{Name: "graphqls/azuread.graphqls", Input: sourceData("graphqls/azuread.graphqls"), BuiltIn: false},
-	{Name: "graphqls/bigquerydataset.graphqls", Input: sourceData("graphqls/bigquerydataset.graphqls"), BuiltIn: false},
-	{Name: "graphqls/bucket.graphqls", Input: sourceData("graphqls/bucket.graphqls"), BuiltIn: false},
 	{Name: "graphqls/cost.graphqls", Input: sourceData("graphqls/cost.graphqls"), BuiltIn: false},
 	{Name: "graphqls/deploy.graphqls", Input: sourceData("graphqls/deploy.graphqls"), BuiltIn: false},
 	{Name: "graphqls/deployinfo.graphqls", Input: sourceData("graphqls/deployinfo.graphqls"), BuiltIn: false},
 	{Name: "graphqls/directives.graphqls", Input: sourceData("graphqls/directives.graphqls"), BuiltIn: false},
 	{Name: "graphqls/idporten.graphqls", Input: sourceData("graphqls/idporten.graphqls"), BuiltIn: false},
 	{Name: "graphqls/instance.graphqls", Input: sourceData("graphqls/instance.graphqls"), BuiltIn: false},
-	{Name: "graphqls/kafka.graphqls", Input: sourceData("graphqls/kafka.graphqls"), BuiltIn: false},
 	{Name: "graphqls/log.graphqls", Input: sourceData("graphqls/log.graphqls"), BuiltIn: false},
 	{Name: "graphqls/maskinporten.graphqls", Input: sourceData("graphqls/maskinporten.graphqls"), BuiltIn: false},
 	{Name: "graphqls/naisjob.graphqls", Input: sourceData("graphqls/naisjob.graphqls"), BuiltIn: false},
-	{Name: "graphqls/opensearch.graphqls", Input: sourceData("graphqls/opensearch.graphqls"), BuiltIn: false},
 	{Name: "graphqls/resources.graphqls", Input: sourceData("graphqls/resources.graphqls"), BuiltIn: false},
 	{Name: "graphqls/scalars.graphqls", Input: sourceData("graphqls/scalars.graphqls"), BuiltIn: false},
 	{Name: "graphqls/schema.graphqls", Input: sourceData("graphqls/schema.graphqls"), BuiltIn: false},
 	{Name: "graphqls/search.graphqls", Input: sourceData("graphqls/search.graphqls"), BuiltIn: false},
-	{Name: "graphqls/sqlinstance.graphqls", Input: sourceData("graphqls/sqlinstance.graphqls"), BuiltIn: false},
 	{Name: "graphqls/storage.graphqls", Input: sourceData("graphqls/storage.graphqls"), BuiltIn: false},
 	{Name: "graphqls/team.graphqls", Input: sourceData("graphqls/team.graphqls"), BuiltIn: false},
 	{Name: "graphqls/tokenx.graphqls", Input: sourceData("graphqls/tokenx.graphqls"), BuiltIn: false},
@@ -11025,6 +11050,50 @@ func (ec *executionContext) fieldContext_InboundAccessError_rule(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _InfluxDb_name(ctx context.Context, field graphql.CollectedField, obj *model.InfluxDb) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InfluxDb_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InfluxDb_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InfluxDb",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Insights_enabled(ctx context.Context, field graphql.CollectedField, obj *model.Insights) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Insights_enabled(ctx, field)
 	if err != nil {
@@ -15430,6 +15499,94 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Redis_name(ctx context.Context, field graphql.CollectedField, obj *model.Redis) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Redis_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Redis_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Redis",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Redis_access(ctx context.Context, field graphql.CollectedField, obj *model.Redis) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Redis_access(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Access, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Redis_access(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Redis",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -21614,6 +21771,20 @@ func (ec *executionContext) _Storage(ctx context.Context, sel ast.SelectionSet, 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
+	case model.InfluxDb:
+		return ec._InfluxDb(ctx, sel, &obj)
+	case *model.InfluxDb:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._InfluxDb(ctx, sel, obj)
+	case model.Redis:
+		return ec._Redis(ctx, sel, &obj)
+	case *model.Redis:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Redis(ctx, sel, obj)
 	case model.BigQueryDataset:
 		return ec._BigQueryDataset(ctx, sel, &obj)
 	case *model.BigQueryDataset:
@@ -23983,6 +24154,45 @@ func (ec *executionContext) _InboundAccessError(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var influxDbImplementors = []string{"InfluxDb", "Storage"}
+
+func (ec *executionContext) _InfluxDb(ctx context.Context, sel ast.SelectionSet, obj *model.InfluxDb) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, influxDbImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InfluxDb")
+		case "name":
+			out.Values[i] = ec._InfluxDb_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var insightsImplementors = []string{"Insights"}
 
 func (ec *executionContext) _Insights(ctx context.Context, sel ast.SelectionSet, obj *model.Insights) graphql.Marshaler {
@@ -25548,6 +25758,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var redisImplementors = []string{"Redis", "Storage"}
+
+func (ec *executionContext) _Redis(ctx context.Context, sel ast.SelectionSet, obj *model.Redis) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, redisImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Redis")
+		case "name":
+			out.Values[i] = ec._Redis_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "access":
+			out.Values[i] = ec._Redis_access(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
