@@ -610,6 +610,23 @@ func naisjobStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]mode
 		}
 		ret = append(ret, kafka)
 	}
+
+	if len(naisjob.Spec.Redis) > 0 {
+		for _, v := range naisjob.Spec.Redis {
+			redis := model.Redis{
+				Name:   v.Instance,
+				Access: v.Access,
+			}
+			ret = append(ret, redis)
+		}
+	}
+
+	if naisjob.Spec.Influx != nil {
+		influx := model.InfluxDb{
+			Name: naisjob.Spec.Influx.Instance,
+		}
+		ret = append(ret, influx)
+	}
 	return ret, nil
 }
 
