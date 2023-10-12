@@ -11,6 +11,7 @@ spec:
     metadata:
       annotations:
         prometheus.io/path: "/metrics"
+        kubectl.kubernetes.io/default-container: "{{ .Chart.Name }}"
       labels:
         app: "{{ .Release.Name }}"
     spec:
