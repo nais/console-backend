@@ -7,7 +7,20 @@ env:
   NAME: console-backend
   IMAGE_REPOSITORY: oci://europe-north1-docker.pkg.dev/nais-io/nais
 jobs:
+  go_version:
+    outputs:
+      go_version: ${{ steps.go_version.outputs.GO_VERSION }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Find Go version
+        id: go_version
+        run: |
+          echo "GO_VERSION=$(grep golang .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
+
   build_push:
+    needs:
+      - go_version
     outputs:
       version: ${{ steps.build-push-sign.outputs.version }}
     permissions:
@@ -21,6 +34,8 @@ jobs:
         id: build-push-sign
         with:
           name: ${{ env.NAME }}
+          build_args: |
+            GO_VERSION=${{ needs.go_version.outputs.go_version }}
           google_service_account: gh-${{ env.NAME }}
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           push: true
@@ -37,13 +52,15 @@ jobs:
         run: |-
           helm push ${{ env.NAME }}*.tgz ${{ env.IMAGE_REPOSITORY }}
   test:
+    needs:
+      - go_version
     name: Run tests and static code analysis
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
-          go-version: "1.21.x"
+          go-version: ${{ needs.go_version.outputs.go_version }}
           check-latest: true
       - run: go mod download
       - run: make check
