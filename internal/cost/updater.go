@@ -14,8 +14,6 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-const gcpProject = "nais-io"
-
 type Updater struct {
 	log           logrus.FieldLogger
 	queries       gensql.Querier
@@ -26,7 +24,7 @@ type Updater struct {
 
 // NewCostUpdater creates a new cost updater
 func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName string, daysToFetch int, log logrus.FieldLogger) (*Updater, error) {
-	client, err := bigquery.NewClient(ctx, gcpProject)
+	client, err := bigquery.NewClient(ctx, bigquery.DetectProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +35,7 @@ func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName stri
 		queries:       queries,
 		client:        client,
 		log:           log,
-		bigQueryTable: fmt.Sprintf("nais-io.console_data.console_backend_%s", tenantName),
+		bigQueryTable: "nais-io.console.cost_" + tenantName,
 		daysToFetch:   daysToFetch,
 	}, nil
 }
