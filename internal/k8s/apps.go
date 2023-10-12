@@ -397,7 +397,10 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 				return nil, fmt.Errorf("converting to application: %w", err)
 			}
 
-			setStatus(app, *tmpApp.Status.Conditions, instances)
+			if tmpApp != nil {
+				setStatus(app, *tmpApp.Status.Conditions, instances)
+			}
+
 			ret = append(ret, app)
 		}
 	}
