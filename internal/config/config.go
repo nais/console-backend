@@ -29,9 +29,9 @@ type Config struct {
 
 func New() *Config {
 	cfg := &Config{}
-	costDataDaysToFetch, err := strconv.Atoi(envOrDefault("COST_DATA_DAYS_TO_FETCH", "5"))
+	costDataDaysToFetch, err := strconv.Atoi(envOrDefault("COST_DATA_DAYS_TO_FETCH", "1500"))
 	if err != nil {
-		costDataDaysToFetch = 5
+		costDataDaysToFetch = 1500
 	}
 
 	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
