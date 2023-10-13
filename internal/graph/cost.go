@@ -32,9 +32,6 @@ func DailyCostsForTeamFromDatabaseRows(from model.Date, to model.Date, rows []*g
 	sum := 0.0
 	daily := dailyCosts{}
 	for _, row := range rows {
-		if row.App == nil || *row.App == "<unknown>" {
-			continue
-		}
 		if _, exists := daily[row.CostType]; !exists {
 			daily[row.CostType] = make(map[model.Date]float64)
 		}
