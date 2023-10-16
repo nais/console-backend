@@ -78,7 +78,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	defer pool.Close()
 
 	queries := gensql.New(pool)
-	costUpdater, err := cost.NewCostUpdater(ctx, queries, cfg.Tenant, cfg.CostDataDaysToFetch, cfg.CostDataReimport, log.WithField("subsystem", "cost_updater"))
+	costUpdater, err := cost.NewCostUpdater(ctx, queries, cfg.BigQueryProjectID, cfg.Tenant, cfg.CostDataDaysToFetch, cfg.CostDataReimport, log.WithField("subsystem", "cost_updater"))
 	if err != nil {
 		log.WithError(err).Error("setting up cost updater. You might need to run `gcloud auth --update-adc` if running locally")
 	} else {

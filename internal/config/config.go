@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"cloud.google.com/go/bigquery"
 	flag "github.com/spf13/pflag"
 )
 
@@ -26,6 +27,7 @@ type Config struct {
 	KubernetesClusters       []string
 	KubernetesClustersStatic []string
 	CostDataReimport         bool
+	BigQueryProjectID        string
 }
 
 func New() *Config {
@@ -53,6 +55,7 @@ func New() *Config {
 	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
 	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
 	flag.StringVar(&cfg.Tenant, "tenant", envOrDefault("TENANT", "dev-nais"), "Which tenant we are running in")
+	flag.StringVar(&cfg.BigQueryProjectID, "bigquery-project-id", envOrDefault("BIGQUERY_PROJECTID", bigquery.DetectProjectID), "ID of the project for the BigQuery tables / views")
 	flag.StringVar(&cfg.RunAsUser, "run-as-user", os.Getenv("RUN_AS_USER"), "Statically configured frontend user")
 	flag.StringVar(&cfg.FieldSelector, "field-selector", os.Getenv("FIELD_SELECTOR"), "Field selector for k8s resources")
 	flag.StringSliceVar(&cfg.KubernetesClusters, "kubernetes-clusters", splitEnv("KUBERNETES_CLUSTERS", ","), "Kubernetes clusters to watch (comma separated)")

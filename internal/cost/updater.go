@@ -24,8 +24,8 @@ type Updater struct {
 }
 
 // NewCostUpdater creates a new cost updater
-func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName string, daysToFetch int, reimport bool, log logrus.FieldLogger) (*Updater, error) {
-	client, err := bigquery.NewClient(ctx, bigquery.DetectProjectID)
+func NewCostUpdater(ctx context.Context, queries gensql.Querier, projectID, tenantName string, daysToFetch int, reimport bool, log logrus.FieldLogger) (*Updater, error) {
+	client, err := bigquery.NewClient(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
