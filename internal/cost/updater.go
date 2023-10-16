@@ -61,7 +61,7 @@ func (c *Updater) Run(ctx context.Context, schedule time.Duration) {
 // fetch all data from 2020-01-01, which should be enough to get all historic data.
 func (c *Updater) getDayIntervalForBigQuerySql() int {
 	if c.reimport {
-		return int(time.Now().Sub(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)).Hours() / 24)
+		return int(time.Since(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)).Hours() / 24)
 	}
 
 	return c.daysToFetch
