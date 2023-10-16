@@ -59,7 +59,7 @@ spec:
             - name: COST_DATA_DAYS_TO_FETCH
               value: "5"
             - name: COST_DATA_REIMPORT
-              value: "false"
+              value: "true"
 
           envFrom:
             - secretRef:
