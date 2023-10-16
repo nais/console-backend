@@ -25,6 +25,8 @@ type Querier interface {
 	LastCostDate(ctx context.Context) (pgtype.Date, error)
 	MonthlyCostForApp(ctx context.Context, arg MonthlyCostForAppParams) ([]*MonthlyCostForAppRow, error)
 	MonthlyCostForTeam(ctx context.Context, team *string) ([]*MonthlyCostForTeamRow, error)
+	// TruncateCostTable will truncate the cost table before doing a complete reimport.
+	TruncateCostTable(ctx context.Context) error
 }
 
 var _ Querier = (*Queries)(nil)

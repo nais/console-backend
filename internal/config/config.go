@@ -25,6 +25,7 @@ type Config struct {
 	Tenant                   string
 	KubernetesClusters       []string
 	KubernetesClustersStatic []string
+	CostDataReimport         bool
 }
 
 func New() *Config {
@@ -34,6 +35,12 @@ func New() *Config {
 		costDataDaysToFetch = 5
 	}
 
+	costDataReimport, err := strconv.ParseBool(os.Getenv("COST_DATA_REIMPORT"))
+	if err != nil {
+		costDataReimport = false
+	}
+
+	flag.BoolVar(&cfg.CostDataReimport, "cost-data-reimport", costDataReimport, "Do a complete re-import of all cost data")
 	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
 	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
 	flag.StringVar(&cfg.DBConnectionDSN, "db-connection-dsn", envOrDefault("CONSOLE_DATABASE_URL", "postgres://postgres:postgres@127.0.0.1:5432/console?sslmode=disable"), "database connection DSN")

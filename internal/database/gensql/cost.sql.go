@@ -320,3 +320,13 @@ func (q *Queries) MonthlyCostForTeam(ctx context.Context, team *string) ([]*Mont
 	}
 	return items, nil
 }
+
+const truncateCostTable = `-- name: TruncateCostTable :exec
+TRUNCATE TABLE cost
+`
+
+// TruncateCostTable will truncate the cost table before doing a complete reimport.
+func (q *Queries) TruncateCostTable(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, truncateCostTable)
+	return err
+}

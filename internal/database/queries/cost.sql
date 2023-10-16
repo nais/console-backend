@@ -108,3 +108,7 @@ GROUP BY
     team, app, date
 ORDER BY
     date, app ASC;
+
+-- TruncateCostTable will truncate the cost table before doing a complete reimport.
+-- name: TruncateCostTable :exec
+TRUNCATE TABLE cost;

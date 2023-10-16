@@ -20,10 +20,11 @@ type Updater struct {
 	client        *bigquery.Client
 	bigQueryTable string
 	daysToFetch   int
+	reimport      bool
 }
 
 // NewCostUpdater creates a new cost updater
-func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName string, daysToFetch int, log logrus.FieldLogger) (*Updater, error) {
+func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName string, daysToFetch int, reimport bool, log logrus.FieldLogger) (*Updater, error) {
 	client, err := bigquery.NewClient(ctx, bigquery.DetectProjectID)
 	if err != nil {
 		return nil, err
@@ -37,6 +38,7 @@ func NewCostUpdater(ctx context.Context, queries gensql.Querier, tenantName stri
 		log:           log,
 		bigQueryTable: "nais-io.console.cost_" + tenantName,
 		daysToFetch:   daysToFetch,
+		reimport:      reimport,
 	}, nil
 }
 
@@ -53,6 +55,16 @@ func (c *Updater) Run(ctx context.Context, schedule time.Duration) {
 		case <-ticker.C:
 		}
 	}
+}
+
+// getDayIntervalForBigQuerySql returns the number of days to fetch for the SQL query. When doing a reimport, we want to
+// fetch all data from 2020-01-01, which should be enough to get all historic data.
+func (c *Updater) getDayIntervalForBigQuerySql() int {
+	if c.reimport {
+		return int(time.Now().Sub(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)).Hours() / 24)
+	}
+
+	return c.daysToFetch
 }
 
 // updateCosts will insert the latest cost data into the database
@@ -72,7 +84,7 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 	sql := fmt.Sprintf(
 		"SELECT * FROM `%s` WHERE `date` >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL %d DAY)",
 		c.bigQueryTable,
-		c.daysToFetch,
+		c.getDayIntervalForBigQuerySql(),
 	)
 	c.log.WithField("query", sql).Debugf("fetch data from bigquery")
 	query := c.client.Query(sql)
@@ -124,6 +136,13 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 
 	start = time.Now()
 	c.log.Debugf("start upserting cost data")
+	if c.reimport {
+		c.log.Debugf("truncate existing data (reimport set to true)")
+		if err := c.queries.TruncateCostTable(ctx); err != nil {
+			return err
+		}
+	}
+
 	c.queries.CostUpsert(ctx, rows).Exec(func(i int, err error) {
 		if err != nil {
 			c.log.WithError(err).Errorf("failed to upsert cost: index %v", i)
