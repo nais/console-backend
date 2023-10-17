@@ -29,7 +29,7 @@ ORDER BY
 type DailyCostForAppParams struct {
 	Env      *string
 	Team     *string
-	App      *string
+	App      string
 	FromDate pgtype.Date
 	ToDate   pgtype.Date
 }
@@ -146,7 +146,7 @@ type DailyEnvCostForTeamParams struct {
 
 type DailyEnvCostForTeamRow struct {
 	Team      *string
-	App       *string
+	App       string
 	Date      pgtype.Date
 	DailyCost float32
 }
@@ -226,13 +226,13 @@ LIMIT 12
 
 type MonthlyCostForAppParams struct {
 	Team *string
-	App  *string
+	App  string
 	Env  *string
 }
 
 type MonthlyCostForAppRow struct {
 	Team             *string
-	App              *string
+	App              string
 	Env              *string
 	Month            pgtype.Date
 	LastRecordedDate pgtype.Date

@@ -33,7 +33,7 @@ type CostUpsertBatchResults struct {
 type CostUpsertParams struct {
 	Env       *string
 	Team      *string
-	App       *string
+	App       string
 	CostType  string
 	Date      pgtype.Date
 	DailyCost float32

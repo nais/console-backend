@@ -21,7 +21,7 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 	}
 
 	rows, err := r.Queries.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
-		App:      &app,
+		App:      app,
 		Team:     &team,
 		Env:      &env,
 		FromDate: from.PgDate(),
@@ -93,7 +93,7 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 	if filter.App != "" && filter.Env != "" && filter.Team != "" {
 		rows, err := r.Queries.MonthlyCostForApp(ctx, gensql.MonthlyCostForAppParams{
 			Team: &filter.Team,
-			App:  &filter.App,
+			App:  filter.App,
 			Env:  &filter.Env,
 		})
 		if err != nil {

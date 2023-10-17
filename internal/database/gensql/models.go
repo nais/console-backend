@@ -12,7 +12,7 @@ type Cost struct {
 	ID        int32
 	Env       *string
 	Team      *string
-	App       *string
+	App       string
 	CostType  string
 	Date      pgtype.Date
 	DailyCost float32

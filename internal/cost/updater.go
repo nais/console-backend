@@ -123,7 +123,7 @@ func (c *Updater) updateCosts(ctx context.Context) error {
 		rows = append(rows, gensql.CostUpsertParams{
 			Env:       nullToStringPointer(r.Env),
 			Team:      nullToStringPointer(r.Team),
-			App:       nullToStringPointer(r.App),
+			App:       r.App.StringVal,
 			CostType:  r.CostType,
 			Date:      pgtype.Date{Time: r.Date.In(time.UTC), Valid: true},
 			DailyCost: r.Cost,

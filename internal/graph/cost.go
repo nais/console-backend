@@ -51,13 +51,13 @@ func DailyCostsForTeamPerEnvFromDatabaseRows(from model.Date, to model.Date, row
 	sum := 0.0
 	daily := dailyCosts{}
 	for _, row := range rows {
-		if row.App == nil || *row.App == "<unknown>" {
+		if row.App == "" {
 			continue
 		}
-		if _, exists := daily[*row.App]; !exists {
-			daily[*row.App] = make(map[model.Date]float64)
+		if _, exists := daily[row.App]; !exists {
+			daily[row.App] = make(map[model.Date]float64)
 		}
-		daily[*row.App][model.NewDate(row.Date.Time)] = float64(row.DailyCost)
+		daily[row.App][model.NewDate(row.Date.Time)] = float64(row.DailyCost)
 		sum += float64(row.DailyCost)
 	}
 
