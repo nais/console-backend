@@ -1,20 +1,20 @@
 type IDPorten {
-  accessTokenLifetime: Int
-  clientURI: String
-  frontchannelLogoutPath: String
-  integrationType: String
-  postLogoutRedirectURIs: [String]
-  redirectPath: String
-  scopes: [String]
-  sessionLifetime: Int
-  sidecar: IDPortenSidecar
+    accessTokenLifetime: Int
+    clientURI: String
+    frontchannelLogoutPath: String
+    integrationType: String
+    postLogoutRedirectURIs: [String]
+    redirectPath: String
+    scopes: [String]
+    sessionLifetime: Int
+    sidecar: IDPortenSidecar
 }
 
 type IDPortenSidecar {
-  autoLogin: Boolean
-  autoLoginIgnorePaths: [String]
-  enabled: Boolean
-  level: String
-  locale: String
-  resources: Resources
+    autoLogin: Boolean
+    autoLoginIgnorePaths: [String]
+    enabled: Boolean
+    level: String
+    locale: String
+    resources: Resources
 }

@@ -1,27 +1,27 @@
 type Consume {
-  name: String!
+    name: String!
 }
 
 type Consumer {
-  name: String!
-  orgno: String!
+    name: String!
+    orgno: String!
 }
 
 type Expose {
-  allowedIntegrations: [String!]!
-  atMaxAge: Int!
-  consumers: [Consumer!]!
-  enabled: Boolean!
-  name: String!
-  product: String!
+    allowedIntegrations: [String!]!
+    atMaxAge: Int!
+    consumers: [Consumer!]!
+    enabled: Boolean!
+    name: String!
+    product: String!
 }
 
 type MaskinportenScope {
-  consumes: [Consume!]!
-  exposes: [Expose!]!
+    consumes: [Consume!]!
+    exposes: [Expose!]!
 }
 
 type Maskinporten {
-  scopes: MaskinportenScope!
-  enabled: Boolean!
+    scopes: MaskinportenScope!
+    enabled: Boolean!
 }

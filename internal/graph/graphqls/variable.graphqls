@@ -1,4 +1,4 @@
 type Variable {
-  name: String!
-  value: String!
+    name: String!
+    value: String!
 }

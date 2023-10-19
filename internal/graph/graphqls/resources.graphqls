@@ -1,14 +1,14 @@
 type Limits {
-  cpu: String!
-  memory: String!
+    cpu: String!
+    memory: String!
 }
 
 type Requests {
-  cpu: String!
-  memory: String!
+    cpu: String!
+    memory: String!
 }
 
 type Resources {
-  limits: Limits!
-  requests: Requests!
+    limits: Limits!
+    requests: Requests!
 }

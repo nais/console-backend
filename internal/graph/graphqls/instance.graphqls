@@ -1,15 +1,15 @@
 type Instance implements Node {
-  id: ID!
-  name: String!
-  state: InstanceState!
-  message: String!
-  image: String!
-  restarts: Int!
-  created: Time!
+    id: ID!
+    name: String!
+    state: InstanceState!
+    message: String!
+    image: String!
+    restarts: Int!
+    created: Time!
 }
 
 enum InstanceState {
-  RUNNING
-  FAILING
-  UNKNOWN
+    RUNNING
+    FAILING
+    UNKNOWN
 }

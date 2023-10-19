@@ -1,58 +1,58 @@
 type NaisJobConnection implements Connection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [NaisJobEdge!]!
+    totalCount: Int!
+    pageInfo: PageInfo!
+    edges: [NaisJobEdge!]!
 }
 
 type NaisJobEdge implements Edge {
-  cursor: Cursor!
-  node: NaisJob!
+    cursor: Cursor!
+    node: NaisJob!
 }
 
 type Run implements Node {
-  id: ID!
-  name: String!
-  podNames: [String!]!
-  startTime: Time
-  completionTime: Time
-  duration: String!
-  image: String!
-  message: String!
-  failed: Boolean!
+    id: ID!
+    name: String!
+    podNames: [String!]!
+    startTime: Time
+    completionTime: Time
+    duration: String!
+    image: String!
+    message: String!
+    failed: Boolean!
 }
 
 type JobState {
-  state: State!
-  errors: [StateError!]!
+    state: State!
+    errors: [StateError!]!
 }
 
 type FailedRunError implements StateError {
-  revision: String!
-  level: ErrorLevel!
-  runMessage: String!
-  runName: String!
+    revision: String!
+    level: ErrorLevel!
+    runMessage: String!
+    runName: String!
 }
 
 type NaisJob implements Node {
-  id: ID!
-  accessPolicy: AccessPolicy!
-  deployInfo: DeployInfo!
-  env: Env!
-  image: String!
-  runs: [Run!]!
-  manifest: String!
-  name: String!
-  resources: Resources!
-  schedule: String!
-  team: Team!
-  storage: [Storage!]!
-  authz: [Authz!]!
-  completions: Int!
-  parallelism: Int!
-  retries: Int!
-  jobState: JobState!
+    id: ID!
+    accessPolicy: AccessPolicy!
+    deployInfo: DeployInfo!
+    env: Env!
+    image: String!
+    runs: [Run!]!
+    manifest: String!
+    name: String!
+    resources: Resources!
+    schedule: String!
+    team: Team!
+    storage: [Storage!]!
+    authz: [Authz!]!
+    completions: Int!
+    parallelism: Int!
+    retries: Int!
+    jobState: JobState!
 }
 
 extend type Query {
-  naisjob(name: String!, team: String!, env: String!): NaisJob!
+    naisjob(name: String!, team: String!, env: String!): NaisJob!
 }

@@ -1,17 +1,17 @@
 type LogLine {
-  time: Time!
-  message: String!
-  instance: String!
+    time: Time!
+    message: String!
+    instance: String!
 }
 
 input LogSubscriptionInput {
-  app: String
-  job: String
-  env: String!
-  team: String!
-  instances: [String!]
+    app: String
+    job: String
+    env: String!
+    team: String!
+    instances: [String!]
 }
 
 type Subscription {
-  log(input: LogSubscriptionInput): LogLine!
+    log(input: LogSubscriptionInput): LogLine!
 }

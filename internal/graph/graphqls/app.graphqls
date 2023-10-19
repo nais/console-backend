@@ -1,100 +1,100 @@
 type AppConnection implements Connection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [AppEdge!]!
+    totalCount: Int!
+    pageInfo: PageInfo!
+    edges: [AppEdge!]!
 }
 
 type AppEdge implements Edge {
-  cursor: Cursor!
-  node: App!
+    cursor: Cursor!
+    node: App!
 }
 
 type App implements Node {
-  id: ID!
-  name: String!
-  image: String!
-  deployInfo: DeployInfo!
-  env: Env!
-  ingresses: [String!]!
-  instances: [Instance!]!
-  accessPolicy: AccessPolicy!
-  resources: Resources!
-  autoScaling: AutoScaling!
-  storage: [Storage!]!
-  variables: [Variable!]!
-  authz: [Authz!]!
-  manifest: String!
-  team: Team!
-  appState: AppState!
+    id: ID!
+    name: String!
+    image: String!
+    deployInfo: DeployInfo!
+    env: Env!
+    ingresses: [String!]!
+    instances: [Instance!]!
+    accessPolicy: AccessPolicy!
+    resources: Resources!
+    autoScaling: AutoScaling!
+    storage: [Storage!]!
+    variables: [Variable!]!
+    authz: [Authz!]!
+    manifest: String!
+    team: Team!
+    appState: AppState!
 }
 
 type AppState {
-  state: State!
-  errors: [StateError!]!
+    state: State!
+    errors: [StateError!]!
 }
 
 enum ErrorLevel {
-  INFO
-  WARNING
-  ERROR
+    INFO
+    WARNING
+    ERROR
 }
 
 interface StateError {
-  revision: String!
-  level: ErrorLevel!
+    revision: String!
+    level: ErrorLevel!
 }
 
 type DeprecatedRegistryError implements StateError {
-  revision: String!
-  level: ErrorLevel!
-  registry: String!
-  repository: String!
-  name: String!
-  tag: String!
+    revision: String!
+    level: ErrorLevel!
+    registry: String!
+    repository: String!
+    name: String!
+    tag: String!
 }
 
 type DeprecatedIngressError implements StateError {
-  revision: String!
-  level: ErrorLevel!
-  ingress: String!
+    revision: String!
+    level: ErrorLevel!
+    ingress: String!
 }
 
 type NoRunningInstancesError implements StateError {
-  revision: String!
-  level: ErrorLevel!
+    revision: String!
+    level: ErrorLevel!
 }
 
 type NewInstancesFailingError implements StateError {
-  revision: String!
-  level: ErrorLevel!
-  failingInstances: [String!]!
+    revision: String!
+    level: ErrorLevel!
+    failingInstances: [String!]!
 }
 
 type InvalidNaisYamlError implements StateError {
-  revision: String!
-  level: ErrorLevel!
-  detail: String!
+    revision: String!
+    level: ErrorLevel!
+    detail: String!
 }
 
 type InboundAccessError implements StateError {
-  revision: String!
-  level: ErrorLevel!
-  rule: Rule!
+    revision: String!
+    level: ErrorLevel!
+    rule: Rule!
 }
 
 type OutboundAccessError implements StateError {
-  revision: String!
-  level: ErrorLevel!
-  rule: Rule!
+    revision: String!
+    level: ErrorLevel!
+    rule: Rule!
 }
 
 enum State {
-  NAIS
-  NOTNAIS
-  FAILING
-  UNKNOWN
+    NAIS
+    NOTNAIS
+    FAILING
+    UNKNOWN
 }
 
 extend type Query {
-  app(name: String!, team: String!, env: String!): App!
+    app(name: String!, team: String!, env: String!): App!
 }

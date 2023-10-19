@@ -1,9 +1,9 @@
 type AutoScaling {
-  disabled: Boolean!
-  """
-  CPU threshold in percent
-  """
-  cpuThreshold: Int!
-  max: Int!
-  min: Int!
+    disabled: Boolean!
+    """
+    CPU threshold in percent
+    """
+    cpuThreshold: Int!
+    max: Int!
+    min: Int!
 }
