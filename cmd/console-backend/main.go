@@ -9,11 +9,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/lru"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/config"
@@ -104,13 +99,10 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 		},
 	}
 
-	srv := newServer(graph.NewExecutableSchema(graphConfig))
-
-	metricsMW, err := graph.NewMetrics(meter)
+	graphHandler, err := graph.NewHandler(graph.NewExecutableSchema(graphConfig), meter)
 	if err != nil {
-		return fmt.Errorf("create metrics middleware: %w", err)
+		return fmt.Errorf("create graph handler: %w", err)
 	}
-	srv.Use(metricsMW)
 
 	corsMW := cors.New(
 		cors.Options{
@@ -123,9 +115,9 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	if cfg.RunAsUser != "" && cfg.Audience == "" {
 		log.Infof("Running as user %s", cfg.RunAsUser)
-		http.Handle("/query", corsMW.Handler(auth.StaticUser(cfg.RunAsUser, srv)))
+		http.Handle("/query", corsMW.Handler(auth.StaticUser(cfg.RunAsUser, graphHandler)))
 	} else {
-		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.Audience, srv)))
+		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.Audience, graphHandler)))
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
@@ -158,22 +150,6 @@ func newLogger(logFormat, logLevel string) (*logrus.Logger, error) {
 
 	log.SetLevel(level)
 	return log, nil
-}
-
-func newServer(es graphql.ExecutableSchema) *handler.Server {
-	srv := handler.New(es)
-	srv.AddTransport(transport.SSE{}) // Support subscriptions
-	srv.AddTransport(transport.Options{})
-	srv.AddTransport(transport.POST{})
-
-	srv.SetQueryCache(lru.New(1000))
-
-	srv.Use(extension.Introspection{})
-	srv.Use(extension.AutomaticPersistedQuery{
-		Cache: lru.New(100),
-	})
-
-	return srv
 }
 
 // getBigQueryClient will return a new BigQuery client for the specified project
