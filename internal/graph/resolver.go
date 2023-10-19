@@ -46,7 +46,7 @@ type Resolver struct {
 	TeamsClient *teams.Client
 	K8s         *k8s.Client
 	Searcher    *search.Searcher
-	Log         *logrus.Logger
+	Log         logrus.FieldLogger
 	Queries     gensql.Querier
 	Clusters    []string
 }

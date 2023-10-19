@@ -18,6 +18,7 @@ import (
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
+	"github.com/nais/console-backend/internal/logger"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -37,7 +38,7 @@ const (
 
 func main() {
 	cfg := config.New()
-	log, err := newLogger(cfg.LogFormat, cfg.LogLevel)
+	log, err := logger.New(cfg.LogFormat, cfg.LogLevel)
 	if err != nil {
 		fmt.Printf("create logger: %s", err)
 		os.Exit(exitCodeLoggerError)
@@ -52,7 +53,7 @@ func main() {
 	os.Exit(exitCodeSuccess)
 }
 
-func run(cfg *config.Config, log *logrus.Logger) error {
+func run(cfg *config.Config, log logrus.FieldLogger) error {
 	ctx := context.Background()
 
 	meter, err := getMetricMeter()
@@ -129,27 +130,6 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	}
 	log.Info("HTTP server finished, terminating...")
 	return nil
-}
-
-func newLogger(logFormat, logLevel string) (*logrus.Logger, error) {
-	log := logrus.StandardLogger()
-
-	switch logFormat {
-	case "json":
-		log.SetFormatter(&logrus.JSONFormatter{})
-	case "text":
-		log.SetFormatter(&logrus.TextFormatter{})
-	default:
-		return nil, fmt.Errorf("invalid log format: %q", logFormat)
-	}
-
-	level, err := logrus.ParseLevel(logLevel)
-	if err != nil {
-		return nil, err
-	}
-
-	log.SetLevel(level)
-	return log, nil
 }
 
 // getBigQueryClient will return a new BigQuery client for the specified project
