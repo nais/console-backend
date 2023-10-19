@@ -19,11 +19,11 @@ import (
 type Client struct {
 	endpoint   string
 	httpClient *httpClient
-	log        *logrus.Entry
+	log        logrus.FieldLogger
 	errors     api.Int64Counter
 }
 
-func New(psk, endpoint string, errors api.Int64Counter, log *logrus.Entry) *Client {
+func New(psk, endpoint string, errors api.Int64Counter, log logrus.FieldLogger) *Client {
 	return &Client{
 		endpoint: endpoint,
 		httpClient: &httpClient{

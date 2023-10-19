@@ -76,11 +76,11 @@ type Client struct {
 	lock       sync.RWMutex
 	teams      []*model.Team
 	updated    time.Time
-	log        *logrus.Entry
+	log        logrus.FieldLogger
 	errors     metric.Int64Counter
 }
 
-func New(token, endpoint string, errors metric.Int64Counter, log *logrus.Entry) *Client {
+func New(token, endpoint string, errors metric.Int64Counter, log logrus.FieldLogger) *Client {
 	return &Client{
 		endpoint: endpoint,
 		httpClient: &httpClient{
