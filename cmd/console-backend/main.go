@@ -73,10 +73,7 @@ func run(cfg *config.Config, log logrus.FieldLogger) error {
 	}
 	defer closer()
 
-	err = runCostUpdater(ctx, querier, cfg, log)
-	if err != nil {
-		log.WithError(err).Error("unable to setup and run cost updater. You might need to run `gcloud auth --update-adc` if running locally")
-	}
+	go runCostUpdater(ctx, querier, cfg, log)
 
 	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
@@ -164,65 +161,62 @@ func getUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config,
 }
 
 // runCostUpdater will create an instance of the cost updater, and update the costs on a schedule
-func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config, log logrus.FieldLogger) error {
+func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config, log logrus.FieldLogger) {
 	updater, err := getUpdater(ctx, querier, cfg, log)
 	if err != nil {
-		return err
+		log.WithError(err).Error("unable to setup and run cost updater. You might need to run `gcloud auth --update-adc` if running locally")
 	}
 
-	go func() {
-		ticker := time.NewTicker(1 * time.Second) // initial run
-		defer ticker.Stop()
+	ticker := time.NewTicker(1 * time.Second) // initial run
+	defer ticker.Stop()
 
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				func() {
-					ticker.Reset(costUpdateSchedule) // regular schedule
-					log.Debugf("start scheduled cost update run")
-					start := time.Now()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			func() {
+				ticker.Reset(costUpdateSchedule) // regular schedule
+				log.Debugf("start scheduled cost update run")
+				start := time.Now()
 
-					if shouldUpdate, err := updater.ShouldUpdateCosts(ctx); err != nil {
-						log.WithError(err).Errorf("unable to check if costs should be updated")
-						return
-					} else if !shouldUpdate {
-						log.Debugf("no need to update costs yet")
-						return
-					}
+				if shouldUpdate, err := updater.ShouldUpdateCosts(ctx); err != nil {
+					log.WithError(err).Errorf("unable to check if costs should be updated")
+					return
+				} else if !shouldUpdate {
+					log.Debugf("no need to update costs yet")
+					return
+				}
 
-					ctx, cancel := context.WithTimeout(ctx, costUpdateSchedule-5*time.Minute)
-					defer cancel()
+				ctx, cancel := context.WithTimeout(ctx, costUpdateSchedule-5*time.Minute)
+				defer cancel()
 
-					done := make(chan bool)
-					defer close(done)
+				done := make(chan bool)
+				defer close(done)
 
-					ch := make(chan gensql.CostUpsertParams, cost.UpsertBatchSize*2)
+				ch := make(chan gensql.CostUpsertParams, cost.UpsertBatchSize*2)
 
-					go func() {
-						err := updater.UpdateCosts(ctx, ch)
-						if err != nil {
-							log.WithError(err).Errorf("failed to update costs")
-						}
-						done <- true
-					}()
-
-					err = updater.FetchBigQueryData(ctx, ch)
+				go func() {
+					err := updater.UpdateCosts(ctx, ch)
 					if err != nil {
-						log.WithError(err).Errorf("failed to fetch bigquery data")
+						log.WithError(err).Errorf("failed to update costs")
 					}
-					close(ch)
-					<-done
-
-					log.WithFields(logrus.Fields{
-						"duration": time.Since(start),
-					}).Infof("cost update run finished")
+					done <- true
 				}()
-			}
+
+				err = updater.FetchBigQueryData(ctx, ch)
+				if err != nil {
+					log.WithError(err).Errorf("failed to fetch bigquery data")
+				}
+				close(ch)
+				<-done
+
+				log.WithFields(logrus.Fields{
+					"duration": time.Since(start),
+				}).Infof("cost update run finished")
+			}()
 		}
-	}()
-	return nil
+	}
 }
 
 // getMetricMeter will return a new metric meter that uses a Prometheus exporter
