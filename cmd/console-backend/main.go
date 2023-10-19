@@ -29,6 +29,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/exporters/prometheus"
+	met "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
 )
 
@@ -59,12 +60,10 @@ func main() {
 func run(cfg *config.Config, log *logrus.Logger) error {
 	ctx := context.Background()
 
-	exporter, err := prometheus.New()
+	meter, err := getMetricMeter()
 	if err != nil {
-		return fmt.Errorf("create prometheus exporter: %w", err)
+		return fmt.Errorf("create metric meter: %w", err)
 	}
-	provider := metric.NewMeterProvider(metric.WithReader(exporter))
-	meter := provider.Meter("github.com/nais/console-backend")
 
 	errorsCounter, err := meter.Int64Counter("errors")
 	if err != nil {
@@ -269,4 +268,15 @@ func updateCosts(ctx context.Context, querier gensql.Querier, cfg *config.Config
 		}
 	}()
 	return nil
+}
+
+// getMetricMeter will return a new metric meter that uses a Prometheus exporter
+func getMetricMeter() (met.Meter, error) {
+	exporter, err := prometheus.New()
+	if err != nil {
+		return nil, fmt.Errorf("create prometheus exporter: %w", err)
+	}
+
+	provider := metric.NewMeterProvider(metric.WithReader(exporter))
+	return provider.Meter("github.com/nais/console-backend"), nil
 }
