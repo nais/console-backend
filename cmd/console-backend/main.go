@@ -77,7 +77,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	}
 	defer closer()
 
-	err = updateCosts(ctx, querier, cfg, log)
+	err = runCostUpdater(ctx, querier, cfg, log)
 	if err != nil {
 		log.WithError(err).Error("unable to setup and run cost updater. You might need to run `gcloud auth --update-adc` if running locally")
 	}
@@ -207,8 +207,8 @@ func getUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config,
 	), nil
 }
 
-// updateCosts will create an instance of the cost updater, and update the costs on a schedule
-func updateCosts(ctx context.Context, querier gensql.Querier, cfg *config.Config, log logrus.FieldLogger) error {
+// runCostUpdater will create an instance of the cost updater, and update the costs on a schedule
+func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config, log logrus.FieldLogger) error {
 	updater, err := getUpdater(ctx, querier, cfg, log)
 	if err != nil {
 		return err
