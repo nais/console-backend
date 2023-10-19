@@ -13,7 +13,6 @@ type Config struct {
 	Audience                 string
 	BindHost                 string
 	DBConnectionDSN          string
-	CostDataDaysToFetch      int
 	FieldSelector            string
 	HookdEndpoint            string
 	HookdPSK                 string
@@ -32,10 +31,6 @@ type Config struct {
 
 func New() *Config {
 	cfg := &Config{}
-	costDataDaysToFetch, err := strconv.Atoi(envOrDefault("COST_DATA_DAYS_TO_FETCH", "5"))
-	if err != nil {
-		costDataDaysToFetch = 5
-	}
 
 	costDataReimport, err := strconv.ParseBool(os.Getenv("COST_DATA_REIMPORT"))
 	if err != nil {
@@ -46,7 +41,6 @@ func New() *Config {
 	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
 	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
 	flag.StringVar(&cfg.DBConnectionDSN, "db-connection-dsn", envOrDefault("CONSOLE_DATABASE_URL", "postgres://postgres:postgres@127.0.0.1:5432/console?sslmode=disable"), "database connection DSN")
-	flag.IntVar(&cfg.CostDataDaysToFetch, "cost-data-days-to-fetch", costDataDaysToFetch, "Number of days to fetch when updating cost data")
 	flag.StringVar(&cfg.TeamsEndpoint, "teams-endpoint", envOrDefault("TEAMS_ENDPOINT", "http://teams-backend/query"), "Teams endpoint")
 	flag.StringVar(&cfg.TeamsToken, "teams-token", envOrDefault("TEAMS_TOKEN", "secret-admin-api-key"), "Teams token")
 	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd"), "Hookd endpoint")

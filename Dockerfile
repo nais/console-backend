@@ -1,11 +1,11 @@
 ARG GO_VERSION=1.21
 FROM golang:${GO_VERSION}-alpine as builder
-RUN apk add --no-cache make
 WORKDIR /src
 COPY go.* /src/
 RUN go mod download
 COPY . /src
-RUN make linux-binary
+RUN go build -o bin/console-backend ./cmd/console-backend/main.go
+
 
 FROM gcr.io/distroless/base
 WORKDIR /app

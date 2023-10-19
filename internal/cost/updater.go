@@ -14,47 +14,191 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+const (
+	UpsertBatchSize = 100000
+	daysToFetch     = 5
+	reimport        = false
+)
+
+// bigQueryCostTableRow is a struct that represents a row in the BigQuery table
+type bigQueryCostTableRow struct {
+	Env      bigquery.NullString `bigquery:"env"`
+	Team     bigquery.NullString `bigquery:"team"`
+	App      bigquery.NullString `bigquery:"app"`
+	CostType string              `bigquery:"cost_type"`
+	Date     civil.Date          `bigquery:"date"`
+	Cost     float32             `bigquery:"cost"`
+}
+
+// Updater is the cost updater struct
 type Updater struct {
-	log           logrus.FieldLogger
-	queries       gensql.Querier
-	client        *bigquery.Client
-	bigQueryTable string
-	daysToFetch   int
-	reimport      bool
+	log             logrus.FieldLogger
+	querier         gensql.Querier
+	bigQueryClient  *bigquery.Client
+	bigQueryTable   string
+	daysToFetch     int
+	reimport        bool
+	upsertBatchSize int
+}
+
+// Option is a function that can be used to set custom options for the cost updater
+type Option func(*Updater)
+
+// WithBigQueryTable will set a custom BigQuery table to fetch data from
+func WithBigQueryTable(table string) Option {
+	return func(u *Updater) {
+		u.bigQueryTable = table
+	}
+}
+
+// WithReimport will set a custom BigQuery table to fetch data from
+func WithReimport(reimport bool) Option {
+	return func(u *Updater) {
+		u.reimport = reimport
+	}
+}
+
+// WithDaysToFetch will set a custom number of days to fetch from BigQuery
+func WithDaysToFetch(daysToFetch int) Option {
+	return func(u *Updater) {
+		u.daysToFetch = daysToFetch
+	}
 }
 
 // NewCostUpdater creates a new cost updater
-func NewCostUpdater(ctx context.Context, queries gensql.Querier, projectID, tenantName string, daysToFetch int, reimport bool, log logrus.FieldLogger) (*Updater, error) {
-	client, err := bigquery.NewClient(ctx, projectID)
-	if err != nil {
-		return nil, err
+func NewCostUpdater(bigQueryClient *bigquery.Client, querier gensql.Querier, tenantName string, log logrus.FieldLogger, opts ...Option) *Updater {
+	updater := &Updater{
+		querier:         querier,
+		bigQueryClient:  bigQueryClient,
+		log:             log,
+		bigQueryTable:   "nais-io.console.cost_" + tenantName,
+		daysToFetch:     daysToFetch,
+		reimport:        reimport,
+		upsertBatchSize: UpsertBatchSize,
 	}
 
-	client.Location = "EU"
+	for _, opt := range opts {
+		opt(updater)
+	}
 
-	return &Updater{
-		queries:       queries,
-		client:        client,
-		log:           log,
-		bigQueryTable: "nais-io.console.cost_" + tenantName,
-		daysToFetch:   daysToFetch,
-		reimport:      reimport,
-	}, nil
+	return updater
 }
 
-// Run will update the costs
-func (c *Updater) Run(ctx context.Context, schedule time.Duration) {
-	ticker := time.NewTicker(schedule)
+// ShouldUpdateCosts returns true if costs should be updated, false otherwise
+func (c *Updater) ShouldUpdateCosts(ctx context.Context) (bool, error) {
+	lastDate, err := c.querier.LastCostDate(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if lastDate.Time.Day() == time.Now().Day() {
+		// already have todays date in the costs, no need for another update
+		return false, nil
+	}
+
+	if time.Now().Hour() < 5 {
+		// no need for updating costs until after 05:00 ¯\_(ツ)_/¯
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// FetchBigQueryData fetches cost data from BigQuery and sends it to the provided channel
+func (c *Updater) FetchBigQueryData(ctx context.Context, ch chan<- gensql.CostUpsertParams) error {
+	start := time.Now()
+	numRows := 0
+	it, err := c.getBigQueryIterator(ctx)
+	if err != nil {
+		return err
+	}
+
+	var row bigQueryCostTableRow
 	for {
-		if err := c.updateCosts(ctx); err != nil {
-			c.log.WithError(err).Error("failed to update costs")
+		if err := it.Next(&row); err != nil {
+			if errors.Is(err, iterator.Done) {
+				break
+			}
+
+			if errors.Is(err, context.Canceled) {
+				return err
+			}
+
+			continue
 		}
+
+		numRows++
+
 		select {
 		case <-ctx.Done():
-			return
-		case <-ticker.C:
+			return ctx.Err()
+		case ch <- gensql.CostUpsertParams{
+			Env:       nullToStringPointer(row.Env),
+			Team:      nullToStringPointer(row.Team),
+			App:       row.App.StringVal,
+			CostType:  row.CostType,
+			Date:      pgtype.Date{Time: row.Date.In(time.UTC), Valid: true},
+			DailyCost: row.Cost,
+		}:
+			// entry sent to the channel
 		}
 	}
+
+	c.log.WithFields(logrus.Fields{
+		"duration": time.Since(start),
+		"num_rows": numRows,
+	}).Infof("done fetching data from BigQuery")
+	return nil
+}
+
+// UpdateCosts will update the cost data in the database based on data from the provided channel
+func (c *Updater) UpdateCosts(ctx context.Context, ch <-chan gensql.CostUpsertParams) error {
+	var numUpserted, numErrors int
+	start := time.Now()
+
+	for {
+		batch, err := c.getBatch(ctx, ch)
+		if err != nil {
+			return err
+		}
+
+		if len(batch) == 0 {
+			break
+		}
+
+		batchUpserts, batchErrors := c.upsertBatch(ctx, batch)
+		numUpserted += batchUpserts
+		numErrors += batchErrors
+	}
+
+	c.log.WithFields(logrus.Fields{
+		"duration":   time.Since(start),
+		"num_rows":   numUpserted - numErrors,
+		"num_errors": numErrors,
+	}).Infof("cost data has been updated")
+	return nil
+}
+
+// upsertBatch will upsert a batch of cost data
+func (c *Updater) upsertBatch(ctx context.Context, batch []gensql.CostUpsertParams) (upserted, errors int) {
+	if len(batch) == 0 {
+		return
+	}
+
+	start := time.Now()
+	c.querier.CostUpsert(ctx, batch).Exec(func(i int, err error) {
+		if err != nil {
+			errors++
+		}
+	})
+
+	upserted += len(batch) - errors
+	c.log.WithFields(logrus.Fields{
+		"duration":   time.Since(start),
+		"num_rows":   upserted,
+		"num_errors": errors,
+	}).Debugf("upserted batch")
+	return
 }
 
 // getDayIntervalForBigQuerySql returns the number of days to fetch for the SQL query. When doing a reimport, we want to
@@ -67,94 +211,36 @@ func (c *Updater) getDayIntervalForBigQuerySql() int {
 	return c.daysToFetch
 }
 
-// updateCosts will insert the latest cost data into the database
-// it will only do so if the current date is newer than the latest date in the database +1 day
-// and the time is after 05:00
-func (c *Updater) updateCosts(ctx context.Context) error {
-	lastDate, err := c.queries.LastCostDate(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Only run if the latest date recorded isn't today, and the time is after 05:00
-	if lastDate.Time.Day()+1 == time.Now().Day() && time.Now().Hour() < 5 {
-		return nil
-	}
-
+// getBigQueryIterator will return an iterator for the resultset of the cost query
+func (c *Updater) getBigQueryIterator(ctx context.Context) (*bigquery.RowIterator, error) {
 	sql := fmt.Sprintf(
 		"SELECT * FROM `%s` WHERE `date` >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL %d DAY)",
 		c.bigQueryTable,
 		c.getDayIntervalForBigQuerySql(),
 	)
+
 	c.log.WithField("query", sql).Debugf("fetch data from bigquery")
-	query := c.client.Query(sql)
-	it, err := query.Read(ctx)
-	if err != nil {
-		return err
-	}
+	return c.bigQueryClient.Query(sql).Read(ctx)
+}
 
-	type Row struct {
-		Env      bigquery.NullString `bigquery:"env"`
-		Team     bigquery.NullString `bigquery:"team"`
-		App      bigquery.NullString `bigquery:"app"`
-		CostType string              `bigquery:"cost_type"`
-		Date     civil.Date          `bigquery:"date"`
-		Cost     float32             `bigquery:"cost"`
-	}
-
-	c.log.Debugf("collect cost data")
-	rows := make([]gensql.CostUpsertParams, 0)
-	start := time.Now()
+// getBatch will return a batch of rows from the provided channel
+func (c *Updater) getBatch(ctx context.Context, ch <-chan gensql.CostUpsertParams) ([]gensql.CostUpsertParams, error) {
+	batch := make([]gensql.CostUpsertParams, 0)
 	for {
-		var r Row
-		if err := it.Next(&r); err != nil {
-			if errors.Is(err, iterator.Done) {
-				break
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case row, more := <-ch:
+			if !more {
+				return batch, nil
 			}
 
-			if errors.Is(err, context.Canceled) {
-				return err
+			batch = append(batch, row)
+			if len(batch) == c.upsertBatchSize {
+				return batch, nil
 			}
-
-			c.log.WithError(err).Error("failed to read row")
-			continue
-		}
-
-		rows = append(rows, gensql.CostUpsertParams{
-			Env:       nullToStringPointer(r.Env),
-			Team:      nullToStringPointer(r.Team),
-			App:       r.App.StringVal,
-			CostType:  r.CostType,
-			Date:      pgtype.Date{Time: r.Date.In(time.UTC), Valid: true},
-			DailyCost: r.Cost,
-		})
-	}
-	c.log.
-		WithField("duration", time.Since(start).String()).
-		WithField("rows", len(rows)).
-		Info("collected data")
-
-	start = time.Now()
-	c.log.Debugf("start upserting cost data")
-	if c.reimport {
-		c.log.Debugf("truncate existing data (reimport set to true)")
-		if err := c.queries.TruncateCostTable(ctx); err != nil {
-			return err
 		}
 	}
-
-	c.queries.CostUpsert(ctx, rows).Exec(func(i int, err error) {
-		if err != nil {
-			c.log.WithError(err).Errorf("failed to upsert cost: index %v", i)
-		}
-	})
-
-	c.log.
-		WithField("duration", time.Since(start).String()).
-		WithField("num_inserts", len(rows)).
-		Info("updated cost data")
-
-	return nil
 }
 
 // nullToStringPointer converts a bigquery.NullString to a *string
