@@ -71,14 +71,13 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 	}
 
 	log.Info("connecting to database")
-	pool, err := database.NewDB(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
+	querier, closer, err := database.NewQuerier(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
 	if err != nil {
 		return fmt.Errorf("setting up database: %w", err)
 	}
-	defer pool.Close()
-	queries := gensql.New(pool)
+	defer closer()
 
-	err = updateCosts(ctx, queries, cfg, log)
+	err = updateCosts(ctx, querier, cfg, log)
 	if err != nil {
 		log.WithError(err).Error("unable to setup and run cost updater. You might need to run `gcloud auth --update-adc` if running locally")
 	}
@@ -100,7 +99,7 @@ func run(cfg *config.Config, log *logrus.Logger) error {
 			K8s:         k8sClient,
 			Searcher:    searcher,
 			Log:         log,
-			Queries:     queries,
+			Queries:     querier,
 			Clusters:    cfg.KubernetesClusters,
 		},
 	}

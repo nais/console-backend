@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -17,16 +18,17 @@ var embedMigrations embed.FS
 
 const databaseConnectRetries = 5
 
-// NewDB runs migrations and returns a new database connection
-func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*pgxpool.Pool, error) {
+// NewQuerier connects to the database, runs migrations and returns a querier instance. The caller must call the
+// returned closer function when the database connection is no longer needed
+func NewQuerier(ctx context.Context, dsn string, log *logrus.Entry) (querier gensql.Querier, closer func(), err error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse dsn config: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse dsn config: %w", err)
 	}
 
 	conn, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		return nil, nil, fmt.Errorf("failed to connect: %w", err)
 	}
 
 	connected := false
@@ -41,14 +43,14 @@ func NewDB(ctx context.Context, dsn string, log *logrus.Entry) (*pgxpool.Pool, e
 	}
 
 	if !connected {
-		return nil, fmt.Errorf("giving up connecting to the database after %d attempts: %w", databaseConnectRetries, err)
+		return nil, nil, fmt.Errorf("giving up connecting to the database after %d attempts: %w", databaseConnectRetries, err)
 	}
 
 	if err = migrateDatabaseSchema("pgx", dsn, log); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return conn, nil
+	return gensql.New(conn), conn.Close, nil
 }
 
 // migrateDatabaseSchema runs database migrations
