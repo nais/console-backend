@@ -110,7 +110,7 @@ func TestUpdater_FetchBigQueryData(t *testing.T) {
 func TestUpdater_ShouldUpdateCosts(t *testing.T) {
 	ctx := context.Background()
 	logger, _ := logrustest.NewNullLogger()
-	bigQueryClient, err := bigquery.NewClient(ctx, projectID)
+	bigQueryClient, err := bigquery.NewClient(ctx, projectID, option.WithoutAuthentication())
 	assert.NoError(t, err)
 
 	t.Run("error when fetching last date", func(t *testing.T) {
