@@ -31,6 +31,16 @@ type TeamMembership struct {
 	Team Team `json:"team"`
 }
 
+type ReconcilerState struct {
+	GcpProjects []GcpProject `json:"gcpProjects"`
+}
+
+type GcpProject struct {
+	ProjectID   string `json:"projectId"`
+	ProjectName string `json:"projectName"`
+	Environment string `json:"environment"`
+}
+
 type Team struct {
 	Slug                string               `json:"slug"`
 	Purpose             string               `json:"purpose"`
@@ -38,6 +48,7 @@ type Team struct {
 	GitHubRepositories  []GitHubRepository   `json:"gitHubRepositories"`
 	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
 	Members             []Member             `json:"members"`
+	ReconcilerState     ReconcilerState      `json:"reconcilerState"`
 }
 
 type GitHubRepository struct {
@@ -196,6 +207,13 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 			slackAlertsChannels {
 				channelName
 				environment
+			}
+			reconcilerState {
+				gcpProjects {
+					projectId
+					projectName
+					environment
+				}
 			}
 		}
 	}`
@@ -392,6 +410,17 @@ func toModelTeams(teams []Team) []*model.Team {
 				}
 				return models
 			}(team.SlackAlertsChannels),
+			GcpProjects: func(projects []GcpProject) []model.GcpProject {
+				models := make([]model.GcpProject, 0)
+				for _, project := range projects {
+					models = append(models, model.GcpProject{
+						ID:          project.ProjectID,
+						Name:        project.ProjectName,
+						Environment: project.Environment,
+					})
+				}
+				return models
+			}(team.ReconcilerState.GcpProjects),
 		})
 	}
 	return models

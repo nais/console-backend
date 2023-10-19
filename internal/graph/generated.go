@@ -291,6 +291,12 @@ type ComplexityRoot struct {
 		Value func(childComplexity int) int
 	}
 
+	GcpProject struct {
+		Environment func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+	}
+
 	GithubRepository struct {
 		Name func(childComplexity int) int
 	}
@@ -585,6 +591,7 @@ type ComplexityRoot struct {
 		DeployKey           func(childComplexity int) int
 		Deployments         func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) int
 		Description         func(childComplexity int) int
+		GcpProjects         func(childComplexity int) int
 		GithubRepositories  func(childComplexity int, first *int, after *model.Cursor) int
 		ID                  func(childComplexity int) int
 		Members             func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
@@ -1613,6 +1620,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Flag.Value(childComplexity), true
+
+	case "GcpProject.environment":
+		if e.complexity.GcpProject.Environment == nil {
+			break
+		}
+
+		return e.complexity.GcpProject.Environment(childComplexity), true
+
+	case "GcpProject.id":
+		if e.complexity.GcpProject.ID == nil {
+			break
+		}
+
+		return e.complexity.GcpProject.ID(childComplexity), true
+
+	case "GcpProject.name":
+		if e.complexity.GcpProject.Name == nil {
+			break
+		}
+
+		return e.complexity.GcpProject.Name(childComplexity), true
 
 	case "GithubRepository.name":
 		if e.complexity.GithubRepository.Name == nil {
@@ -2836,6 +2864,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Team.Description(childComplexity), true
+
+	case "Team.gcpProjects":
+		if e.complexity.Team.GcpProjects == nil {
+			break
+		}
+
+		return e.complexity.Team.GcpProjects(childComplexity), true
 
 	case "Team.githubRepositories":
 		if e.complexity.Team.GithubRepositories == nil {
@@ -4944,6 +4979,8 @@ func (ec *executionContext) fieldContext_App_team(ctx context.Context, field gra
 				return ec.fieldContext_Team_slackChannel(ctx, field)
 			case "slackAlertsChannels":
 				return ec.fieldContext_Team_slackAlertsChannels(ctx, field)
+			case "gcpProjects":
+				return ec.fieldContext_Team_gcpProjects(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
 			case "deployKey":
@@ -7464,6 +7501,8 @@ func (ec *executionContext) fieldContext_Deployment_team(ctx context.Context, fi
 				return ec.fieldContext_Team_slackChannel(ctx, field)
 			case "slackAlertsChannels":
 				return ec.fieldContext_Team_slackAlertsChannels(ctx, field)
+			case "gcpProjects":
+				return ec.fieldContext_Team_gcpProjects(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
 			case "deployKey":
@@ -9873,6 +9912,138 @@ func (ec *executionContext) _Flag_value(ctx context.Context, field graphql.Colle
 func (ec *executionContext) fieldContext_Flag_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Flag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GcpProject_id(ctx context.Context, field graphql.CollectedField, obj *model.GcpProject) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GcpProject_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GcpProject_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GcpProject",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GcpProject_name(ctx context.Context, field graphql.CollectedField, obj *model.GcpProject) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GcpProject_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GcpProject_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GcpProject",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GcpProject_environment(ctx context.Context, field graphql.CollectedField, obj *model.GcpProject) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GcpProject_environment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Environment, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GcpProject_environment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GcpProject",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13150,6 +13321,8 @@ func (ec *executionContext) fieldContext_NaisJob_team(ctx context.Context, field
 				return ec.fieldContext_Team_slackChannel(ctx, field)
 			case "slackAlertsChannels":
 				return ec.fieldContext_Team_slackAlertsChannels(ctx, field)
+			case "gcpProjects":
+				return ec.fieldContext_Team_gcpProjects(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
 			case "deployKey":
@@ -15295,6 +15468,8 @@ func (ec *executionContext) fieldContext_Query_team(ctx context.Context, field g
 				return ec.fieldContext_Team_slackChannel(ctx, field)
 			case "slackAlertsChannels":
 				return ec.fieldContext_Team_slackAlertsChannels(ctx, field)
+			case "gcpProjects":
+				return ec.fieldContext_Team_gcpProjects(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
 			case "deployKey":
@@ -18139,6 +18314,58 @@ func (ec *executionContext) fieldContext_Team_slackAlertsChannels(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Team_gcpProjects(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Team_gcpProjects(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GcpProjects, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.GcpProject)
+	fc.Result = res
+	return ec.marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Team_gcpProjects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Team",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_GcpProject_id(ctx, field)
+			case "name":
+				return ec.fieldContext_GcpProject_name(ctx, field)
+			case "environment":
+				return ec.fieldContext_GcpProject_environment(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GcpProject", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Team_deployments(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Team_deployments(ctx, field)
 	if err != nil {
@@ -18597,6 +18824,8 @@ func (ec *executionContext) fieldContext_TeamEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_Team_slackChannel(ctx, field)
 			case "slackAlertsChannels":
 				return ec.fieldContext_Team_slackAlertsChannels(ctx, field)
+			case "gcpProjects":
+				return ec.fieldContext_Team_gcpProjects(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
 			case "deployKey":
@@ -23797,6 +24026,55 @@ func (ec *executionContext) _Flag(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var gcpProjectImplementors = []string{"GcpProject"}
+
+func (ec *executionContext) _GcpProject(ctx context.Context, sel ast.SelectionSet, obj *model.GcpProject) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, gcpProjectImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GcpProject")
+		case "id":
+			out.Values[i] = ec._GcpProject_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._GcpProject_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "environment":
+			out.Values[i] = ec._GcpProject_environment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var githubRepositoryImplementors = []string{"GithubRepository"}
 
 func (ec *executionContext) _GithubRepository(ctx context.Context, sel ast.SelectionSet, obj *model.GithubRepository) graphql.Marshaler {
@@ -26539,6 +26817,11 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Team_slackChannel(ctx, field, obj)
 		case "slackAlertsChannels":
 			out.Values[i] = ec._Team_slackAlertsChannels(ctx, field, obj)
+		case "gcpProjects":
+			out.Values[i] = ec._Team_gcpProjects(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "deployments":
 			field := field
 
@@ -28611,6 +28894,54 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 		}
 	}
 	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) marshalNGcpProject2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx context.Context, sel ast.SelectionSet, v model.GcpProject) graphql.Marshaler {
+	return ec._GcpProject(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []model.GcpProject) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGcpProject2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNGithubRepository2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepository(ctx context.Context, sel ast.SelectionSet, v *model.GithubRepository) graphql.Marshaler {

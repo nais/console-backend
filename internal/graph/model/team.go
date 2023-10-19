@@ -6,6 +6,7 @@ type Team struct {
 	Description         string               `json:"description,omitempty"`
 	SlackChannel        string               `json:"slackChannel"`
 	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
+	GcpProjects         []GcpProject         `json:"gcpProject"`
 }
 
 func (Team) IsSearchNode()  {}

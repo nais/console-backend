@@ -341,6 +341,16 @@ type Flag struct {
 	Value string `json:"value"`
 }
 
+// GCP project type.
+type GcpProject struct {
+	// The unique identifier of the GCP project.
+	ID string `json:"id"`
+	// The name of the GCP project.
+	Name string `json:"name"`
+	// The environment for the GCP project.
+	Environment string `json:"environment"`
+}
+
 // GitHub repository type.
 type GithubRepository struct {
 	// The name of the GitHub repository.
