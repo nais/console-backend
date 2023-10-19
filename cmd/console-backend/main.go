@@ -216,54 +216,57 @@ func updateCosts(ctx context.Context, querier gensql.Querier, cfg *config.Config
 		return err
 	}
 
-	ticker := time.NewTicker(1 * time.Second) // initial run
-	defer ticker.Stop()
+	go func() {
+		ticker := time.NewTicker(1 * time.Second) // initial run
+		defer ticker.Stop()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C:
-			func() {
-				ticker.Reset(costUpdateSchedule) // regular schedule
-				log.Debugf("start scheduled cost update run")
-				start := time.Now()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				func() {
+					ticker.Reset(costUpdateSchedule) // regular schedule
+					log.Debugf("start scheduled cost update run")
+					start := time.Now()
 
-				if shouldUpdate, err := updater.ShouldUpdateCosts(ctx); err != nil {
-					log.WithError(err).Errorf("unable to check if costs should be updated")
-					return
-				} else if !shouldUpdate {
-					log.Debugf("no need to update costs yet")
-					return
-				}
-
-				ctx, cancel := context.WithTimeout(ctx, costUpdateSchedule-5*time.Minute)
-				defer cancel()
-
-				done := make(chan bool)
-				defer close(done)
-
-				ch := make(chan gensql.CostUpsertParams, cost.UpsertBatchSize*2)
-
-				go func() {
-					err := updater.UpdateCosts(ctx, ch)
-					if err != nil {
-						log.WithError(err).Errorf("failed to update costs")
+					if shouldUpdate, err := updater.ShouldUpdateCosts(ctx); err != nil {
+						log.WithError(err).Errorf("unable to check if costs should be updated")
+						return
+					} else if !shouldUpdate {
+						log.Debugf("no need to update costs yet")
+						return
 					}
-					done <- true
+
+					ctx, cancel := context.WithTimeout(ctx, costUpdateSchedule-5*time.Minute)
+					defer cancel()
+
+					done := make(chan bool)
+					defer close(done)
+
+					ch := make(chan gensql.CostUpsertParams, cost.UpsertBatchSize*2)
+
+					go func() {
+						err := updater.UpdateCosts(ctx, ch)
+						if err != nil {
+							log.WithError(err).Errorf("failed to update costs")
+						}
+						done <- true
+					}()
+
+					err = updater.FetchBigQueryData(ctx, ch)
+					if err != nil {
+						log.WithError(err).Errorf("failed to fetch bigquery data")
+					}
+					close(ch)
+					<-done
+
+					log.WithFields(logrus.Fields{
+						"duration": time.Since(start),
+					}).Infof("cost update run finished")
 				}()
-
-				err = updater.FetchBigQueryData(ctx, ch)
-				if err != nil {
-					log.WithError(err).Errorf("failed to fetch bigquery data")
-				}
-				close(ch)
-				<-done
-
-				log.WithFields(logrus.Fields{
-					"duration": time.Since(start),
-				}).Infof("cost update run finished")
-			}()
+			}
 		}
-	}
+	}()
+	return nil
 }
