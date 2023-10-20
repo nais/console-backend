@@ -75,29 +75,14 @@ func run(cfg *config.Config, log logrus.FieldLogger) error {
 
 	go runCostUpdater(ctx, querier, cfg, log)
 
-	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField("client", "k8s"))
+	k8sClient, teamsBackendClient, hookdClient, err := setupClients(cfg, errorsCounter, log)
 	if err != nil {
-		return fmt.Errorf("create k8s client: %w", err)
+		return fmt.Errorf("setup clients: %w", err)
 	}
-
 	k8sClient.Run(ctx)
-
-	teamsBackendClient := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errorsCounter, log.WithField("client", "teams"))
 	searcher := search.New(teamsBackendClient, k8sClient)
 
-	graphConfig := graph.Config{
-		Resolvers: &graph.Resolver{
-			Hookd:       hookd.New(cfg.HookdPSK, cfg.HookdEndpoint, errorsCounter, log.WithField("client", "hookd")),
-			TeamsClient: teamsBackendClient,
-			K8s:         k8sClient,
-			Searcher:    searcher,
-			Log:         log,
-			Queries:     querier,
-			Clusters:    cfg.KubernetesClusters,
-		},
-	}
-
-	graphHandler, err := graph.NewHandler(graph.NewExecutableSchema(graphConfig), meter)
+	graphHandler, err := graph.NewHandler(hookdClient, teamsBackendClient, k8sClient, searcher, querier, cfg.KubernetesClusters, log, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
 	}
@@ -229,4 +214,18 @@ func getMetricMeter() (met.Meter, error) {
 
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	return provider.Meter("github.com/nais/console-backend"), nil
+}
+
+// setupClients will create and return the clients used by the application
+func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, *hookd.Client, error) {
+	loggerFieldKey := "client"
+	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("create k8s client: %w", err)
+	}
+
+	teamsClient := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errorsCounter, log.WithField(loggerFieldKey, "teams"))
+	hookdClient := hookd.New(cfg.HookdPSK, cfg.HookdEndpoint, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
+
+	return k8sClient, teamsClient, hookdClient, nil
 }

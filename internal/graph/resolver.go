@@ -3,7 +3,6 @@ package graph
 import (
 	"fmt"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -21,14 +20,36 @@ import (
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
+type Resolver struct {
+	Hookd       *hookd.Client
+	TeamsClient *teams.Client
+	K8s         *k8s.Client
+	Searcher    *search.Searcher
+	Log         logrus.FieldLogger
+	Queries     gensql.Querier
+	Clusters    []string
+}
+
 // NewHandler creates and returns a new GraphQL handler with the given schema
-func NewHandler(es graphql.ExecutableSchema, meter metric.Meter) (*handler.Server, error) {
+func NewHandler(hookdClient *hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, searcher *search.Searcher, querier gensql.Querier, clusters []string, log logrus.FieldLogger, meter metric.Meter) (*handler.Server, error) {
 	metricsMiddleware, err := NewMetrics(meter)
 	if err != nil {
 		return nil, fmt.Errorf("create metrics middleware: %w", err)
 	}
 
-	graphHandler := handler.New(es)
+	config := Config{
+		Resolvers: &Resolver{
+			Hookd:       hookdClient,
+			TeamsClient: teamsClient,
+			K8s:         k8sClient,
+			Searcher:    searcher,
+			Log:         log,
+			Queries:     querier,
+			Clusters:    clusters,
+		},
+	}
+	schema := NewExecutableSchema(config)
+	graphHandler := handler.New(schema)
 	graphHandler.Use(metricsMiddleware)
 	graphHandler.AddTransport(transport.SSE{}) // Support subscriptions
 	graphHandler.AddTransport(transport.Options{})
@@ -39,14 +60,4 @@ func NewHandler(es graphql.ExecutableSchema, meter metric.Meter) (*handler.Serve
 		Cache: lru.New(100),
 	})
 	return graphHandler, nil
-}
-
-type Resolver struct {
-	Hookd       *hookd.Client
-	TeamsClient *teams.Client
-	K8s         *k8s.Client
-	Searcher    *search.Searcher
-	Log         logrus.FieldLogger
-	Queries     gensql.Querier
-	Clusters    []string
 }
