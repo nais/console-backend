@@ -11,7 +11,11 @@ type StaticCluster struct {
 	Token string
 }
 
-func (c *StaticCluster) Decode(value string) error {
+func (c *StaticCluster) EnvDecode(value string) error {
+	if value == "" {
+		return nil
+	}
+
 	parts := strings.Split(value, "|")
 	if len(parts) != 3 {
 		return fmt.Errorf(`invalid static cluster entry: %q. Must be on format "name|host|token"`, value)

@@ -23,6 +23,7 @@ import (
 	"github.com/nais/console-backend/internal/teams"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
+	"github.com/sethvargo/go-envconfig"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	met "go.opentelemetry.io/otel/metric"
@@ -41,7 +42,8 @@ const (
 )
 
 func main() {
-	cfg, err := config.New()
+	ctx := context.Background()
+	cfg, err := config.New(ctx, envconfig.OsLookuper())
 	if err != nil {
 		fmt.Printf("error when processing configuration: %s", err)
 		os.Exit(exitCodeConfigError)
@@ -53,7 +55,7 @@ func main() {
 		os.Exit(exitCodeLoggerError)
 	}
 
-	err = run(cfg, log)
+	err = run(ctx, cfg, log)
 	if err != nil {
 		log.WithError(err).Errorf("error in run()")
 		os.Exit(exitCodeRunError)
@@ -62,9 +64,7 @@ func main() {
 	os.Exit(exitCodeSuccess)
 }
 
-func run(cfg *config.Config, log logrus.FieldLogger) error {
-	ctx := context.Background()
-
+func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error {
 	meter, err := getMetricMeter()
 	if err != nil {
 		return fmt.Errorf("create metric meter: %w", err)
