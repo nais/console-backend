@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/search"
 	kafka_nais_io_v1 "github.com/nais/liberator/pkg/apis/kafka.nais.io/v1"
@@ -48,34 +49,33 @@ type Informers struct {
 	EventInformer   corev1inf.EventInformer
 }
 
-func New(clusters, static []string, tenant, fieldSelector string, errors metric.Int64Counter, log *logrus.Entry) (*Client, error) {
-	restConfigs, err := CreateClusterConfigMap(clusters, static, tenant)
+func New(cfg config.K8S, errors metric.Int64Counter, log *logrus.Entry) (*Client, error) {
+	restConfigs, err := CreateClusterConfigMap(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
 	}
 
 	infs := map[string]*Informers{}
 	clientSets := map[string]*kubernetes.Clientset{}
-	for cluster, cfg := range restConfigs {
-		cfg := cfg
+	for cluster, restConfig := range restConfigs {
 		infs[cluster] = &Informers{}
 
-		clientSet, err := kubernetes.NewForConfig(&cfg)
+		clientSet, err := kubernetes.NewForConfig(&restConfig)
 		if err != nil {
 			return nil, fmt.Errorf("create clientset: %w", err)
 		}
 
-		dynamicClient, err := dynamic.NewForConfig(&cfg)
+		dynamicClient, err := dynamic.NewForConfig(&restConfig)
 		if err != nil {
 			return nil, fmt.Errorf("create dynamic client: %w", err)
 		}
 
 		log.Debug("creating informers")
 		dinf := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, 4*time.Hour, "", func(options *metav1.ListOptions) {
-			options.FieldSelector = fieldSelector
+			options.FieldSelector = cfg.FieldSelector
 		})
 		inf := informers.NewSharedInformerFactoryWithOptions(clientSet, 4*time.Hour, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-			options.FieldSelector = fieldSelector
+			options.FieldSelector = cfg.FieldSelector
 		}))
 
 		infs[cluster].PodInformer = inf.Core().V1().Pods()

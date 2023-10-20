@@ -52,7 +52,7 @@ spec:
               value: "{{ .Values.audience }}"
             - name: TENANT
               value: "{{ .Values.fasit.tenant.name }}"
-            - name: FIELD_SELECTOR
+            - name: KUBERNETES_FIELD_SELECTOR
               value: "{{ .Values.fieldSelector }}"
             - name: CONSOLE_DATABASE_URL
               value: "postgres://{{ .Values.database.user }}@127.0.0.1:5432/{{ .Values.database.name }}?sslmode=disable"

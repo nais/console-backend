@@ -1,74 +1,74 @@
 package config
 
 import (
-	"os"
-	"strconv"
-	"strings"
+	"fmt"
 
-	"cloud.google.com/go/bigquery"
-	flag "github.com/spf13/pflag"
+	"github.com/kelseyhightower/envconfig"
 )
 
+// Cost is the configuration for the cost service
+type Cost struct {
+	Reimport          bool   `envconfig:"COST_DATA_REIMPORT" default:"false"`
+	BigQueryProjectID string `envconfig:"BIGQUERY_PROJECTID" default:"*detect-project-id*"`
+	Tenant            string `envconfig:"TENANT" default:"dev-nais"`
+}
+
+// Hookd is the configuration for the hookd service
+type Hookd struct {
+	Endpoint string `envconfig:"HOOKD_ENDPOINT" default:"http://hookd"`
+	PSK      string `envconfig:"HOOKD_PSK" default:"secret-frontend-psk"`
+}
+
+// K8S is the configuration related to Kubernetes
+type K8S struct {
+	Clusters       []string        `envconfig:"KUBERNETES_CLUSTERS"`
+	FieldSelector  string          `envconfig:"KUBERNETES_FIELD_SELECTOR"`
+	StaticClusters []StaticCluster `envconfig:"KUBERNETES_CLUSTERS_STATIC"`
+	Tenant         string          `envconfig:"TENANT" default:"dev-nais"`
+}
+
+// Logger is the configuration for the logger
+type Logger struct {
+	Format string `envconfig:"LOG_FORMAT" default:"json"`
+	Level  string `envconfig:"LOG_LEVEL" default:"info"`
+}
+
+// Teams is the configuration for the teams backend service
+type Teams struct {
+	Endpoint string `envconfig:"TEAMS_ENDPOINT" default:"http://teams-backend/query"`
+	Token    string `envconfig:"TEAMS_TOKEN" default:"secret-admin-api-key"`
+}
+
+// Config is the configuration for the console-backend application
 type Config struct {
-	Audience                 string
-	BindHost                 string
-	DBConnectionDSN          string
-	FieldSelector            string
-	HookdEndpoint            string
-	HookdPSK                 string
-	LogFormat                string
-	LogLevel                 string
-	Port                     string
-	RunAsUser                string
-	TeamsEndpoint            string
-	TeamsToken               string
-	Tenant                   string
-	KubernetesClusters       []string
-	KubernetesClustersStatic []string
-	CostDataReimport         bool
-	BigQueryProjectID        string
+	Cost   Cost
+	Hookd  Hookd
+	K8S    K8S
+	Logger Logger
+	Teams  Teams
+
+	// IapAudience is the audience for the IAP JWT token. Will not be used when RUN_AS_USER is set
+	IapAudience string `envconfig:"IAP_AUDIENCE"`
+
+	// DatabaseConnectionString is the database DSN
+	DatabaseConnectionString string `envconfig:"CONSOLE_DATABASE_URL" default:"postgres://postgres:postgres@127.0.0.1:5432/console?sslmode=disable"`
+
+	// ListenAddress is host:port combination used by the http server
+	ListenAddress string `envconfig:"LISTEN_ADDRESS" default:":8080"`
+
+	// RunAsUser is the static user to run as. Used for development purposes. Will override IAP_AUDIENCE when set
+	RunAsUser string `envconfig:"RUN_AS_USER"`
 }
 
-func New() *Config {
+// New creates a new configuration instance from environment variables
+func New() (*Config, error) {
 	cfg := &Config{}
-
-	costDataReimport, err := strconv.ParseBool(os.Getenv("COST_DATA_REIMPORT"))
+	err := envconfig.Process("", cfg)
 	if err != nil {
-		costDataReimport = false
+		return nil, err
 	}
-
-	flag.BoolVar(&cfg.CostDataReimport, "cost-data-reimport", costDataReimport, "Do a complete re-import of all cost data")
-	flag.StringVar(&cfg.Audience, "audience", os.Getenv("IAP_AUDIENCE"), "IAP audience")
-	flag.StringVar(&cfg.BindHost, "bind-host", os.Getenv("BIND_HOST"), "Bind host")
-	flag.StringVar(&cfg.DBConnectionDSN, "db-connection-dsn", envOrDefault("CONSOLE_DATABASE_URL", "postgres://postgres:postgres@127.0.0.1:5432/console?sslmode=disable"), "database connection DSN")
-	flag.StringVar(&cfg.TeamsEndpoint, "teams-endpoint", envOrDefault("TEAMS_ENDPOINT", "http://teams-backend/query"), "Teams endpoint")
-	flag.StringVar(&cfg.TeamsToken, "teams-token", envOrDefault("TEAMS_TOKEN", "secret-admin-api-key"), "Teams token")
-	flag.StringVar(&cfg.HookdEndpoint, "hookd-endpoint", envOrDefault("HOOKD_ENDPOINT", "http://hookd"), "Hookd endpoint")
-	flag.StringVar(&cfg.HookdPSK, "hookd-psk", envOrDefault("HOOKD_PSK", "secret-frontend-psk"), "Hookd PSK")
-	flag.StringVar(&cfg.LogFormat, "log-format", "json", "which log format to use")
-	flag.StringVar(&cfg.LogLevel, "log-level", "info", "which log level to output")
-	flag.StringVar(&cfg.Port, "port", envOrDefault("PORT", "8080"), "Port to listen on")
-	flag.StringVar(&cfg.Tenant, "tenant", envOrDefault("TENANT", "dev-nais"), "Which tenant we are running in")
-	flag.StringVar(&cfg.BigQueryProjectID, "bigquery-project-id", envOrDefault("BIGQUERY_PROJECTID", bigquery.DetectProjectID), "ID of the project for the BigQuery tables / views")
-	flag.StringVar(&cfg.RunAsUser, "run-as-user", os.Getenv("RUN_AS_USER"), "Statically configured frontend user")
-	flag.StringVar(&cfg.FieldSelector, "field-selector", os.Getenv("FIELD_SELECTOR"), "Field selector for k8s resources")
-	flag.StringSliceVar(&cfg.KubernetesClusters, "kubernetes-clusters", splitEnv("KUBERNETES_CLUSTERS", ","), "Kubernetes clusters to watch (comma separated)")
-	flag.StringSliceVar(&cfg.KubernetesClustersStatic, "kubernetes-clusters-static", splitEnv("KUBERNETES_CLUSTERS_STATIC", ","), "Kubernetes clusters to watch with static credentials (comma separated entries on the format 'name|apiserver-host|token')")
-	flag.Parse()
-
-	return cfg
-}
-
-func envOrDefault(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
+	if cfg.RunAsUser == "" && cfg.IapAudience == "" {
+		return nil, fmt.Errorf("either RUN_AS_USER or IAP_AUDIENCE must be set")
 	}
-	return fallback
-}
-
-func splitEnv(key, sep string) []string {
-	if value, ok := os.LookupEnv(key); ok {
-		return strings.Split(value, sep)
-	}
-	return nil
+	return cfg, nil
 }

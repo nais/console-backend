@@ -9,12 +9,23 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	assert.NoError(t, os.Setenv("TEAMS_ENDPOINT", "http://some/endpoint"))
-	assert.NoError(t, os.Setenv("KUBERNETES_CLUSTERS", "cluster1,cluster2"))
-	cfg := config.New()
-	assert.Equal(t, "http://some/endpoint", cfg.TeamsEndpoint)
-	assert.Equal(t, "secret-admin-api-key", cfg.TeamsToken)
-	assert.Equal(t, "cluster1", cfg.KubernetesClusters[0])
-	assert.Equal(t, "cluster2", cfg.KubernetesClusters[1])
-	assert.Empty(t, cfg.KubernetesClustersStatic)
+	t.Run("missing required environment variables", func(t *testing.T) {
+		cfg, err := config.New()
+		assert.Nil(t, cfg)
+		assert.ErrorContains(t, err, "either RUN_AS_USER or IAP_AUDIENCE must be set")
+	})
+
+	t.Run("incorrect format for static k8s cluster", func(t *testing.T) {
+		assert.NoError(t, os.Setenv("KUBERNETES_CLUSTERS_STATIC", "foobar"))
+		cfg, err := config.New()
+		assert.Nil(t, cfg)
+		assert.ErrorContains(t, err, `invalid static cluster entry: "foobar"`)
+	})
+
+	t.Run("process config", func(t *testing.T) {
+		assert.NoError(t, os.Setenv("RUN_AS_USER", "some-user"))
+		cfg, err := config.New()
+		assert.Equal(t, "some-user", cfg.RunAsUser)
+		assert.NoError(t, err)
+	})
 }

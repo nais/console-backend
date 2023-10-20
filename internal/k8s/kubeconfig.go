@@ -2,27 +2,27 @@ package k8s
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/nais/console-backend/internal/config"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type ClusterConfigMap map[string]rest.Config
 
-func CreateClusterConfigMap(clusters, static []string, tenant string) (ClusterConfigMap, error) {
+func CreateClusterConfigMap(cfg config.K8S) (ClusterConfigMap, error) {
 	configs := ClusterConfigMap{}
 
-	for _, cluster := range clusters {
+	for _, cluster := range cfg.Clusters {
 		configs[cluster] = rest.Config{
-			Host: fmt.Sprintf("https://apiserver.%s.%s.cloud.nais.io", cluster, tenant),
+			Host: fmt.Sprintf("https://apiserver.%s.%s.cloud.nais.io", cluster, cfg.Tenant),
 			AuthProvider: &api.AuthProviderConfig{
 				Name: googleAuthPlugin,
 			},
 		}
 	}
 
-	staticConfigs, err := getStaticClusterConfigs(static)
+	staticConfigs, err := getStaticClusterConfigs(cfg.StaticClusters)
 	if err != nil {
 		return nil, err
 	}
@@ -34,22 +34,12 @@ func CreateClusterConfigMap(clusters, static []string, tenant string) (ClusterCo
 	return configs, nil
 }
 
-func getStaticClusterConfigs(static []string) (ClusterConfigMap, error) {
+func getStaticClusterConfigs(clusters []config.StaticCluster) (ClusterConfigMap, error) {
 	configs := ClusterConfigMap{}
-
-	for _, entry := range static {
-		parts := strings.Split(entry, "|")
-		if len(parts) != 3 {
-			return nil, fmt.Errorf("invalid static cluster entry: %q. Must be on format 'name|apiserver-host|token'", entry)
-		}
-
-		cluster := parts[0]
-		host := parts[1]
-		token := parts[2]
-
-		configs[cluster] = rest.Config{
-			Host:        host,
-			BearerToken: token,
+	for _, cluster := range clusters {
+		configs[cluster.Name] = rest.Config{
+			Host:        cluster.Host,
+			BearerToken: cluster.Token,
 			TLSClientConfig: rest.TLSClientConfig{
 				Insecure: true,
 			},

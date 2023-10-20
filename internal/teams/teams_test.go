@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/teams"
 	"github.com/sirupsen/logrus/hooks/test"
@@ -25,7 +26,7 @@ func TestClient_Search(t *testing.T) {
 		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{})
 		searchType := model.SearchTypeApp
 		results := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			Search(ctx, "query", &model.SearchFilter{Type: &searchType})
 		assert.Nil(t, results)
 	})
@@ -41,7 +42,7 @@ func TestClient_Search(t *testing.T) {
 		})
 		searchType := model.SearchTypeTeam
 		results := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			Search(ctx, "query", &model.SearchFilter{Type: &searchType})
 		assert.NotNil(t, results)
 		assert.Empty(t, results)
@@ -56,7 +57,7 @@ func TestClient_Search(t *testing.T) {
 		})
 		searchType := model.SearchTypeTeam
 		results := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			Search(ctx, "query", &model.SearchFilter{Type: &searchType})
 		assert.NotNil(t, results)
 		assert.Empty(t, results)
@@ -71,7 +72,7 @@ func TestClient_Search(t *testing.T) {
 		})
 		searchType := model.SearchTypeTeam
 		results := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			Search(ctx, "foo", &model.SearchFilter{Type: &searchType})
 		assert.Len(t, results, 3)
 
@@ -98,7 +99,7 @@ func TestClient_GetTeam(t *testing.T) {
 			},
 		})
 		team, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetTeam(ctx, "foobar")
 
 		assert.Nil(t, team)
@@ -113,7 +114,7 @@ func TestClient_GetTeam(t *testing.T) {
 			},
 		})
 		team, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetTeam(ctx, "team-2")
 
 		assert.Equal(t, "team-2", team.Name)
@@ -134,7 +135,7 @@ func TestClient_GetGithubRepositories(t *testing.T) {
 			},
 		})
 		repos, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetGithubRepositories(ctx, "foobar")
 
 		assert.Nil(t, repos)
@@ -149,7 +150,7 @@ func TestClient_GetGithubRepositories(t *testing.T) {
 			},
 		})
 		repos, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetGithubRepositories(ctx, "foobar")
 
 		assert.NoError(t, err)
@@ -164,7 +165,7 @@ func TestClient_GetGithubRepositories(t *testing.T) {
 			},
 		})
 		repos, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetGithubRepositories(ctx, "foobar")
 
 		assert.NoError(t, err)
@@ -186,7 +187,7 @@ func TestClient_GetTeamMembers(t *testing.T) {
 			},
 		})
 		members, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetTeamMembers(ctx, "foobar")
 
 		assert.Nil(t, members)
@@ -201,7 +202,7 @@ func TestClient_GetTeamMembers(t *testing.T) {
 			},
 		})
 		members, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetTeamMembers(ctx, "foobar")
 
 		assert.NoError(t, err)
@@ -216,7 +217,7 @@ func TestClient_GetTeamMembers(t *testing.T) {
 			},
 		})
 		members, err := teams.
-			New(apiToken, teamsBackend.URL, errorsMeter(t), log).
+			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, errorsMeter(t), log).
 			GetTeamMembers(ctx, "foobar")
 
 		assert.NoError(t, err)

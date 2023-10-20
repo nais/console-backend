@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nais/console-backend/internal/config"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	api "go.opentelemetry.io/otel/metric"
@@ -23,12 +24,12 @@ type Client struct {
 	errors     api.Int64Counter
 }
 
-func New(psk, endpoint string, errors api.Int64Counter, log logrus.FieldLogger) *Client {
+func New(cfg config.Hookd, errors api.Int64Counter, log logrus.FieldLogger) *Client {
 	return &Client{
-		endpoint: endpoint,
+		endpoint: cfg.Endpoint,
 		httpClient: &httpClient{
 			client: &http.Client{},
-			psk:    psk,
+			psk:    cfg.PSK,
 		},
 		log:    log,
 		errors: errors,

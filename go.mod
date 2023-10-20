@@ -7,10 +7,10 @@ require (
 	github.com/99designs/gqlgen v0.17.39
 	github.com/google/uuid v1.3.1
 	github.com/jackc/pgx/v5 v5.4.3
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/nais/liberator v0.0.0-20230928105142-02d598bc50cb
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/pflag v1.0.5
 	github.com/sqlc-dev/sqlc v1.22.0
 	github.com/stretchr/testify v1.8.4
 	github.com/vektah/gqlparser/v2 v2.5.10
@@ -86,6 +86,7 @@ require (
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.16.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect

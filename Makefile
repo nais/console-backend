@@ -31,13 +31,30 @@ portforward-teams:
 	kubectl port-forward -n nais-system --context nav-management-v2 svc/teams-backend 8181:80
 
 local-nav:
-	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 --decode)" \
+	HOOKD_ENDPOINT="http://localhost:8282" \
 	HOOKD_PSK="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \
+	KUBERNETES_CLUSTERS="dev-gcp,prod-gcp" \
 	KUBERNETES_CLUSTERS_STATIC="dev-fss|apiserver.dev-fss.nais.io|$(shell kubectl get secret --context dev-fss --namespace nais-system console-backend -ojsonpath='{ .data.token }' | base64 --decode)" \
-	go run ./cmd/console-backend/main.go --bind-host 127.0.0.1 --port 4242 --kubernetes-clusters "dev-gcp,prod-gcp" --run-as-user johnny.horvi@nav.no --teams-endpoint="http://localhost:8181/query" --hookd-endpoint="http://localhost:8282" --tenant="nav" --field-selector "metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny,metadata.namespace!=nais"
+	KUBERNETES_FIELD_SELECTOR="metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny,metadata.namespace!=nais" \
+	LISTEN_ADDRESS=":4242" \
+	LOG_FORMAT="text" \
+	LOG_LEVEL="debug" \
+	RUN_AS_USER="johnny.horvi@nav.no" \
+	TEAMS_ENDPOINT="http://localhost:8181/query" \
+	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 --decode)" \
+	TENANT="nav" \
+	go run ./cmd/console-backend/main.go
 
 local:
-	go run ./cmd/console-backend/main.go --bind-host 127.0.0.1 --port 4242 --kubernetes-clusters "ci,dev" --run-as-user devuser@console.no --teams-endpoint="http://teams.local.nais.io/query" --hookd-endpoint="http://hookd.local.nais.io" --field-selector "metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny"
+	HOOKD_ENDPOINT="http://hookd.local.nais.io" \
+	KUBERNETES_CLUSTERS="ci,dev" \
+	KUBERNETES_FIELD_SELECTOR="metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny" \
+	LISTEN_ADDRESS=":4242" \
+	LOG_FORMAT="text" \
+	LOG_LEVEL="debug" \
+	RUN_AS_USER="devuser@console.no" \
+	TEAMS_ENDPOINT="http://teams.local.nais.io/query" \
+	go run ./cmd/console-backend/main.go
 
 test:
 	go test ./... -v

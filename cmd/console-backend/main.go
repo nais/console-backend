@@ -30,17 +30,26 @@ import (
 )
 
 const (
-	costUpdateSchedule  = 1 * time.Hour
-	exitCodeSuccess     = 0
-	exitCodeLoggerError = 1
-	exitCodeRunError    = 2
+	exitCodeSuccess = iota
+	exitCodeLoggerError
+	exitCodeRunError
+	exitCodeConfigError
+)
+
+const (
+	costUpdateSchedule = 1 * time.Hour
 )
 
 func main() {
-	cfg := config.New()
-	log, err := logger.New(cfg.LogFormat, cfg.LogLevel)
+	cfg, err := config.New()
 	if err != nil {
-		fmt.Printf("create logger: %s", err)
+		fmt.Printf("error when processing configuration: %s", err)
+		os.Exit(exitCodeConfigError)
+	}
+
+	log, err := logger.New(cfg.Logger)
+	if err != nil {
+		fmt.Printf("error when creating logger: %s", err)
 		os.Exit(exitCodeLoggerError)
 	}
 
@@ -67,13 +76,13 @@ func run(cfg *config.Config, log logrus.FieldLogger) error {
 	}
 
 	log.Info("connecting to database")
-	querier, closer, err := database.NewQuerier(ctx, cfg.DBConnectionDSN, log.WithField("subsystem", "database"))
+	querier, closer, err := database.NewQuerier(ctx, cfg.DatabaseConnectionString, log.WithField("subsystem", "database"))
 	if err != nil {
 		return fmt.Errorf("setting up database: %w", err)
 	}
 	defer closer()
 
-	go runCostUpdater(ctx, querier, cfg, log)
+	go runCostUpdater(ctx, querier, cfg.Cost, log)
 
 	k8sClient, teamsBackendClient, hookdClient, err := setupClients(cfg, errorsCounter, log)
 	if err != nil {
@@ -82,7 +91,7 @@ func run(cfg *config.Config, log logrus.FieldLogger) error {
 	k8sClient.Run(ctx)
 	searcher := search.New(teamsBackendClient, k8sClient)
 
-	graphHandler, err := graph.NewHandler(hookdClient, teamsBackendClient, k8sClient, searcher, querier, cfg.KubernetesClusters, log, meter)
+	graphHandler, err := graph.NewHandler(hookdClient, teamsBackendClient, k8sClient, searcher, querier, cfg.K8S.Clusters, log, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
 	}
@@ -92,21 +101,21 @@ func run(cfg *config.Config, log logrus.FieldLogger) error {
 			AllowedOrigins:   []string{"https://*", "http://*"},
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowCredentials: true,
-			Debug:            cfg.LogLevel == "debug",
+			Debug:            cfg.Logger.Level == "debug",
 		})
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	if cfg.RunAsUser != "" && cfg.Audience == "" {
+	if cfg.RunAsUser != "" {
 		log.Infof("Running as user %s", cfg.RunAsUser)
 		http.Handle("/query", corsMW.Handler(auth.StaticUser(cfg.RunAsUser, graphHandler)))
 	} else {
-		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.Audience, graphHandler)))
+		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.IapAudience, graphHandler)))
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	log.Printf("connect to http://%s:%s/ for GraphQL playground", cfg.BindHost, cfg.Port)
-	err = http.ListenAndServe(cfg.BindHost+":"+cfg.Port, nil)
+	log.Printf("GraphQL playground listening on %q", cfg.ListenAddress)
+	err = http.ListenAndServe(cfg.ListenAddress, nil)
 	if !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
@@ -125,14 +134,14 @@ func getBigQueryClient(ctx context.Context, projectID string) (*bigquery.Client,
 }
 
 // getBigQueryClient will return a new cost updater instance
-func getUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config, log logrus.FieldLogger) (*cost.Updater, error) {
+func getUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) (*cost.Updater, error) {
 	bigQueryClient, err := getBigQueryClient(ctx, cfg.BigQueryProjectID)
 	if err != nil {
 		return nil, err
 	}
 
 	opts := make([]cost.Option, 0)
-	if cfg.CostDataReimport {
+	if cfg.Reimport {
 		opts = append(opts, cost.WithReimport(true))
 	}
 
@@ -147,10 +156,11 @@ func getUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config,
 
 // runCostUpdater will create an instance of the cost updater, and update the costs on a schedule. This function will
 // block until the context is cancelled, so it should be run in a goroutine.
-func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config, log logrus.FieldLogger) {
+func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) {
 	updater, err := getUpdater(ctx, querier, cfg, log)
 	if err != nil {
 		log.WithError(err).Error("unable to setup and run cost updater. You might need to run `gcloud auth --update-adc` if running locally")
+		return
 	}
 
 	ticker := time.NewTicker(1 * time.Second) // initial run
@@ -219,13 +229,13 @@ func getMetricMeter() (met.Meter, error) {
 // setupClients will create and return the clients used by the application
 func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, *hookd.Client, error) {
 	loggerFieldKey := "client"
-	k8sClient, err := k8s.New(cfg.KubernetesClusters, cfg.KubernetesClustersStatic, cfg.Tenant, cfg.FieldSelector, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
+	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create k8s client: %w", err)
 	}
 
-	teamsClient := teams.New(cfg.TeamsToken, cfg.TeamsEndpoint, errorsCounter, log.WithField(loggerFieldKey, "teams"))
-	hookdClient := hookd.New(cfg.HookdPSK, cfg.HookdEndpoint, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
+	teamsClient := teams.New(cfg.Teams, errorsCounter, log.WithField(loggerFieldKey, "teams"))
+	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
 
 	return k8sClient, teamsClient, hookdClient, nil
 }

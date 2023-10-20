@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/sirupsen/logrus"
@@ -80,12 +81,12 @@ type Client struct {
 	errors     metric.Int64Counter
 }
 
-func New(token, endpoint string, errors metric.Int64Counter, log logrus.FieldLogger) *Client {
+func New(cfg config.Teams, errors metric.Int64Counter, log logrus.FieldLogger) *Client {
 	return &Client{
-		endpoint: endpoint,
+		endpoint: cfg.Endpoint,
 		httpClient: &httpClient{
 			client:   &http.Client{},
-			apiToken: token,
+			apiToken: cfg.Token,
 		},
 		log:    log,
 		errors: errors,
