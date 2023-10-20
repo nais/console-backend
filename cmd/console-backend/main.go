@@ -160,7 +160,8 @@ func getUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config,
 	), nil
 }
 
-// runCostUpdater will create an instance of the cost updater, and update the costs on a schedule
+// runCostUpdater will create an instance of the cost updater, and update the costs on a schedule. This function will
+// block until the context is cancelled, so it should be run in a goroutine.
 func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Config, log logrus.FieldLogger) {
 	updater, err := getUpdater(ctx, querier, cfg, log)
 	if err != nil {
