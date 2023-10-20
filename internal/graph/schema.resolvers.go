@@ -31,13 +31,13 @@ func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, er
 func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, error) {
 	switch id.Type {
 	case model.IdentTypeTeam:
-		t, err := r.TeamsClient.GetTeam(ctx, id.ID)
+		t, err := r.teamsClient.GetTeam(ctx, id.ID)
 		if err != nil {
 			return nil, fmt.Errorf("getting team from Teams: %w", err)
 		}
 		return t, nil
 	case model.IdentTypeUser:
-		u, err := r.TeamsClient.GetUserByID(ctx, id.ID)
+		u, err := r.teamsClient.GetUserByID(ctx, id.ID)
 		if err != nil {
 			return nil, fmt.Errorf("getting user from Teams: %w", err)
 		}

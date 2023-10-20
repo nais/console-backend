@@ -12,7 +12,7 @@ import (
 
 // Search is the resolver for the search field.
 func (r *queryResolver) Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error) {
-	results := r.Searcher.Search(ctx, query, filter)
+	results := r.searcher.Search(ctx, query, filter)
 	pagination, err := model.NewPagination(first, last, after, before)
 	if err != nil {
 		return nil, err

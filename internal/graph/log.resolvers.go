@@ -26,7 +26,7 @@ func (r *subscriptionResolver) Log(ctx context.Context, input *model.LogSubscrip
 		return nil, fmt.Errorf("must specify either app or job")
 	}
 
-	return r.K8s.LogStream(ctx, input.Env, input.Team, selector, container, input.Instances)
+	return r.k8sClient.LogStream(ctx, input.Env, input.Team, selector, container, input.Instances)
 }
 
 // Subscription returns SubscriptionResolver implementation.

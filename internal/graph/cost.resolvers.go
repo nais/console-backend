@@ -20,7 +20,7 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 		return nil, err
 	}
 
-	rows, err := r.Queries.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
+	rows, err := r.querier.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
 		App:      app,
 		Team:     &team,
 		Env:      &env,
@@ -58,7 +58,7 @@ func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from 
 		return nil, err
 	}
 
-	rows, err := r.Queries.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
+	rows, err := r.querier.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
 		Team:     &team,
 		FromDate: from.PgDate(),
 		ToDate:   to.PgDate(),
@@ -91,7 +91,7 @@ func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from 
 // MonthlyCost is the resolver for the monthlyCost field.
 func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error) {
 	if filter.App != "" && filter.Env != "" && filter.Team != "" {
-		rows, err := r.Queries.MonthlyCostForApp(ctx, gensql.MonthlyCostForAppParams{
+		rows, err := r.querier.MonthlyCostForApp(ctx, gensql.MonthlyCostForAppParams{
 			Team: &filter.Team,
 			App:  filter.App,
 			Env:  &filter.Env,
@@ -115,7 +115,7 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 			Cost: cost,
 		}, nil
 	} else if filter.App == "" && filter.Env == "" && filter.Team != "" {
-		rows, err := r.Queries.MonthlyCostForTeam(ctx, &filter.Team)
+		rows, err := r.querier.MonthlyCostForTeam(ctx, &filter.Team)
 		if err != nil {
 			return nil, err
 		}
@@ -145,10 +145,10 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 		return nil, err
 	}
 
-	ret := make([]*model.EnvCost, len(r.Clusters))
-	for idx, cluster := range r.Clusters {
+	ret := make([]*model.EnvCost, len(r.clusters))
+	for idx, cluster := range r.clusters {
 		appsCost := make([]*model.AppCost, 0)
-		rows, err := r.Queries.DailyEnvCostForTeam(ctx, gensql.DailyEnvCostForTeamParams{
+		rows, err := r.querier.DailyEnvCostForTeam(ctx, gensql.DailyEnvCostForTeamParams{
 			Team:     &filter.Team,
 			Env:      &cluster,
 			FromDate: filter.From.PgDate(),

@@ -18,7 +18,7 @@ func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, 
 	if limit != nil {
 		l = *limit
 	}
-	deploys, err := r.Hookd.Deployments(ctx, hookd.WithLimit(l), hookd.WithIgnoreTeams("nais-verification"))
+	deploys, err := r.hookdClient.Deployments(ctx, hookd.WithLimit(l), hookd.WithIgnoreTeams("nais-verification"))
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}

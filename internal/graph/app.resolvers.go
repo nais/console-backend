@@ -13,7 +13,7 @@ import (
 
 // Instances is the resolver for the instances field.
 func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error) {
-	instances, err := r.K8s.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
+	instances, err := r.k8sClient.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting instances from Kubernetes: %w", err)
 	}
@@ -23,7 +23,7 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 
 // Manifest is the resolver for the manifest field.
 func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, error) {
-	app, err := r.K8s.Manifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
+	app, err := r.k8sClient.Manifest(ctx, obj.Name, obj.GQLVars.Team, obj.Env.Name)
 	if err != nil {
 		return "", fmt.Errorf("getting app manifest from Kubernetes: %w", err)
 	}
@@ -32,12 +32,12 @@ func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, err
 
 // Team is the resolver for the team field.
 func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, error) {
-	return r.TeamsClient.GetTeam(ctx, obj.GQLVars.Team)
+	return r.teamsClient.GetTeam(ctx, obj.GQLVars.Team)
 }
 
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
-	app, err := r.K8s.App(ctx, name, team, env)
+	app, err := r.k8sClient.App(ctx, name, team, env)
 	if err != nil {
 		return nil, fmt.Errorf("getting app from Kubernetes: %w", err)
 	}

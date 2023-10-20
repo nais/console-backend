@@ -21,13 +21,13 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Hookd       *hookd.Client
-	TeamsClient *teams.Client
-	K8s         *k8s.Client
-	Searcher    *search.Searcher
-	Log         logrus.FieldLogger
-	Queries     gensql.Querier
-	Clusters    []string
+	hookdClient *hookd.Client
+	teamsClient *teams.Client
+	k8sClient   *k8s.Client
+	searcher    *search.Searcher
+	log         logrus.FieldLogger
+	querier     gensql.Querier
+	clusters    []string
 }
 
 // NewHandler creates and returns a new GraphQL handler with the given schema
@@ -39,13 +39,13 @@ func NewHandler(hookdClient *hookd.Client, teamsClient *teams.Client, k8sClient 
 
 	config := Config{
 		Resolvers: &Resolver{
-			Hookd:       hookdClient,
-			TeamsClient: teamsClient,
-			K8s:         k8sClient,
-			Searcher:    searcher,
-			Log:         log,
-			Queries:     querier,
-			Clusters:    clusters,
+			hookdClient: hookdClient,
+			teamsClient: teamsClient,
+			k8sClient:   k8sClient,
+			searcher:    searcher,
+			log:         log,
+			querier:     querier,
+			clusters:    clusters,
 		},
 	}
 	schema := NewExecutableSchema(config)

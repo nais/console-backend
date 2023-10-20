@@ -20,7 +20,7 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 		return nil, fmt.Errorf("access denied")
 	}
 
-	deployKey, err := r.Hookd.ChangeDeployKey(ctx, team)
+	deployKey, err := r.hookdClient.ChangeDeployKey(ctx, team)
 	if err != nil {
 		return nil, fmt.Errorf("changing deploy key in Hookd: %w", err)
 	}
@@ -34,7 +34,7 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error) {
-	teams, err := r.TeamsClient.GetTeams(ctx)
+	teams, err := r.teamsClient.GetTeams(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
@@ -74,7 +74,7 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 
 // Team is the resolver for the team field.
 func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
-	team, err := r.TeamsClient.GetTeam(ctx, name)
+	team, err := r.teamsClient.GetTeam(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("getting team from Teams: %w", err)
 	}
@@ -84,7 +84,7 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 
 // Members is the resolver for the members field.
 func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamMemberConnection, error) {
-	members, err := r.TeamsClient.GetTeamMembers(ctx, obj.Name)
+	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting members from Teams: %w", err)
 	}
@@ -124,7 +124,7 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 
 // Apps is the resolver for the apps field.
 func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.AppConnection, error) {
-	apps, err := r.K8s.Apps(ctx, obj.Name)
+	apps, err := r.k8sClient.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
@@ -164,7 +164,7 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 
 // Naisjobs is the resolver for the naisjobs field.
 func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.NaisJobConnection, error) {
-	naisjobs, err := r.K8s.NaisJobs(ctx, obj.Name)
+	naisjobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
 	}
@@ -212,7 +212,7 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 		after = &model.Cursor{Offset: 0}
 	}
 
-	repos, err := r.TeamsClient.GetGithubRepositories(ctx, obj.Name)
+	repos, err := r.teamsClient.GetGithubRepositories(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
@@ -249,7 +249,7 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 		*limit = 10
 	}
 
-	deploys, err := r.Hookd.Deployments(ctx, hookd.WithTeam(obj.Name), hookd.WithLimit(*limit))
+	deploys, err := r.hookdClient.Deployments(ctx, hookd.WithTeam(obj.Name), hookd.WithLimit(*limit))
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
@@ -293,7 +293,7 @@ func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.D
 		return nil, fmt.Errorf("access denied")
 	}
 
-	key, err := r.Hookd.DeployKey(ctx, obj.Name)
+	key, err := r.hookdClient.DeployKey(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting deploy key from Hookd: %w", err)
 	}
@@ -313,7 +313,7 @@ func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (boo
 		return false, fmt.Errorf("getting email from context: %w", err)
 	}
 
-	members, err := r.TeamsClient.GetTeamMembers(ctx, obj.Name)
+	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
 	if err != nil {
 		return false, fmt.Errorf("getting teams from Teams: %w", err)
 	}
@@ -336,7 +336,7 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 		return false, fmt.Errorf("getting email from context: %w", err)
 	}
 
-	members, err := r.TeamsClient.GetTeamMembers(ctx, obj.Name)
+	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
 	if err != nil {
 		return false, fmt.Errorf("getting members from Teams: %w", err)
 	}
