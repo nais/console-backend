@@ -197,7 +197,7 @@ func (c *Updater) upsertBatch(ctx context.Context, batch []gensql.CostUpsertPara
 		"duration":   time.Since(start),
 		"num_rows":   upserted,
 		"num_errors": errors,
-	}).Debugf("upserted batch")
+	}).Infof("upserted batch")
 	return
 }
 
@@ -219,7 +219,7 @@ func (c *Updater) getBigQueryIterator(ctx context.Context) (*bigquery.RowIterato
 		c.getDayIntervalForBigQuerySql(),
 	)
 
-	c.log.WithField("query", sql).Debugf("fetch data from bigquery")
+	c.log.WithField("query", sql).Infof("fetch data from bigquery")
 	return c.bigQueryClient.Query(sql).Read(ctx)
 }
 

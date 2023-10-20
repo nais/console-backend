@@ -163,14 +163,14 @@ func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg *config.Con
 		case <-ticker.C:
 			func() {
 				ticker.Reset(costUpdateSchedule) // regular schedule
-				log.Debugf("start scheduled cost update run")
+				log.Infof("start scheduled cost update run")
 				start := time.Now()
 
 				if shouldUpdate, err := updater.ShouldUpdateCosts(ctx); err != nil {
 					log.WithError(err).Errorf("unable to check if costs should be updated")
 					return
 				} else if !shouldUpdate {
-					log.Debugf("no need to update costs yet")
+					log.Infof("no need to update costs yet")
 					return
 				}
 
