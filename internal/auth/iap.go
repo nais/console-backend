@@ -54,6 +54,7 @@ func ValidateIAPJWT(aud string) Middleware {
 	}
 }
 
+// GetEmail returns the email address of the authenticated user that is stored in the context
 func GetEmail(ctx context.Context) (string, error) {
 	email, ok := ctx.Value(contextEmail).(string)
 	if !ok || email == "" {
