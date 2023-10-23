@@ -36,7 +36,7 @@ import (
 type Client struct {
 	informers  map[string]*Informers
 	clientSets map[string]*kubernetes.Clientset
-	log        *logrus.Entry
+	log        logrus.FieldLogger
 	errors     metric.Int64Counter
 }
 
@@ -49,7 +49,7 @@ type Informers struct {
 	EventInformer   corev1inf.EventInformer
 }
 
-func New(cfg config.K8S, errors metric.Int64Counter, log *logrus.Entry) (*Client, error) {
+func New(cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*Client, error) {
 	restConfigs, err := CreateClusterConfigMap(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)

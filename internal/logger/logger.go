@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bombsimon/logrusr/v4"
 	"github.com/nais/console-backend/internal/config"
 	"github.com/sirupsen/logrus"
+	"k8s.io/klog/v2"
 )
 
 // New creates a new logger with the given format and level
@@ -27,5 +29,12 @@ func New(cfg config.Logger) (logrus.FieldLogger, error) {
 	}
 
 	log.SetLevel(level)
+
+	// set an internal logger for klog (used by k8s client-go)
+	klogLogger := logrus.New()
+	klogLogger.SetLevel(logrus.WarnLevel)
+	klogLogger.SetFormatter(log.Formatter)
+	klog.SetLogger(logrusr.New(klogLogger))
+
 	return log, nil
 }
