@@ -17,28 +17,30 @@ const (
 
 func TestStaticUser(t *testing.T) {
 	ctx := context.Background()
+	mw := auth.StaticUser(user)
 
 	t.Run("static user", func(t *testing.T) {
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			emailFromContext, err := auth.GetEmail(r.Context())
 			assert.Equal(t, user, emailFromContext)
 			assert.NoError(t, err)
 		})
-		auth.StaticUser(user, handler).ServeHTTP(httptest.NewRecorder(), getRequest(t, ctx))
+		mw(next).ServeHTTP(httptest.NewRecorder(), getRequest(t, ctx))
 	})
 }
 
 func TestValidateIAPJWT(t *testing.T) {
 	ctx := context.Background()
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Fail(t, "should not be executed")
 	})
+	mw := auth.ValidateIAPJWT(aud)
 
 	t.Run("invalid JWT token", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		req := getRequest(t, ctx)
 		req.Header.Set("X-Goog-IAP-JWT-Assertion", "invalid JWT token")
-		auth.ValidateIAPJWT(aud, handler).ServeHTTP(recorder, req)
+		mw(next).ServeHTTP(recorder, req)
 		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 		assert.Contains(t, recorder.Body.String(), "Invalid JWT token")
 	})
@@ -50,7 +52,7 @@ func TestValidateIAPJWT(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		req := getRequest(t, ctx)
 		req.Header.Set("X-Goog-IAP-JWT-Assertion", jwtWithIncorrectAudience)
-		auth.ValidateIAPJWT(aud, handler).ServeHTTP(recorder, req)
+		mw(next).ServeHTTP(recorder, req)
 		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 		assert.Contains(t, recorder.Body.String(), "Invalid JWT token")
 	})

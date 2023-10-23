@@ -6,7 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/go-chi/chi/v5"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -65,6 +70,9 @@ func main() {
 }
 
 func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	meter, err := getMetricMeter()
 	if err != nil {
 		return fmt.Errorf("create metric meter: %w", err)
@@ -82,8 +90,6 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	}
 	defer closer()
 
-	go runCostUpdater(ctx, querier, cfg.Cost, log)
-
 	k8sClient, teamsBackendClient, hookdClient, err := setupClients(cfg, errorsCounter, log)
 	if err != nil {
 		return fmt.Errorf("setup clients: %w", err)
@@ -96,31 +102,70 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		return fmt.Errorf("create graph handler: %w", err)
 	}
 
-	corsMW := cors.New(
-		cors.Options{
-			AllowedOrigins:   []string{"https://*", "http://*"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowCredentials: true,
-			Debug:            cfg.Logger.Level == "debug",
-		})
+	go func() {
+		defer cancel()
+		err = runCostUpdater(ctx, querier, cfg.Cost, log)
+		if err != nil {
+			log.WithError(err).Errorf("error in cost updater")
+		}
+	}()
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	go func() {
+		defer cancel()
+		srv := getHttpServer(cfg, graphHandler)
+		err = srv.ListenAndServe()
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.WithError(err).Infof("unexpected error from HTTP server")
+		}
+		log.Infof("HTTP server finished, terminating...")
+	}()
+
+	signals := make(chan os.Signal, 1)
+	defer close(signals)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		defer cancel()
+		sig := <-signals
+		log.Infof("received signal %s, terminating...", sig)
+	}()
+
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+// getHttpServer will return a new HTTP server with the specified configuration
+func getHttpServer(cfg *config.Config, graphHandler *handler.Server) *http.Server {
+	router := chi.NewRouter()
+	router.Handle("/metrics", promhttp.Handler())
+	router.Get("/healthz", func(_ http.ResponseWriter, _ *http.Request) {})
+	router.Get("/", playground.Handler("GraphQL playground", "/query"))
+
+	middlewares := []func(http.Handler) http.Handler{
+		cors.New(
+			cors.Options{
+				AllowedOrigins:   []string{"https://*", "http://*"},
+				AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+				AllowCredentials: true,
+				Debug:            cfg.Logger.Level == "debug",
+			},
+		).Handler,
+	}
+
+	authMiddlware := auth.ValidateIAPJWT(cfg.IapAudience)
 	if cfg.RunAsUser != "" {
-		log.Infof("Running as user %s", cfg.RunAsUser)
-		http.Handle("/query", corsMW.Handler(auth.StaticUser(cfg.RunAsUser, graphHandler)))
-	} else {
-		http.Handle("/query", corsMW.Handler(auth.ValidateIAPJWT(cfg.IapAudience, graphHandler)))
+		authMiddlware = auth.StaticUser(cfg.RunAsUser)
 	}
+	middlewares = append(middlewares, authMiddlware)
 
-	http.Handle("/metrics", promhttp.Handler())
+	router.Route("/query", func(r chi.Router) {
+		r.Use(middlewares...)
+		r.Post("/", graphHandler.ServeHTTP)
+	})
 
-	log.Printf("GraphQL playground listening on %q", cfg.ListenAddress)
-	err = http.ListenAndServe(cfg.ListenAddress, nil)
-	if !errors.Is(err, http.ErrServerClosed) {
-		return err
+	return &http.Server{
+		Addr:    cfg.ListenAddress,
+		Handler: router,
 	}
-	log.Info("HTTP server finished, terminating...")
-	return nil
 }
 
 // getBigQueryClient will return a new BigQuery client for the specified project
@@ -156,11 +201,10 @@ func getUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, lo
 
 // runCostUpdater will create an instance of the cost updater, and update the costs on a schedule. This function will
 // block until the context is cancelled, so it should be run in a goroutine.
-func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) {
+func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) error {
 	updater, err := getUpdater(ctx, querier, cfg, log)
 	if err != nil {
-		log.WithError(err).Error("unable to setup and run cost updater. You might need to run `gcloud auth --update-adc` if running locally")
-		return
+		return fmt.Errorf("unable to set up and run cost updater: %w", err)
 	}
 
 	ticker := time.NewTicker(1 * time.Second) // initial run
@@ -169,7 +213,7 @@ func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		case <-ticker.C:
 			func() {
 				ticker.Reset(costUpdateSchedule) // regular schedule
@@ -187,7 +231,7 @@ func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost
 				ctx, cancel := context.WithTimeout(ctx, costUpdateSchedule-5*time.Minute)
 				defer cancel()
 
-				done := make(chan bool)
+				done := make(chan struct{})
 				defer close(done)
 
 				ch := make(chan gensql.CostUpsertParams, cost.UpsertBatchSize*2)
@@ -197,7 +241,7 @@ func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost
 					if err != nil {
 						log.WithError(err).Errorf("failed to update costs")
 					}
-					done <- true
+					done <- struct{}{}
 				}()
 
 				err = updater.FetchBigQueryData(ctx, ch)
