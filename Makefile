@@ -59,8 +59,12 @@ local:
 test:
 	go test ./... -v
 
-check:
+check: staticcheck vulncheck
+
+staticcheck:
 	go run honnef.co/go/tools/cmd/staticcheck ./...
+
+vulncheck:
 	go run golang.org/x/vuln/cmd/govulncheck ./...
 
 fmt:

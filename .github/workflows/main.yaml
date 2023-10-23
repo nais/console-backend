@@ -51,10 +51,11 @@ jobs:
       - name: Push Chart
         run: |-
           helm push ${{ env.NAME }}*.tgz ${{ env.IMAGE_REPOSITORY }}
+
   test:
     needs:
       - go_version
-    name: Run tests and static code analysis
+    name: Run test suite
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -63,12 +64,42 @@ jobs:
           go-version: ${{ needs.go_version.outputs.go_version }}
           check-latest: true
       - run: go mod download
-      - run: make check
       - run: make test
+
+  staticcheck:
+    needs:
+      - go_version
+    name: Run static code analysis
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ needs.go_version.outputs.go_version }}
+          check-latest: true
+      - run: go mod download
+      - run: make staticcheck
+
+  vulncheck:
+    needs:
+      - go_version
+    name: Run vulnerability check
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ needs.go_version.outputs.go_version }}
+          check-latest: true
+      - run: go mod download
+      - run: make vulncheck
+
   rollout:
     needs:
       - build_push
       - test
+      - staticcheck
+      - vulncheck
     runs-on: fasit-deploy
     permissions:
       id-token: write
