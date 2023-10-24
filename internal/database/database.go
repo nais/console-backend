@@ -20,7 +20,7 @@ const databaseConnectRetries = 5
 
 // NewQuerier connects to the database, runs migrations and returns a querier instance. The caller must call the
 // returned closer function when the database connection is no longer needed
-func NewQuerier(ctx context.Context, dsn string, log *logrus.Entry) (querier gensql.Querier, closer func(), err error) {
+func NewQuerier(ctx context.Context, dsn string, log logrus.FieldLogger) (querier gensql.Querier, closer func(), err error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse dsn config: %w", err)
@@ -54,7 +54,7 @@ func NewQuerier(ctx context.Context, dsn string, log *logrus.Entry) (querier gen
 }
 
 // migrateDatabaseSchema runs database migrations
-func migrateDatabaseSchema(driver, dsn string, log *logrus.Entry) error {
+func migrateDatabaseSchema(driver, dsn string, log logrus.FieldLogger) error {
 	goose.SetBaseFS(embedMigrations)
 	goose.SetLogger(log)
 

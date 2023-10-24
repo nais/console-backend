@@ -72,6 +72,10 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	signals := make(chan os.Signal, 1)
+	defer close(signals)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+
 	meter, err := getMetricMeter()
 	if err != nil {
 		return fmt.Errorf("create metric meter: %w", err)
@@ -99,6 +103,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		return fmt.Errorf("create graph handler: %w", err)
 	}
 
+	// k8s informers
 	go func() {
 		stopCh := ctx.Done()
 		for cluster, informer := range k8sClient.Informers() {
@@ -113,6 +118,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		}
 	}()
 
+	// cost updater
 	go func() {
 		defer cancel()
 		err = runCostUpdater(ctx, querier, cfg.Cost, log)
@@ -121,6 +127,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		}
 	}()
 
+	// HTTP server
 	go func() {
 		defer cancel()
 		srv := getHttpServer(cfg, graphHandler)
@@ -131,9 +138,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		log.Infof("HTTP server finished, terminating...")
 	}()
 
-	signals := make(chan os.Signal, 1)
-	defer close(signals)
-	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+	// signal handling
 	go func() {
 		defer cancel()
 		sig := <-signals
