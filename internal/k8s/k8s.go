@@ -1,12 +1,10 @@
 package k8s
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/nais/console-backend/internal/config"
@@ -18,7 +16,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -29,8 +26,6 @@ import (
 	batchv1inf "k8s.io/client-go/informers/batch/v1"
 	corev1inf "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/utils/ptr"
-	"k8s.io/utils/strings/slices"
 )
 
 type Client struct {
@@ -103,117 +98,6 @@ func New(cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*C
 		errors:     errors,
 		clientSets: clientSets,
 	}, nil
-}
-
-func (c *Client) LogStream(ctx context.Context, cluster, namespace, selector, container string, instances []string) (<-chan *model.LogLine, error) {
-	pods, err := c.clientSets[cluster].CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: selector,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	wg := &sync.WaitGroup{}
-	ch := make(chan *model.LogLine, 10)
-	for _, pod := range pods.Items {
-		pod := pod
-		if len(instances) > 0 && !slices.Contains(instances, pod.Name) {
-			continue
-		}
-		wg.Add(1)
-		go func(wg *sync.WaitGroup) {
-			defer wg.Done()
-			logs, err := c.clientSets[cluster].CoreV1().Pods(namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
-				Container:  container,
-				Follow:     true,
-				Timestamps: true,
-				TailLines:  ptr.To[int64](int64(150 / len(pods.Items))),
-			}).Stream(ctx)
-			if err != nil {
-				c.log.Error(err)
-				return
-			}
-			defer logs.Close()
-			sc := bufio.NewScanner(logs)
-
-			for sc.Scan() {
-				line := sc.Text()
-				parts := strings.SplitN(line, " ", 2)
-				if len(parts) != 2 {
-					continue
-				}
-				time, err := time.Parse(time.RFC3339Nano, parts[0])
-				if err != nil {
-					continue
-				}
-
-				t := &model.LogLine{
-					Time:     time,
-					Message:  parts[1],
-					Instance: pod.Name,
-				}
-
-				select {
-				case <-ctx.Done():
-					// Exit on cancellation
-					c.log.Info("closing subscription")
-					return
-
-				case ch <- t:
-					// Our message went through, do nothing
-				}
-
-			}
-
-			c.log.Infof("Logs done, err: %v", sc.Err())
-		}(wg)
-	}
-	go func() {
-		wg.Wait()
-		c.log.Info("closing subscription with explicit message")
-		ch <- &model.LogLine{
-			Time:     time.Now(),
-			Message:  "Subscription closed.",
-			Instance: "console-backend",
-		}
-		close(ch)
-	}()
-	return ch, nil
-}
-
-func (c *Client) Log(ctx context.Context, cluster, namespace, pod, container string, tailLines int64) ([]*model.LogLine, error) {
-	logs, err := c.clientSets[cluster].CoreV1().Pods(namespace).GetLogs(pod, &corev1.PodLogOptions{
-		TailLines:  &tailLines,
-		Container:  container,
-		Follow:     false,
-		Timestamps: true,
-	}).Stream(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer logs.Close()
-
-	sc := bufio.NewScanner(logs)
-
-	ret := []*model.LogLine{}
-
-	for sc.Scan() {
-		line := sc.Text()
-		parts := strings.SplitN(line, " ", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		t, err := time.Parse(time.RFC3339Nano, parts[0])
-		if err != nil {
-			continue
-		}
-		ret = append(ret, &model.LogLine{
-			Time:    t,
-			Message: parts[1],
-		})
-	}
-
-	return ret, nil
 }
 
 func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilter) []*search.Result {
