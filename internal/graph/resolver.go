@@ -31,7 +31,7 @@ type Resolver struct {
 }
 
 // NewHandler creates and returns a new GraphQL handler with the given schema
-func NewHandler(hookdClient *hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, searcher *search.Searcher, querier gensql.Querier, clusters []string, log logrus.FieldLogger, meter metric.Meter) (*handler.Server, error) {
+func NewHandler(hookdClient *hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger, meter metric.Meter) (*handler.Server, error) {
 	metricsMiddleware, err := NewMetrics(meter)
 	if err != nil {
 		return nil, fmt.Errorf("create metrics middleware: %w", err)
@@ -42,7 +42,7 @@ func NewHandler(hookdClient *hookd.Client, teamsClient *teams.Client, k8sClient 
 			hookdClient: hookdClient,
 			teamsClient: teamsClient,
 			k8sClient:   k8sClient,
-			searcher:    searcher,
+			searcher:    search.New(teamsClient, k8sClient),
 			log:         log,
 			querier:     querier,
 			clusters:    clusters,

@@ -24,7 +24,6 @@ import (
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/logger"
-	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -95,9 +94,8 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		return fmt.Errorf("setup clients: %w", err)
 	}
 	k8sClient.Run(ctx)
-	searcher := search.New(teamsBackendClient, k8sClient)
 
-	graphHandler, err := graph.NewHandler(hookdClient, teamsBackendClient, k8sClient, searcher, querier, cfg.K8S.Clusters, log, meter)
+	graphHandler, err := graph.NewHandler(hookdClient, teamsBackendClient, k8sClient, querier, cfg.K8S.Clusters, log, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
 	}
