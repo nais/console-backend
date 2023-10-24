@@ -65,7 +65,7 @@ func New(cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*C
 			return nil, fmt.Errorf("create dynamic client: %w", err)
 		}
 
-		log.Debug("creating informers")
+		log.WithField("cluster", cluster).Debug("creating informers")
 		dinf := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, 4*time.Hour, "", func(options *metav1.ListOptions) {
 			options.FieldSelector = cfg.FieldSelector
 		})
@@ -164,17 +164,9 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 	return ret
 }
 
-func (c *Client) Run(ctx context.Context) {
-	for env, inf := range c.informers {
-		c.log.Info("starting informers for ", env)
-		go inf.PodInformer.Informer().Run(ctx.Done())
-		go inf.AppInformer.Informer().Run(ctx.Done())
-		go inf.NaisjobInformer.Informer().Run(ctx.Done())
-		go inf.JobInformer.Informer().Run(ctx.Done())
-		if inf.TopicInformer != nil {
-			go inf.TopicInformer.Informer().Run(ctx.Done())
-		}
-	}
+// Informers returns a map of informers, keyed by environment
+func (c *Client) Informers() map[string]*Informers {
+	return c.informers
 }
 
 // convert takes a map[string]any / json, and converts it to the target struct

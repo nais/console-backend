@@ -93,12 +93,25 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	if err != nil {
 		return fmt.Errorf("setup clients: %w", err)
 	}
-	k8sClient.Run(ctx)
 
 	graphHandler, err := graph.NewHandler(hookdClient, teamsBackendClient, k8sClient, querier, cfg.K8S.Clusters, log, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
 	}
+
+	go func() {
+		stopCh := ctx.Done()
+		for cluster, informer := range k8sClient.Informers() {
+			log.WithField("cluster", cluster).Infof("starting informers")
+			go informer.PodInformer.Informer().Run(stopCh)
+			go informer.AppInformer.Informer().Run(stopCh)
+			go informer.NaisjobInformer.Informer().Run(stopCh)
+			go informer.JobInformer.Informer().Run(stopCh)
+			if informer.TopicInformer != nil {
+				go informer.TopicInformer.Informer().Run(stopCh)
+			}
+		}
+	}()
 
 	go func() {
 		defer cancel()
