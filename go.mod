@@ -5,7 +5,7 @@ go 1.21
 require (
 	cloud.google.com/go v0.110.9
 	cloud.google.com/go/bigquery v1.56.0
-	github.com/99designs/gqlgen v0.17.39
+	github.com/99designs/gqlgen v0.17.40
 	github.com/bombsimon/logrusr/v4 v4.0.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/uuid v1.3.1
