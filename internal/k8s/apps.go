@@ -274,6 +274,12 @@ func checkNoZeroTrust(env string, rule *model.Rule) bool {
 		return true
 	}
 
+	if strings.Contains(rule.Cluster, "-external") {
+		rule.MutualExplanation = "NO_ZERO_TRUST"
+		rule.Mutual = true
+		return true
+	}
+
 	return false
 }
 
