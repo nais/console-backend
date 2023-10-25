@@ -43,9 +43,7 @@ func naisJobEdges(naisjobs []*model.NaisJob, team string, p *model.Pagination) [
 	start, end := p.ForSlice(len(naisjobs))
 
 	for i, job := range naisjobs[start:end] {
-		job.GQLVars = struct{ Team string }{
-			Team: team,
-		}
+		job.GQLVars = model.NaisJobGQLVars{Team: team}
 
 		edges = append(edges, &model.NaisJobEdge{
 			Cursor: model.Cursor{Offset: start + i},
@@ -61,9 +59,7 @@ func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppE
 	start, end := p.ForSlice(len(apps))
 
 	for i, app := range apps[start:end] {
-		app.GQLVars = struct{ Team string }{
-			Team: team,
-		}
+		app.GQLVars = model.AppGQLVars{Team: team}
 
 		edges = append(edges, &model.AppEdge{
 			Cursor: model.Cursor{Offset: start + i},

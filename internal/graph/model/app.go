@@ -21,6 +21,10 @@ type Replicas struct {
 	CPUThresholdPercentage int  `json:"cpuThresholdPercentage"`
 }
 
+type AppGQLVars struct {
+	Team string
+}
+
 type App struct {
 	ID           Ident        `json:"id"`
 	Name         string       `json:"name"`
@@ -37,10 +41,7 @@ type App struct {
 	Storage      []Storage    `json:"storage"`
 	Variables    []Variable   `json:"variables"`
 	AppState     AppState     `json:"state"`
-
-	GQLVars struct {
-		Team string
-	} `json:"-"`
+	GQLVars      AppGQLVars   `json:"-"`
 }
 
 func (App) IsSearchNode()  {}
