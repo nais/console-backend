@@ -37,7 +37,7 @@ func mapResources(resources []hookd.Resource) []*model.DeploymentResource {
 	ret := []*model.DeploymentResource{}
 	for _, resource := range resources {
 		ret = append(ret, &model.DeploymentResource{
-			ID:        resource.ID,
+			ID:        model.DeploymentResourceIdent(resource.ID),
 			Group:     resource.Group,
 			Kind:      resource.Kind,
 			Name:      resource.Name,

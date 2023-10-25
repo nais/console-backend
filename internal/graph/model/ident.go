@@ -14,13 +14,14 @@ import (
 type IdentType string
 
 const (
-	IdentTypeApp       IdentType = "app"
-	IdentTypeDeployKey IdentType = "deployKey"
-	IdentTypeEnv       IdentType = "env"
-	IdentTypeJob       IdentType = "job"
-	IdentTypePod       IdentType = "pod"
-	IdentTypeTeam      IdentType = "team"
-	IdentTypeUser      IdentType = "user"
+	IdentTypeApp                IdentType = "app"
+	IdentTypeDeployKey          IdentType = "deployKey"
+	IdentTypeDeploymentResource IdentType = "deploymentResource"
+	IdentTypeEnv                IdentType = "env"
+	IdentTypeJob                IdentType = "job"
+	IdentTypePod                IdentType = "pod"
+	IdentTypeTeam               IdentType = "team"
+	IdentTypeUser               IdentType = "user"
 )
 
 type Ident struct {
@@ -87,6 +88,10 @@ func TeamIdent(id string) Ident {
 
 func UserIdent(id string) Ident {
 	return newIdent(id, IdentTypeUser)
+}
+
+func DeploymentResourceIdent(id string) Ident {
+	return newIdent(id, IdentTypeDeploymentResource)
 }
 
 func newIdent(id string, t IdentType) Ident {
