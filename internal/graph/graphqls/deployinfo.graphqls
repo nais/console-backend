@@ -8,7 +8,7 @@ type DeployInfo {
         last: Int
         after: Cursor
         before: Cursor
-    ): DeploymentResponse!
+    ): DeploymentResponse! @goField(forceResolver: true)
 }
 
 union DeploymentResponse = DeploymentConnection | Error

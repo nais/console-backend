@@ -208,6 +208,15 @@ type DatabaseUser struct {
 	Name string `json:"name"`
 }
 
+type DeployInfo struct {
+	Deployer  string             `json:"deployer"`
+	Timestamp *time.Time         `json:"timestamp,omitempty"`
+	CommitSha string             `json:"commitSha"`
+	URL       string             `json:"url"`
+	History   DeploymentResponse `json:"history"`
+	GQLVars   DeployInfoGQLVars  `json:"-"`
+}
+
 type DeploymentConnection struct {
 	TotalCount int               `json:"totalCount"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
