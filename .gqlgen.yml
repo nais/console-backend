@@ -54,3 +54,7 @@ models:
   Date:
     model:
       - github.com/nais/console-backend/internal/graph/model.Date
+  DeployInfo:
+    extraFields:
+      GQLVars:
+        type: "github.com/nais/console-backend/internal/graph/model.DeployInfoGQLVars"
