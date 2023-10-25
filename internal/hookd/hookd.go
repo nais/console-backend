@@ -24,18 +24,6 @@ type Client struct {
 	errors     api.Int64Counter
 }
 
-func New(cfg config.Hookd, errors api.Int64Counter, log logrus.FieldLogger) *Client {
-	return &Client{
-		endpoint: cfg.Endpoint,
-		httpClient: &httpClient{
-			client: &http.Client{},
-			psk:    cfg.PSK,
-		},
-		log:    log,
-		errors: errors,
-	}
-}
-
 type DeploymentsResponse struct {
 	Deployments []Deploy `json:"deployments"`
 }
@@ -68,6 +56,13 @@ type Resource struct {
 	Name      string `json:"name"`
 	Version   string `json:"version"`
 	Namespace string `json:"namespace"`
+}
+
+type DeployKey struct {
+	Team    string    `json:"team"`
+	Key     string    `json:"key"`
+	Expires time.Time `json:"expires"`
+	Created time.Time `json:"created"`
 }
 
 type RequestOptions func(*http.Request)
@@ -104,6 +99,20 @@ func WithIgnoreTeams(teams ...string) RequestOptions {
 	}
 }
 
+// New creates a new hookd client
+func New(cfg config.Hookd, errors api.Int64Counter, log logrus.FieldLogger) *Client {
+	return &Client{
+		endpoint: cfg.Endpoint,
+		httpClient: &httpClient{
+			client: &http.Client{},
+			psk:    cfg.PSK,
+		},
+		log:    log,
+		errors: errors,
+	}
+}
+
+// Deployments returns a list of deployments from hookd
 func (c *Client) Deployments(ctx context.Context, opts ...RequestOptions) ([]Deploy, error) {
 	url := c.endpoint + "/internal/api/v1/console/deployments"
 
@@ -136,6 +145,7 @@ func (c *Client) Deployments(ctx context.Context, opts ...RequestOptions) ([]Dep
 	return ret, nil
 }
 
+// DeploymentsByKind returns a list of filtered deployments from hookd
 func (c *Client) DeploymentsByKind(ctx context.Context, name, team, env, kind string) ([]Deploy, error) {
 	deploys, err := c.Deployments(ctx, WithTeam(team), WithCluster(env))
 	if err != nil {
@@ -145,26 +155,7 @@ func (c *Client) DeploymentsByKind(ctx context.Context, name, team, env, kind st
 	return filterByKind(deploys, name, kind), nil
 }
 
-func filterByKind(deploys []Deploy, name, kind string) []Deploy {
-	ret := []Deploy{}
-	for _, deploy := range deploys {
-		for _, resource := range deploy.Resources {
-			if resource.Name == name && resource.Kind == kind {
-				ret = append(ret, deploy)
-				continue
-			}
-		}
-	}
-	return ret
-}
-
-type DeployKey struct {
-	Team    string    `json:"team"`
-	Key     string    `json:"key"`
-	Expires time.Time `json:"expires"`
-	Created time.Time `json:"created"`
-}
-
+// ChangeDeployKey changes the deploy key for a team
 func (c *Client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, error) {
 	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
@@ -185,6 +176,7 @@ func (c *Client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, 
 	return c.DeployKey(ctx, team)
 }
 
+// DeployKey returns a deploy key for a team
 func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error) {
 	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -212,8 +204,23 @@ func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error)
 	return ret, nil
 }
 
+// error increments the error counter, logs an error, and returns an error instance
 func (c *Client) error(ctx context.Context, err error, msg string) error {
 	c.errors.Add(ctx, 1, api.WithAttributes(attribute.String("component", "hookd-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
+}
+
+// filterByKind filters a list of deployments by name and kind
+func filterByKind(deploys []Deploy, name, kind string) []Deploy {
+	ret := []Deploy{}
+	for _, deploy := range deploys {
+		for _, resource := range deploy.Resources {
+			if resource.Name == name && resource.Kind == kind {
+				ret = append(ret, deploy)
+				continue
+			}
+		}
+	}
+	return ret
 }
