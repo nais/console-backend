@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-type External struct {
-	Host  string `json:"host"`
-	Ports []Port `json:"ports"`
-}
-
 type AccessPolicy struct {
 	Inbound  Inbound  `json:"inbound"`
 	Outbound Outbound `json:"outbound"`

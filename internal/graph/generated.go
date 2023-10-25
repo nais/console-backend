@@ -9636,9 +9636,9 @@ func (ec *executionContext) _External_ports(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]model.Port)
+	res := resTmp.([]*model.Port)
 	fc.Result = res
-	return ec.marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx, field.Selections, res)
+	return ec.marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_External_ports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29357,11 +29357,7 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx context.Context, sel ast.SelectionSet, v model.Port) graphql.Marshaler {
-	return ec._Port(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Port) graphql.Marshaler {
+func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Port) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29385,7 +29381,7 @@ func (ec *executionContext) marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑback
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx, sel, v[i])
+			ret[i] = ec.marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29403,6 +29399,16 @@ func (ec *executionContext) marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑback
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx context.Context, sel ast.SelectionSet, v *model.Port) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Port(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRequests2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx context.Context, sel ast.SelectionSet, v *model.Requests) graphql.Marshaler {
