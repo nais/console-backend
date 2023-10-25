@@ -272,6 +272,15 @@ func (DeploymentKey) IsNode() {}
 // The unique ID of an object.
 func (this DeploymentKey) GetID() Ident { return this.ID }
 
+type DeploymentResource struct {
+	ID        Ident  `json:"id"`
+	Group     string `json:"group"`
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	Version   string `json:"version"`
+	Namespace string `json:"namespace"`
+}
+
 type DeprecatedIngressError struct {
 	Revision string     `json:"revision"`
 	Level    ErrorLevel `json:"level"`

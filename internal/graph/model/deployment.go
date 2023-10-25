@@ -15,15 +15,6 @@ type Deployment struct {
 	Repository string                `json:"repository"`
 }
 
-type DeploymentResource struct {
-	ID        string `json:"id"`
-	Group     string `json:"group"`
-	Kind      string `json:"kind"`
-	Name      string `json:"name"`
-	Version   string `json:"version"`
-	Namespace string `json:"namespace"`
-}
-
 type DeploymentStatus struct {
 	ID      string    `json:"id"`
 	Status  string    `json:"status"`

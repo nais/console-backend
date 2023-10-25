@@ -98,12 +98,12 @@ func Test_deployInfoResolver_History(t *testing.T) {
 
 	assert.Equal(t, "id-3", conn.Edges[0].Node.ID)
 	assert.Len(t, conn.Edges[0].Node.Resources, 1)
-	assert.Equal(t, "resource-id-3", conn.Edges[0].Node.Resources[0].ID)
+	assert.Equal(t, "resource-id-3", conn.Edges[0].Node.Resources[0].ID.ID)
 
 	assert.Equal(t, "id-4", conn.Edges[1].Node.ID)
 	assert.Len(t, conn.Edges[1].Node.Resources, 4)
-	assert.Equal(t, "resource-id-4", conn.Edges[1].Node.Resources[0].ID)
-	assert.Equal(t, "resource-id-5", conn.Edges[1].Node.Resources[1].ID)
-	assert.Equal(t, "resource-id-6", conn.Edges[1].Node.Resources[2].ID)
-	assert.Equal(t, "resource-id-7", conn.Edges[1].Node.Resources[3].ID)
+	assert.Equal(t, "resource-id-4", conn.Edges[1].Node.Resources[0].ID.ID)
+	assert.Equal(t, "resource-id-5", conn.Edges[1].Node.Resources[1].ID.ID)
+	assert.Equal(t, "resource-id-6", conn.Edges[1].Node.Resources[2].ID.ID)
+	assert.Equal(t, "resource-id-7", conn.Edges[1].Node.Resources[3].ID.ID)
 }
