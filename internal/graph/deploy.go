@@ -6,7 +6,7 @@ import (
 )
 
 func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []*model.DeploymentEdge {
-	edges := []*model.DeploymentEdge{}
+	edges := make([]*model.DeploymentEdge, 0)
 
 	start, end := p.ForSlice(len(deploys))
 
@@ -34,7 +34,7 @@ func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []*model.Deploymen
 }
 
 func mapResources(resources []hookd.Resource) []*model.DeploymentResource {
-	ret := []*model.DeploymentResource{}
+	ret := make([]*model.DeploymentResource, 0)
 	for _, resource := range resources {
 		ret = append(ret, &model.DeploymentResource{
 			ID:        model.DeploymentResourceIdent(resource.ID),
@@ -49,10 +49,10 @@ func mapResources(resources []hookd.Resource) []*model.DeploymentResource {
 }
 
 func mapStatuses(statuses []hookd.Status) []*model.DeploymentStatus {
-	ret := []*model.DeploymentStatus{}
+	ret := make([]*model.DeploymentStatus, 0)
 	for _, status := range statuses {
 		ret = append(ret, &model.DeploymentStatus{
-			ID:      status.ID,
+			ID:      model.DeploymentStatusIdent(status.ID),
 			Status:  status.Status,
 			Message: &status.Message,
 			Created: status.Created,
