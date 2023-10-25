@@ -828,6 +828,22 @@ type Topic struct {
 	ACL  []*ACL `json:"acl"`
 }
 
+type User struct {
+	// The unique identifier for the user.
+	ID Ident `json:"id"`
+	// The user's full name.
+	Name string `json:"name"`
+	// The user's email address.
+	Email string `json:"email"`
+	// Teams that the user is a member and/or owner of.
+	Teams *TeamConnection `json:"teams"`
+}
+
+func (User) IsNode() {}
+
+// The unique ID of an object.
+func (this User) GetID() Ident { return this.ID }
+
 type Variable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
