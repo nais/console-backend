@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/hookd"
 )
 
 // History is the resolver for the history field.
@@ -20,10 +21,13 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 		name = obj.GQLVars.Job
 	}
 
-	deploys, err := r.hookdClient.DeploymentsByKind(ctx, name, obj.GQLVars.Team, obj.GQLVars.Env, kind)
+	deploys, err := r.hookdClient.Deployments(ctx, hookd.WithTeam(obj.GQLVars.Team), hookd.WithCluster(obj.GQLVars.Env))
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
+
+	deploys = filterDeploysByNameAndKind(deploys, name, kind)
+
 	pagination, err := model.NewPagination(first, last, after, before)
 	if err != nil {
 		return nil, err

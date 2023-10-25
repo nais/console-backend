@@ -10,8 +10,7 @@ import (
 func NewHttpServerWithHandlers(t *testing.T, handlers []http.HandlerFunc) *httptest.Server {
 	idx := 0
 	t.Cleanup(func() {
-		diff := len(handlers) - idx
-		if diff != 0 {
+		if diff := len(handlers) - idx; diff != 0 {
 			t.Fatalf("too many configured handlers, remove %d handler(s)", diff)
 		}
 	})

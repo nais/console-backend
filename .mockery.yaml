@@ -7,3 +7,6 @@ packages:
   github.com/nais/console-backend/internal/database/gensql:
     interfaces:
       Querier:
+  github.com/nais/console-backend/internal/hookd:
+    interfaces:
+      Client:

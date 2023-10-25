@@ -100,7 +100,8 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		return fmt.Errorf("setup clients: %w", err)
 	}
 
-	graphHandler, err := graph.NewHandler(hookdClient, teamsBackendClient, k8sClient, querier, cfg.K8S.Clusters, log, meter)
+	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, querier, cfg.K8S.Clusters, log)
+	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
 	}
@@ -328,7 +329,7 @@ func getMetricMeter() (met.Meter, error) {
 }
 
 // setupClients will create and return the clients used by the application
-func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, *hookd.Client, error) {
+func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, hookd.Client, error) {
 	loggerFieldKey := "client"
 	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
 	if err != nil {
