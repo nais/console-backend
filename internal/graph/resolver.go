@@ -21,7 +21,7 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	hookdClient *hookd.Client
+	hookdClient hookd.Client
 	teamsClient *teams.Client
 	k8sClient   *k8s.Client
 	searcher    *search.Searcher
@@ -30,24 +30,26 @@ type Resolver struct {
 	clusters    []string
 }
 
-// NewHandler creates and returns a new GraphQL handler with the given schema
-func NewHandler(hookdClient *hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger, meter metric.Meter) (*handler.Server, error) {
+// NewResolver creates a new GraphQL resolver with the given dependencies
+func NewResolver(hookdClient hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
+	return &Resolver{
+		hookdClient: hookdClient,
+		teamsClient: teamsClient,
+		k8sClient:   k8sClient,
+		searcher:    search.New(teamsClient, k8sClient),
+		log:         log,
+		querier:     querier,
+		clusters:    clusters,
+	}
+}
+
+// NewHandler creates and returns a new GraphQL handler with the given configuration
+func NewHandler(config Config, meter metric.Meter) (*handler.Server, error) {
 	metricsMiddleware, err := NewMetrics(meter)
 	if err != nil {
 		return nil, fmt.Errorf("create metrics middleware: %w", err)
 	}
 
-	config := Config{
-		Resolvers: &Resolver{
-			hookdClient: hookdClient,
-			teamsClient: teamsClient,
-			k8sClient:   k8sClient,
-			searcher:    search.New(teamsClient, k8sClient),
-			log:         log,
-			querier:     querier,
-			clusters:    clusters,
-		},
-	}
 	schema := NewExecutableSchema(config)
 	graphHandler := handler.New(schema)
 	graphHandler.Use(metricsMiddleware)

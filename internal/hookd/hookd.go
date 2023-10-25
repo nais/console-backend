@@ -17,7 +17,13 @@ import (
 	api "go.opentelemetry.io/otel/metric"
 )
 
-type Client struct {
+type Client interface {
+	Deployments(ctx context.Context, opts ...RequestOption) ([]Deploy, error)
+	ChangeDeployKey(ctx context.Context, team string) (*DeployKey, error)
+	DeployKey(ctx context.Context, team string) (*DeployKey, error)
+}
+
+type client struct {
 	endpoint   string
 	httpClient *httpClient
 	log        logrus.FieldLogger
@@ -65,9 +71,9 @@ type DeployKey struct {
 	Created time.Time `json:"created"`
 }
 
-type RequestOptions func(*http.Request)
+type RequestOption func(*http.Request)
 
-func WithTeam(team string) RequestOptions {
+func WithTeam(team string) RequestOption {
 	return func(req *http.Request) {
 		q := req.URL.Query()
 		q.Set("team", team)
@@ -75,7 +81,7 @@ func WithTeam(team string) RequestOptions {
 	}
 }
 
-func WithCluster(cluster string) RequestOptions {
+func WithCluster(cluster string) RequestOption {
 	return func(req *http.Request) {
 		q := req.URL.Query()
 		q.Set("cluster", cluster)
@@ -83,7 +89,7 @@ func WithCluster(cluster string) RequestOptions {
 	}
 }
 
-func WithLimit(limit int) RequestOptions {
+func WithLimit(limit int) RequestOption {
 	return func(req *http.Request) {
 		q := req.URL.Query()
 		q.Set("limit", strconv.Itoa(limit))
@@ -91,7 +97,7 @@ func WithLimit(limit int) RequestOptions {
 	}
 }
 
-func WithIgnoreTeams(teams ...string) RequestOptions {
+func WithIgnoreTeams(teams ...string) RequestOption {
 	return func(req *http.Request) {
 		q := req.URL.Query()
 		q.Set("ignoreTeam", strings.Join(teams, ","))
@@ -100,8 +106,8 @@ func WithIgnoreTeams(teams ...string) RequestOptions {
 }
 
 // New creates a new hookd client
-func New(cfg config.Hookd, errors api.Int64Counter, log logrus.FieldLogger) *Client {
-	return &Client{
+func New(cfg config.Hookd, errors api.Int64Counter, log logrus.FieldLogger) Client {
+	return &client{
 		endpoint: cfg.Endpoint,
 		httpClient: &httpClient{
 			client: &http.Client{},
@@ -113,7 +119,7 @@ func New(cfg config.Hookd, errors api.Int64Counter, log logrus.FieldLogger) *Cli
 }
 
 // Deployments returns a list of deployments from hookd
-func (c *Client) Deployments(ctx context.Context, opts ...RequestOptions) ([]Deploy, error) {
+func (c *client) Deployments(ctx context.Context, opts ...RequestOption) ([]Deploy, error) {
 	url := c.endpoint + "/internal/api/v1/console/deployments"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -129,6 +135,11 @@ func (c *Client) Deployments(ctx context.Context, opts ...RequestOptions) ([]Dep
 	if err != nil {
 		return nil, c.error(ctx, err, "calling hookd")
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.log.WithError(err).Error("closing response body")
+		}
+	}()
 
 	var deploymentsResponse DeploymentsResponse
 
@@ -145,18 +156,8 @@ func (c *Client) Deployments(ctx context.Context, opts ...RequestOptions) ([]Dep
 	return ret, nil
 }
 
-// DeploymentsByKind returns a list of filtered deployments from hookd
-func (c *Client) DeploymentsByKind(ctx context.Context, name, team, env, kind string) ([]Deploy, error) {
-	deploys, err := c.Deployments(ctx, WithTeam(team), WithCluster(env))
-	if err != nil {
-		return nil, c.error(ctx, err, "getting deploys from hookd")
-	}
-
-	return filterByKind(deploys, name, kind), nil
-}
-
 // ChangeDeployKey changes the deploy key for a team
-func (c *Client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, error) {
+func (c *client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, error) {
 	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
 	if err != nil {
@@ -167,7 +168,11 @@ func (c *Client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, 
 	if err != nil {
 		return nil, c.error(ctx, err, "calling hookd")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.log.WithError(err).Error("closing response body")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.error(ctx, fmt.Errorf("deploy key API returned %s", resp.Status), "deploy key API returned non-200")
@@ -177,7 +182,7 @@ func (c *Client) ChangeDeployKey(ctx context.Context, team string) (*DeployKey, 
 }
 
 // DeployKey returns a deploy key for a team
-func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error) {
+func (c *client) DeployKey(ctx context.Context, team string) (*DeployKey, error) {
 	url := fmt.Sprintf("%s/internal/api/v1/console/apikey/%s", c.endpoint, team)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -188,7 +193,11 @@ func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.log.WithError(err).Error("closing response body")
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, c.error(ctx, fmt.Errorf("deploy key API returned %s", resp.Status), "deploy key API returned non-200")
@@ -205,22 +214,8 @@ func (c *Client) DeployKey(ctx context.Context, team string) (*DeployKey, error)
 }
 
 // error increments the error counter, logs an error, and returns an error instance
-func (c *Client) error(ctx context.Context, err error, msg string) error {
+func (c *client) error(ctx context.Context, err error, msg string) error {
 	c.errors.Add(ctx, 1, api.WithAttributes(attribute.String("component", "hookd-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
-}
-
-// filterByKind filters a list of deployments by name and kind
-func filterByKind(deploys []Deploy, name, kind string) []Deploy {
-	ret := []Deploy{}
-	for _, deploy := range deploys {
-		for _, resource := range deploy.Resources {
-			if resource.Name == name && resource.Kind == kind {
-				ret = append(ret, deploy)
-				continue
-			}
-		}
-	}
-	return ret
 }

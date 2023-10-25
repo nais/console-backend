@@ -31,17 +31,19 @@ type DeploymentStatus struct {
 	Created time.Time `json:"created"`
 }
 
+type DeployInfoGQLVars struct {
+	App  string
+	Job  string
+	Env  string
+	Team string
+}
+
 type DeployInfo struct {
-	Deployer  string     `json:"deployer"`
-	Timestamp *time.Time `json:"timestamp,omitempty"`
-	CommitSha string     `json:"commitSha"`
-	URL       string     `json:"url"`
-	GQLVars   struct {
-		App  string
-		Job  string
-		Env  string
-		Team string
-	} `json:"-"`
+	Deployer  string            `json:"deployer"`
+	Timestamp *time.Time        `json:"timestamp,omitempty"`
+	CommitSha string            `json:"commitSha"`
+	URL       string            `json:"url"`
+	GQLVars   DeployInfoGQLVars `json:"-"`
 }
 
 type Error struct {
