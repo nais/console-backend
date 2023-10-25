@@ -766,6 +766,44 @@ type SQLInstance struct {
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
 
+// Team type.
+type Team struct {
+	// The unique identifier of the team.
+	ID Ident `json:"id"`
+	// The name of the team.
+	Name string `json:"name"`
+	// The description of the team.
+	Description string `json:"description"`
+	// Team members.
+	Members *TeamMemberConnection `json:"members"`
+	// The NAIS applications owned by the team.
+	Apps *AppConnection `json:"apps"`
+	// The NAIS jobs owned by the team.
+	Naisjobs *NaisJobConnection `json:"naisjobs"`
+	// The GitHub repositories that the team has access to.
+	GithubRepositories *GithubRepositoryConnection `json:"githubRepositories"`
+	// The main Slack channel for the team.
+	SlackChannel string `json:"slackChannel"`
+	// Slack alerts channels for the team.
+	SlackAlertsChannels []*SlackAlertsChannel `json:"slackAlertsChannels"`
+	GcpProjects         []*GcpProject         `json:"gcpProjects"`
+	// The deployments of the team's applications.
+	Deployments *DeploymentConnection `json:"deployments"`
+	// The deploy key of the team.
+	DeployKey *DeploymentKey `json:"deployKey"`
+	// Whether or not the viewer is a member of the team.
+	ViewerIsMember bool `json:"viewerIsMember"`
+	// Whether or not the viewer is an administrator of the team.
+	ViewerIsAdmin bool `json:"viewerIsAdmin"`
+}
+
+func (Team) IsSearchNode() {}
+
+func (Team) IsNode() {}
+
+// The unique ID of an object.
+func (this Team) GetID() Ident { return this.ID }
+
 // Team connection type.
 type TeamConnection struct {
 	// The total count of available teams.
