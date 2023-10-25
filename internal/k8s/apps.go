@@ -577,13 +577,6 @@ func (c *Client) toApp(ctx context.Context, u *unstructured.Unstructured, env st
 	}
 	ret.Resources = r
 
-	reps := model.Replicas{}
-	if err := convert(app.Spec.Replicas, &reps); err != nil {
-		return nil, fmt.Errorf("converting replicas: %w", err)
-	}
-
-	ret.Replicas = reps
-
 	authz, err := appAuthz(app)
 	if err != nil {
 		return nil, fmt.Errorf("getting authz: %w", err)
