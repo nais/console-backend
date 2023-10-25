@@ -996,6 +996,49 @@ func (e ErrorLevel) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type InstanceState string
+
+const (
+	InstanceStateRunning InstanceState = "RUNNING"
+	InstanceStateFailing InstanceState = "FAILING"
+	InstanceStateUnknown InstanceState = "UNKNOWN"
+)
+
+var AllInstanceState = []InstanceState{
+	InstanceStateRunning,
+	InstanceStateFailing,
+	InstanceStateUnknown,
+}
+
+func (e InstanceState) IsValid() bool {
+	switch e {
+	case InstanceStateRunning, InstanceStateFailing, InstanceStateUnknown:
+		return true
+	}
+	return false
+}
+
+func (e InstanceState) String() string {
+	return string(e)
+}
+
+func (e *InstanceState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = InstanceState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid InstanceState", str)
+	}
+	return nil
+}
+
+func (e InstanceState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type SearchType string
 
 const (
