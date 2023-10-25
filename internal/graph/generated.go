@@ -29182,12 +29182,12 @@ func (ec *executionContext) marshalNInstance2ᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 
 func (ec *executionContext) unmarshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx context.Context, v interface{}) (model.InstanceState, error) {
 	var res model.InstanceState
-	err := res.UnmarshalGQLContext(ctx, v)
+	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx context.Context, sel ast.SelectionSet, v model.InstanceState) graphql.Marshaler {
-	return graphql.WrapContextMarshaler(ctx, v)
+	return v
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
