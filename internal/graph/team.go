@@ -21,10 +21,10 @@ func teamEdges(teams []t.Team, p *model.Pagination) []*model.TeamEdge {
 				Name:         team.Slug,
 				Description:  team.Purpose,
 				SlackChannel: team.SlackChannel,
-				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {
-					ret := []model.SlackAlertsChannel{}
+				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []*model.SlackAlertsChannel {
+					ret := make([]*model.SlackAlertsChannel, 0)
 					for _, v := range t {
-						ret = append(ret, model.SlackAlertsChannel{
+						ret = append(ret, &model.SlackAlertsChannel{
 							Env:  v.Environment,
 							Name: v.ChannelName,
 						})

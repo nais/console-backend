@@ -18250,11 +18250,14 @@ func (ec *executionContext) _Team_slackChannel(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_slackChannel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18291,11 +18294,14 @@ func (ec *executionContext) _Team_slackAlertsChannels(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]model.SlackAlertsChannel)
+	res := resTmp.([]*model.SlackAlertsChannel)
 	fc.Result = res
-	return ec.marshalOSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNSlackAlertsChannel2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_slackAlertsChannels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18343,9 +18349,9 @@ func (ec *executionContext) _Team_gcpProjects(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]model.GcpProject)
+	res := resTmp.([]*model.GcpProject)
 	fc.Result = res
-	return ec.marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx, field.Selections, res)
+	return ec.marshalNGcpProject2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_gcpProjects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -26823,8 +26829,14 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "slackChannel":
 			out.Values[i] = ec._Team_slackChannel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "slackAlertsChannels":
 			out.Values[i] = ec._Team_slackAlertsChannels(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "gcpProjects":
 			out.Values[i] = ec._Team_gcpProjects(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -28904,11 +28916,7 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalNGcpProject2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx context.Context, sel ast.SelectionSet, v model.GcpProject) graphql.Marshaler {
-	return ec._GcpProject(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []model.GcpProject) graphql.Marshaler {
+func (ec *executionContext) marshalNGcpProject2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GcpProject) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28932,7 +28940,7 @@ func (ec *executionContext) marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsole�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGcpProject2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNGcpProject2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28950,6 +28958,16 @@ func (ec *executionContext) marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsole�
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNGcpProject2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx context.Context, sel ast.SelectionSet, v *model.GcpProject) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GcpProject(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNGithubRepository2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepository(ctx context.Context, sel ast.SelectionSet, v *model.GithubRepository) graphql.Marshaler {
@@ -29614,8 +29632,58 @@ func (ec *executionContext) marshalNSearchNode2githubᚗcomᚋnaisᚋconsoleᚑb
 	return ec._SearchNode(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx context.Context, sel ast.SelectionSet, v model.SlackAlertsChannel) graphql.Marshaler {
-	return ec._SlackAlertsChannel(ctx, sel, &v)
+func (ec *executionContext) marshalNSlackAlertsChannel2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SlackAlertsChannel) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSlackAlertsChannel2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSlackAlertsChannel2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx context.Context, sel ast.SelectionSet, v *model.SlackAlertsChannel) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SlackAlertsChannel(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐState(ctx context.Context, v interface{}) (model.State, error) {
@@ -30460,63 +30528,6 @@ func (ec *executionContext) marshalOSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 		return graphql.Null
 	}
 	return ec._Sidecar(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SlackAlertsChannel) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	return res
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {

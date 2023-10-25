@@ -15,7 +15,10 @@ extend type Query {
     ): TeamConnection!
 
     "Get a specific NAIS-team by the team name."
-    team("The name of the NAIS-team to get." name: String!): Team!
+    team(
+        "The name of the NAIS-team to get."
+        name: String!
+    ): Team!
 }
 
 extend type Mutation {
@@ -92,7 +95,7 @@ type Team implements Node {
 
         "Get entries before the cursor."
         before: Cursor
-    ): TeamMemberConnection!
+    ): TeamMemberConnection! @goField(forceResolver: true)
 
     "The NAIS applications owned by the team."
     apps(
@@ -107,7 +110,7 @@ type Team implements Node {
 
         "Get entries before the cursor."
         before: Cursor
-    ): AppConnection!
+    ): AppConnection! @goField(forceResolver: true)
 
     "The NAIS jobs owned by the team."
     naisjobs(
@@ -122,7 +125,7 @@ type Team implements Node {
 
         "Get entries before the cursor."
         before: Cursor
-    ): NaisJobConnection!
+    ): NaisJobConnection! @goField(forceResolver: true)
 
     "The GitHub repositories that the team has access to."
     githubRepositories(
@@ -131,13 +134,13 @@ type Team implements Node {
 
         "Get entries after the cursor."
         after: Cursor
-    ): GithubRepositoryConnection!
+    ): GithubRepositoryConnection! @goField(forceResolver: true)
 
     "The main Slack channel for the team."
-    slackChannel: String
+    slackChannel: String!
 
     "Slack alerts channels for the team."
-    slackAlertsChannels: [SlackAlertsChannel!]
+    slackAlertsChannels: [SlackAlertsChannel!]!
 
     gcpProjects: [GcpProject!]!
 
@@ -157,16 +160,16 @@ type Team implements Node {
 
         "Limit the number of entries returned."
         limit: Int
-    ): DeploymentConnection!
+    ): DeploymentConnection! @goField(forceResolver: true)
 
     "The deploy key of the team."
-    deployKey: DeploymentKey!
+    deployKey: DeploymentKey! @goField(forceResolver: true)
 
     "Whether or not the viewer is a member of the team."
-    viewerIsMember: Boolean!
+    viewerIsMember: Boolean! @goField(forceResolver: true)
 
     "Whether or not the viewer is an administrator of the team."
-    viewerIsAdmin: Boolean!
+    viewerIsAdmin: Boolean! @goField(forceResolver: true)
 }
 
 "Deployment key type."
