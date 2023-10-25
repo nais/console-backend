@@ -2,12 +2,6 @@ package model
 
 import "time"
 
-type RunGQLVars struct {
-	Env     string
-	Team    string
-	NaisJob string
-}
-
 type Run struct {
 	ID             Ident      `json:"id"`
 	Name           string     `json:"name"`
@@ -23,10 +17,6 @@ type Run struct {
 
 func (Run) IsNode()        {}
 func (r Run) GetID() Ident { return r.ID }
-
-type NaisJobGQLVars struct {
-	Team string
-}
 
 type NaisJob struct {
 	ID           Ident          `json:"id"`

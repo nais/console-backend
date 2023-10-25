@@ -9,10 +9,6 @@ type AccessPolicy struct {
 	Outbound Outbound `json:"outbound"`
 }
 
-type AppGQLVars struct {
-	Team string
-}
-
 type App struct {
 	ID           Ident        `json:"id"`
 	Name         string       `json:"name"`
