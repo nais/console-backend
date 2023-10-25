@@ -9,13 +9,6 @@ type AccessPolicy struct {
 	Outbound Outbound `json:"outbound"`
 }
 
-type Replicas struct {
-	MinReplicas            int  `json:"min"`
-	MaxReplicas            int  `json:"max"`
-	DisableAutoScaling     bool `json:"disableAutoScaling"`
-	CPUThresholdPercentage int  `json:"cpuThresholdPercentage"`
-}
-
 type AppGQLVars struct {
 	Team string
 }
@@ -31,7 +24,6 @@ type App struct {
 	AutoScaling  AutoScaling  `json:"autoScaling"`
 	Deployed     time.Time    `json:"deployed"`
 	Ingresses    []string     `json:"ingresses"`
-	Replicas     Replicas     `json:"replicas"`
 	Resources    Resources    `json:"resources"`
 	Storage      []Storage    `json:"storage"`
 	Variables    []Variable   `json:"variables"`
