@@ -15,13 +15,6 @@ type Deployment struct {
 	Repository string                `json:"repository"`
 }
 
-type DeploymentStatus struct {
-	ID      string    `json:"id"`
-	Status  string    `json:"status"`
-	Message *string   `json:"message,omitempty"`
-	Created time.Time `json:"created"`
-}
-
 type DeployInfoGQLVars struct {
 	App  string
 	Job  string

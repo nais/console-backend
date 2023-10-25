@@ -281,6 +281,13 @@ type DeploymentResource struct {
 	Namespace string `json:"namespace"`
 }
 
+type DeploymentStatus struct {
+	ID      Ident     `json:"id"`
+	Status  string    `json:"status"`
+	Message *string   `json:"message,omitempty"`
+	Created time.Time `json:"created"`
+}
+
 type DeprecatedIngressError struct {
 	Revision string     `json:"revision"`
 	Level    ErrorLevel `json:"level"`

@@ -8481,9 +8481,9 @@ func (ec *executionContext) _DeploymentStatus_id(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.Ident)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentStatus_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
