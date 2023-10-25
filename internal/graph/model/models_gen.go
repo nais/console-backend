@@ -325,6 +325,11 @@ type Expose struct {
 	Product             string      `json:"product"`
 }
 
+type External struct {
+	Host  string  `json:"host"`
+	Ports []*Port `json:"ports"`
+}
+
 type FailedRunError struct {
 	Revision   string     `json:"revision"`
 	Level      ErrorLevel `json:"level"`
