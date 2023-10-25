@@ -501,6 +501,22 @@ type Insights struct {
 	RecordClientAddress   bool `json:"recordClientAddress"`
 }
 
+type Instance struct {
+	ID       Ident           `json:"id"`
+	Name     string          `json:"name"`
+	State    InstanceState   `json:"state"`
+	Message  string          `json:"message"`
+	Image    string          `json:"image"`
+	Restarts int             `json:"restarts"`
+	Created  time.Time       `json:"created"`
+	GQLVars  InstanceGQLVars `json:"-"`
+}
+
+func (Instance) IsNode() {}
+
+// The unique ID of an object.
+func (this Instance) GetID() Ident { return this.ID }
+
 type InvalidNaisYamlError struct {
 	Revision string     `json:"revision"`
 	Level    ErrorLevel `json:"level"`
