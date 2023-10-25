@@ -809,6 +809,23 @@ func (TeamEdge) IsEdge() {}
 // A cursor for use in pagination.
 func (this TeamEdge) GetCursor() Cursor { return this.Cursor }
 
+// Team member type.
+type TeamMember struct {
+	// The unique identifier of the team member.
+	ID Ident `json:"id"`
+	// The name of the team member.
+	Name string `json:"name"`
+	// The email of the team member.
+	Email string `json:"email"`
+	// The role of the team member.
+	Role TeamRole `json:"role"`
+}
+
+func (TeamMember) IsNode() {}
+
+// The unique ID of an object.
+func (this TeamMember) GetID() Ident { return this.ID }
+
 // Team member connection type.
 type TeamMemberConnection struct {
 	// The total count of available team members.
