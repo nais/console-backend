@@ -48,8 +48,8 @@ type PageInfo {
     "A cursor corresponding to the last node in the connection."
     endCursor: Cursor
 
-    from: Int!
-    to: Int!
+    from: Int! @goField(forceResolver: true)
+    to: Int! @goField(forceResolver: true)
 }
 
 type Env implements Node {

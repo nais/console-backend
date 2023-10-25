@@ -659,6 +659,20 @@ func (OutboundAccessError) IsStateError()             {}
 func (this OutboundAccessError) GetRevision() string  { return this.Revision }
 func (this OutboundAccessError) GetLevel() ErrorLevel { return this.Level }
 
+// PageInfo is a type that contains pagination information in a Relay style.
+type PageInfo struct {
+	// When paginating forwards, are there more items?
+	HasNextPage bool `json:"hasNextPage"`
+	// When paginating backwards, are there more items?
+	HasPreviousPage bool `json:"hasPreviousPage"`
+	// A cursor corresponding to the first node in the connection.
+	StartCursor *Cursor `json:"startCursor,omitempty"`
+	// A cursor corresponding to the last node in the connection.
+	EndCursor *Cursor `json:"endCursor,omitempty"`
+	From      int     `json:"from"`
+	To        int     `json:"to"`
+}
+
 type Port struct {
 	Port int `json:"port"`
 }
