@@ -45,9 +45,3 @@ type DeployInfo struct {
 	URL       string            `json:"url"`
 	GQLVars   DeployInfoGQLVars `json:"-"`
 }
-
-type Error struct {
-	Message string `json:"message"`
-}
-
-func (e *Error) IsDeploymentResponse() {}
