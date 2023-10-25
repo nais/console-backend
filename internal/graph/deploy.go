@@ -15,7 +15,7 @@ func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []*model.Deploymen
 		edges = append(edges, &model.DeploymentEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.Deployment{
-				ID:        deploy.DeploymentInfo.ID,
+				ID:        model.DeploymentIdent(deploy.DeploymentInfo.ID),
 				Statuses:  mapStatuses(deploy.Statuses),
 				Resources: mapResources(deploy.Resources),
 				Team: &model.Team{

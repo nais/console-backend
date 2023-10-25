@@ -217,6 +217,16 @@ type DeployInfo struct {
 	GQLVars   DeployInfoGQLVars  `json:"-"`
 }
 
+type Deployment struct {
+	ID         Ident                 `json:"id"`
+	Team       *Team                 `json:"team"`
+	Resources  []*DeploymentResource `json:"resources"`
+	Env        string                `json:"env"`
+	Statuses   []*DeploymentStatus   `json:"statuses"`
+	Created    time.Time             `json:"created"`
+	Repository string                `json:"repository"`
+}
+
 type DeploymentConnection struct {
 	TotalCount int               `json:"totalCount"`
 	PageInfo   *PageInfo         `json:"pageInfo"`

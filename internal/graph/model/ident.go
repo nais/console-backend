@@ -16,6 +16,7 @@ type IdentType string
 const (
 	IdentTypeApp                IdentType = "app"
 	IdentTypeDeployKey          IdentType = "deployKey"
+	IdentTypeDeployment         IdentType = "deployment"
 	IdentTypeDeploymentResource IdentType = "deploymentResource"
 	IdentTypeDeploymentStatus   IdentType = "deploymentStatus"
 	IdentTypeEnv                IdentType = "env"
@@ -89,6 +90,10 @@ func TeamIdent(id string) Ident {
 
 func UserIdent(id string) Ident {
 	return newIdent(id, IdentTypeUser)
+}
+
+func DeploymentIdent(id string) Ident {
+	return newIdent(id, IdentTypeDeployment)
 }
 
 func DeploymentResourceIdent(id string) Ident {
