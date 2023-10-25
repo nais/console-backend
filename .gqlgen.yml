@@ -58,3 +58,7 @@ models:
     extraFields:
       GQLVars:
         type: "github.com/nais/console-backend/internal/graph/model.DeployInfoGQLVars"
+  Instance:
+    extraFields:
+      GQLVars:
+        type: "github.com/nais/console-backend/internal/graph/model.InstanceGQLVars"
