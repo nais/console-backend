@@ -2,6 +2,12 @@ package model
 
 import "time"
 
+type RunGQLVars struct {
+	Env     string
+	Team    string
+	NaisJob string
+}
+
 type Run struct {
 	ID             Ident      `json:"id"`
 	Name           string     `json:"name"`
@@ -12,34 +18,32 @@ type Run struct {
 	Image          string     `json:"image"`
 	Message        string     `json:"message"`
 	Failed         bool       `json:"failed,omitempty"`
-	GQLVars        struct {
-		Env     string
-		Team    string
-		NaisJob string
-	} `json:"-"`
+	GQLVars        RunGQLVars `json:"-"`
 }
 
 func (Run) IsNode()        {}
 func (r Run) GetID() Ident { return r.ID }
 
+type NaisJobGQLVars struct {
+	Team string
+}
+
 type NaisJob struct {
-	ID           Ident         `json:"id"`
-	Name         string        `json:"name"`
-	Env          *Env          `json:"env"`
-	DeployInfo   *DeployInfo   `json:"deployInfo"`
-	Image        string        `json:"image"`
-	AccessPolicy *AccessPolicy `json:"accessPolicy"`
-	Resources    *Resources    `json:"resources"`
-	Storage      []Storage     `json:"storage"`
-	Authz        []Authz       `json:"authz"`
-	Schedule     string        `json:"schedule"`
-	Completions  int           `json:"completions"`
-	Parallelism  int           `json:"parallelism"`
-	Retries      int           `json:"retries"`
-	JobState     JobState      `json:"jobState"`
-	GQLVars      struct {
-		Team string
-	} `json:"-"`
+	ID           Ident          `json:"id"`
+	Name         string         `json:"name"`
+	Env          *Env           `json:"env"`
+	DeployInfo   *DeployInfo    `json:"deployInfo"`
+	Image        string         `json:"image"`
+	AccessPolicy *AccessPolicy  `json:"accessPolicy"`
+	Resources    *Resources     `json:"resources"`
+	Storage      []Storage      `json:"storage"`
+	Authz        []Authz        `json:"authz"`
+	Schedule     string         `json:"schedule"`
+	Completions  int            `json:"completions"`
+	Parallelism  int            `json:"parallelism"`
+	Retries      int            `json:"retries"`
+	JobState     JobState       `json:"jobState"`
+	GQLVars      NaisJobGQLVars `json:"-"`
 }
 
 func (NaisJob) IsNode()        {}

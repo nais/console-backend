@@ -458,11 +458,7 @@ func Instance(pod *corev1.Pod, env string) *model.Instance {
 		Message:  messageFromCS(appCS),
 		State:    stateFromCS(appCS),
 		Created:  pod.GetCreationTimestamp().Time,
-		GQLVars: struct {
-			Env     string
-			Team    string
-			AppName string
-		}{
+		GQLVars: model.InstanceGQLVars{
 			Env:     env,
 			Team:    pod.GetNamespace(),
 			AppName: appName,

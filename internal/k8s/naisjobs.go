@@ -416,11 +416,11 @@ func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run
 			Duration:       duration(job).String(),
 			Image:          job.Spec.Template.Spec.Containers[0].Image,
 			Message:        Message(job),
-			GQLVars: struct {
-				Env     string
-				Team    string
-				NaisJob string
-			}{Env: env, Team: team, NaisJob: name},
+			GQLVars: model.RunGQLVars{
+				Env:     env,
+				Team:    team,
+				NaisJob: name,
+			},
 		})
 	}
 
