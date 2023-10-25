@@ -21761,6 +21761,8 @@ func (ec *executionContext) _DeploymentResponse(ctx context.Context, sel ast.Sel
 			return graphql.Null
 		}
 		return ec._DeploymentConnection(ctx, sel, obj)
+	case model.Error:
+		return ec._Error(ctx, sel, &obj)
 	case *model.Error:
 		if obj == nil {
 			return graphql.Null

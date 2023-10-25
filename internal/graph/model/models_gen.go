@@ -316,6 +316,12 @@ type EnvCostFilter struct {
 	Team string `json:"team"`
 }
 
+type Error struct {
+	Message string `json:"message"`
+}
+
+func (Error) IsDeploymentResponse() {}
+
 type Expose struct {
 	AllowedIntegrations []string    `json:"allowedIntegrations"`
 	AtMaxAge            int         `json:"atMaxAge"`
