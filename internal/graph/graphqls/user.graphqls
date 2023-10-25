@@ -19,5 +19,5 @@ type User implements Node {
         after: Cursor,
         last: Int,
         before: Cursor
-    ): TeamConnection!
+    ): TeamConnection! @goField(forceResolver: true)
 }
