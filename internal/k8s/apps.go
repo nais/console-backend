@@ -374,14 +374,36 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 		}
 
 		for _, obj := range objs {
-			name := obj.(*unstructured.Unstructured).GetName()
-			namespace := obj.(*unstructured.Unstructured).GetNamespace()
-
-			app, err := c.App(ctx, name, namespace, env)
+			app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
 			if err != nil {
 				return nil, c.error(ctx, err, "converting to app")
 			}
 
+			for _, rule := range app.AccessPolicy.Outbound.Rules {
+				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on outbound")
+				}
+			}
+
+			for _, rule := range app.AccessPolicy.Inbound.Rules {
+				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on inbound")
+				}
+			}
+
+			instances, err := c.Instances(ctx, team, env, app.Name)
+			if err != nil {
+				return nil, c.error(ctx, err, "getting instances")
+			}
+
+			tmpApp := &naisv1alpha1.Application{}
+			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpApp); err != nil {
+				return nil, fmt.Errorf("converting to application: %w", err)
+			}
+
+			setStatus(app, *tmpApp.Status.Conditions, instances)
 			ret = append(ret, app)
 		}
 	}
