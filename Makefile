@@ -1,6 +1,6 @@
 .PHONY: all
 
-all: generate fmt test check console-backend
+all: generate fmt test check console-backend helm-lint
 
 generate: generate-sql generate-graphql generate-mocks
 
@@ -69,3 +69,6 @@ vulncheck:
 
 fmt:
 	go run mvdan.cc/gofumpt -w ./
+
+helm-lint:
+	helm lint --strict ./charts
