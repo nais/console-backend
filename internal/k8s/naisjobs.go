@@ -35,21 +35,17 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 		return nil, c.error(ctx, err, "converting to job")
 	}
 
-	if job.AccessPolicy.Outbound != nil {
-		for _, rule := range job.AccessPolicy.Outbound.Rules {
-			err = c.setJobHasMutualOnOutbound(ctx, name, team, env, rule)
-			if err != nil {
-				return nil, c.error(ctx, err, "setting hasMutual on outbound")
-			}
+	for _, rule := range job.AccessPolicy.Outbound.Rules {
+		err = c.setJobHasMutualOnOutbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual on outbound")
 		}
 	}
 
-	if job.AccessPolicy.Inbound != nil {
-		for _, rule := range job.AccessPolicy.Inbound.Rules {
-			err = c.setJobHasMutualOnInbound(ctx, name, team, env, rule)
-			if err != nil {
-				return nil, c.error(ctx, err, "setting hasMutual on inbound")
-			}
+	for _, rule := range job.AccessPolicy.Inbound.Rules {
+		err = c.setJobHasMutualOnInbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual on inbound")
 		}
 	}
 
@@ -113,24 +109,22 @@ func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oJob, oTeam, oEn
 		return nil
 	}
 
-	if app.AccessPolicy.Inbound != nil {
-		for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
-			if inboundRuleOnOutboundApp.Cluster != "" {
-				if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
-					continue
-				}
+	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
+		if inboundRuleOnOutboundApp.Cluster != "" {
+			if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
+				continue
 			}
+		}
 
-			if inboundRuleOnOutboundApp.Namespace != "" {
-				if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
-					continue
-				}
+		if inboundRuleOnOutboundApp.Namespace != "" {
+			if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
+				continue
 			}
+		}
 
-			if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oJob {
-				outboundRule.Mutual = true
-				return nil
-			}
+		if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oJob {
+			outboundRule.Mutual = true
+			return nil
 		}
 	}
 
@@ -174,24 +168,22 @@ func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv
 		return nil
 	}
 
-	if app.AccessPolicy.Outbound != nil {
-		for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
-			if outboundRuleOnInboundApp.Cluster != "" {
-				if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
-					continue
-				}
+	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
+		if outboundRuleOnInboundApp.Cluster != "" {
+			if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
+				continue
 			}
+		}
 
-			if outboundRuleOnInboundApp.Namespace != "" {
-				if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
-					continue
-				}
+		if outboundRuleOnInboundApp.Namespace != "" {
+			if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
+				continue
 			}
+		}
 
-			if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
-				inboundRule.Mutual = true
-				return nil
-			}
+		if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
+			inboundRule.Mutual = true
+			return nil
 		}
 	}
 
@@ -268,32 +260,28 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 		}
 	}
 
-	if job.AccessPolicy.Inbound != nil {
-		for _, rule := range job.AccessPolicy.Inbound.Rules {
-			if !rule.Mutual {
-				jobState.Errors = append(jobState.Errors, &model.InboundAccessError{
-					Revision: job.DeployInfo.CommitSha,
-					Level:    model.ErrorLevelWarning,
-					Rule:     rule,
-				})
-				if jobState.State != model.StateFailing {
-					jobState.State = model.StateNotnais
-				}
+	for _, rule := range job.AccessPolicy.Inbound.Rules {
+		if !rule.Mutual {
+			jobState.Errors = append(jobState.Errors, &model.InboundAccessError{
+				Revision: job.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if jobState.State != model.StateFailing {
+				jobState.State = model.StateNotnais
 			}
 		}
 	}
 
-	if job.AccessPolicy.Outbound != nil {
-		for _, rule := range job.AccessPolicy.Outbound.Rules {
-			if !rule.Mutual {
-				jobState.Errors = append(jobState.Errors, &model.OutboundAccessError{
-					Revision: job.DeployInfo.CommitSha,
-					Level:    model.ErrorLevelWarning,
-					Rule:     rule,
-				})
-				if jobState.State != model.StateFailing {
-					jobState.State = model.StateNotnais
-				}
+	for _, rule := range job.AccessPolicy.Outbound.Rules {
+		if !rule.Mutual {
+			jobState.Errors = append(jobState.Errors, &model.OutboundAccessError{
+				Revision: job.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if jobState.State != model.StateFailing {
+				jobState.State = model.StateNotnais
 			}
 		}
 	}
@@ -315,21 +303,17 @@ func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, e
 				return nil, c.error(ctx, err, "converting to job")
 			}
 
-			if job.AccessPolicy.Outbound != nil {
-				for _, rule := range job.AccessPolicy.Outbound.Rules {
-					err = c.setJobHasMutualOnOutbound(ctx, job.Name, team, env, rule)
-					if err != nil {
-						return nil, c.error(ctx, err, "setting hasMutual on outbound")
-					}
+			for _, rule := range job.AccessPolicy.Outbound.Rules {
+				err = c.setJobHasMutualOnOutbound(ctx, job.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on outbound")
 				}
 			}
 
-			if job.AccessPolicy.Inbound != nil {
-				for _, rule := range job.AccessPolicy.Inbound.Rules {
-					err = c.setJobHasMutualOnInbound(ctx, job.Name, team, env, rule)
-					if err != nil {
-						return nil, c.error(ctx, err, "setting hasMutual on inbound")
-					}
+			for _, rule := range job.AccessPolicy.Inbound.Rules {
+				err = c.setJobHasMutualOnInbound(ctx, job.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on inbound")
 				}
 			}
 
