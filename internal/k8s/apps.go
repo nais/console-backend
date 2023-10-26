@@ -81,17 +81,21 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		return nil, c.error(ctx, err, "converting to app")
 	}
 
-	for _, rule := range app.AccessPolicy.Outbound.Rules {
-		err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
-		if err != nil {
-			return nil, c.error(ctx, err, "setting hasMutual on outbound")
+	if app.AccessPolicy.Outbound != nil {
+		for _, rule := range app.AccessPolicy.Outbound.Rules {
+			err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
+			if err != nil {
+				return nil, c.error(ctx, err, "setting hasMutual on outbound")
+			}
 		}
 	}
 
-	for _, rule := range app.AccessPolicy.Inbound.Rules {
-		err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
-		if err != nil {
-			return nil, c.error(ctx, err, "setting hasMutual on inbound")
+	if app.AccessPolicy.Inbound != nil {
+		for _, rule := range app.AccessPolicy.Inbound.Rules {
+			err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
+			if err != nil {
+				return nil, c.error(ctx, err, "setting hasMutual on inbound")
+			}
 		}
 	}
 
@@ -155,22 +159,24 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 		return nil
 	}
 
-	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
-		if inboundRuleOnOutboundApp.Cluster != "" {
-			if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
-				continue
+	if app.AccessPolicy.Inbound != nil {
+		for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
+			if inboundRuleOnOutboundApp.Cluster != "" {
+				if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
+					continue
+				}
 			}
-		}
 
-		if inboundRuleOnOutboundApp.Namespace != "" {
-			if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
-				continue
+			if inboundRuleOnOutboundApp.Namespace != "" {
+				if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
+					continue
+				}
 			}
-		}
 
-		if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
-			outboundRule.Mutual = true
-			return nil
+			if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
+				outboundRule.Mutual = true
+				return nil
+			}
 		}
 	}
 
@@ -728,28 +734,32 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 		}
 	}
 
-	for _, rule := range app.AccessPolicy.Inbound.Rules {
-		if !rule.Mutual {
-			appState.Errors = append(appState.Errors, &model.InboundAccessError{
-				Revision: app.DeployInfo.CommitSha,
-				Level:    model.ErrorLevelWarning,
-				Rule:     rule,
-			})
-			if appState.State != model.StateFailing {
-				appState.State = model.StateNotnais
+	if app.AccessPolicy.Inbound != nil {
+		for _, rule := range app.AccessPolicy.Inbound.Rules {
+			if !rule.Mutual {
+				appState.Errors = append(appState.Errors, &model.InboundAccessError{
+					Revision: app.DeployInfo.CommitSha,
+					Level:    model.ErrorLevelWarning,
+					Rule:     rule,
+				})
+				if appState.State != model.StateFailing {
+					appState.State = model.StateNotnais
+				}
 			}
 		}
 	}
 
-	for _, rule := range app.AccessPolicy.Outbound.Rules {
-		if !rule.Mutual {
-			appState.Errors = append(appState.Errors, &model.OutboundAccessError{
-				Revision: app.DeployInfo.CommitSha,
-				Level:    model.ErrorLevelWarning,
-				Rule:     rule,
-			})
-			if appState.State != model.StateFailing {
-				appState.State = model.StateNotnais
+	if app.AccessPolicy.Outbound != nil {
+		for _, rule := range app.AccessPolicy.Outbound.Rules {
+			if !rule.Mutual {
+				appState.Errors = append(appState.Errors, &model.OutboundAccessError{
+					Revision: app.DeployInfo.CommitSha,
+					Level:    model.ErrorLevelWarning,
+					Rule:     rule,
+				})
+				if appState.State != model.StateFailing {
+					appState.State = model.StateNotnais
+				}
 			}
 		}
 	}

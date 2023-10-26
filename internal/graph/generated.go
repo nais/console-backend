@@ -4041,9 +4041,9 @@ func (ec *executionContext) _AccessPolicy_inbound(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Inbound)
+	res := resTmp.(*model.Inbound)
 	fc.Result = res
-	return ec.marshalNInbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInbound(ctx, field.Selections, res)
+	return ec.marshalNInbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInbound(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AccessPolicy_inbound(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4089,9 +4089,9 @@ func (ec *executionContext) _AccessPolicy_outbound(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Outbound)
+	res := resTmp.(*model.Outbound)
 	fc.Result = res
-	return ec.marshalNOutbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx, field.Selections, res)
+	return ec.marshalNOutbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AccessPolicy_outbound(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29113,8 +29113,14 @@ func (ec *executionContext) marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackend�
 	return graphql.WrapContextMarshaler(ctx, v)
 }
 
-func (ec *executionContext) marshalNInbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInbound(ctx context.Context, sel ast.SelectionSet, v model.Inbound) graphql.Marshaler {
-	return ec._Inbound(ctx, sel, &v)
+func (ec *executionContext) marshalNInbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInbound(ctx context.Context, sel ast.SelectionSet, v *model.Inbound) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Inbound(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNInsights2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInsights(ctx context.Context, sel ast.SelectionSet, v *model.Insights) graphql.Marshaler {
@@ -29355,8 +29361,14 @@ func (ec *executionContext) marshalNNaisJobEdge2ᚖgithubᚗcomᚋnaisᚋconsole
 	return ec._NaisJobEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOutbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v model.Outbound) graphql.Marshaler {
-	return ec._Outbound(ctx, sel, &v)
+func (ec *executionContext) marshalNOutbound2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v *model.Outbound) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Outbound(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {

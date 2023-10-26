@@ -6,11 +6,6 @@ import (
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
-type AccessPolicy struct {
-	Inbound  Inbound  `json:"inbound"`
-	Outbound Outbound `json:"outbound"`
-}
-
 type App struct {
 	ID           scalar.Ident `json:"id"`
 	Name         string       `json:"name"`
