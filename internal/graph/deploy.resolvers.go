@@ -9,11 +9,12 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 )
 
 // Deployments is the resolver for the deployments field.
-func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error) {
+func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error) {
 	l := 100
 	if limit != nil {
 		l = *limit
@@ -29,8 +30,8 @@ func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, 
 	}
 	e := deployEdges(deploys, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor

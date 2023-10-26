@@ -46,7 +46,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Cursor:
     model:
-      - github.com/nais/console-backend/internal/graph/model.Cursor
+      - github.com/nais/console-backend/internal/graph/scalar.Cursor
   SearchEdge:
     extraFields:
       Rank:

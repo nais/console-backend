@@ -1,15 +1,19 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/nais/console-backend/internal/graph/scalar"
+)
 
 type Pagination struct {
 	first  *int
 	last   *int
-	after  *Cursor
-	before *Cursor
+	after  *scalar.Cursor
+	before *scalar.Cursor
 }
 
-func NewPagination(first, last *int, after, before *Cursor) (*Pagination, error) {
+func NewPagination(first, last *int, after, before *scalar.Cursor) (*Pagination, error) {
 	if first != nil && last != nil {
 		return nil, fmt.Errorf("using both `first` and `last` with pagination is not supported")
 	}
@@ -62,13 +66,13 @@ func (p *Pagination) Last() int {
 	return *p.last
 }
 
-func (p *Pagination) After() *Cursor {
+func (p *Pagination) After() *scalar.Cursor {
 	if p.after == nil {
-		return &Cursor{Offset: -1}
+		return &scalar.Cursor{Offset: -1}
 	}
 	return p.after
 }
 
-func (p *Pagination) Before() *Cursor {
+func (p *Pagination) Before() *scalar.Cursor {
 	return p.before
 }

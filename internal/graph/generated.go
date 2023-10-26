@@ -187,7 +187,7 @@ type ComplexityRoot struct {
 	DeployInfo struct {
 		CommitSha func(childComplexity int) int
 		Deployer  func(childComplexity int) int
-		History   func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
+		History   func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		Timestamp func(childComplexity int) int
 		URL       func(childComplexity int) int
 	}
@@ -496,14 +496,14 @@ type ComplexityRoot struct {
 		App              func(childComplexity int, name string, team string, env string) int
 		DailyCostForApp  func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
 		DailyCostForTeam func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
-		Deployments      func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) int
+		Deployments      func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
 		EnvCost          func(childComplexity int, filter model.EnvCostFilter) int
 		MonthlyCost      func(childComplexity int, filter model.MonthlyCostFilter) int
 		Naisjob          func(childComplexity int, name string, team string, env string) int
 		Node             func(childComplexity int, id scalar.Ident) int
-		Search           func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) int
+		Search           func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		Team             func(childComplexity int, name string) int
-		Teams            func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
+		Teams            func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		User             func(childComplexity int) int
 	}
 
@@ -588,15 +588,15 @@ type ComplexityRoot struct {
 	}
 
 	Team struct {
-		Apps                func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
+		Apps                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		DeployKey           func(childComplexity int) int
-		Deployments         func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) int
+		Deployments         func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
 		Description         func(childComplexity int) int
 		GcpProjects         func(childComplexity int) int
-		GithubRepositories  func(childComplexity int, first *int, after *model.Cursor) int
+		GithubRepositories  func(childComplexity int, first *int, after *scalar.Cursor) int
 		ID                  func(childComplexity int) int
-		Members             func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
-		Naisjobs            func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
+		Members             func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		Naisjobs            func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		Name                func(childComplexity int) int
 		SlackAlertsChannels func(childComplexity int) int
 		SlackChannel        func(childComplexity int) int
@@ -646,7 +646,7 @@ type ComplexityRoot struct {
 		Email func(childComplexity int) int
 		ID    func(childComplexity int) int
 		Name  func(childComplexity int) int
-		Teams func(childComplexity int, first *int, after *model.Cursor, last *int, before *model.Cursor) int
+		Teams func(childComplexity int, first *int, after *scalar.Cursor, last *int, before *scalar.Cursor) int
 	}
 
 	Variable struct {
@@ -662,7 +662,7 @@ type AppResolver interface {
 	Team(ctx context.Context, obj *model.App) (*model.Team, error)
 }
 type DeployInfoResolver interface {
-	History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *model.Cursor, before *model.Cursor) (model.DeploymentResponse, error)
+	History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (model.DeploymentResponse, error)
 }
 type MutationResolver interface {
 	ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error)
@@ -684,10 +684,10 @@ type QueryResolver interface {
 	DailyCostForTeam(ctx context.Context, team string, from scalar.Date, to scalar.Date) (*model.DailyCost, error)
 	MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error)
 	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]*model.EnvCost, error)
-	Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error)
+	Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
-	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error)
-	Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error)
+	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error)
+	Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error)
 	Team(ctx context.Context, name string) (*model.Team, error)
 	User(ctx context.Context) (*model.User, error)
 }
@@ -695,18 +695,18 @@ type SubscriptionResolver interface {
 	Log(ctx context.Context, input *model.LogSubscriptionInput) (<-chan *model.LogLine, error)
 }
 type TeamResolver interface {
-	Members(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamMemberConnection, error)
-	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.AppConnection, error)
-	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.NaisJobConnection, error)
-	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error)
+	Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error)
+	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.AppConnection, error)
+	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.NaisJobConnection, error)
+	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *scalar.Cursor) (*model.GithubRepositoryConnection, error)
 
-	Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error)
+	Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
 	ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error)
 	ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error)
 }
 type UserResolver interface {
-	Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error)
+	Teams(ctx context.Context, obj *model.User, first *int, after *scalar.Cursor, last *int, before *scalar.Cursor) (*model.TeamConnection, error)
 }
 
 type executableSchema struct {
@@ -1221,7 +1221,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.DeployInfo.History(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
+		return e.complexity.DeployInfo.History(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
 
 	case "DeployInfo.timestamp":
 		if e.complexity.DeployInfo.Timestamp == nil {
@@ -2401,7 +2401,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor), args["limit"].(*int)), true
+		return e.complexity.Query.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["limit"].(*int)), true
 
 	case "Query.envCost":
 		if e.complexity.Query.EnvCost == nil {
@@ -2461,7 +2461,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["filter"].(*model.SearchFilter), args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
+		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["filter"].(*model.SearchFilter), args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
 
 	case "Query.team":
 		if e.complexity.Query.Team == nil {
@@ -2485,7 +2485,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Teams(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
+		return e.complexity.Query.Teams(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
 
 	case "Query.user":
 		if e.complexity.Query.User == nil {
@@ -2838,7 +2838,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Apps(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
+		return e.complexity.Team.Apps(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
 
 	case "Team.deployKey":
 		if e.complexity.Team.DeployKey == nil {
@@ -2857,7 +2857,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor), args["limit"].(*int)), true
+		return e.complexity.Team.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["limit"].(*int)), true
 
 	case "Team.description":
 		if e.complexity.Team.Description == nil {
@@ -2883,7 +2883,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.GithubRepositories(childComplexity, args["first"].(*int), args["after"].(*model.Cursor)), true
+		return e.complexity.Team.GithubRepositories(childComplexity, args["first"].(*int), args["after"].(*scalar.Cursor)), true
 
 	case "Team.id":
 		if e.complexity.Team.ID == nil {
@@ -2902,7 +2902,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Members(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
+		return e.complexity.Team.Members(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
 
 	case "Team.naisjobs":
 		if e.complexity.Team.Naisjobs == nil {
@@ -2914,7 +2914,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Naisjobs(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*model.Cursor), args["before"].(*model.Cursor)), true
+		return e.complexity.Team.Naisjobs(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
 
 	case "Team.name":
 		if e.complexity.Team.Name == nil {
@@ -3101,7 +3101,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.User.Teams(childComplexity, args["first"].(*int), args["after"].(*model.Cursor), args["last"].(*int), args["before"].(*model.Cursor)), true
+		return e.complexity.User.Teams(childComplexity, args["first"].(*int), args["after"].(*scalar.Cursor), args["last"].(*int), args["before"].(*scalar.Cursor)), true
 
 	case "Variable.name":
 		if e.complexity.Variable.Name == nil {
@@ -3305,19 +3305,19 @@ func (ec *executionContext) field_DeployInfo_history_args(ctx context.Context, r
 		}
 	}
 	args["last"] = arg1
-	var arg2 *model.Cursor
+	var arg2 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3494,19 +3494,19 @@ func (ec *executionContext) field_Query_deployments_args(ctx context.Context, ra
 		}
 	}
 	args["last"] = arg1
-	var arg2 *model.Cursor
+	var arg2 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3641,19 +3641,19 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 		}
 	}
 	args["last"] = arg3
-	var arg4 *model.Cursor
+	var arg4 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg4, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg4, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg4
-	var arg5 *model.Cursor
+	var arg5 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg5, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg5, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3698,19 +3698,19 @@ func (ec *executionContext) field_Query_teams_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["last"] = arg1
-	var arg2 *model.Cursor
+	var arg2 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3755,19 +3755,19 @@ func (ec *executionContext) field_Team_apps_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["last"] = arg1
-	var arg2 *model.Cursor
+	var arg2 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3797,19 +3797,19 @@ func (ec *executionContext) field_Team_deployments_args(ctx context.Context, raw
 		}
 	}
 	args["last"] = arg1
-	var arg2 *model.Cursor
+	var arg2 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3839,10 +3839,10 @@ func (ec *executionContext) field_Team_githubRepositories_args(ctx context.Conte
 		}
 	}
 	args["first"] = arg0
-	var arg1 *model.Cursor
+	var arg1 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg1, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg1, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3872,19 +3872,19 @@ func (ec *executionContext) field_Team_members_args(ctx context.Context, rawArgs
 		}
 	}
 	args["last"] = arg1
-	var arg2 *model.Cursor
+	var arg2 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3914,19 +3914,19 @@ func (ec *executionContext) field_Team_naisjobs_args(ctx context.Context, rawArg
 		}
 	}
 	args["last"] = arg1
-	var arg2 *model.Cursor
+	var arg2 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["after"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3947,10 +3947,10 @@ func (ec *executionContext) field_User_teams_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["first"] = arg0
-	var arg1 *model.Cursor
+	var arg1 *scalar.Cursor
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg1, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg1, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3965,10 +3965,10 @@ func (ec *executionContext) field_User_teams_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["last"] = arg2
-	var arg3 *model.Cursor
+	var arg3 *scalar.Cursor
 	if tmp, ok := rawArgs["before"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, tmp)
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5363,9 +5363,9 @@ func (ec *executionContext) _AppEdge_cursor(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Cursor)
+	res := resTmp.(scalar.Cursor)
 	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AppEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7360,7 +7360,7 @@ func (ec *executionContext) _DeployInfo_history(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DeployInfo().History(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
+		return ec.resolvers.DeployInfo().History(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7941,9 +7941,9 @@ func (ec *executionContext) _DeploymentEdge_cursor(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Cursor)
+	res := resTmp.(scalar.Cursor)
 	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10280,9 +10280,9 @@ func (ec *executionContext) _GithubRepositoryEdge_cursor(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Cursor)
+	res := resTmp.(scalar.Cursor)
 	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GithubRepositoryEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13790,9 +13790,9 @@ func (ec *executionContext) _NaisJobEdge_cursor(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Cursor)
+	res := resTmp.(scalar.Cursor)
 	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJobEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14557,9 +14557,9 @@ func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Cursor)
+	res := resTmp.(*scalar.Cursor)
 	fc.Result = res
-	return ec.marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14598,9 +14598,9 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Cursor)
+	res := resTmp.(*scalar.Cursor)
 	fc.Result = res
-	return ec.marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15149,7 +15149,7 @@ func (ec *executionContext) _Query_deployments(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Deployments(rctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor), fc.Args["limit"].(*int))
+		return ec.resolvers.Query().Deployments(rctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15303,7 +15303,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["filter"].(*model.SearchFilter), fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
+		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["filter"].(*model.SearchFilter), fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15366,7 +15366,7 @@ func (ec *executionContext) _Query_teams(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Teams(rctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
+		return ec.resolvers.Query().Teams(rctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16791,9 +16791,9 @@ func (ec *executionContext) _SearchEdge_cursor(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Cursor)
+	res := resTmp.(scalar.Cursor)
 	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17992,7 +17992,7 @@ func (ec *executionContext) _Team_members(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Members(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
+		return ec.resolvers.Team().Members(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18055,7 +18055,7 @@ func (ec *executionContext) _Team_apps(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Apps(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
+		return ec.resolvers.Team().Apps(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18118,7 +18118,7 @@ func (ec *executionContext) _Team_naisjobs(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Naisjobs(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor))
+		return ec.resolvers.Team().Naisjobs(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18181,7 +18181,7 @@ func (ec *executionContext) _Team_githubRepositories(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().GithubRepositories(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor))
+		return ec.resolvers.Team().GithubRepositories(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18390,7 +18390,7 @@ func (ec *executionContext) _Team_deployments(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Deployments(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["before"].(*model.Cursor), fc.Args["limit"].(*int))
+		return ec.resolvers.Team().Deployments(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18759,9 +18759,9 @@ func (ec *executionContext) _TeamEdge_cursor(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Cursor)
+	res := resTmp.(scalar.Cursor)
 	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19205,9 +19205,9 @@ func (ec *executionContext) _TeamMemberEdge_cursor(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Cursor)
+	res := resTmp.(scalar.Cursor)
 	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx, field.Selections, res)
+	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamMemberEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19563,7 +19563,7 @@ func (ec *executionContext) _User_teams(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Teams(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*model.Cursor), fc.Args["last"].(*int), fc.Args["before"].(*model.Cursor))
+		return ec.resolvers.User().Teams(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["last"].(*int), fc.Args["before"].(*scalar.Cursor))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -28295,13 +28295,13 @@ func (ec *executionContext) marshalNCostSeries2ᚖgithubᚗcomᚋnaisᚋconsole�
 	return ec._CostSeries(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, v interface{}) (model.Cursor, error) {
-	var res model.Cursor
+func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, v interface{}) (scalar.Cursor, error) {
+	var res scalar.Cursor
 	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, sel ast.SelectionSet, v model.Cursor) graphql.Marshaler {
+func (ec *executionContext) marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, sel ast.SelectionSet, v scalar.Cursor) graphql.Marshaler {
 	return graphql.WrapContextMarshaler(ctx, v)
 }
 
@@ -30439,16 +30439,16 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, v interface{}) (*model.Cursor, error) {
+func (ec *executionContext) unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, v interface{}) (*scalar.Cursor, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.Cursor)
+	var res = new(scalar.Cursor)
 	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCursor(ctx context.Context, sel ast.SelectionSet, v *model.Cursor) graphql.Marshaler {
+func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, sel ast.SelectionSet, v *scalar.Cursor) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

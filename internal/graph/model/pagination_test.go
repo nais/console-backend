@@ -3,6 +3,8 @@ package model_test
 import (
 	"testing"
 
+	"github.com/nais/console-backend/internal/graph/scalar"
+
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +26,7 @@ func Test_NewPagination(t *testing.T) {
 	})
 
 	t.Run("pagination with values", func(t *testing.T) {
-		pagination, err := model.NewPagination(intP(9), nil, &model.Cursor{Offset: 8}, &model.Cursor{Offset: 7})
+		pagination, err := model.NewPagination(intP(9), nil, &scalar.Cursor{Offset: 8}, &scalar.Cursor{Offset: 7})
 		assert.NoError(t, err)
 		assert.Equal(t, 9, pagination.First())
 		assert.Equal(t, 10, pagination.Last())
