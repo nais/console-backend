@@ -10,6 +10,7 @@ import (
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 // User is the resolver for the user field.
@@ -23,7 +24,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 		return nil, fmt.Errorf("getting user from Teams: %w", err)
 	}
 	return &model.User{
-		ID:    model.UserIdent(user.ID.String()),
+		ID:    scalar.UserIdent(user.ID.String()),
 		Name:  user.Name,
 		Email: email,
 	}, nil

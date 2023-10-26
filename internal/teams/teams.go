@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
@@ -291,7 +292,7 @@ func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error
 	}
 
 	return &model.User{
-		ID:    model.UserIdent(id),
+		ID:    scalar.UserIdent(id),
 		Name:  respBody.Data.UserByID.Name,
 		Email: respBody.Data.UserByID.Email,
 	}, nil
@@ -397,7 +398,7 @@ func toModelTeams(teams []Team) []*model.Team {
 	models := make([]*model.Team, 0)
 	for _, team := range teams {
 		models = append(models, &model.Team{
-			ID:           model.TeamIdent(team.Slug),
+			ID:           scalar.TeamIdent(team.Slug),
 			Name:         team.Slug,
 			Description:  team.Purpose,
 			SlackChannel: team.SlackChannel,

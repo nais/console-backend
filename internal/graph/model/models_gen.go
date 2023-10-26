@@ -7,6 +7,8 @@ import (
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 type Authz interface {
@@ -39,7 +41,7 @@ type Edge interface {
 type Node interface {
 	IsNode()
 	// The unique ID of an object.
-	GetID() Ident
+	GetID() scalar.Ident
 }
 
 type SearchNode interface {
@@ -218,7 +220,7 @@ type DeployInfo struct {
 }
 
 type Deployment struct {
-	ID         Ident                 `json:"id"`
+	ID         scalar.Ident          `json:"id"`
 	Team       *Team                 `json:"team"`
 	Resources  []*DeploymentResource `json:"resources"`
 	Env        string                `json:"env"`
@@ -268,7 +270,7 @@ func (this DeploymentEdge) GetCursor() Cursor { return this.Cursor }
 // Deployment key type.
 type DeploymentKey struct {
 	// The unique identifier of the deployment key.
-	ID Ident `json:"id"`
+	ID scalar.Ident `json:"id"`
 	// The actual key.
 	Key string `json:"key"`
 	// The date the deployment key was created.
@@ -280,22 +282,22 @@ type DeploymentKey struct {
 func (DeploymentKey) IsNode() {}
 
 // The unique ID of an object.
-func (this DeploymentKey) GetID() Ident { return this.ID }
+func (this DeploymentKey) GetID() scalar.Ident { return this.ID }
 
 type DeploymentResource struct {
-	ID        Ident  `json:"id"`
-	Group     string `json:"group"`
-	Kind      string `json:"kind"`
-	Name      string `json:"name"`
-	Version   string `json:"version"`
-	Namespace string `json:"namespace"`
+	ID        scalar.Ident `json:"id"`
+	Group     string       `json:"group"`
+	Kind      string       `json:"kind"`
+	Name      string       `json:"name"`
+	Version   string       `json:"version"`
+	Namespace string       `json:"namespace"`
 }
 
 type DeploymentStatus struct {
-	ID      Ident     `json:"id"`
-	Status  string    `json:"status"`
-	Message *string   `json:"message,omitempty"`
-	Created time.Time `json:"created"`
+	ID      scalar.Ident `json:"id"`
+	Status  string       `json:"status"`
+	Message *string      `json:"message,omitempty"`
+	Created time.Time    `json:"created"`
 }
 
 type DeprecatedIngressError struct {
@@ -322,14 +324,14 @@ func (this DeprecatedRegistryError) GetRevision() string  { return this.Revision
 func (this DeprecatedRegistryError) GetLevel() ErrorLevel { return this.Level }
 
 type Env struct {
-	ID   Ident  `json:"id"`
-	Name string `json:"name"`
+	ID   scalar.Ident `json:"id"`
+	Name string       `json:"name"`
 }
 
 func (Env) IsNode() {}
 
 // The unique ID of an object.
-func (this Env) GetID() Ident { return this.ID }
+func (this Env) GetID() scalar.Ident { return this.ID }
 
 // Env cost type.
 type EnvCost struct {
@@ -502,7 +504,7 @@ type Insights struct {
 }
 
 type Instance struct {
-	ID       Ident           `json:"id"`
+	ID       scalar.Ident    `json:"id"`
 	Name     string          `json:"name"`
 	State    InstanceState   `json:"state"`
 	Message  string          `json:"message"`
@@ -515,7 +517,7 @@ type Instance struct {
 func (Instance) IsNode() {}
 
 // The unique ID of an object.
-func (this Instance) GetID() Ident { return this.ID }
+func (this Instance) GetID() scalar.Ident { return this.ID }
 
 type InvalidNaisYamlError struct {
 	Revision string     `json:"revision"`
@@ -799,7 +801,7 @@ func (this SQLInstance) GetName() string { return this.Name }
 // Team type.
 type Team struct {
 	// The unique identifier of the team.
-	ID Ident `json:"id"`
+	ID scalar.Ident `json:"id"`
 	// The name of the team.
 	Name string `json:"name"`
 	// The description of the team.
@@ -832,7 +834,7 @@ func (Team) IsSearchNode() {}
 func (Team) IsNode() {}
 
 // The unique ID of an object.
-func (this Team) GetID() Ident { return this.ID }
+func (this Team) GetID() scalar.Ident { return this.ID }
 
 // Team connection type.
 type TeamConnection struct {
@@ -880,7 +882,7 @@ func (this TeamEdge) GetCursor() Cursor { return this.Cursor }
 // Team member type.
 type TeamMember struct {
 	// The unique identifier of the team member.
-	ID Ident `json:"id"`
+	ID scalar.Ident `json:"id"`
 	// The name of the team member.
 	Name string `json:"name"`
 	// The email of the team member.
@@ -892,7 +894,7 @@ type TeamMember struct {
 func (TeamMember) IsNode() {}
 
 // The unique ID of an object.
-func (this TeamMember) GetID() Ident { return this.ID }
+func (this TeamMember) GetID() scalar.Ident { return this.ID }
 
 // Team member connection type.
 type TeamMemberConnection struct {
@@ -950,7 +952,7 @@ type Topic struct {
 
 type User struct {
 	// The unique identifier for the user.
-	ID Ident `json:"id"`
+	ID scalar.Ident `json:"id"`
 	// The user's full name.
 	Name string `json:"name"`
 	// The user's email address.
@@ -962,7 +964,7 @@ type User struct {
 func (User) IsNode() {}
 
 // The unique ID of an object.
-func (this User) GetID() Ident { return this.ID }
+func (this User) GetID() scalar.Ident { return this.ID }
 
 type Variable struct {
 	Name  string `json:"name"`

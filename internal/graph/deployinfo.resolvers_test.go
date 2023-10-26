@@ -7,6 +7,7 @@ import (
 
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -97,20 +98,20 @@ func Test_deployInfoResolver_History(t *testing.T) {
 	assert.Len(t, conn.Edges, 2)
 
 	assert.Equal(t, "id-3", conn.Edges[0].Node.ID.ID)
-	assert.Equal(t, model.IdentTypeDeployment, conn.Edges[0].Node.ID.Type)
+	assert.Equal(t, scalar.IdentTypeDeployment, conn.Edges[0].Node.ID.Type)
 	assert.Len(t, conn.Edges[0].Node.Resources, 1)
 	assert.Equal(t, "resource-id-3", conn.Edges[0].Node.Resources[0].ID.ID)
-	assert.Equal(t, model.IdentTypeDeploymentResource, conn.Edges[0].Node.Resources[0].ID.Type)
+	assert.Equal(t, scalar.IdentTypeDeploymentResource, conn.Edges[0].Node.Resources[0].ID.Type)
 
 	assert.Equal(t, "id-4", conn.Edges[1].Node.ID.ID)
-	assert.Equal(t, model.IdentTypeDeployment, conn.Edges[1].Node.ID.Type)
+	assert.Equal(t, scalar.IdentTypeDeployment, conn.Edges[1].Node.ID.Type)
 	assert.Len(t, conn.Edges[1].Node.Resources, 4)
 	assert.Equal(t, "resource-id-4", conn.Edges[1].Node.Resources[0].ID.ID)
-	assert.Equal(t, model.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[0].ID.Type)
+	assert.Equal(t, scalar.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[0].ID.Type)
 	assert.Equal(t, "resource-id-5", conn.Edges[1].Node.Resources[1].ID.ID)
-	assert.Equal(t, model.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[1].ID.Type)
+	assert.Equal(t, scalar.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[1].ID.Type)
 	assert.Equal(t, "resource-id-6", conn.Edges[1].Node.Resources[2].ID.ID)
-	assert.Equal(t, model.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[2].ID.Type)
+	assert.Equal(t, scalar.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[2].ID.Type)
 	assert.Equal(t, "resource-id-7", conn.Edges[1].Node.Resources[3].ID.ID)
-	assert.Equal(t, model.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[3].ID.Type)
+	assert.Equal(t, scalar.IdentTypeDeploymentResource, conn.Edges[1].Node.Resources[3].ID.Type)
 }

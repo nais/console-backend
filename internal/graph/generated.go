@@ -17,6 +17,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -499,7 +500,7 @@ type ComplexityRoot struct {
 		EnvCost          func(childComplexity int, filter model.EnvCostFilter) int
 		MonthlyCost      func(childComplexity int, filter model.MonthlyCostFilter) int
 		Naisjob          func(childComplexity int, name string, team string, env string) int
-		Node             func(childComplexity int, id model.Ident) int
+		Node             func(childComplexity int, id scalar.Ident) int
 		Search           func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) int
 		Team             func(childComplexity int, name string) int
 		Teams            func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor) int
@@ -677,7 +678,7 @@ type PageInfoResolver interface {
 	To(ctx context.Context, obj *model.PageInfo) (int, error)
 }
 type QueryResolver interface {
-	Node(ctx context.Context, id model.Ident) (model.Node, error)
+	Node(ctx context.Context, id scalar.Ident) (model.Node, error)
 	App(ctx context.Context, name string, team string, env string) (*model.App, error)
 	DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCost, error)
 	DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCost, error)
@@ -2448,7 +2449,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Node(childComplexity, args["id"].(model.Ident)), true
+		return e.complexity.Query.Node(childComplexity, args["id"].(scalar.Ident)), true
 
 	case "Query.search":
 		if e.complexity.Query.Search == nil {
@@ -3589,10 +3590,10 @@ func (ec *executionContext) field_Query_naisjob_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.Ident
+	var arg0 scalar.Ident
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4270,9 +4271,9 @@ func (ec *executionContext) _App_id(ctx context.Context, field graphql.Collected
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_App_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7426,9 +7427,9 @@ func (ec *executionContext) _Deployment_id(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Deployment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8044,9 +8045,9 @@ func (ec *executionContext) _DeploymentKey_id(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentKey_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8220,9 +8221,9 @@ func (ec *executionContext) _DeploymentResource_id(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentResource_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8484,9 +8485,9 @@ func (ec *executionContext) _DeploymentStatus_id(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentStatus_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9053,9 +9054,9 @@ func (ec *executionContext) _Env_id(ctx context.Context, field graphql.Collected
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Env_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11470,9 +11471,9 @@ func (ec *executionContext) _Instance_id(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Instance_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12803,9 +12804,9 @@ func (ec *executionContext) _NaisJob_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJob_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14761,7 +14762,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Node(rctx, fc.Args["id"].(model.Ident))
+		return ec.resolvers.Query().Node(rctx, fc.Args["id"].(scalar.Ident))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16204,9 +16205,9 @@ func (ec *executionContext) _Run_id(ctx context.Context, field graphql.Collected
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Run_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17871,9 +17872,9 @@ func (ec *executionContext) _Team_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18876,9 +18877,9 @@ func (ec *executionContext) _TeamMember_id(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamMember_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19442,9 +19443,9 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Ident)
+	res := resTmp.(scalar.Ident)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -29102,13 +29103,13 @@ func (ec *executionContext) marshalNGroup2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbac
 	return ec._Group(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx context.Context, v interface{}) (model.Ident, error) {
-	var res model.Ident
+func (ec *executionContext) unmarshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx context.Context, v interface{}) (scalar.Ident, error) {
+	var res scalar.Ident
 	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIdent(ctx context.Context, sel ast.SelectionSet, v model.Ident) graphql.Marshaler {
+func (ec *executionContext) marshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx context.Context, sel ast.SelectionSet, v scalar.Ident) graphql.Marshaler {
 	return graphql.WrapContextMarshaler(ctx, v)
 }
 

@@ -34,7 +34,7 @@ omit_gqlgen_version_in_file_notice: true
 models:
   ID:
     model:
-      - github.com/nais/console-backend/internal/graph/model.Ident
+      - github.com/nais/console-backend/internal/graph/scalar.Ident
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64

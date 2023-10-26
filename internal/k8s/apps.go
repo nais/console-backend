@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	kafka_nais_io_v1 "github.com/nais/liberator/pkg/apis/kafka.nais.io/v1"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"gopkg.in/yaml.v2"
@@ -451,7 +452,7 @@ func Instance(pod *corev1.Pod, env string) *model.Instance {
 	}
 
 	ret := &model.Instance{
-		ID:       model.PodIdent(pod.GetUID()),
+		ID:       scalar.PodIdent(pod.GetUID()),
 		Name:     pod.GetName(),
 		Image:    image,
 		Restarts: restarts,
@@ -516,12 +517,12 @@ func (c *Client) toApp(ctx context.Context, u *unstructured.Unstructured, env st
 	}
 
 	ret := &model.App{}
-	ret.ID = model.AppIdent("app_" + env + "_" + app.GetNamespace() + "_" + app.GetName())
+	ret.ID = scalar.AppIdent("app_" + env + "_" + app.GetNamespace() + "_" + app.GetName())
 	ret.Name = app.GetName()
 
 	ret.Env = &model.Env{
 		Name: env,
-		ID:   model.EnvIdent(env),
+		ID:   scalar.EnvIdent(env),
 	}
 
 	appSynchState := app.GetStatus().SynchronizationState

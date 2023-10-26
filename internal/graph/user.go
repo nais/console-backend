@@ -2,6 +2,7 @@ package graph
 
 import (
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	t "github.com/nais/console-backend/internal/teams"
 )
 
@@ -14,7 +15,7 @@ func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []*model.TeamE
 		edges = append(edges, &model.TeamEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.Team{
-				ID:           model.TeamIdent(team.Team.Slug),
+				ID:           scalar.TeamIdent(team.Team.Slug),
 				Name:         team.Team.Slug,
 				Description:  team.Team.Purpose,
 				SlackChannel: team.Team.SlackChannel,
