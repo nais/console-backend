@@ -59,11 +59,6 @@ type Storage interface {
 	GetName() string
 }
 
-type AccessPolicy struct {
-	Inbound  *Inbound  `json:"inbound"`
-	Outbound *Outbound `json:"outbound"`
-}
-
 type ACL struct {
 	Access      string `json:"access"`
 	Application string `json:"application"`

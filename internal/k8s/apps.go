@@ -81,21 +81,17 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		return nil, c.error(ctx, err, "converting to app")
 	}
 
-	if app.AccessPolicy.Outbound != nil {
-		for _, rule := range app.AccessPolicy.Outbound.Rules {
-			err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
-			if err != nil {
-				return nil, c.error(ctx, err, "setting hasMutual on outbound")
-			}
+	for _, rule := range app.AccessPolicy.Outbound.Rules {
+		err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual on outbound")
 		}
 	}
 
-	if app.AccessPolicy.Inbound != nil {
-		for _, rule := range app.AccessPolicy.Inbound.Rules {
-			err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
-			if err != nil {
-				return nil, c.error(ctx, err, "setting hasMutual on inbound")
-			}
+	for _, rule := range app.AccessPolicy.Inbound.Rules {
+		err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
+		if err != nil {
+			return nil, c.error(ctx, err, "setting hasMutual on inbound")
 		}
 	}
 
@@ -159,24 +155,22 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 		return nil
 	}
 
-	if app.AccessPolicy.Inbound != nil {
-		for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
-			if inboundRuleOnOutboundApp.Cluster != "" {
-				if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
-					continue
-				}
+	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
+		if inboundRuleOnOutboundApp.Cluster != "" {
+			if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
+				continue
 			}
+		}
 
-			if inboundRuleOnOutboundApp.Namespace != "" {
-				if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
-					continue
-				}
+		if inboundRuleOnOutboundApp.Namespace != "" {
+			if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
+				continue
 			}
+		}
 
-			if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
-				outboundRule.Mutual = true
-				return nil
-			}
+		if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
+			outboundRule.Mutual = true
+			return nil
 		}
 	}
 
@@ -220,24 +214,22 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 		return nil
 	}
 
-	if app.AccessPolicy.Outbound != nil {
-		for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
-			if outboundRuleOnInboundApp.Cluster != "" {
-				if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
-					continue
-				}
+	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
+		if outboundRuleOnInboundApp.Cluster != "" {
+			if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
+				continue
 			}
+		}
 
-			if outboundRuleOnInboundApp.Namespace != "" {
-				if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
-					continue
-				}
+		if outboundRuleOnInboundApp.Namespace != "" {
+			if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
+				continue
 			}
+		}
 
-			if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
-				inboundRule.Mutual = true
-				return nil
-			}
+		if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
+			inboundRule.Mutual = true
+			return nil
 		}
 	}
 
@@ -388,21 +380,17 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 				return nil, c.error(ctx, err, "converting to app")
 			}
 
-			if app.AccessPolicy.Outbound != nil {
-				for _, rule := range app.AccessPolicy.Outbound.Rules {
-					err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
-					if err != nil {
-						return nil, c.error(ctx, err, "setting hasMutual on outbound")
-					}
+			for _, rule := range app.AccessPolicy.Outbound.Rules {
+				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on outbound")
 				}
 			}
 
-			if app.AccessPolicy.Inbound != nil {
-				for _, rule := range app.AccessPolicy.Inbound.Rules {
-					err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
-					if err != nil {
-						return nil, c.error(ctx, err, "setting hasMutual on inbound")
-					}
+			for _, rule := range app.AccessPolicy.Inbound.Rules {
+				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
+				if err != nil {
+					return nil, c.error(ctx, err, "setting hasMutual on inbound")
 				}
 			}
 
@@ -740,32 +728,28 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 		}
 	}
 
-	if app.AccessPolicy.Inbound != nil {
-		for _, rule := range app.AccessPolicy.Inbound.Rules {
-			if !rule.Mutual {
-				appState.Errors = append(appState.Errors, &model.InboundAccessError{
-					Revision: app.DeployInfo.CommitSha,
-					Level:    model.ErrorLevelWarning,
-					Rule:     rule,
-				})
-				if appState.State != model.StateFailing {
-					appState.State = model.StateNotnais
-				}
+	for _, rule := range app.AccessPolicy.Inbound.Rules {
+		if !rule.Mutual {
+			appState.Errors = append(appState.Errors, &model.InboundAccessError{
+				Revision: app.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if appState.State != model.StateFailing {
+				appState.State = model.StateNotnais
 			}
 		}
 	}
 
-	if app.AccessPolicy.Outbound != nil {
-		for _, rule := range app.AccessPolicy.Outbound.Rules {
-			if !rule.Mutual {
-				appState.Errors = append(appState.Errors, &model.OutboundAccessError{
-					Revision: app.DeployInfo.CommitSha,
-					Level:    model.ErrorLevelWarning,
-					Rule:     rule,
-				})
-				if appState.State != model.StateFailing {
-					appState.State = model.StateNotnais
-				}
+	for _, rule := range app.AccessPolicy.Outbound.Rules {
+		if !rule.Mutual {
+			appState.Errors = append(appState.Errors, &model.OutboundAccessError{
+				Revision: app.DeployInfo.CommitSha,
+				Level:    model.ErrorLevelWarning,
+				Rule:     rule,
+			})
+			if appState.State != model.StateFailing {
+				appState.State = model.StateNotnais
 			}
 		}
 	}
