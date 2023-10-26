@@ -297,36 +297,13 @@ func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, e
 			return nil, c.error(ctx, err, "listing jobs")
 		}
 		for _, obj := range objs {
-			job, err := toNaisJob(obj.(*unstructured.Unstructured), env)
+			name := obj.(*unstructured.Unstructured).GetName()
+			namespace := obj.(*unstructured.Unstructured).GetNamespace()
+
+			job, err := c.NaisJob(ctx, name, namespace, env)
 			if err != nil {
-				return nil, c.error(ctx, err, "converting to job")
+				return nil, c.error(ctx, err, "getting job")
 			}
-
-			for _, rule := range job.AccessPolicy.Outbound.Rules {
-				err = c.setJobHasMutualOnOutbound(ctx, job.Name, team, env, rule)
-				if err != nil {
-					return nil, c.error(ctx, err, "setting hasMutual on outbound")
-				}
-			}
-
-			for _, rule := range job.AccessPolicy.Inbound.Rules {
-				err = c.setJobHasMutualOnInbound(ctx, job.Name, team, env, rule)
-				if err != nil {
-					return nil, c.error(ctx, err, "setting hasMutual on inbound")
-				}
-			}
-
-			runs, err := c.Runs(ctx, team, env, job.Name)
-			if err != nil {
-				return nil, c.error(ctx, err, "getting runs")
-			}
-
-			tmpJob := &naisv1.Naisjob{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, tmpJob); err != nil {
-				return nil, fmt.Errorf("converting to naisjob: %w", err)
-			}
-
-			setJobStatus(job, *tmpJob.Status.Conditions, runs)
 
 			ret = append(ret, job)
 		}
