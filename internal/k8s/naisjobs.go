@@ -174,22 +174,24 @@ func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv
 		return nil
 	}
 
-	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
-		if outboundRuleOnInboundApp.Cluster != "" {
-			if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
-				continue
+	if app.AccessPolicy.Outbound != nil {
+		for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
+			if outboundRuleOnInboundApp.Cluster != "" {
+				if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
+					continue
+				}
 			}
-		}
 
-		if outboundRuleOnInboundApp.Namespace != "" {
-			if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
-				continue
+			if outboundRuleOnInboundApp.Namespace != "" {
+				if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
+					continue
+				}
 			}
-		}
 
-		if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
-			inboundRule.Mutual = true
-			return nil
+			if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
+				inboundRule.Mutual = true
+				return nil
+			}
 		}
 	}
 
