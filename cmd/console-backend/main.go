@@ -163,7 +163,6 @@ func getHttpServer(cfg *config.Config, graphHandler *handler.Server) *http.Serve
 				AllowedOrigins:   []string{"https://*", "http://*"},
 				AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 				AllowCredentials: true,
-				Debug:            cfg.Logger.Level == "debug",
 			},
 		).Handler,
 	}
