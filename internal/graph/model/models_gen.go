@@ -721,6 +721,24 @@ type Rule struct {
 	MutualExplanation string `json:"mutualExplanation"`
 }
 
+type Run struct {
+	ID             scalar.Ident `json:"id"`
+	Name           string       `json:"name"`
+	PodNames       []string     `json:"podNames"`
+	StartTime      *time.Time   `json:"startTime,omitempty"`
+	CompletionTime *time.Time   `json:"completionTime,omitempty"`
+	Duration       string       `json:"duration"`
+	Image          string       `json:"image"`
+	Message        string       `json:"message"`
+	Failed         bool         `json:"failed"`
+	GQLVars        RunGQLVars   `json:"-"`
+}
+
+func (Run) IsNode() {}
+
+// The unique ID of an object.
+func (this Run) GetID() scalar.Ident { return this.ID }
+
 type SearchConnection struct {
 	TotalCount int           `json:"totalCount"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
