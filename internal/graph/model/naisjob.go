@@ -1,26 +1,8 @@
 package model
 
 import (
-	"time"
-
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
-
-type Run struct {
-	ID             scalar.Ident `json:"id"`
-	Name           string       `json:"name"`
-	PodNames       []string     `json:"podNames"`
-	StartTime      *time.Time   `json:"startTime,omitempty"`
-	CompletionTime *time.Time   `json:"completionTime,omitempty"`
-	Duration       string       `json:"duration"`
-	Image          string       `json:"image"`
-	Message        string       `json:"message"`
-	Failed         bool         `json:"failed,omitempty"`
-	GQLVars        RunGQLVars   `json:"-"`
-}
-
-func (Run) IsNode()               {}
-func (r Run) GetID() scalar.Ident { return r.ID }
 
 type NaisJob struct {
 	ID           scalar.Ident   `json:"id"`

@@ -62,3 +62,7 @@ models:
     extraFields:
       GQLVars:
         type: "github.com/nais/console-backend/internal/graph/model.InstanceGQLVars"
+  Run:
+    extraFields:
+      GQLVars:
+        type: "github.com/nais/console-backend/internal/graph/model.RunGQLVars"
