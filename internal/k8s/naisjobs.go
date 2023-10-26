@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	naisv1 "github.com/nais/liberator/pkg/apis/nais.io/v1"
 	"gopkg.in/yaml.v2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -407,7 +408,7 @@ func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run
 		}
 
 		ret = append(ret, &model.Run{
-			ID:             model.JobIdent(job.Name),
+			ID:             scalar.JobIdent(job.Name),
 			Name:           job.Name,
 			PodNames:       podNames,
 			StartTime:      startTime,
@@ -512,11 +513,11 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	}
 
 	ret := &model.NaisJob{}
-	ret.ID = model.JobIdent("job_" + env + "_" + naisjob.GetNamespace() + "_" + naisjob.GetName())
+	ret.ID = scalar.JobIdent("job_" + env + "_" + naisjob.GetNamespace() + "_" + naisjob.GetName())
 	ret.Name = naisjob.GetName()
 	ret.Env = &model.Env{
 		Name: env,
-		ID:   model.EnvIdent(env),
+		ID:   scalar.EnvIdent(env),
 	}
 
 	ret.DeployInfo = &model.DeployInfo{

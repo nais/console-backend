@@ -5,6 +5,7 @@ import (
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	t "github.com/nais/console-backend/internal/teams"
 )
 
@@ -17,7 +18,7 @@ func teamEdges(teams []t.Team, p *model.Pagination) []*model.TeamEdge {
 		edges = append(edges, &model.TeamEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.Team{
-				ID:           model.TeamIdent(team.Slug),
+				ID:           scalar.TeamIdent(team.Slug),
 				Name:         team.Slug,
 				Description:  team.Purpose,
 				SlackChannel: team.SlackChannel,
@@ -80,7 +81,7 @@ func memberEdges(members []t.Member, p *model.Pagination) []*model.TeamMemberEdg
 		edges = append(edges, &model.TeamMemberEdge{
 			Cursor: model.Cursor{Offset: start + i},
 			Node: &model.TeamMember{
-				ID:    model.UserIdent(member.User.Email),
+				ID:    scalar.UserIdent(member.User.Email),
 				Name:  member.User.Name,
 				Email: member.User.Email,
 				Role:  model.TeamRole(member.Role),

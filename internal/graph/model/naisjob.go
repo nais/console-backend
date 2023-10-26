@@ -1,25 +1,29 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/nais/console-backend/internal/graph/scalar"
+)
 
 type Run struct {
-	ID             Ident      `json:"id"`
-	Name           string     `json:"name"`
-	PodNames       []string   `json:"podNames"`
-	StartTime      *time.Time `json:"startTime,omitempty"`
-	CompletionTime *time.Time `json:"completionTime,omitempty"`
-	Duration       string     `json:"duration"`
-	Image          string     `json:"image"`
-	Message        string     `json:"message"`
-	Failed         bool       `json:"failed,omitempty"`
-	GQLVars        RunGQLVars `json:"-"`
+	ID             scalar.Ident `json:"id"`
+	Name           string       `json:"name"`
+	PodNames       []string     `json:"podNames"`
+	StartTime      *time.Time   `json:"startTime,omitempty"`
+	CompletionTime *time.Time   `json:"completionTime,omitempty"`
+	Duration       string       `json:"duration"`
+	Image          string       `json:"image"`
+	Message        string       `json:"message"`
+	Failed         bool         `json:"failed,omitempty"`
+	GQLVars        RunGQLVars   `json:"-"`
 }
 
-func (Run) IsNode()        {}
-func (r Run) GetID() Ident { return r.ID }
+func (Run) IsNode()               {}
+func (r Run) GetID() scalar.Ident { return r.ID }
 
 type NaisJob struct {
-	ID           Ident          `json:"id"`
+	ID           scalar.Ident   `json:"id"`
 	Name         string         `json:"name"`
 	Env          *Env           `json:"env"`
 	DeployInfo   *DeployInfo    `json:"deployInfo"`
@@ -36,6 +40,6 @@ type NaisJob struct {
 	GQLVars      NaisJobGQLVars `json:"-"`
 }
 
-func (NaisJob) IsNode()        {}
-func (j NaisJob) GetID() Ident { return j.ID }
-func (NaisJob) IsSearchNode()  {}
+func (NaisJob) IsNode()               {}
+func (j NaisJob) GetID() scalar.Ident { return j.ID }
+func (NaisJob) IsSearchNode()         {}

@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 type AccessPolicy struct {
@@ -10,7 +12,7 @@ type AccessPolicy struct {
 }
 
 type App struct {
-	ID           Ident        `json:"id"`
+	ID           scalar.Ident `json:"id"`
 	Name         string       `json:"name"`
 	Image        string       `json:"image"`
 	DeployInfo   DeployInfo   `json:"deployInfo"`
@@ -27,6 +29,6 @@ type App struct {
 	GQLVars      AppGQLVars   `json:"-"`
 }
 
-func (App) IsSearchNode()  {}
-func (App) IsNode()        {}
-func (a App) GetID() Ident { return a.ID }
+func (App) IsSearchNode()         {}
+func (App) IsNode()               {}
+func (a App) GetID() scalar.Ident { return a.ID }

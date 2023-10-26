@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 // From is the resolver for the from field.
@@ -28,15 +29,15 @@ func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, er
 }
 
 // Node is the resolver for the node field.
-func (r *queryResolver) Node(ctx context.Context, id model.Ident) (model.Node, error) {
+func (r *queryResolver) Node(ctx context.Context, id scalar.Ident) (model.Node, error) {
 	switch id.Type {
-	case model.IdentTypeTeam:
+	case scalar.IdentTypeTeam:
 		t, err := r.teamsClient.GetTeam(ctx, id.ID)
 		if err != nil {
 			return nil, fmt.Errorf("getting team from Teams: %w", err)
 		}
 		return t, nil
-	case model.IdentTypeUser:
+	case scalar.IdentTypeUser:
 		u, err := r.teamsClient.GetUserByID(ctx, id.ID)
 		if err != nil {
 			return nil, fmt.Errorf("getting user from Teams: %w", err)
