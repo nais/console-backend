@@ -11,10 +11,11 @@ import (
 
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 // DailyCostForApp is the resolver for the dailyCostForApp field.
-func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCost, error) {
+func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app string, env string, from scalar.Date, to scalar.Date) (*model.DailyCost, error) {
 	err := ValidateDateInterval(from, to)
 	if err != nil {
 		return nil, err
@@ -52,7 +53,7 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 }
 
 // DailyCostForTeam is the resolver for the dailyCostForTeam field.
-func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCost, error) {
+func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from scalar.Date, to scalar.Date) (*model.DailyCost, error) {
 	err := ValidateDateInterval(from, to)
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 			// make date variable equal last day in month of row.LastRecordedDate
 
 			cost[idx] = &model.CostEntry{
-				Date: model.NewDate(row.LastRecordedDate.Time),
+				Date: scalar.NewDate(row.LastRecordedDate.Time),
 				Cost: float64(row.DailyCost),
 			}
 		}
@@ -126,7 +127,7 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 			// make date variable equal last day in month of row.LastRecordedDate
 
 			cost[idx] = &model.CostEntry{
-				Date: model.NewDate(row.LastRecordedDate.Time),
+				Date: scalar.NewDate(row.LastRecordedDate.Time),
 				Cost: float64(row.DailyCost),
 			}
 		}

@@ -53,7 +53,7 @@ models:
         type: int
   Date:
     model:
-      - github.com/nais/console-backend/internal/graph/model.Date
+      - github.com/nais/console-backend/internal/graph/scalar.Date
   DeployInfo:
     extraFields:
       GQLVars:
