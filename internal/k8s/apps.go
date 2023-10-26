@@ -386,17 +386,21 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 				return nil, c.error(ctx, err, "converting to app")
 			}
 
-			for _, rule := range app.AccessPolicy.Outbound.Rules {
-				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
-				if err != nil {
-					return nil, c.error(ctx, err, "setting hasMutual on outbound")
+			if app.AccessPolicy.Outbound != nil {
+				for _, rule := range app.AccessPolicy.Outbound.Rules {
+					err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
+					if err != nil {
+						return nil, c.error(ctx, err, "setting hasMutual on outbound")
+					}
 				}
 			}
 
-			for _, rule := range app.AccessPolicy.Inbound.Rules {
-				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
-				if err != nil {
-					return nil, c.error(ctx, err, "setting hasMutual on inbound")
+			if app.AccessPolicy.Inbound != nil {
+				for _, rule := range app.AccessPolicy.Inbound.Rules {
+					err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
+					if err != nil {
+						return nil, c.error(ctx, err, "setting hasMutual on inbound")
+					}
 				}
 			}
 
