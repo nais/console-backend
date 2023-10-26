@@ -313,17 +313,21 @@ func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, e
 				return nil, c.error(ctx, err, "converting to job")
 			}
 
-			for _, rule := range job.AccessPolicy.Outbound.Rules {
-				err = c.setJobHasMutualOnOutbound(ctx, job.Name, team, env, rule)
-				if err != nil {
-					return nil, c.error(ctx, err, "setting hasMutual on outbound")
+			if job.AccessPolicy.Outbound != nil {
+				for _, rule := range job.AccessPolicy.Outbound.Rules {
+					err = c.setJobHasMutualOnOutbound(ctx, job.Name, team, env, rule)
+					if err != nil {
+						return nil, c.error(ctx, err, "setting hasMutual on outbound")
+					}
 				}
 			}
 
-			for _, rule := range job.AccessPolicy.Inbound.Rules {
-				err = c.setJobHasMutualOnInbound(ctx, job.Name, team, env, rule)
-				if err != nil {
-					return nil, c.error(ctx, err, "setting hasMutual on inbound")
+			if job.AccessPolicy.Inbound != nil {
+				for _, rule := range job.AccessPolicy.Inbound.Rules {
+					err = c.setJobHasMutualOnInbound(ctx, job.Name, team, env, rule)
+					if err != nil {
+						return nil, c.error(ctx, err, "setting hasMutual on inbound")
+					}
 				}
 			}
 
