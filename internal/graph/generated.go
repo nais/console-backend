@@ -494,8 +494,8 @@ type ComplexityRoot struct {
 
 	Query struct {
 		App              func(childComplexity int, name string, team string, env string) int
-		DailyCostForApp  func(childComplexity int, team string, app string, env string, from model.Date, to model.Date) int
-		DailyCostForTeam func(childComplexity int, team string, from model.Date, to model.Date) int
+		DailyCostForApp  func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
+		DailyCostForTeam func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
 		Deployments      func(childComplexity int, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) int
 		EnvCost          func(childComplexity int, filter model.EnvCostFilter) int
 		MonthlyCost      func(childComplexity int, filter model.MonthlyCostFilter) int
@@ -680,8 +680,8 @@ type PageInfoResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id scalar.Ident) (model.Node, error)
 	App(ctx context.Context, name string, team string, env string) (*model.App, error)
-	DailyCostForApp(ctx context.Context, team string, app string, env string, from model.Date, to model.Date) (*model.DailyCost, error)
-	DailyCostForTeam(ctx context.Context, team string, from model.Date, to model.Date) (*model.DailyCost, error)
+	DailyCostForApp(ctx context.Context, team string, app string, env string, from scalar.Date, to scalar.Date) (*model.DailyCost, error)
+	DailyCostForTeam(ctx context.Context, team string, from scalar.Date, to scalar.Date) (*model.DailyCost, error)
 	MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error)
 	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]*model.EnvCost, error)
 	Deployments(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error)
@@ -2377,7 +2377,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.DailyCostForApp(childComplexity, args["team"].(string), args["app"].(string), args["env"].(string), args["from"].(model.Date), args["to"].(model.Date)), true
+		return e.complexity.Query.DailyCostForApp(childComplexity, args["team"].(string), args["app"].(string), args["env"].(string), args["from"].(scalar.Date), args["to"].(scalar.Date)), true
 
 	case "Query.dailyCostForTeam":
 		if e.complexity.Query.DailyCostForTeam == nil {
@@ -2389,7 +2389,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.DailyCostForTeam(childComplexity, args["team"].(string), args["from"].(model.Date), args["to"].(model.Date)), true
+		return e.complexity.Query.DailyCostForTeam(childComplexity, args["team"].(string), args["from"].(scalar.Date), args["to"].(scalar.Date)), true
 
 	case "Query.deployments":
 		if e.complexity.Query.Deployments == nil {
@@ -3419,19 +3419,19 @@ func (ec *executionContext) field_Query_dailyCostForApp_args(ctx context.Context
 		}
 	}
 	args["env"] = arg2
-	var arg3 model.Date
+	var arg3 scalar.Date
 	if tmp, ok := rawArgs["from"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg3, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, tmp)
+		arg3, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["from"] = arg3
-	var arg4 model.Date
+	var arg4 scalar.Date
 	if tmp, ok := rawArgs["to"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg4, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, tmp)
+		arg4, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3452,19 +3452,19 @@ func (ec *executionContext) field_Query_dailyCostForTeam_args(ctx context.Contex
 		}
 	}
 	args["team"] = arg0
-	var arg1 model.Date
+	var arg1 scalar.Date
 	if tmp, ok := rawArgs["from"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg1, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, tmp)
+		arg1, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["from"] = arg1
-	var arg2 model.Date
+	var arg2 scalar.Date
 	if tmp, ok := rawArgs["to"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg2, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, tmp)
+		arg2, err = ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6697,9 +6697,9 @@ func (ec *executionContext) _CostEntry_date(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Date)
+	res := resTmp.(scalar.Date)
 	fc.Result = res
-	return ec.marshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, field.Selections, res)
+	return ec.marshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CostEntry_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14903,7 +14903,7 @@ func (ec *executionContext) _Query_dailyCostForApp(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DailyCostForApp(rctx, fc.Args["team"].(string), fc.Args["app"].(string), fc.Args["env"].(string), fc.Args["from"].(model.Date), fc.Args["to"].(model.Date))
+		return ec.resolvers.Query().DailyCostForApp(rctx, fc.Args["team"].(string), fc.Args["app"].(string), fc.Args["env"].(string), fc.Args["from"].(scalar.Date), fc.Args["to"].(scalar.Date))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14964,7 +14964,7 @@ func (ec *executionContext) _Query_dailyCostForTeam(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().DailyCostForTeam(rctx, fc.Args["team"].(string), fc.Args["from"].(model.Date), fc.Args["to"].(model.Date))
+		return ec.resolvers.Query().DailyCostForTeam(rctx, fc.Args["team"].(string), fc.Args["from"].(scalar.Date), fc.Args["to"].(scalar.Date))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21491,7 +21491,7 @@ func (ec *executionContext) unmarshalInputEnvCostFilter(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-			data, err := ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, v)
+			data, err := ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -21500,7 +21500,7 @@ func (ec *executionContext) unmarshalInputEnvCostFilter(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-			data, err := ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx, v)
+			data, err := ec.unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -28427,13 +28427,13 @@ func (ec *executionContext) marshalNDatabaseUser2ᚖgithubᚗcomᚋnaisᚋconsol
 	return ec._DatabaseUser(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx context.Context, v interface{}) (model.Date, error) {
-	var res model.Date
+func (ec *executionContext) unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx context.Context, v interface{}) (scalar.Date, error) {
+	var res scalar.Date
 	err := res.UnmarshalGQLContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDate(ctx context.Context, sel ast.SelectionSet, v model.Date) graphql.Marshaler {
+func (ec *executionContext) marshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx context.Context, sel ast.SelectionSet, v scalar.Date) graphql.Marshaler {
 	return graphql.WrapContextMarshaler(ctx, v)
 }
 

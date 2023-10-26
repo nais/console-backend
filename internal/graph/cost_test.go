@@ -6,15 +6,15 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/nais/console-backend/internal/database/gensql"
-	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDailyCostsFromDatabaseRows(t *testing.T) {
 	fromTime := time.Date(2020, time.April, 28, 0, 0, 0, 0, time.UTC)
 	endTime := time.Date(2020, time.May, 2, 0, 0, 0, 0, time.UTC)
-	from := model.NewDate(fromTime)
-	to := model.NewDate(endTime)
+	from := scalar.NewDate(fromTime)
+	to := scalar.NewDate(endTime)
 
 	t.Run("no cost types present", func(t *testing.T) {
 		existingCosts := make([]*gensql.Cost, 0)
@@ -93,18 +93,18 @@ func TestValidateDateInterval(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		from := time.Date(2020, time.April, 1, 0, 0, 0, 0, time.UTC)
 		to := time.Date(2020, time.May, 1, 0, 0, 0, 0, time.UTC)
-		assert.NoError(t, ValidateDateInterval(model.NewDate(from), model.NewDate(to)))
+		assert.NoError(t, ValidateDateInterval(scalar.NewDate(from), scalar.NewDate(to)))
 	})
 
 	t.Run("from date after to date", func(t *testing.T) {
 		from := time.Date(2020, time.May, 1, 0, 0, 0, 0, time.UTC)
 		to := time.Date(2020, time.April, 1, 0, 0, 0, 0, time.UTC)
-		assert.EqualError(t, ValidateDateInterval(model.NewDate(from), model.NewDate(to)), "from date cannot be after to date")
+		assert.EqualError(t, ValidateDateInterval(scalar.NewDate(from), scalar.NewDate(to)), "from date cannot be after to date")
 	})
 
 	t.Run("to date in the future", func(t *testing.T) {
 		from := time.Date(2020, time.April, 1, 0, 0, 0, 0, time.UTC)
 		to := time.Now().AddDate(0, 0, 1)
-		assert.EqualError(t, ValidateDateInterval(model.NewDate(from), model.NewDate(to)), "to date cannot be in the future")
+		assert.EqualError(t, ValidateDateInterval(scalar.NewDate(from), scalar.NewDate(to)), "to date cannot be in the future")
 	})
 }

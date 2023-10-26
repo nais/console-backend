@@ -177,7 +177,7 @@ type Consumer struct {
 // Cost entry type.
 type CostEntry struct {
 	// The date for the entry.
-	Date Date `json:"date"`
+	Date scalar.Date `json:"date"`
 	// The cost in euros.
 	Cost float64 `json:"cost"`
 }
@@ -346,9 +346,9 @@ type EnvCost struct {
 // Env cost filter input type.
 type EnvCostFilter struct {
 	// Start date for the cost series, inclusive.
-	From Date `json:"from"`
+	From scalar.Date `json:"from"`
 	// End date for cost series, inclusive.
-	To Date `json:"to"`
+	To scalar.Date `json:"to"`
 	// The name of the team to get costs for.
 	Team string `json:"team"`
 }
