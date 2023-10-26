@@ -9,11 +9,12 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 )
 
 // History is the resolver for the history field.
-func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *model.Cursor, before *model.Cursor) (model.DeploymentResponse, error) {
+func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (model.DeploymentResponse, error) {
 	name := obj.GQLVars.App
 	kind := "Application"
 	if obj.GQLVars.Job != "" {
@@ -34,8 +35,8 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 	}
 	e := deployEdges(deploys, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor

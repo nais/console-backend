@@ -34,7 +34,7 @@ type DeploymentResponse interface {
 type Edge interface {
 	IsEdge()
 	// A cursor for use in pagination.
-	GetCursor() Cursor
+	GetCursor() scalar.Cursor
 }
 
 // Node interface.
@@ -102,14 +102,14 @@ type AppCost struct {
 }
 
 type AppEdge struct {
-	Cursor Cursor `json:"cursor"`
-	Node   *App   `json:"node"`
+	Cursor scalar.Cursor `json:"cursor"`
+	Node   *App          `json:"node"`
 }
 
 func (AppEdge) IsEdge() {}
 
 // A cursor for use in pagination.
-func (this AppEdge) GetCursor() Cursor { return this.Cursor }
+func (this AppEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type AppState struct {
 	State  State        `json:"state"`
@@ -258,14 +258,14 @@ func (this DeploymentConnection) GetEdges() []Edge {
 func (DeploymentConnection) IsDeploymentResponse() {}
 
 type DeploymentEdge struct {
-	Cursor Cursor      `json:"cursor"`
-	Node   *Deployment `json:"node"`
+	Cursor scalar.Cursor `json:"cursor"`
+	Node   *Deployment   `json:"node"`
 }
 
 func (DeploymentEdge) IsEdge() {}
 
 // A cursor for use in pagination.
-func (this DeploymentEdge) GetCursor() Cursor { return this.Cursor }
+func (this DeploymentEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 // Deployment key type.
 type DeploymentKey struct {
@@ -438,7 +438,7 @@ func (this GithubRepositoryConnection) GetEdges() []Edge {
 // GitHub repository edge type.
 type GithubRepositoryEdge struct {
 	// A cursor for use in pagination.
-	Cursor Cursor `json:"cursor"`
+	Cursor scalar.Cursor `json:"cursor"`
 	// The GitHub repository at the end of the edge.
 	Node *GithubRepository `json:"node"`
 }
@@ -446,7 +446,7 @@ type GithubRepositoryEdge struct {
 func (GithubRepositoryEdge) IsEdge() {}
 
 // A cursor for use in pagination.
-func (this GithubRepositoryEdge) GetCursor() Cursor { return this.Cursor }
+func (this GithubRepositoryEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type Group struct {
 	ID string `json:"id"`
@@ -625,14 +625,14 @@ func (this NaisJobConnection) GetEdges() []Edge {
 }
 
 type NaisJobEdge struct {
-	Cursor Cursor   `json:"cursor"`
-	Node   *NaisJob `json:"node"`
+	Cursor scalar.Cursor `json:"cursor"`
+	Node   *NaisJob      `json:"node"`
 }
 
 func (NaisJobEdge) IsEdge() {}
 
 // A cursor for use in pagination.
-func (this NaisJobEdge) GetCursor() Cursor { return this.Cursor }
+func (this NaisJobEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type NewInstancesFailingError struct {
 	Revision         string     `json:"revision"`
@@ -684,11 +684,11 @@ type PageInfo struct {
 	// When paginating backwards, are there more items?
 	HasPreviousPage bool `json:"hasPreviousPage"`
 	// A cursor corresponding to the first node in the connection.
-	StartCursor *Cursor `json:"startCursor,omitempty"`
+	StartCursor *scalar.Cursor `json:"startCursor,omitempty"`
 	// A cursor corresponding to the last node in the connection.
-	EndCursor *Cursor `json:"endCursor,omitempty"`
-	From      int     `json:"from"`
-	To        int     `json:"to"`
+	EndCursor *scalar.Cursor `json:"endCursor,omitempty"`
+	From      int            `json:"from"`
+	To        int            `json:"to"`
 }
 
 type Port struct {
@@ -748,15 +748,15 @@ func (this SearchConnection) GetEdges() []Edge {
 }
 
 type SearchEdge struct {
-	Node   SearchNode `json:"node"`
-	Cursor Cursor     `json:"cursor"`
-	Rank   int        `json:"-"`
+	Node   SearchNode    `json:"node"`
+	Cursor scalar.Cursor `json:"cursor"`
+	Rank   int           `json:"-"`
 }
 
 func (SearchEdge) IsEdge() {}
 
 // A cursor for use in pagination.
-func (this SearchEdge) GetCursor() Cursor { return this.Cursor }
+func (this SearchEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type SearchFilter struct {
 	Type *SearchType `json:"type,omitempty"`
@@ -869,7 +869,7 @@ func (this TeamConnection) GetEdges() []Edge {
 // Team edge type.
 type TeamEdge struct {
 	// A cursor for use in pagination.
-	Cursor Cursor `json:"cursor"`
+	Cursor scalar.Cursor `json:"cursor"`
 	// The team at the end of the edge.
 	Node *Team `json:"node"`
 }
@@ -877,7 +877,7 @@ type TeamEdge struct {
 func (TeamEdge) IsEdge() {}
 
 // A cursor for use in pagination.
-func (this TeamEdge) GetCursor() Cursor { return this.Cursor }
+func (this TeamEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 // Team member type.
 type TeamMember struct {
@@ -929,7 +929,7 @@ func (this TeamMemberConnection) GetEdges() []Edge {
 // Team member edge type.
 type TeamMemberEdge struct {
 	// A cursor for use in pagination.
-	Cursor Cursor `json:"cursor"`
+	Cursor scalar.Cursor `json:"cursor"`
 	// The team member at the end of the edge.
 	Node *TeamMember `json:"node"`
 }
@@ -937,7 +937,7 @@ type TeamMemberEdge struct {
 func (TeamMemberEdge) IsEdge() {}
 
 // A cursor for use in pagination.
-func (this TeamMemberEdge) GetCursor() Cursor { return this.Cursor }
+func (this TeamMemberEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type TokenX struct {
 	MountSecretsAsFilesOnly bool `json:"mountSecretsAsFilesOnly"`

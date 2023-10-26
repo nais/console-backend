@@ -8,10 +8,11 @@ import (
 	"context"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.SearchConnection, error) {
+func (r *queryResolver) Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error) {
 	results := r.searcher.Search(ctx, query, filter)
 	pagination, err := model.NewPagination(first, last, after, before)
 	if err != nil {
@@ -19,8 +20,8 @@ func (r *queryResolver) Search(ctx context.Context, query string, filter *model.
 	}
 	edges := searchEdges(results, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 
 	if len(edges) > 0 {
 		startCursor = &edges[0].Cursor

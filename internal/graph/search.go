@@ -2,6 +2,7 @@ package graph
 
 import (
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/search"
 )
 
@@ -11,7 +12,7 @@ func searchEdges(results []*search.Result, p *model.Pagination) []*model.SearchE
 
 	for i, res := range results[start:end] {
 		edges = append(edges, &model.SearchEdge{
-			Cursor: model.Cursor{Offset: start + i},
+			Cursor: scalar.Cursor{Offset: start + i},
 			Node:   res.Node,
 		},
 		)

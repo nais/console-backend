@@ -16,7 +16,7 @@ func teamEdges(teams []t.Team, p *model.Pagination) []*model.TeamEdge {
 	for i, team := range teams[start:end] {
 		team := team
 		edges = append(edges, &model.TeamEdge{
-			Cursor: model.Cursor{Offset: start + i},
+			Cursor: scalar.Cursor{Offset: start + i},
 			Node: &model.Team{
 				ID:           scalar.TeamIdent(team.Slug),
 				Name:         team.Slug,
@@ -47,7 +47,7 @@ func naisJobEdges(naisjobs []*model.NaisJob, team string, p *model.Pagination) [
 		job.GQLVars = model.NaisJobGQLVars{Team: team}
 
 		edges = append(edges, &model.NaisJobEdge{
-			Cursor: model.Cursor{Offset: start + i},
+			Cursor: scalar.Cursor{Offset: start + i},
 			Node:   job,
 		})
 	}
@@ -63,7 +63,7 @@ func appEdges(apps []*model.App, team string, p *model.Pagination) []*model.AppE
 		app.GQLVars = model.AppGQLVars{Team: team}
 
 		edges = append(edges, &model.AppEdge{
-			Cursor: model.Cursor{Offset: start + i},
+			Cursor: scalar.Cursor{Offset: start + i},
 			Node:   app,
 		})
 	}
@@ -79,7 +79,7 @@ func memberEdges(members []t.Member, p *model.Pagination) []*model.TeamMemberEdg
 	for i, member := range members[start:end] {
 		member := member
 		edges = append(edges, &model.TeamMemberEdge{
-			Cursor: model.Cursor{Offset: start + i},
+			Cursor: scalar.Cursor{Offset: start + i},
 			Node: &model.TeamMember{
 				ID:    scalar.UserIdent(member.User.Email),
 				Name:  member.User.Name,
@@ -101,7 +101,7 @@ func githubRepositoryEdges(repos []t.GitHubRepository, first int, after int) []*
 	for i := after; i < limit; i++ {
 		repo := repos[i]
 		edges = append(edges, &model.GithubRepositoryEdge{
-			Cursor: model.Cursor{Offset: i + 1},
+			Cursor: scalar.Cursor{Offset: i + 1},
 			Node: &model.GithubRepository{
 				Name: repo.Name,
 			},

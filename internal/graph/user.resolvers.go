@@ -31,7 +31,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 }
 
 // Teams is the resolver for the teams field.
-func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *model.Cursor, last *int, before *model.Cursor) (*model.TeamConnection, error) {
+func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, after *scalar.Cursor, last *int, before *scalar.Cursor) (*model.TeamConnection, error) {
 	teams, err := r.teamsClient.GetTeamsForUser(ctx, obj.Email)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
@@ -44,8 +44,8 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 
 	e := userTeamEdges(teams, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor

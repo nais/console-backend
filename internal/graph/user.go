@@ -13,7 +13,7 @@ func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []*model.TeamE
 	for i, team := range teams[start:end] {
 		team := team
 		edges = append(edges, &model.TeamEdge{
-			Cursor: model.Cursor{Offset: start + i},
+			Cursor: scalar.Cursor{Offset: start + i},
 			Node: &model.Team{
 				ID:           scalar.TeamIdent(team.Team.Slug),
 				Name:         team.Team.Slug,

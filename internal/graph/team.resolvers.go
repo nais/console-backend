@@ -34,7 +34,7 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 }
 
 // Teams is the resolver for the teams field.
-func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamConnection, error) {
+func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error) {
 	teams, err := r.teamsClient.GetTeams(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
@@ -46,8 +46,8 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 	}
 	e := teamEdges(teams, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
@@ -84,7 +84,7 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 }
 
 // Members is the resolver for the members field.
-func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.TeamMemberConnection, error) {
+func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error) {
 	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting members from Teams: %w", err)
@@ -96,8 +96,8 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 	}
 	e := memberEdges(members, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
@@ -124,7 +124,7 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 }
 
 // Apps is the resolver for the apps field.
-func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.AppConnection, error) {
+func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.AppConnection, error) {
 	apps, err := r.k8sClient.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
@@ -136,8 +136,8 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 	}
 	a := appEdges(apps, obj.Name, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(a) > 0 {
 		startCursor = &a[0].Cursor
 		endCursor = &a[len(a)-1].Cursor
@@ -164,7 +164,7 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 }
 
 // Naisjobs is the resolver for the naisjobs field.
-func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor) (*model.NaisJobConnection, error) {
+func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.NaisJobConnection, error) {
 	naisjobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
@@ -176,8 +176,8 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 	}
 	j := naisJobEdges(naisjobs, obj.Name, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(j) > 0 {
 		startCursor = &j[0].Cursor
 		endCursor = &j[len(j)-1].Cursor
@@ -204,13 +204,13 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 }
 
 // GithubRepositories is the resolver for the githubRepositories field.
-func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *model.Cursor) (*model.GithubRepositoryConnection, error) {
+func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *scalar.Cursor) (*model.GithubRepositoryConnection, error) {
 	if first == nil {
 		first = new(int)
 		*first = 10
 	}
 	if after == nil {
-		after = &model.Cursor{Offset: 0}
+		after = &scalar.Cursor{Offset: 0}
 	}
 
 	repos, err := r.teamsClient.GetGithubRepositories(ctx, obj.Name)
@@ -223,8 +223,8 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 
 	e := githubRepositoryEdges(repos, *first, after.Offset)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
@@ -244,7 +244,7 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 }
 
 // Deployments is the resolver for the deployments field.
-func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *model.Cursor, before *model.Cursor, limit *int) (*model.DeploymentConnection, error) {
+func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error) {
 	if limit == nil {
 		limit = new(int)
 		*limit = 10
@@ -261,8 +261,8 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 	}
 	e := deployEdges(deploys, pagination)
 
-	var startCursor *model.Cursor
-	var endCursor *model.Cursor
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
 	if len(e) > 0 {
 		startCursor = &e[0].Cursor
 		endCursor = &e[len(e)-1].Cursor
