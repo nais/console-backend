@@ -12,6 +12,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/go-chi/chi/v5"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/tools/cache"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -113,6 +115,46 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 			go informer.NaisjobInformer.Informer().Run(stopCh)
 			go informer.JobInformer.Informer().Run(stopCh)
 			if informer.TopicInformer != nil {
+				_, err := informer.TopicInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+					AddFunc: func(obj interface{}) {
+						log.Infof("added topic: %s", obj.(*unstructured.Unstructured).GetName())
+					},
+					UpdateFunc: func(oldObj, newObj interface{}) {
+						log.Infof("updated topic: %s", newObj.(*unstructured.Unstructured).GetName())
+					},
+					DeleteFunc: func(obj interface{}) {
+						log.Infof("deleted topic: %s", obj.(*unstructured.Unstructured).GetName())
+					},
+				})
+				if err != nil {
+					log.WithError(err).Errorf("error adding event handler")
+				}
+
+				/*listWatcher := cache.NewListWatchFromClient(
+					k8sClient.ClientSets[cluster].RESTClient(),
+					informer.TopicInformer.Informer().AddEventHandler(),
+					"kafka.nais.io", // Namespace
+					fields.Everything(),
+				)
+				resyncPeriod := 30 * time.Second
+				_, controller := cache.NewInformer(
+					listWatcher,
+					&kafka_nais_io_v1.Topic{}, // Change to your custom resource's API type
+					resyncPeriod,
+					cache.ResourceEventHandlerFuncs{
+						AddFunc: func(obj interface{}) {
+							log.Infof("added topic: %s", obj)
+						},
+						UpdateFunc: func(oldObj, newObj interface{}) {
+							log.Infof("updated topic: %s", newObj)
+						},
+						DeleteFunc: func(obj interface{}) {
+							log.Infof("deleted topic: %s", obj)
+						},
+					},
+				)
+				go controller.Run(stopCh)*/
+
 				go informer.TopicInformer.Informer().Run(stopCh)
 			}
 		}
@@ -162,7 +204,6 @@ func getHttpServer(cfg *config.Config, graphHandler *handler.Server) *http.Serve
 				AllowedOrigins:   []string{"https://*", "http://*"},
 				AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 				AllowCredentials: true,
-				Debug:            cfg.Logger.Level == "debug",
 			},
 		).Handler,
 	}

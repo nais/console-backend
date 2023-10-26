@@ -30,7 +30,7 @@ import (
 
 type Client struct {
 	informers  map[string]*Informers
-	clientSets map[string]*kubernetes.Clientset
+	ClientSets map[string]*kubernetes.Clientset
 	log        logrus.FieldLogger
 	errors     metric.Int64Counter
 }
@@ -96,7 +96,7 @@ func New(cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*C
 		informers:  infs,
 		log:        log,
 		errors:     errors,
-		clientSets: clientSets,
+		ClientSets: clientSets,
 	}, nil
 }
 
