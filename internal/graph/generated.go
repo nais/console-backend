@@ -4459,9 +4459,9 @@ func (ec *executionContext) _App_env(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Env)
+	res := resTmp.(model.Env)
 	fc.Result = res
-	return ec.marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx, field.Selections, res)
+	return ec.marshalNEnv2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_App_env(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -28575,6 +28575,10 @@ func (ec *executionContext) marshalNDeploymentStatus2ᚕgithubᚗcomᚋnaisᚋco
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNEnv2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx context.Context, sel ast.SelectionSet, v model.Env) graphql.Marshaler {
+	return ec._Env(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx context.Context, sel ast.SelectionSet, v *model.Env) graphql.Marshaler {

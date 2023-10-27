@@ -66,6 +66,10 @@ models:
     extraFields:
       GQLVars:
         type: "github.com/nais/console-backend/internal/graph/model.RunGQLVars"
+  App:
+    extraFields:
+      GQLVars:
+        type: "github.com/nais/console-backend/internal/graph/model.AppGQLVars"
 
 # Setting this to false will generate type instances for required struct fields, and type pointers for optional fields
 struct_fields_always_pointers: false

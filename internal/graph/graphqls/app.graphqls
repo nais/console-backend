@@ -16,15 +16,15 @@ type App implements Node {
     deployInfo: DeployInfo!
     env: Env!
     ingresses: [String!]!
-    instances: [Instance!]!
+    instances: [Instance!]! @goField(forceResolver: true)
     accessPolicy: AccessPolicy!
     resources: Resources!
     autoScaling: AutoScaling!
     storage: [Storage!]!
     variables: [Variable!]!
     authz: [Authz!]!
-    manifest: String!
-    team: Team!
+    manifest: String! @goField(forceResolver: true)
+    team: Team! @goField(forceResolver: true)
     appState: AppState!
 }
 
