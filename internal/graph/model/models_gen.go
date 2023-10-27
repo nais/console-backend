@@ -630,6 +630,34 @@ type MonthlyCostFilter struct {
 	Env string `json:"env"`
 }
 
+type NaisJob struct {
+	ID           scalar.Ident   `json:"id"`
+	AccessPolicy AccessPolicy   `json:"accessPolicy"`
+	DeployInfo   DeployInfo     `json:"deployInfo"`
+	Env          Env            `json:"env"`
+	Image        string         `json:"image"`
+	Runs         []Run          `json:"runs"`
+	Manifest     string         `json:"manifest"`
+	Name         string         `json:"name"`
+	Resources    Resources      `json:"resources"`
+	Schedule     string         `json:"schedule"`
+	Team         Team           `json:"team"`
+	Storage      []Storage      `json:"storage"`
+	Authz        []Authz        `json:"authz"`
+	Completions  int            `json:"completions"`
+	Parallelism  int            `json:"parallelism"`
+	Retries      int            `json:"retries"`
+	JobState     JobState       `json:"jobState"`
+	GQLVars      NaisJobGQLVars `json:"-"`
+}
+
+func (NaisJob) IsNode() {}
+
+// The unique ID of an object.
+func (this NaisJob) GetID() scalar.Ident { return this.ID }
+
+func (NaisJob) IsSearchNode() {}
+
 type NaisJobConnection struct {
 	TotalCount int           `json:"totalCount"`
 	PageInfo   PageInfo      `json:"pageInfo"`

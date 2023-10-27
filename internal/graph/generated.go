@@ -12848,9 +12848,9 @@ func (ec *executionContext) _NaisJob_accessPolicy(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.AccessPolicy)
+	res := resTmp.(model.AccessPolicy)
 	fc.Result = res
-	return ec.marshalNAccessPolicy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAccessPolicy(ctx, field.Selections, res)
+	return ec.marshalNAccessPolicy2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAccessPolicy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJob_accessPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12898,9 +12898,9 @@ func (ec *executionContext) _NaisJob_deployInfo(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.DeployInfo)
+	res := resTmp.(model.DeployInfo)
 	fc.Result = res
-	return ec.marshalNDeployInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployInfo(ctx, field.Selections, res)
+	return ec.marshalNDeployInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJob_deployInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12954,9 +12954,9 @@ func (ec *executionContext) _NaisJob_env(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Env)
+	res := resTmp.(model.Env)
 	fc.Result = res
-	return ec.marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx, field.Selections, res)
+	return ec.marshalNEnv2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJob_env(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13200,9 +13200,9 @@ func (ec *executionContext) _NaisJob_resources(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Resources)
+	res := resTmp.(model.Resources)
 	fc.Result = res
-	return ec.marshalNResources2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx, field.Selections, res)
+	return ec.marshalNResources2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJob_resources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27792,16 +27792,6 @@ func (ec *executionContext) marshalNAccessPolicy2githubᚗcomᚋnaisᚋconsole�
 	return ec._AccessPolicy(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAccessPolicy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAccessPolicy(ctx context.Context, sel ast.SelectionSet, v *model.AccessPolicy) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AccessPolicy(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNAcl2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACL(ctx context.Context, sel ast.SelectionSet, v model.ACL) graphql.Marshaler {
 	return ec._Acl(ctx, sel, &v)
 }
@@ -28381,16 +28371,6 @@ func (ec *executionContext) marshalNDeployInfo2githubᚗcomᚋnaisᚋconsoleᚑb
 	return ec._DeployInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeployInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployInfo(ctx context.Context, sel ast.SelectionSet, v *model.DeployInfo) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeployInfo(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNDeployment2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployment(ctx context.Context, sel ast.SelectionSet, v model.Deployment) graphql.Marshaler {
 	return ec._Deployment(ctx, sel, &v)
 }
@@ -28579,16 +28559,6 @@ func (ec *executionContext) marshalNDeploymentStatus2ᚕgithubᚗcomᚋnaisᚋco
 
 func (ec *executionContext) marshalNEnv2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx context.Context, sel ast.SelectionSet, v model.Env) graphql.Marshaler {
 	return ec._Env(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx context.Context, sel ast.SelectionSet, v *model.Env) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Env(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNEnvCost2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCost(ctx context.Context, sel ast.SelectionSet, v model.EnvCost) graphql.Marshaler {
@@ -29253,16 +29223,6 @@ func (ec *executionContext) marshalNRequests2githubᚗcomᚋnaisᚋconsoleᚑbac
 
 func (ec *executionContext) marshalNResources2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx context.Context, sel ast.SelectionSet, v model.Resources) graphql.Marshaler {
 	return ec._Resources(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNResources2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx context.Context, sel ast.SelectionSet, v *model.Resources) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Resources(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRule2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx context.Context, sel ast.SelectionSet, v model.Rule) graphql.Marshaler {
