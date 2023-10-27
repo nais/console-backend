@@ -76,7 +76,7 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 	return job, nil
 }
 
-func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oJob, oTeam, oEnv string, outboundRule *model.Rule) error {
+func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oJob, oTeam, oEnv string, outboundRule model.Rule) error {
 	outboundEnv := oEnv
 	if outboundRule.Cluster != "" {
 		outboundEnv = outboundRule.Cluster
@@ -134,7 +134,7 @@ func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oJob, oTeam, oEn
 	return nil
 }
 
-func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule *model.Rule) error {
+func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule model.Rule) error {
 	inboundEnv := oEnv
 	if inboundRule.Cluster != "" {
 		inboundEnv = inboundRule.Cluster
@@ -290,7 +290,7 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 }
 
 func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, error) {
-	ret := []*model.NaisJob{}
+	ret := make([]*model.NaisJob, 0)
 
 	for env, infs := range c.informers {
 		objs, err := infs.NaisjobInformer.Lister().ByNamespace(team).List(labels.Everything())
@@ -369,8 +369,7 @@ func (c *Client) NaisJobManifest(ctx context.Context, name, team, env string) (s
 }
 
 func (c *Client) Runs(ctx context.Context, team, env, name string) ([]*model.Run, error) {
-	ret := []*model.Run{}
-
+	ret := make([]*model.Run, 0)
 	nameReq, err := labels.NewRequirement("app", selection.Equals, []string{name})
 	if err != nil {
 		return nil, c.error(ctx, err, "creating label selector")
@@ -545,12 +544,8 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 		return nil, fmt.Errorf("converting resources: %w", err)
 	}
 
-	if r.Requests == nil {
-		r.Requests = &model.Requests{}
-	}
-	if r.Limits == nil {
-		r.Limits = &model.Limits{}
-	}
+	r.Requests = model.Requests{}
+	r.Limits = model.Limits{}
 	ret.Resources = &r
 
 	ret.Schedule = naisjob.Spec.Schedule
@@ -573,13 +568,13 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	return ret, nil
 }
 
-func naisjobStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.Storage, error) {
+func naisjobStorage(u *unstructured.Unstructured, topics []model.Topic) ([]model.Storage, error) {
 	naisjob := &naisv1.Naisjob{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, naisjob); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
 	}
 
-	ret := []model.Storage{}
+	ret := make([]model.Storage, 0)
 
 	if naisjob.Spec.GCP != nil {
 		for _, v := range naisjob.Spec.GCP.Buckets {
@@ -646,7 +641,7 @@ func naisjobStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]mode
 }
 
 func jobAuthz(job *naisv1.Naisjob) ([]model.Authz, error) {
-	ret := []model.Authz{}
+	ret := make([]model.Authz, 0)
 	if job.Spec.Azure != nil {
 		isApp := job.Spec.Azure.Application != nil && job.Spec.Azure.Application.Enabled
 		if isApp {

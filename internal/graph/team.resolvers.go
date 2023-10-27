@@ -64,7 +64,7 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 	return &model.TeamConnection{
 		TotalCount: len(teams),
 		Edges:      e,
-		PageInfo: &model.PageInfo{
+		PageInfo: model.PageInfo{
 			HasNextPage:     hasNext,
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
@@ -94,13 +94,13 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 	if err != nil {
 		return nil, err
 	}
-	e := memberEdges(members, pagination)
+	edges := memberEdges(members, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
 	}
 
 	hasNext := len(members) > pagination.First()+pagination.After().Offset+1
@@ -113,8 +113,8 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 
 	return &model.TeamMemberConnection{
 		TotalCount: len(members),
-		Edges:      e,
-		PageInfo: &model.PageInfo{
+		Edges:      edges,
+		PageInfo: model.PageInfo{
 			HasNextPage:     hasNext,
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
@@ -134,13 +134,13 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 	if err != nil {
 		return nil, err
 	}
-	a := appEdges(apps, obj.Name, pagination)
+	edges := appEdges(apps, obj.Name, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
-	if len(a) > 0 {
-		startCursor = &a[0].Cursor
-		endCursor = &a[len(a)-1].Cursor
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
 	}
 
 	hasNext := len(apps) > pagination.First()+pagination.After().Offset+1
@@ -153,8 +153,8 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 
 	return &model.AppConnection{
 		TotalCount: len(apps),
-		Edges:      a,
-		PageInfo: &model.PageInfo{
+		Edges:      edges,
+		PageInfo: model.PageInfo{
 			HasNextPage:     hasNext,
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
@@ -174,13 +174,13 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 	if err != nil {
 		return nil, err
 	}
-	j := naisJobEdges(naisjobs, obj.Name, pagination)
+	edges := naisJobEdges(naisjobs, obj.Name, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
-	if len(j) > 0 {
-		startCursor = &j[0].Cursor
-		endCursor = &j[len(j)-1].Cursor
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
 	}
 
 	hasNext := len(naisjobs) > pagination.First()+pagination.After().Offset+1
@@ -193,8 +193,8 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 
 	return &model.NaisJobConnection{
 		TotalCount: len(naisjobs),
-		Edges:      j,
-		PageInfo: &model.PageInfo{
+		Edges:      edges,
+		PageInfo: model.PageInfo{
 			HasNextPage:     hasNext,
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
@@ -221,20 +221,20 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 		*first = len(repos)
 	}
 
-	e := githubRepositoryEdges(repos, *first, after.Offset)
+	edges := githubRepositoryEdges(repos, *first, after.Offset)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
 
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
 	}
 
 	return &model.GithubRepositoryConnection{
 		TotalCount: len(repos),
-		Edges:      e,
-		PageInfo: &model.PageInfo{
+		Edges:      edges,
+		PageInfo: model.PageInfo{
 			HasNextPage:     len(repos) > *first+after.Offset,
 			HasPreviousPage: after.Offset > 0,
 			StartCursor:     startCursor,
@@ -259,13 +259,13 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 	if err != nil {
 		return nil, err
 	}
-	e := deployEdges(deploys, pagination)
+	edges := deployEdges(deploys, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
 	}
 
 	hasNext := len(deploys) > pagination.First()+pagination.After().Offset+1
@@ -278,8 +278,8 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *
 
 	return &model.DeploymentConnection{
 		TotalCount: len(deploys),
-		Edges:      e,
-		PageInfo: &model.PageInfo{
+		Edges:      edges,
+		PageInfo: model.PageInfo{
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 			HasNextPage:     hasNext,

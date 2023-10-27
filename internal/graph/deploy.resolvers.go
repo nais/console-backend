@@ -48,7 +48,7 @@ func (r *queryResolver) Deployments(ctx context.Context, first *int, last *int, 
 	return &model.DeploymentConnection{
 		TotalCount: len(deploys),
 		Edges:      e,
-		PageInfo: &model.PageInfo{
+		PageInfo: model.PageInfo{
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 			HasNextPage:     hasNext,

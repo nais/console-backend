@@ -6,20 +6,20 @@ import (
 	"github.com/nais/console-backend/internal/hookd"
 )
 
-func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []*model.DeploymentEdge {
-	edges := make([]*model.DeploymentEdge, 0)
+func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []model.DeploymentEdge {
+	edges := make([]model.DeploymentEdge, 0)
 
 	start, end := p.ForSlice(len(deploys))
 
 	for i, deploy := range deploys[start:end] {
 		deploy := deploy
-		edges = append(edges, &model.DeploymentEdge{
+		edges = append(edges, model.DeploymentEdge{
 			Cursor: scalar.Cursor{Offset: start + i},
-			Node: &model.Deployment{
+			Node: model.Deployment{
 				ID:        scalar.DeploymentIdent(deploy.DeploymentInfo.ID),
 				Statuses:  mapStatuses(deploy.Statuses),
 				Resources: mapResources(deploy.Resources),
-				Team: &model.Team{
+				Team: model.Team{
 					Name: deploy.DeploymentInfo.Team,
 					ID:   scalar.TeamIdent(deploy.DeploymentInfo.Team),
 				},
@@ -34,10 +34,10 @@ func deployEdges(deploys []hookd.Deploy, p *model.Pagination) []*model.Deploymen
 	return edges
 }
 
-func mapResources(resources []hookd.Resource) []*model.DeploymentResource {
-	ret := make([]*model.DeploymentResource, 0)
+func mapResources(resources []hookd.Resource) []model.DeploymentResource {
+	ret := make([]model.DeploymentResource, 0)
 	for _, resource := range resources {
-		ret = append(ret, &model.DeploymentResource{
+		ret = append(ret, model.DeploymentResource{
 			ID:        scalar.DeploymentResourceIdent(resource.ID),
 			Group:     resource.Group,
 			Kind:      resource.Kind,
@@ -49,10 +49,10 @@ func mapResources(resources []hookd.Resource) []*model.DeploymentResource {
 	return ret
 }
 
-func mapStatuses(statuses []hookd.Status) []*model.DeploymentStatus {
-	ret := make([]*model.DeploymentStatus, 0)
+func mapStatuses(statuses []hookd.Status) []model.DeploymentStatus {
+	ret := make([]model.DeploymentStatus, 0)
 	for _, status := range statuses {
-		ret = append(ret, &model.DeploymentStatus{
+		ret = append(ret, model.DeploymentStatus{
 			ID:      scalar.DeploymentStatusIdent(status.ID),
 			Status:  status.Status,
 			Message: &status.Message,

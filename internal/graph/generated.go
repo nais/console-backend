@@ -656,7 +656,7 @@ type ComplexityRoot struct {
 }
 
 type AppResolver interface {
-	Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error)
+	Instances(ctx context.Context, obj *model.App) ([]model.Instance, error)
 
 	Manifest(ctx context.Context, obj *model.App) (string, error)
 	Team(ctx context.Context, obj *model.App) (*model.Team, error)
@@ -668,7 +668,7 @@ type MutationResolver interface {
 	ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error)
 }
 type NaisJobResolver interface {
-	Runs(ctx context.Context, obj *model.NaisJob) ([]*model.Run, error)
+	Runs(ctx context.Context, obj *model.NaisJob) ([]model.Run, error)
 	Manifest(ctx context.Context, obj *model.NaisJob) (string, error)
 
 	Team(ctx context.Context, obj *model.NaisJob) (*model.Team, error)
@@ -683,7 +683,7 @@ type QueryResolver interface {
 	DailyCostForApp(ctx context.Context, team string, app string, env string, from scalar.Date, to scalar.Date) (*model.DailyCost, error)
 	DailyCostForTeam(ctx context.Context, team string, from scalar.Date, to scalar.Date) (*model.DailyCost, error)
 	MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error)
-	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]*model.EnvCost, error)
+	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]model.EnvCost, error)
 	Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error)
@@ -4553,9 +4553,9 @@ func (ec *executionContext) _App_instances(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Instance)
+	res := resTmp.([]model.Instance)
 	fc.Result = res
-	return ec.marshalNInstance2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceᚄ(ctx, field.Selections, res)
+	return ec.marshalNInstance2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_App_instances(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5117,9 +5117,9 @@ func (ec *executionContext) _AppConnection_pageInfo(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PageInfo)
+	res := resTmp.(model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AppConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5175,9 +5175,9 @@ func (ec *executionContext) _AppConnection_edges(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.AppEdge)
+	res := resTmp.([]model.AppEdge)
 	fc.Result = res
-	return ec.marshalNAppEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNAppEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AppConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5313,9 +5313,9 @@ func (ec *executionContext) _AppCost_cost(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.CostEntry)
+	res := resTmp.([]model.CostEntry)
 	fc.Result = res
-	return ec.marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
+	return ec.marshalNCostEntry2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AppCost_cost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5407,9 +5407,9 @@ func (ec *executionContext) _AppEdge_node(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.App)
+	res := resTmp.(model.App)
 	fc.Result = res
-	return ec.marshalNApp2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
+	return ec.marshalNApp2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5895,9 +5895,9 @@ func (ec *executionContext) _AzureApplication_claims(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Claims)
+	res := resTmp.(model.Claims)
 	fc.Result = res
-	return ec.marshalNClaims2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐClaims(ctx, field.Selections, res)
+	return ec.marshalNClaims2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐClaims(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AzureApplication_claims(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6517,9 +6517,9 @@ func (ec *executionContext) _Claims_groups(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Group)
+	res := resTmp.([]model.Group)
 	fc.Result = res
-	return ec.marshalNGroup2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroupᚄ(ctx, field.Selections, res)
+	return ec.marshalNGroup2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroupᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Claims_groups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6873,9 +6873,9 @@ func (ec *executionContext) _CostSeries_data(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.CostEntry)
+	res := resTmp.([]model.CostEntry)
 	fc.Result = res
-	return ec.marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
+	return ec.marshalNCostEntry2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CostSeries_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6967,9 +6967,9 @@ func (ec *executionContext) _DailyCost_series(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.CostSeries)
+	res := resTmp.([]model.CostSeries)
 	fc.Result = res
-	return ec.marshalNCostSeries2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeriesᚄ(ctx, field.Selections, res)
+	return ec.marshalNCostSeries2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeriesᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DailyCost_series(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7107,9 +7107,9 @@ func (ec *executionContext) _Database_users(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.DatabaseUser)
+	res := resTmp.([]model.DatabaseUser)
 	fc.Result = res
-	return ec.marshalNDatabaseUser2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNDatabaseUser2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Database_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7471,9 +7471,9 @@ func (ec *executionContext) _Deployment_team(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Team)
+	res := resTmp.(model.Team)
 	fc.Result = res
-	return ec.marshalNTeam2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeam(ctx, field.Selections, res)
+	return ec.marshalNTeam2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeam(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Deployment_team(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7545,9 +7545,9 @@ func (ec *executionContext) _Deployment_resources(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.DeploymentResource)
+	res := resTmp.([]model.DeploymentResource)
 	fc.Result = res
-	return ec.marshalNDeploymentResource2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResourceᚄ(ctx, field.Selections, res)
+	return ec.marshalNDeploymentResource2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResourceᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Deployment_resources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7647,9 +7647,9 @@ func (ec *executionContext) _Deployment_statuses(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.DeploymentStatus)
+	res := resTmp.([]model.DeploymentStatus)
 	fc.Result = res
-	return ec.marshalNDeploymentStatus2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatusᚄ(ctx, field.Selections, res)
+	return ec.marshalNDeploymentStatus2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatusᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Deployment_statuses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7833,9 +7833,9 @@ func (ec *executionContext) _DeploymentConnection_pageInfo(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PageInfo)
+	res := resTmp.(model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7891,9 +7891,9 @@ func (ec *executionContext) _DeploymentConnection_edges(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.DeploymentEdge)
+	res := resTmp.([]model.DeploymentEdge)
 	fc.Result = res
-	return ec.marshalNDeploymentEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNDeploymentEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7985,9 +7985,9 @@ func (ec *executionContext) _DeploymentEdge_node(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Deployment)
+	res := resTmp.(model.Deployment)
 	fc.Result = res
-	return ec.marshalNDeployment2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployment(ctx, field.Selections, res)
+	return ec.marshalNDeployment2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DeploymentEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9230,9 +9230,9 @@ func (ec *executionContext) _EnvCost_apps(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.AppCost)
+	res := resTmp.([]model.AppCost)
 	fc.Result = res
-	return ec.marshalNAppCost2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCostᚄ(ctx, field.Selections, res)
+	return ec.marshalNAppCost2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCostᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_EnvCost_apps(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9414,9 +9414,9 @@ func (ec *executionContext) _Expose_consumers(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Consumer)
+	res := resTmp.([]model.Consumer)
 	fc.Result = res
-	return ec.marshalNConsumer2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumerᚄ(ctx, field.Selections, res)
+	return ec.marshalNConsumer2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumerᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Expose_consumers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9640,9 +9640,9 @@ func (ec *executionContext) _External_ports(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Port)
+	res := resTmp.([]model.Port)
 	fc.Result = res
-	return ec.marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx, field.Selections, res)
+	return ec.marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_External_ports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10172,9 +10172,9 @@ func (ec *executionContext) _GithubRepositoryConnection_pageInfo(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PageInfo)
+	res := resTmp.(model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GithubRepositoryConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10230,9 +10230,9 @@ func (ec *executionContext) _GithubRepositoryConnection_edges(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.GithubRepositoryEdge)
+	res := resTmp.([]model.GithubRepositoryEdge)
 	fc.Result = res
-	return ec.marshalNGithubRepositoryEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNGithubRepositoryEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GithubRepositoryConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10324,9 +10324,9 @@ func (ec *executionContext) _GithubRepositoryEdge_node(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubRepository)
+	res := resTmp.(model.GithubRepository)
 	fc.Result = res
-	return ec.marshalNGithubRepository2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepository(ctx, field.Selections, res)
+	return ec.marshalNGithubRepository2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepository(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_GithubRepositoryEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11051,9 +11051,9 @@ func (ec *executionContext) _Inbound_rules(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Rule)
+	res := resTmp.([]model.Rule)
 	fc.Result = res
-	return ec.marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx, field.Selections, res)
+	return ec.marshalNRule2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Inbound_rules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11195,9 +11195,9 @@ func (ec *executionContext) _InboundAccessError_rule(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Rule)
+	res := resTmp.(model.Rule)
 	fc.Result = res
-	return ec.marshalNRule2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx, field.Selections, res)
+	return ec.marshalNRule2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InboundAccessError_rule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12087,9 +12087,9 @@ func (ec *executionContext) _Kafka_topics(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Topic)
+	res := resTmp.([]model.Topic)
 	fc.Result = res
-	return ec.marshalNTopic2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopicᚄ(ctx, field.Selections, res)
+	return ec.marshalNTopic2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopicᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Kafka_topics(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12445,9 +12445,9 @@ func (ec *executionContext) _Maskinporten_scopes(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.MaskinportenScope)
+	res := resTmp.(model.MaskinportenScope)
 	fc.Result = res
-	return ec.marshalNMaskinportenScope2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaskinportenScope(ctx, field.Selections, res)
+	return ec.marshalNMaskinportenScope2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaskinportenScope(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Maskinporten_scopes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12539,9 +12539,9 @@ func (ec *executionContext) _MaskinportenScope_consumes(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Consume)
+	res := resTmp.([]model.Consume)
 	fc.Result = res
-	return ec.marshalNConsume2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumeᚄ(ctx, field.Selections, res)
+	return ec.marshalNConsume2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MaskinportenScope_consumes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12587,9 +12587,9 @@ func (ec *executionContext) _MaskinportenScope_exposes(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Expose)
+	res := resTmp.([]model.Expose)
 	fc.Result = res
-	return ec.marshalNExpose2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExposeᚄ(ctx, field.Selections, res)
+	return ec.marshalNExpose2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExposeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MaskinportenScope_exposes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12689,9 +12689,9 @@ func (ec *executionContext) _MonthlyCost_cost(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.CostEntry)
+	res := resTmp.([]model.CostEntry)
 	fc.Result = res
-	return ec.marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
+	return ec.marshalNCostEntry2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MonthlyCost_cost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13048,9 +13048,9 @@ func (ec *executionContext) _NaisJob_runs(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Run)
+	res := resTmp.([]model.Run)
 	fc.Result = res
-	return ec.marshalNRun2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRunᚄ(ctx, field.Selections, res)
+	return ec.marshalNRun2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRunᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJob_runs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13682,9 +13682,9 @@ func (ec *executionContext) _NaisJobConnection_pageInfo(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PageInfo)
+	res := resTmp.(model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJobConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13740,9 +13740,9 @@ func (ec *executionContext) _NaisJobConnection_edges(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.NaisJobEdge)
+	res := resTmp.([]model.NaisJobEdge)
 	fc.Result = res
-	return ec.marshalNNaisJobEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNNaisJobEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJobConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13834,9 +13834,9 @@ func (ec *executionContext) _NaisJobEdge_node(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.NaisJob)
+	res := resTmp.(model.NaisJob)
 	fc.Result = res
-	return ec.marshalNNaisJob2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJob(ctx, field.Selections, res)
+	return ec.marshalNNaisJob2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NaisJobEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14222,9 +14222,9 @@ func (ec *executionContext) _Outbound_rules(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Rule)
+	res := resTmp.([]model.Rule)
 	fc.Result = res
-	return ec.marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx, field.Selections, res)
+	return ec.marshalNRule2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Outbound_rules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14278,9 +14278,9 @@ func (ec *executionContext) _Outbound_external(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.External)
+	res := resTmp.([]model.External)
 	fc.Result = res
-	return ec.marshalNExternal2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternalᚄ(ctx, field.Selections, res)
+	return ec.marshalNExternal2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternalᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Outbound_external(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14416,9 +14416,9 @@ func (ec *executionContext) _OutboundAccessError_rule(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Rule)
+	res := resTmp.(model.Rule)
 	fc.Result = res
-	return ec.marshalNRule2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx, field.Selections, res)
+	return ec.marshalNRule2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_OutboundAccessError_rule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15098,9 +15098,9 @@ func (ec *executionContext) _Query_envCost(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.EnvCost)
+	res := resTmp.([]model.EnvCost)
 	fc.Result = res
-	return ec.marshalNEnvCost2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCostᚄ(ctx, field.Selections, res)
+	return ec.marshalNEnvCost2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCostᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_envCost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15885,9 +15885,9 @@ func (ec *executionContext) _Resources_limits(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Limits)
+	res := resTmp.(model.Limits)
 	fc.Result = res
-	return ec.marshalNLimits2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐLimits(ctx, field.Selections, res)
+	return ec.marshalNLimits2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐLimits(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Resources_limits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15935,9 +15935,9 @@ func (ec *executionContext) _Resources_requests(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Requests)
+	res := resTmp.(model.Requests)
 	fc.Result = res
-	return ec.marshalNRequests2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx, field.Selections, res)
+	return ec.marshalNRequests2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Resources_requests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16639,9 +16639,9 @@ func (ec *executionContext) _SearchConnection_pageInfo(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PageInfo)
+	res := resTmp.(model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16697,9 +16697,9 @@ func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SearchEdge)
+	res := resTmp.([]model.SearchEdge)
 	fc.Result = res
-	return ec.marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNSearchEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16923,9 +16923,9 @@ func (ec *executionContext) _Sidecar_resources(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Resources)
+	res := resTmp.(model.Resources)
 	fc.Result = res
-	return ec.marshalNResources2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx, field.Selections, res)
+	return ec.marshalNResources2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Sidecar_resources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17193,9 +17193,9 @@ func (ec *executionContext) _SqlInstance_databases(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Database)
+	res := resTmp.([]model.Database)
 	fc.Result = res
-	return ec.marshalNDatabase2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseᚄ(ctx, field.Selections, res)
+	return ec.marshalNDatabase2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SqlInstance_databases(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17377,9 +17377,9 @@ func (ec *executionContext) _SqlInstance_flags(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Flag)
+	res := resTmp.([]model.Flag)
 	fc.Result = res
-	return ec.marshalNFlag2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlagᚄ(ctx, field.Selections, res)
+	return ec.marshalNFlag2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlagᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SqlInstance_flags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17471,9 +17471,9 @@ func (ec *executionContext) _SqlInstance_insights(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Insights)
+	res := resTmp.(model.Insights)
 	fc.Result = res
-	return ec.marshalNInsights2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInsights(ctx, field.Selections, res)
+	return ec.marshalNInsights2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInsights(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SqlInstance_insights(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -17525,9 +17525,9 @@ func (ec *executionContext) _SqlInstance_maintenance(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Maintenance)
+	res := resTmp.(model.Maintenance)
 	fc.Result = res
-	return ec.marshalNMaintenance2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaintenance(ctx, field.Selections, res)
+	return ec.marshalNMaintenance2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaintenance(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SqlInstance_maintenance(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18300,9 +18300,9 @@ func (ec *executionContext) _Team_slackAlertsChannels(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SlackAlertsChannel)
+	res := resTmp.([]model.SlackAlertsChannel)
 	fc.Result = res
-	return ec.marshalNSlackAlertsChannel2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx, field.Selections, res)
+	return ec.marshalNSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_slackAlertsChannels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18350,9 +18350,9 @@ func (ec *executionContext) _Team_gcpProjects(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.GcpProject)
+	res := resTmp.([]model.GcpProject)
 	fc.Result = res
-	return ec.marshalNGcpProject2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx, field.Selections, res)
+	return ec.marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_gcpProjects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18651,9 +18651,9 @@ func (ec *executionContext) _TeamConnection_pageInfo(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PageInfo)
+	res := resTmp.(model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18709,9 +18709,9 @@ func (ec *executionContext) _TeamConnection_edges(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.TeamEdge)
+	res := resTmp.([]model.TeamEdge)
 	fc.Result = res
-	return ec.marshalNTeamEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNTeamEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18803,9 +18803,9 @@ func (ec *executionContext) _TeamEdge_node(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Team)
+	res := resTmp.(model.Team)
 	fc.Result = res
-	return ec.marshalNTeam2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeam(ctx, field.Selections, res)
+	return ec.marshalNTeam2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeam(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19097,9 +19097,9 @@ func (ec *executionContext) _TeamMemberConnection_pageInfo(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PageInfo)
+	res := resTmp.(model.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamMemberConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19155,9 +19155,9 @@ func (ec *executionContext) _TeamMemberConnection_edges(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.TeamMemberEdge)
+	res := resTmp.([]model.TeamMemberEdge)
 	fc.Result = res
-	return ec.marshalNTeamMemberEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNTeamMemberEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamMemberConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19249,9 +19249,9 @@ func (ec *executionContext) _TeamMemberEdge_node(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.TeamMember)
+	res := resTmp.(model.TeamMember)
 	fc.Result = res
-	return ec.marshalNTeamMember2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMember(ctx, field.Selections, res)
+	return ec.marshalNTeamMember2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TeamMemberEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19391,9 +19391,9 @@ func (ec *executionContext) _Topic_acl(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.ACL)
+	res := resTmp.([]model.ACL)
 	fc.Result = res
-	return ec.marshalNAcl2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACLᚄ(ctx, field.Selections, res)
+	return ec.marshalNAcl2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACLᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Topic_acl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27802,7 +27802,11 @@ func (ec *executionContext) marshalNAccessPolicy2ᚖgithubᚗcomᚋnaisᚋconsol
 	return ec._AccessPolicy(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAcl2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACLᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ACL) graphql.Marshaler {
+func (ec *executionContext) marshalNAcl2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACL(ctx context.Context, sel ast.SelectionSet, v model.ACL) graphql.Marshaler {
+	return ec._Acl(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAcl2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACLᚄ(ctx context.Context, sel ast.SelectionSet, v []model.ACL) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -27826,7 +27830,7 @@ func (ec *executionContext) marshalNAcl2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAcl2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACL(ctx, sel, v[i])
+			ret[i] = ec.marshalNAcl2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACL(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -27844,16 +27848,6 @@ func (ec *executionContext) marshalNAcl2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNAcl2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐACL(ctx context.Context, sel ast.SelectionSet, v *model.ACL) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Acl(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNApp2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐApp(ctx context.Context, sel ast.SelectionSet, v model.App) graphql.Marshaler {
@@ -27884,7 +27878,11 @@ func (ec *executionContext) marshalNAppConnection2ᚖgithubᚗcomᚋnaisᚋconso
 	return ec._AppConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAppCost2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCostᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AppCost) graphql.Marshaler {
+func (ec *executionContext) marshalNAppCost2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCost(ctx context.Context, sel ast.SelectionSet, v model.AppCost) graphql.Marshaler {
+	return ec._AppCost(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAppCost2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCostᚄ(ctx context.Context, sel ast.SelectionSet, v []model.AppCost) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -27908,7 +27906,7 @@ func (ec *executionContext) marshalNAppCost2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAppCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCost(ctx, sel, v[i])
+			ret[i] = ec.marshalNAppCost2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -27928,17 +27926,11 @@ func (ec *executionContext) marshalNAppCost2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 	return ret
 }
 
-func (ec *executionContext) marshalNAppCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppCost(ctx context.Context, sel ast.SelectionSet, v *model.AppCost) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AppCost(ctx, sel, v)
+func (ec *executionContext) marshalNAppEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdge(ctx context.Context, sel ast.SelectionSet, v model.AppEdge) graphql.Marshaler {
+	return ec._AppEdge(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAppEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AppEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNAppEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.AppEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -27962,7 +27954,7 @@ func (ec *executionContext) marshalNAppEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAppEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNAppEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -27980,16 +27972,6 @@ func (ec *executionContext) marshalNAppEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNAppEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppEdge(ctx context.Context, sel ast.SelectionSet, v *model.AppEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AppEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNAppState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppState(ctx context.Context, sel ast.SelectionSet, v model.AppState) graphql.Marshaler {
@@ -28069,17 +28051,15 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNClaims2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐClaims(ctx context.Context, sel ast.SelectionSet, v *model.Claims) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Claims(ctx, sel, v)
+func (ec *executionContext) marshalNClaims2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐClaims(ctx context.Context, sel ast.SelectionSet, v model.Claims) graphql.Marshaler {
+	return ec._Claims(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNConsume2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Consume) graphql.Marshaler {
+func (ec *executionContext) marshalNConsume2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsume(ctx context.Context, sel ast.SelectionSet, v model.Consume) graphql.Marshaler {
+	return ec._Consume(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNConsume2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Consume) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28103,7 +28083,7 @@ func (ec *executionContext) marshalNConsume2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNConsume2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsume(ctx, sel, v[i])
+			ret[i] = ec.marshalNConsume2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsume(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28123,17 +28103,11 @@ func (ec *executionContext) marshalNConsume2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 	return ret
 }
 
-func (ec *executionContext) marshalNConsume2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsume(ctx context.Context, sel ast.SelectionSet, v *model.Consume) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Consume(ctx, sel, v)
+func (ec *executionContext) marshalNConsumer2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumer(ctx context.Context, sel ast.SelectionSet, v model.Consumer) graphql.Marshaler {
+	return ec._Consumer(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNConsumer2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Consumer) graphql.Marshaler {
+func (ec *executionContext) marshalNConsumer2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumerᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Consumer) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28157,7 +28131,7 @@ func (ec *executionContext) marshalNConsumer2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNConsumer2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumer(ctx, sel, v[i])
+			ret[i] = ec.marshalNConsumer2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumer(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28177,17 +28151,11 @@ func (ec *executionContext) marshalNConsumer2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 	return ret
 }
 
-func (ec *executionContext) marshalNConsumer2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐConsumer(ctx context.Context, sel ast.SelectionSet, v *model.Consumer) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Consumer(ctx, sel, v)
+func (ec *executionContext) marshalNCostEntry2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntry(ctx context.Context, sel ast.SelectionSet, v model.CostEntry) graphql.Marshaler {
+	return ec._CostEntry(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CostEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNCostEntry2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []model.CostEntry) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28211,7 +28179,7 @@ func (ec *executionContext) marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsol
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCostEntry2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntry(ctx, sel, v[i])
+			ret[i] = ec.marshalNCostEntry2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntry(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28231,17 +28199,11 @@ func (ec *executionContext) marshalNCostEntry2ᚕᚖgithubᚗcomᚋnaisᚋconsol
 	return ret
 }
 
-func (ec *executionContext) marshalNCostEntry2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostEntry(ctx context.Context, sel ast.SelectionSet, v *model.CostEntry) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CostEntry(ctx, sel, v)
+func (ec *executionContext) marshalNCostSeries2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeries(ctx context.Context, sel ast.SelectionSet, v model.CostSeries) graphql.Marshaler {
+	return ec._CostSeries(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCostSeries2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeriesᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CostSeries) graphql.Marshaler {
+func (ec *executionContext) marshalNCostSeries2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeriesᚄ(ctx context.Context, sel ast.SelectionSet, v []model.CostSeries) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28265,7 +28227,7 @@ func (ec *executionContext) marshalNCostSeries2ᚕᚖgithubᚗcomᚋnaisᚋconso
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCostSeries2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeries(ctx, sel, v[i])
+			ret[i] = ec.marshalNCostSeries2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeries(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28283,16 +28245,6 @@ func (ec *executionContext) marshalNCostSeries2ᚕᚖgithubᚗcomᚋnaisᚋconso
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNCostSeries2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCostSeries(ctx context.Context, sel ast.SelectionSet, v *model.CostSeries) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CostSeries(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, v interface{}) (scalar.Cursor, error) {
@@ -28319,7 +28271,11 @@ func (ec *executionContext) marshalNDailyCost2ᚖgithubᚗcomᚋnaisᚋconsole�
 	return ec._DailyCost(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDatabase2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Database) graphql.Marshaler {
+func (ec *executionContext) marshalNDatabase2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabase(ctx context.Context, sel ast.SelectionSet, v model.Database) graphql.Marshaler {
+	return ec._Database(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDatabase2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Database) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28343,7 +28299,7 @@ func (ec *executionContext) marshalNDatabase2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDatabase2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabase(ctx, sel, v[i])
+			ret[i] = ec.marshalNDatabase2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabase(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28363,17 +28319,11 @@ func (ec *executionContext) marshalNDatabase2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 	return ret
 }
 
-func (ec *executionContext) marshalNDatabase2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabase(ctx context.Context, sel ast.SelectionSet, v *model.Database) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Database(ctx, sel, v)
+func (ec *executionContext) marshalNDatabaseUser2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUser(ctx context.Context, sel ast.SelectionSet, v model.DatabaseUser) graphql.Marshaler {
+	return ec._DatabaseUser(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDatabaseUser2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DatabaseUser) graphql.Marshaler {
+func (ec *executionContext) marshalNDatabaseUser2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUserᚄ(ctx context.Context, sel ast.SelectionSet, v []model.DatabaseUser) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28397,7 +28347,7 @@ func (ec *executionContext) marshalNDatabaseUser2ᚕᚖgithubᚗcomᚋnaisᚋcon
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDatabaseUser2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNDatabaseUser2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28415,16 +28365,6 @@ func (ec *executionContext) marshalNDatabaseUser2ᚕᚖgithubᚗcomᚋnaisᚋcon
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNDatabaseUser2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDatabaseUser(ctx context.Context, sel ast.SelectionSet, v *model.DatabaseUser) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DatabaseUser(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx context.Context, v interface{}) (scalar.Date, error) {
@@ -28451,14 +28391,8 @@ func (ec *executionContext) marshalNDeployInfo2ᚖgithubᚗcomᚋnaisᚋconsole�
 	return ec._DeployInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDeployment2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployment(ctx context.Context, sel ast.SelectionSet, v *model.Deployment) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Deployment(ctx, sel, v)
+func (ec *executionContext) marshalNDeployment2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployment(ctx context.Context, sel ast.SelectionSet, v model.Deployment) graphql.Marshaler {
+	return ec._Deployment(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNDeploymentConnection2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentConnection(ctx context.Context, sel ast.SelectionSet, v model.DeploymentConnection) graphql.Marshaler {
@@ -28475,7 +28409,11 @@ func (ec *executionContext) marshalNDeploymentConnection2ᚖgithubᚗcomᚋnais�
 	return ec._DeploymentConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDeploymentEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeploymentEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDeploymentEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdge(ctx context.Context, sel ast.SelectionSet, v model.DeploymentEdge) graphql.Marshaler {
+	return ec._DeploymentEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeploymentEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.DeploymentEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28499,7 +28437,7 @@ func (ec *executionContext) marshalNDeploymentEdge2ᚕᚖgithubᚗcomᚋnaisᚋc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDeploymentEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNDeploymentEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28517,16 +28455,6 @@ func (ec *executionContext) marshalNDeploymentEdge2ᚕᚖgithubᚗcomᚋnaisᚋc
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNDeploymentEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdge(ctx context.Context, sel ast.SelectionSet, v *model.DeploymentEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeploymentEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDeploymentKey2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentKey(ctx context.Context, sel ast.SelectionSet, v model.DeploymentKey) graphql.Marshaler {
@@ -28543,7 +28471,11 @@ func (ec *executionContext) marshalNDeploymentKey2ᚖgithubᚗcomᚋnaisᚋconso
 	return ec._DeploymentKey(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDeploymentResource2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeploymentResource) graphql.Marshaler {
+func (ec *executionContext) marshalNDeploymentResource2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResource(ctx context.Context, sel ast.SelectionSet, v model.DeploymentResource) graphql.Marshaler {
+	return ec._DeploymentResource(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeploymentResource2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResourceᚄ(ctx context.Context, sel ast.SelectionSet, v []model.DeploymentResource) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28567,7 +28499,7 @@ func (ec *executionContext) marshalNDeploymentResource2ᚕᚖgithubᚗcomᚋnais
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDeploymentResource2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResource(ctx, sel, v[i])
+			ret[i] = ec.marshalNDeploymentResource2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResource(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28585,16 +28517,6 @@ func (ec *executionContext) marshalNDeploymentResource2ᚕᚖgithubᚗcomᚋnais
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNDeploymentResource2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResource(ctx context.Context, sel ast.SelectionSet, v *model.DeploymentResource) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeploymentResource(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDeploymentResponse2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentResponse(ctx context.Context, sel ast.SelectionSet, v model.DeploymentResponse) graphql.Marshaler {
@@ -28607,7 +28529,11 @@ func (ec *executionContext) marshalNDeploymentResponse2githubᚗcomᚋnaisᚋcon
 	return ec._DeploymentResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDeploymentStatus2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeploymentStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNDeploymentStatus2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatus(ctx context.Context, sel ast.SelectionSet, v model.DeploymentStatus) graphql.Marshaler {
+	return ec._DeploymentStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeploymentStatus2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []model.DeploymentStatus) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28631,7 +28557,7 @@ func (ec *executionContext) marshalNDeploymentStatus2ᚕᚖgithubᚗcomᚋnais�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDeploymentStatus2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatus(ctx, sel, v[i])
+			ret[i] = ec.marshalNDeploymentStatus2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatus(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28649,16 +28575,6 @@ func (ec *executionContext) marshalNDeploymentStatus2ᚕᚖgithubᚗcomᚋnais�
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNDeploymentStatus2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentStatus(ctx context.Context, sel ast.SelectionSet, v *model.DeploymentStatus) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeploymentStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnv(ctx context.Context, sel ast.SelectionSet, v *model.Env) graphql.Marshaler {
@@ -28671,7 +28587,11 @@ func (ec *executionContext) marshalNEnv2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbacke
 	return ec._Env(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEnvCost2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCostᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EnvCost) graphql.Marshaler {
+func (ec *executionContext) marshalNEnvCost2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCost(ctx context.Context, sel ast.SelectionSet, v model.EnvCost) graphql.Marshaler {
+	return ec._EnvCost(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEnvCost2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCostᚄ(ctx context.Context, sel ast.SelectionSet, v []model.EnvCost) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28695,7 +28615,7 @@ func (ec *executionContext) marshalNEnvCost2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNEnvCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCost(ctx, sel, v[i])
+			ret[i] = ec.marshalNEnvCost2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28713,16 +28633,6 @@ func (ec *executionContext) marshalNEnvCost2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNEnvCost2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCost(ctx context.Context, sel ast.SelectionSet, v *model.EnvCost) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._EnvCost(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNEnvCostFilter2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐEnvCostFilter(ctx context.Context, v interface{}) (model.EnvCostFilter, error) {
@@ -28740,7 +28650,11 @@ func (ec *executionContext) marshalNErrorLevel2githubᚗcomᚋnaisᚋconsoleᚑb
 	return v
 }
 
-func (ec *executionContext) marshalNExpose2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExposeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Expose) graphql.Marshaler {
+func (ec *executionContext) marshalNExpose2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExpose(ctx context.Context, sel ast.SelectionSet, v model.Expose) graphql.Marshaler {
+	return ec._Expose(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExpose2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExposeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Expose) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28764,7 +28678,7 @@ func (ec *executionContext) marshalNExpose2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNExpose2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExpose(ctx, sel, v[i])
+			ret[i] = ec.marshalNExpose2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExpose(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28784,17 +28698,11 @@ func (ec *executionContext) marshalNExpose2ᚕᚖgithubᚗcomᚋnaisᚋconsole�
 	return ret
 }
 
-func (ec *executionContext) marshalNExpose2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExpose(ctx context.Context, sel ast.SelectionSet, v *model.Expose) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Expose(ctx, sel, v)
+func (ec *executionContext) marshalNExternal2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternal(ctx context.Context, sel ast.SelectionSet, v model.External) graphql.Marshaler {
+	return ec._External(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNExternal2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.External) graphql.Marshaler {
+func (ec *executionContext) marshalNExternal2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternalᚄ(ctx context.Context, sel ast.SelectionSet, v []model.External) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28818,7 +28726,7 @@ func (ec *executionContext) marshalNExternal2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNExternal2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternal(ctx, sel, v[i])
+			ret[i] = ec.marshalNExternal2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternal(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28838,17 +28746,11 @@ func (ec *executionContext) marshalNExternal2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 	return ret
 }
 
-func (ec *executionContext) marshalNExternal2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐExternal(ctx context.Context, sel ast.SelectionSet, v *model.External) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._External(ctx, sel, v)
+func (ec *executionContext) marshalNFlag2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlag(ctx context.Context, sel ast.SelectionSet, v model.Flag) graphql.Marshaler {
+	return ec._Flag(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNFlag2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlagᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Flag) graphql.Marshaler {
+func (ec *executionContext) marshalNFlag2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlagᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Flag) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28872,7 +28774,7 @@ func (ec *executionContext) marshalNFlag2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFlag2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlag(ctx, sel, v[i])
+			ret[i] = ec.marshalNFlag2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28890,16 +28792,6 @@ func (ec *executionContext) marshalNFlag2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNFlag2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐFlag(ctx context.Context, sel ast.SelectionSet, v *model.Flag) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Flag(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
@@ -28917,7 +28809,11 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) marshalNGcpProject2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GcpProject) graphql.Marshaler {
+func (ec *executionContext) marshalNGcpProject2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx context.Context, sel ast.SelectionSet, v model.GcpProject) graphql.Marshaler {
+	return ec._GcpProject(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGcpProject2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []model.GcpProject) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -28941,7 +28837,7 @@ func (ec *executionContext) marshalNGcpProject2ᚕᚖgithubᚗcomᚋnaisᚋconso
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGcpProject2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNGcpProject2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -28961,24 +28857,8 @@ func (ec *executionContext) marshalNGcpProject2ᚕᚖgithubᚗcomᚋnaisᚋconso
 	return ret
 }
 
-func (ec *executionContext) marshalNGcpProject2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGcpProject(ctx context.Context, sel ast.SelectionSet, v *model.GcpProject) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._GcpProject(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNGithubRepository2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepository(ctx context.Context, sel ast.SelectionSet, v *model.GithubRepository) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._GithubRepository(ctx, sel, v)
+func (ec *executionContext) marshalNGithubRepository2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepository(ctx context.Context, sel ast.SelectionSet, v model.GithubRepository) graphql.Marshaler {
+	return ec._GithubRepository(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNGithubRepositoryConnection2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryConnection(ctx context.Context, sel ast.SelectionSet, v model.GithubRepositoryConnection) graphql.Marshaler {
@@ -28995,7 +28875,11 @@ func (ec *executionContext) marshalNGithubRepositoryConnection2ᚖgithubᚗcom�
 	return ec._GithubRepositoryConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGithubRepositoryEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubRepositoryEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNGithubRepositoryEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdge(ctx context.Context, sel ast.SelectionSet, v model.GithubRepositoryEdge) graphql.Marshaler {
+	return ec._GithubRepositoryEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGithubRepositoryEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.GithubRepositoryEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29019,7 +28903,7 @@ func (ec *executionContext) marshalNGithubRepositoryEdge2ᚕᚖgithubᚗcomᚋna
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGithubRepositoryEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNGithubRepositoryEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29039,17 +28923,11 @@ func (ec *executionContext) marshalNGithubRepositoryEdge2ᚕᚖgithubᚗcomᚋna
 	return ret
 }
 
-func (ec *executionContext) marshalNGithubRepositoryEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGithubRepositoryEdge(ctx context.Context, sel ast.SelectionSet, v *model.GithubRepositoryEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._GithubRepositoryEdge(ctx, sel, v)
+func (ec *executionContext) marshalNGroup2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v model.Group) graphql.Marshaler {
+	return ec._Group(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNGroup2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroupᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Group) graphql.Marshaler {
+func (ec *executionContext) marshalNGroup2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroupᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Group) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29073,7 +28951,7 @@ func (ec *executionContext) marshalNGroup2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGroup2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroup(ctx, sel, v[i])
+			ret[i] = ec.marshalNGroup2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroup(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29091,16 +28969,6 @@ func (ec *executionContext) marshalNGroup2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNGroup2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐGroup(ctx context.Context, sel ast.SelectionSet, v *model.Group) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Group(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx context.Context, v interface{}) (scalar.Ident, error) {
@@ -29117,17 +28985,15 @@ func (ec *executionContext) marshalNInbound2githubᚗcomᚋnaisᚋconsoleᚑback
 	return ec._Inbound(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNInsights2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInsights(ctx context.Context, sel ast.SelectionSet, v *model.Insights) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Insights(ctx, sel, v)
+func (ec *executionContext) marshalNInsights2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInsights(ctx context.Context, sel ast.SelectionSet, v model.Insights) graphql.Marshaler {
+	return ec._Insights(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNInstance2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Instance) graphql.Marshaler {
+func (ec *executionContext) marshalNInstance2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstance(ctx context.Context, sel ast.SelectionSet, v model.Instance) graphql.Marshaler {
+	return ec._Instance(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInstance2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Instance) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29151,7 +29017,7 @@ func (ec *executionContext) marshalNInstance2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNInstance2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstance(ctx, sel, v[i])
+			ret[i] = ec.marshalNInstance2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstance(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29169,16 +29035,6 @@ func (ec *executionContext) marshalNInstance2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNInstance2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstance(ctx context.Context, sel ast.SelectionSet, v *model.Instance) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Instance(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNInstanceState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐInstanceState(ctx context.Context, v interface{}) (model.InstanceState, error) {
@@ -29210,14 +29066,8 @@ func (ec *executionContext) marshalNJobState2githubᚗcomᚋnaisᚋconsoleᚑbac
 	return ec._JobState(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLimits2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐLimits(ctx context.Context, sel ast.SelectionSet, v *model.Limits) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Limits(ctx, sel, v)
+func (ec *executionContext) marshalNLimits2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐLimits(ctx context.Context, sel ast.SelectionSet, v model.Limits) graphql.Marshaler {
+	return ec._Limits(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNLogLine2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐLogLine(ctx context.Context, sel ast.SelectionSet, v model.LogLine) graphql.Marshaler {
@@ -29234,24 +29084,12 @@ func (ec *executionContext) marshalNLogLine2ᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 	return ec._LogLine(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMaintenance2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaintenance(ctx context.Context, sel ast.SelectionSet, v *model.Maintenance) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Maintenance(ctx, sel, v)
+func (ec *executionContext) marshalNMaintenance2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaintenance(ctx context.Context, sel ast.SelectionSet, v model.Maintenance) graphql.Marshaler {
+	return ec._Maintenance(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMaskinportenScope2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaskinportenScope(ctx context.Context, sel ast.SelectionSet, v *model.MaskinportenScope) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._MaskinportenScope(ctx, sel, v)
+func (ec *executionContext) marshalNMaskinportenScope2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMaskinportenScope(ctx context.Context, sel ast.SelectionSet, v model.MaskinportenScope) graphql.Marshaler {
+	return ec._MaskinportenScope(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNMonthlyCost2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐMonthlyCost(ctx context.Context, sel ast.SelectionSet, v model.MonthlyCost) graphql.Marshaler {
@@ -29301,7 +29139,11 @@ func (ec *executionContext) marshalNNaisJobConnection2ᚖgithubᚗcomᚋnaisᚋc
 	return ec._NaisJobConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNNaisJobEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.NaisJobEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNNaisJobEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdge(ctx context.Context, sel ast.SelectionSet, v model.NaisJobEdge) graphql.Marshaler {
+	return ec._NaisJobEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNNaisJobEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.NaisJobEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29325,7 +29167,7 @@ func (ec *executionContext) marshalNNaisJobEdge2ᚕᚖgithubᚗcomᚋnaisᚋcons
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNNaisJobEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNNaisJobEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29343,33 +29185,21 @@ func (ec *executionContext) marshalNNaisJobEdge2ᚕᚖgithubᚗcomᚋnaisᚋcons
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNNaisJobEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNaisJobEdge(ctx context.Context, sel ast.SelectionSet, v *model.NaisJobEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._NaisJobEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNOutbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v model.Outbound) graphql.Marshaler {
 	return ec._Outbound(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PageInfo(ctx, sel, v)
+func (ec *executionContext) marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v model.PageInfo) graphql.Marshaler {
+	return ec._PageInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Port) graphql.Marshaler {
+func (ec *executionContext) marshalNPort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx context.Context, sel ast.SelectionSet, v model.Port) graphql.Marshaler {
+	return ec._Port(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPortᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Port) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29393,7 +29223,7 @@ func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx, sel, v[i])
+			ret[i] = ec.marshalNPort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29413,24 +29243,8 @@ func (ec *executionContext) marshalNPort2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 	return ret
 }
 
-func (ec *executionContext) marshalNPort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPort(ctx context.Context, sel ast.SelectionSet, v *model.Port) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Port(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNRequests2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx context.Context, sel ast.SelectionSet, v *model.Requests) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Requests(ctx, sel, v)
+func (ec *executionContext) marshalNRequests2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx context.Context, sel ast.SelectionSet, v model.Requests) graphql.Marshaler {
+	return ec._Requests(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNResources2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx context.Context, sel ast.SelectionSet, v model.Resources) graphql.Marshaler {
@@ -29447,7 +29261,11 @@ func (ec *executionContext) marshalNResources2ᚖgithubᚗcomᚋnaisᚋconsole�
 	return ec._Resources(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Rule) graphql.Marshaler {
+func (ec *executionContext) marshalNRule2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx context.Context, sel ast.SelectionSet, v model.Rule) graphql.Marshaler {
+	return ec._Rule(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRule2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRuleᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Rule) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29471,7 +29289,7 @@ func (ec *executionContext) marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRule2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx, sel, v[i])
+			ret[i] = ec.marshalNRule2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29491,17 +29309,11 @@ func (ec *executionContext) marshalNRule2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 	return ret
 }
 
-func (ec *executionContext) marshalNRule2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRule(ctx context.Context, sel ast.SelectionSet, v *model.Rule) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Rule(ctx, sel, v)
+func (ec *executionContext) marshalNRun2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRun(ctx context.Context, sel ast.SelectionSet, v model.Run) graphql.Marshaler {
+	return ec._Run(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNRun2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRunᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Run) graphql.Marshaler {
+func (ec *executionContext) marshalNRun2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRunᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Run) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29525,7 +29337,7 @@ func (ec *executionContext) marshalNRun2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRun2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRun(ctx, sel, v[i])
+			ret[i] = ec.marshalNRun2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRun(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29543,16 +29355,6 @@ func (ec *executionContext) marshalNRun2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNRun2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRun(ctx context.Context, sel ast.SelectionSet, v *model.Run) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Run(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSearchConnection2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchConnection(ctx context.Context, sel ast.SelectionSet, v model.SearchConnection) graphql.Marshaler {
@@ -29569,7 +29371,11 @@ func (ec *executionContext) marshalNSearchConnection2ᚖgithubᚗcomᚋnaisᚋco
 	return ec._SearchConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SearchEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNSearchEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdge(ctx context.Context, sel ast.SelectionSet, v model.SearchEdge) graphql.Marshaler {
+	return ec._SearchEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSearchEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SearchEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29593,7 +29399,7 @@ func (ec *executionContext) marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconso
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSearchEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNSearchEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29611,16 +29417,6 @@ func (ec *executionContext) marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconso
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNSearchEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdge(ctx context.Context, sel ast.SelectionSet, v *model.SearchEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SearchEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSearchNode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchNode(ctx context.Context, sel ast.SelectionSet, v model.SearchNode) graphql.Marshaler {
@@ -29633,7 +29429,11 @@ func (ec *executionContext) marshalNSearchNode2githubᚗcomᚋnaisᚋconsoleᚑb
 	return ec._SearchNode(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSlackAlertsChannel2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SlackAlertsChannel) graphql.Marshaler {
+func (ec *executionContext) marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx context.Context, sel ast.SelectionSet, v model.SlackAlertsChannel) graphql.Marshaler {
+	return ec._SlackAlertsChannel(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SlackAlertsChannel) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29657,7 +29457,7 @@ func (ec *executionContext) marshalNSlackAlertsChannel2ᚕᚖgithubᚗcomᚋnais
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSlackAlertsChannel2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx, sel, v[i])
+			ret[i] = ec.marshalNSlackAlertsChannel2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29675,16 +29475,6 @@ func (ec *executionContext) marshalNSlackAlertsChannel2ᚕᚖgithubᚗcomᚋnais
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNSlackAlertsChannel2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSlackAlertsChannel(ctx context.Context, sel ast.SelectionSet, v *model.SlackAlertsChannel) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SlackAlertsChannel(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNState2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐState(ctx context.Context, v interface{}) (model.State, error) {
@@ -29880,7 +29670,11 @@ func (ec *executionContext) marshalNTeamConnection2ᚖgithubᚗcomᚋnaisᚋcons
 	return ec._TeamConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTeamEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TeamEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTeamEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdge(ctx context.Context, sel ast.SelectionSet, v model.TeamEdge) graphql.Marshaler {
+	return ec._TeamEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTeamEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.TeamEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29904,7 +29698,7 @@ func (ec *executionContext) marshalNTeamEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTeamEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNTeamEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29924,24 +29718,8 @@ func (ec *executionContext) marshalNTeamEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsole
 	return ret
 }
 
-func (ec *executionContext) marshalNTeamEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamEdge(ctx context.Context, sel ast.SelectionSet, v *model.TeamEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._TeamEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNTeamMember2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMember(ctx context.Context, sel ast.SelectionSet, v *model.TeamMember) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._TeamMember(ctx, sel, v)
+func (ec *executionContext) marshalNTeamMember2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMember(ctx context.Context, sel ast.SelectionSet, v model.TeamMember) graphql.Marshaler {
+	return ec._TeamMember(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNTeamMemberConnection2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberConnection(ctx context.Context, sel ast.SelectionSet, v model.TeamMemberConnection) graphql.Marshaler {
@@ -29958,7 +29736,11 @@ func (ec *executionContext) marshalNTeamMemberConnection2ᚖgithubᚗcomᚋnais�
 	return ec._TeamMemberConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTeamMemberEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TeamMemberEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTeamMemberEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdge(ctx context.Context, sel ast.SelectionSet, v model.TeamMemberEdge) graphql.Marshaler {
+	return ec._TeamMemberEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTeamMemberEdge2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.TeamMemberEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -29982,7 +29764,7 @@ func (ec *executionContext) marshalNTeamMemberEdge2ᚕᚖgithubᚗcomᚋnaisᚋc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTeamMemberEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNTeamMemberEdge2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -30000,16 +29782,6 @@ func (ec *executionContext) marshalNTeamMemberEdge2ᚕᚖgithubᚗcomᚋnaisᚋc
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNTeamMemberEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamMemberEdge(ctx context.Context, sel ast.SelectionSet, v *model.TeamMemberEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._TeamMemberEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTeamRole2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamRole(ctx context.Context, v interface{}) (model.TeamRole, error) {
@@ -30037,7 +29809,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNTopic2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopicᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Topic) graphql.Marshaler {
+func (ec *executionContext) marshalNTopic2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopic(ctx context.Context, sel ast.SelectionSet, v model.Topic) graphql.Marshaler {
+	return ec._Topic(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTopic2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopicᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Topic) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -30061,7 +29837,7 @@ func (ec *executionContext) marshalNTopic2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTopic2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopic(ctx, sel, v[i])
+			ret[i] = ec.marshalNTopic2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopic(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -30079,16 +29855,6 @@ func (ec *executionContext) marshalNTopic2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑ
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNTopic2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTopic(ctx context.Context, sel ast.SelectionSet, v *model.Topic) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Topic(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {

@@ -402,20 +402,20 @@ func toModelTeams(teams []Team) []*model.Team {
 			Name:         team.Slug,
 			Description:  team.Purpose,
 			SlackChannel: team.SlackChannel,
-			SlackAlertsChannels: func(channels []SlackAlertsChannel) []*model.SlackAlertsChannel {
-				models := make([]*model.SlackAlertsChannel, 0)
+			SlackAlertsChannels: func(channels []SlackAlertsChannel) []model.SlackAlertsChannel {
+				models := make([]model.SlackAlertsChannel, 0)
 				for _, ch := range channels {
-					models = append(models, &model.SlackAlertsChannel{
+					models = append(models, model.SlackAlertsChannel{
 						Env:  ch.Environment,
 						Name: ch.ChannelName,
 					})
 				}
 				return models
 			}(team.SlackAlertsChannels),
-			GcpProjects: func(projects []GcpProject) []*model.GcpProject {
-				models := make([]*model.GcpProject, 0)
+			GcpProjects: func(projects []GcpProject) []model.GcpProject {
+				models := make([]model.GcpProject, 0)
 				for _, project := range projects {
-					models = append(models, &model.GcpProject{
+					models = append(models, model.GcpProject{
 						ID:          project.ProjectID,
 						Name:        project.ProjectName,
 						Environment: project.Environment,

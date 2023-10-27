@@ -21,7 +21,7 @@ type Connection interface {
 	// The total count of items in the connection.
 	GetTotalCount() int
 	// Pagination information.
-	GetPageInfo() *PageInfo
+	GetPageInfo() PageInfo
 	// A list of edges.
 	GetEdges() []Edge
 }
@@ -59,6 +59,11 @@ type Storage interface {
 	GetName() string
 }
 
+type AccessPolicy struct {
+	Inbound  Inbound  `json:"inbound"`
+	Outbound Outbound `json:"outbound"`
+}
+
 type ACL struct {
 	Access      string `json:"access"`
 	Application string `json:"application"`
@@ -66,9 +71,9 @@ type ACL struct {
 }
 
 type AppConnection struct {
-	TotalCount int        `json:"totalCount"`
-	PageInfo   *PageInfo  `json:"pageInfo"`
-	Edges      []*AppEdge `json:"edges"`
+	TotalCount int       `json:"totalCount"`
+	PageInfo   PageInfo  `json:"pageInfo"`
+	Edges      []AppEdge `json:"edges"`
 }
 
 func (AppConnection) IsConnection() {}
@@ -77,7 +82,7 @@ func (AppConnection) IsConnection() {}
 func (this AppConnection) GetTotalCount() int { return this.TotalCount }
 
 // Pagination information.
-func (this AppConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+func (this AppConnection) GetPageInfo() PageInfo { return this.PageInfo }
 
 // A list of edges.
 func (this AppConnection) GetEdges() []Edge {
@@ -98,12 +103,12 @@ type AppCost struct {
 	// The sum of all cost entries for the application in euros.
 	Sum float64 `json:"sum"`
 	// A list of cost entries for the application.
-	Cost []*CostEntry `json:"cost"`
+	Cost []CostEntry `json:"cost"`
 }
 
 type AppEdge struct {
 	Cursor scalar.Cursor `json:"cursor"`
-	Node   *App          `json:"node"`
+	Node   App           `json:"node"`
 }
 
 func (AppEdge) IsEdge() {}
@@ -133,7 +138,7 @@ func (AzureAd) IsAuthz() {}
 
 type AzureApplication struct {
 	AllowAllUsers         bool     `json:"allowAllUsers"`
-	Claims                *Claims  `json:"claims"`
+	Claims                Claims   `json:"claims"`
 	ReplyURLs             []string `json:"replyURLs"`
 	SinglePageApplication bool     `json:"singlePageApplication"`
 	Tenant                string   `json:"tenant"`
@@ -162,7 +167,7 @@ func (this Bucket) GetName() string { return this.Name }
 
 type Claims struct {
 	Extra  []string `json:"extra"`
-	Groups []*Group `json:"groups"`
+	Groups []Group  `json:"groups"`
 }
 
 type Consume struct {
@@ -189,7 +194,7 @@ type CostSeries struct {
 	// The sum of all daily costs in the series for this cost type in euros.
 	Sum float64 `json:"sum"`
 	// The cost data.
-	Data []*CostEntry `json:"data"`
+	Data []CostEntry `json:"data"`
 }
 
 // Daily cost type.
@@ -197,13 +202,13 @@ type DailyCost struct {
 	// The sum of all costs in the cost series in euros.
 	Sum float64 `json:"sum"`
 	// The cost series.
-	Series []*CostSeries `json:"series"`
+	Series []CostSeries `json:"series"`
 }
 
 type Database struct {
-	EnvVarPrefix string          `json:"envVarPrefix"`
-	Name         string          `json:"name"`
-	Users        []*DatabaseUser `json:"users"`
+	EnvVarPrefix string         `json:"envVarPrefix"`
+	Name         string         `json:"name"`
+	Users        []DatabaseUser `json:"users"`
 }
 
 type DatabaseUser struct {
@@ -220,19 +225,19 @@ type DeployInfo struct {
 }
 
 type Deployment struct {
-	ID         scalar.Ident          `json:"id"`
-	Team       *Team                 `json:"team"`
-	Resources  []*DeploymentResource `json:"resources"`
-	Env        string                `json:"env"`
-	Statuses   []*DeploymentStatus   `json:"statuses"`
-	Created    time.Time             `json:"created"`
-	Repository string                `json:"repository"`
+	ID         scalar.Ident         `json:"id"`
+	Team       Team                 `json:"team"`
+	Resources  []DeploymentResource `json:"resources"`
+	Env        string               `json:"env"`
+	Statuses   []DeploymentStatus   `json:"statuses"`
+	Created    time.Time            `json:"created"`
+	Repository string               `json:"repository"`
 }
 
 type DeploymentConnection struct {
-	TotalCount int               `json:"totalCount"`
-	PageInfo   *PageInfo         `json:"pageInfo"`
-	Edges      []*DeploymentEdge `json:"edges"`
+	TotalCount int              `json:"totalCount"`
+	PageInfo   PageInfo         `json:"pageInfo"`
+	Edges      []DeploymentEdge `json:"edges"`
 }
 
 func (DeploymentConnection) IsConnection() {}
@@ -241,7 +246,7 @@ func (DeploymentConnection) IsConnection() {}
 func (this DeploymentConnection) GetTotalCount() int { return this.TotalCount }
 
 // Pagination information.
-func (this DeploymentConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+func (this DeploymentConnection) GetPageInfo() PageInfo { return this.PageInfo }
 
 // A list of edges.
 func (this DeploymentConnection) GetEdges() []Edge {
@@ -259,7 +264,7 @@ func (DeploymentConnection) IsDeploymentResponse() {}
 
 type DeploymentEdge struct {
 	Cursor scalar.Cursor `json:"cursor"`
-	Node   *Deployment   `json:"node"`
+	Node   Deployment    `json:"node"`
 }
 
 func (DeploymentEdge) IsEdge() {}
@@ -340,7 +345,7 @@ type EnvCost struct {
 	// The sum of all app costs for the environment in euros.
 	Sum float64 `json:"sum"`
 	// A list of app costs in the environment.
-	Apps []*AppCost `json:"apps"`
+	Apps []AppCost `json:"apps"`
 }
 
 // Env cost filter input type.
@@ -360,17 +365,17 @@ type Error struct {
 func (Error) IsDeploymentResponse() {}
 
 type Expose struct {
-	AllowedIntegrations []string    `json:"allowedIntegrations"`
-	AtMaxAge            int         `json:"atMaxAge"`
-	Consumers           []*Consumer `json:"consumers"`
-	Enabled             bool        `json:"enabled"`
-	Name                string      `json:"name"`
-	Product             string      `json:"product"`
+	AllowedIntegrations []string   `json:"allowedIntegrations"`
+	AtMaxAge            int        `json:"atMaxAge"`
+	Consumers           []Consumer `json:"consumers"`
+	Enabled             bool       `json:"enabled"`
+	Name                string     `json:"name"`
+	Product             string     `json:"product"`
 }
 
 type External struct {
-	Host  string  `json:"host"`
-	Ports []*Port `json:"ports"`
+	Host  string `json:"host"`
+	Ports []Port `json:"ports"`
 }
 
 type FailedRunError struct {
@@ -410,9 +415,9 @@ type GithubRepositoryConnection struct {
 	// The total count of available GitHub repositories.
 	TotalCount int `json:"totalCount"`
 	// Pagination information.
-	PageInfo *PageInfo `json:"pageInfo"`
+	PageInfo PageInfo `json:"pageInfo"`
 	// A list of GitHub repository edges.
-	Edges []*GithubRepositoryEdge `json:"edges"`
+	Edges []GithubRepositoryEdge `json:"edges"`
 }
 
 func (GithubRepositoryConnection) IsConnection() {}
@@ -421,7 +426,7 @@ func (GithubRepositoryConnection) IsConnection() {}
 func (this GithubRepositoryConnection) GetTotalCount() int { return this.TotalCount }
 
 // Pagination information.
-func (this GithubRepositoryConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+func (this GithubRepositoryConnection) GetPageInfo() PageInfo { return this.PageInfo }
 
 // A list of edges.
 func (this GithubRepositoryConnection) GetEdges() []Edge {
@@ -440,7 +445,7 @@ type GithubRepositoryEdge struct {
 	// A cursor for use in pagination.
 	Cursor scalar.Cursor `json:"cursor"`
 	// The GitHub repository at the end of the edge.
-	Node *GithubRepository `json:"node"`
+	Node GithubRepository `json:"node"`
 }
 
 func (GithubRepositoryEdge) IsEdge() {}
@@ -476,13 +481,13 @@ type IDPortenSidecar struct {
 }
 
 type Inbound struct {
-	Rules []*Rule `json:"rules"`
+	Rules []Rule `json:"rules"`
 }
 
 type InboundAccessError struct {
 	Revision string     `json:"revision"`
 	Level    ErrorLevel `json:"level"`
-	Rule     *Rule      `json:"rule"`
+	Rule     Rule       `json:"rule"`
 }
 
 func (InboundAccessError) IsStateError()             {}
@@ -536,9 +541,9 @@ type JobState struct {
 
 type Kafka struct {
 	// The kafka pool name
-	Name    string   `json:"name"`
-	Streams bool     `json:"streams"`
-	Topics  []*Topic `json:"topics"`
+	Name    string  `json:"name"`
+	Streams bool    `json:"streams"`
+	Topics  []Topic `json:"topics"`
 }
 
 func (Kafka) IsStorage()           {}
@@ -569,15 +574,15 @@ type Maintenance struct {
 }
 
 type Maskinporten struct {
-	Scopes  *MaskinportenScope `json:"scopes"`
-	Enabled bool               `json:"enabled"`
+	Scopes  MaskinportenScope `json:"scopes"`
+	Enabled bool              `json:"enabled"`
 }
 
 func (Maskinporten) IsAuthz() {}
 
 type MaskinportenScope struct {
-	Consumes []*Consume `json:"consumes"`
-	Exposes  []*Expose  `json:"exposes"`
+	Consumes []Consume `json:"consumes"`
+	Exposes  []Expose  `json:"exposes"`
 }
 
 // Montly cost type.
@@ -585,7 +590,7 @@ type MonthlyCost struct {
 	// Sum for all months in the series in euros.
 	Sum float64 `json:"sum"`
 	// A list of monthly cost entries.
-	Cost []*CostEntry `json:"cost"`
+	Cost []CostEntry `json:"cost"`
 }
 
 // Monthly cost filter input type.
@@ -599,9 +604,9 @@ type MonthlyCostFilter struct {
 }
 
 type NaisJobConnection struct {
-	TotalCount int            `json:"totalCount"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	Edges      []*NaisJobEdge `json:"edges"`
+	TotalCount int           `json:"totalCount"`
+	PageInfo   PageInfo      `json:"pageInfo"`
+	Edges      []NaisJobEdge `json:"edges"`
 }
 
 func (NaisJobConnection) IsConnection() {}
@@ -610,7 +615,7 @@ func (NaisJobConnection) IsConnection() {}
 func (this NaisJobConnection) GetTotalCount() int { return this.TotalCount }
 
 // Pagination information.
-func (this NaisJobConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+func (this NaisJobConnection) GetPageInfo() PageInfo { return this.PageInfo }
 
 // A list of edges.
 func (this NaisJobConnection) GetEdges() []Edge {
@@ -626,7 +631,7 @@ func (this NaisJobConnection) GetEdges() []Edge {
 
 type NaisJobEdge struct {
 	Cursor scalar.Cursor `json:"cursor"`
-	Node   *NaisJob      `json:"node"`
+	Node   NaisJob       `json:"node"`
 }
 
 func (NaisJobEdge) IsEdge() {}
@@ -663,14 +668,14 @@ func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
 type Outbound struct {
-	Rules    []*Rule     `json:"rules"`
-	External []*External `json:"external"`
+	Rules    []Rule     `json:"rules"`
+	External []External `json:"external"`
 }
 
 type OutboundAccessError struct {
 	Revision string     `json:"revision"`
 	Level    ErrorLevel `json:"level"`
-	Rule     *Rule      `json:"rule"`
+	Rule     Rule       `json:"rule"`
 }
 
 func (OutboundAccessError) IsStateError()             {}
@@ -709,8 +714,8 @@ type Requests struct {
 }
 
 type Resources struct {
-	Limits   *Limits   `json:"limits"`
-	Requests *Requests `json:"requests"`
+	Limits   Limits   `json:"limits"`
+	Requests Requests `json:"requests"`
 }
 
 type Rule struct {
@@ -740,9 +745,9 @@ func (Run) IsNode() {}
 func (this Run) GetID() scalar.Ident { return this.ID }
 
 type SearchConnection struct {
-	TotalCount int           `json:"totalCount"`
-	PageInfo   *PageInfo     `json:"pageInfo"`
-	Edges      []*SearchEdge `json:"edges"`
+	TotalCount int          `json:"totalCount"`
+	PageInfo   PageInfo     `json:"pageInfo"`
+	Edges      []SearchEdge `json:"edges"`
 }
 
 func (SearchConnection) IsConnection() {}
@@ -751,7 +756,7 @@ func (SearchConnection) IsConnection() {}
 func (this SearchConnection) GetTotalCount() int { return this.TotalCount }
 
 // Pagination information.
-func (this SearchConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+func (this SearchConnection) GetPageInfo() PageInfo { return this.PageInfo }
 
 // A list of edges.
 func (this SearchConnection) GetEdges() []Edge {
@@ -781,9 +786,9 @@ type SearchFilter struct {
 }
 
 type Sidecar struct {
-	AutoLogin            bool       `json:"autoLogin"`
-	AutoLoginIgnorePaths []string   `json:"autoLoginIgnorePaths"`
-	Resources            *Resources `json:"resources"`
+	AutoLogin            bool      `json:"autoLogin"`
+	AutoLoginIgnorePaths []string  `json:"autoLoginIgnorePaths"`
+	Resources            Resources `json:"resources"`
 }
 
 // Slack alerts channel type.
@@ -795,22 +800,22 @@ type SlackAlertsChannel struct {
 }
 
 type SQLInstance struct {
-	AutoBackupHour      int          `json:"autoBackupHour"`
-	CascadingDelete     bool         `json:"cascadingDelete"`
-	Collation           string       `json:"collation"`
-	Databases           []*Database  `json:"databases"`
-	DiskAutoresize      bool         `json:"diskAutoresize"`
-	DiskSize            int          `json:"diskSize"`
-	DiskType            string       `json:"diskType"`
-	Flags               []*Flag      `json:"flags"`
-	HighAvailability    bool         `json:"highAvailability"`
-	Insights            *Insights    `json:"insights"`
-	Maintenance         *Maintenance `json:"maintenance"`
-	Name                string       `json:"name"`
-	PointInTimeRecovery bool         `json:"pointInTimeRecovery"`
-	RetainedBackups     int          `json:"retainedBackups"`
-	Tier                string       `json:"tier"`
-	Type                string       `json:"type"`
+	AutoBackupHour      int         `json:"autoBackupHour"`
+	CascadingDelete     bool        `json:"cascadingDelete"`
+	Collation           string      `json:"collation"`
+	Databases           []Database  `json:"databases"`
+	DiskAutoresize      bool        `json:"diskAutoresize"`
+	DiskSize            int         `json:"diskSize"`
+	DiskType            string      `json:"diskType"`
+	Flags               []Flag      `json:"flags"`
+	HighAvailability    bool        `json:"highAvailability"`
+	Insights            Insights    `json:"insights"`
+	Maintenance         Maintenance `json:"maintenance"`
+	Name                string      `json:"name"`
+	PointInTimeRecovery bool        `json:"pointInTimeRecovery"`
+	RetainedBackups     int         `json:"retainedBackups"`
+	Tier                string      `json:"tier"`
+	Type                string      `json:"type"`
 }
 
 func (SQLInstance) IsStorage()           {}
@@ -825,22 +830,22 @@ type Team struct {
 	// The description of the team.
 	Description string `json:"description"`
 	// Team members.
-	Members *TeamMemberConnection `json:"members"`
+	Members TeamMemberConnection `json:"members"`
 	// The NAIS applications owned by the team.
-	Apps *AppConnection `json:"apps"`
+	Apps AppConnection `json:"apps"`
 	// The NAIS jobs owned by the team.
-	Naisjobs *NaisJobConnection `json:"naisjobs"`
+	Naisjobs NaisJobConnection `json:"naisjobs"`
 	// The GitHub repositories that the team has access to.
-	GithubRepositories *GithubRepositoryConnection `json:"githubRepositories"`
+	GithubRepositories GithubRepositoryConnection `json:"githubRepositories"`
 	// The main Slack channel for the team.
 	SlackChannel string `json:"slackChannel"`
 	// Slack alerts channels for the team.
-	SlackAlertsChannels []*SlackAlertsChannel `json:"slackAlertsChannels"`
-	GcpProjects         []*GcpProject         `json:"gcpProjects"`
+	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
+	GcpProjects         []GcpProject         `json:"gcpProjects"`
 	// The deployments of the team's applications.
-	Deployments *DeploymentConnection `json:"deployments"`
+	Deployments DeploymentConnection `json:"deployments"`
 	// The deploy key of the team.
-	DeployKey *DeploymentKey `json:"deployKey"`
+	DeployKey DeploymentKey `json:"deployKey"`
 	// Whether or not the viewer is a member of the team.
 	ViewerIsMember bool `json:"viewerIsMember"`
 	// Whether or not the viewer is an administrator of the team.
@@ -859,9 +864,9 @@ type TeamConnection struct {
 	// The total count of available teams.
 	TotalCount int `json:"totalCount"`
 	// Pagination information.
-	PageInfo *PageInfo `json:"pageInfo"`
+	PageInfo PageInfo `json:"pageInfo"`
 	// A list of team edges.
-	Edges []*TeamEdge `json:"edges"`
+	Edges []TeamEdge `json:"edges"`
 }
 
 func (TeamConnection) IsConnection() {}
@@ -870,7 +875,7 @@ func (TeamConnection) IsConnection() {}
 func (this TeamConnection) GetTotalCount() int { return this.TotalCount }
 
 // Pagination information.
-func (this TeamConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+func (this TeamConnection) GetPageInfo() PageInfo { return this.PageInfo }
 
 // A list of edges.
 func (this TeamConnection) GetEdges() []Edge {
@@ -889,7 +894,7 @@ type TeamEdge struct {
 	// A cursor for use in pagination.
 	Cursor scalar.Cursor `json:"cursor"`
 	// The team at the end of the edge.
-	Node *Team `json:"node"`
+	Node Team `json:"node"`
 }
 
 func (TeamEdge) IsEdge() {}
@@ -919,9 +924,9 @@ type TeamMemberConnection struct {
 	// The total count of available team members.
 	TotalCount int `json:"totalCount"`
 	// Pagination information.
-	PageInfo *PageInfo `json:"pageInfo"`
+	PageInfo PageInfo `json:"pageInfo"`
 	// A list of team member edges.
-	Edges []*TeamMemberEdge `json:"edges"`
+	Edges []TeamMemberEdge `json:"edges"`
 }
 
 func (TeamMemberConnection) IsConnection() {}
@@ -930,7 +935,7 @@ func (TeamMemberConnection) IsConnection() {}
 func (this TeamMemberConnection) GetTotalCount() int { return this.TotalCount }
 
 // Pagination information.
-func (this TeamMemberConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+func (this TeamMemberConnection) GetPageInfo() PageInfo { return this.PageInfo }
 
 // A list of edges.
 func (this TeamMemberConnection) GetEdges() []Edge {
@@ -949,7 +954,7 @@ type TeamMemberEdge struct {
 	// A cursor for use in pagination.
 	Cursor scalar.Cursor `json:"cursor"`
 	// The team member at the end of the edge.
-	Node *TeamMember `json:"node"`
+	Node TeamMember `json:"node"`
 }
 
 func (TeamMemberEdge) IsEdge() {}
@@ -965,7 +970,7 @@ func (TokenX) IsAuthz() {}
 
 type Topic struct {
 	Name string `json:"name"`
-	ACL  []*ACL `json:"acl"`
+	ACL  []ACL  `json:"acl"`
 }
 
 type User struct {
@@ -976,7 +981,7 @@ type User struct {
 	// The user's email address.
 	Email string `json:"email"`
 	// Teams that the user is a member and/or owner of.
-	Teams *TeamConnection `json:"teams"`
+	Teams TeamConnection `json:"teams"`
 }
 
 func (User) IsNode() {}
