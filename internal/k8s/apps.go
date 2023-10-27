@@ -593,13 +593,6 @@ func (c *Client) toApp(_ context.Context, u *unstructured.Unstructured, env stri
 		ret.Variables = append(ret.Variables, m)
 	}
 
-	/*instances, err := c.Instances(ctx, app.GetNamespace(), env, app.GetName())
-	if err != nil {
-		return nil, fmt.Errorf("getting instances: %w", err)
-	}
-
-	setStatus(ret, *app.Status.Conditions, instances)*/
-
 	return ret, nil
 }
 
