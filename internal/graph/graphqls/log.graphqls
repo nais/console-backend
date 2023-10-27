@@ -1,7 +1,7 @@
-type LogLine {
-    time: Time!
-    message: String!
-    instance: String!
+extend type Subscription {
+    log(
+        input: LogSubscriptionInput
+    ): LogLine!
 }
 
 input LogSubscriptionInput {
@@ -12,6 +12,8 @@ input LogSubscriptionInput {
     instances: [String!]
 }
 
-type Subscription {
-    log(input: LogSubscriptionInput): LogLine!
+type LogLine {
+    time: Time!
+    message: String!
+    instance: String!
 }

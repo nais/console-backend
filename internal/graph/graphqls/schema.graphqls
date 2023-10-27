@@ -10,6 +10,9 @@ type Query {
 "The root query for implementing GraphQL mutations."
 type Mutation
 
+"The root subscription type for implementing GraphQL subscriptions."
+type Subscription
+
 "Node interface."
 interface Node {
     "The unique ID of an object."

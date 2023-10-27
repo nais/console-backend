@@ -1,12 +1,15 @@
-type AppConnection implements Connection {
-    totalCount: Int!
-    pageInfo: PageInfo!
-    edges: [AppEdge!]!
-}
+extend type Query {
+    "Get an app by name, team and env."
+    app(
+        "The name of the application."
+        name: String!,
 
-type AppEdge implements Edge {
-    cursor: Cursor!
-    node: App!
+        "The name of the team who owns the application."
+        team: String!,
+
+        "The environment the application is deployed to."
+        env: String!
+    ): App!
 }
 
 type App implements Node {
@@ -28,20 +31,35 @@ type App implements Node {
     appState: AppState!
 }
 
+type AppConnection implements Connection {
+    totalCount: Int!
+    pageInfo: PageInfo!
+    edges: [AppEdge!]!
+}
+
+type AppEdge implements Edge {
+    cursor: Cursor!
+    node: App!
+}
+
 type AppState {
     state: State!
     errors: [StateError!]!
 }
 
-enum ErrorLevel {
-    INFO
-    WARNING
-    ERROR
+type Variable {
+    name: String!
+    value: String!
 }
 
-interface StateError {
-    revision: String!
-    level: ErrorLevel!
+type AutoScaling {
+    disabled: Boolean!
+    """
+    CPU threshold in percent
+    """
+    cpuThreshold: Int!
+    max: Int!
+    min: Int!
 }
 
 type DeprecatedRegistryError implements StateError {
@@ -88,13 +106,36 @@ type OutboundAccessError implements StateError {
     rule: Rule!
 }
 
+type Instance implements Node {
+    id: ID!
+    name: String!
+    state: InstanceState!
+    message: String!
+    image: String!
+    restarts: Int!
+    created: Time!
+}
+
+interface StateError {
+    revision: String!
+    level: ErrorLevel!
+}
+
+enum InstanceState {
+    RUNNING
+    FAILING
+    UNKNOWN
+}
+
+enum ErrorLevel {
+    INFO
+    WARNING
+    ERROR
+}
+
 enum State {
     NAIS
     NOTNAIS
     FAILING
     UNKNOWN
-}
-
-extend type Query {
-    app(name: String!, team: String!, env: String!): App!
 }

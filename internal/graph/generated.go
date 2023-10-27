@@ -3242,7 +3242,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "graphqls/accesspolicy.graphqls" "graphqls/app.graphqls" "graphqls/authz.graphqls" "graphqls/autoscaling.graphqls" "graphqls/azuread.graphqls" "graphqls/cost.graphqls" "graphqls/deploy.graphqls" "graphqls/deployinfo.graphqls" "graphqls/directives.graphqls" "graphqls/idporten.graphqls" "graphqls/instance.graphqls" "graphqls/log.graphqls" "graphqls/maskinporten.graphqls" "graphqls/naisjob.graphqls" "graphqls/resources.graphqls" "graphqls/scalars.graphqls" "graphqls/schema.graphqls" "graphqls/search.graphqls" "graphqls/storage.graphqls" "graphqls/team.graphqls" "graphqls/tokenx.graphqls" "graphqls/user.graphqls" "graphqls/variable.graphqls"
+//go:embed "graphqls/accesspolicy.graphqls" "graphqls/app.graphqls" "graphqls/authz.graphqls" "graphqls/cost.graphqls" "graphqls/deploy.graphqls" "graphqls/deployinfo.graphqls" "graphqls/directives.graphqls" "graphqls/log.graphqls" "graphqls/naisjob.graphqls" "graphqls/resources.graphqls" "graphqls/scalars.graphqls" "graphqls/schema.graphqls" "graphqls/search.graphqls" "graphqls/storage.graphqls" "graphqls/team.graphqls" "graphqls/user.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -3257,16 +3257,11 @@ var sources = []*ast.Source{
 	{Name: "graphqls/accesspolicy.graphqls", Input: sourceData("graphqls/accesspolicy.graphqls"), BuiltIn: false},
 	{Name: "graphqls/app.graphqls", Input: sourceData("graphqls/app.graphqls"), BuiltIn: false},
 	{Name: "graphqls/authz.graphqls", Input: sourceData("graphqls/authz.graphqls"), BuiltIn: false},
-	{Name: "graphqls/autoscaling.graphqls", Input: sourceData("graphqls/autoscaling.graphqls"), BuiltIn: false},
-	{Name: "graphqls/azuread.graphqls", Input: sourceData("graphqls/azuread.graphqls"), BuiltIn: false},
 	{Name: "graphqls/cost.graphqls", Input: sourceData("graphqls/cost.graphqls"), BuiltIn: false},
 	{Name: "graphqls/deploy.graphqls", Input: sourceData("graphqls/deploy.graphqls"), BuiltIn: false},
 	{Name: "graphqls/deployinfo.graphqls", Input: sourceData("graphqls/deployinfo.graphqls"), BuiltIn: false},
 	{Name: "graphqls/directives.graphqls", Input: sourceData("graphqls/directives.graphqls"), BuiltIn: false},
-	{Name: "graphqls/idporten.graphqls", Input: sourceData("graphqls/idporten.graphqls"), BuiltIn: false},
-	{Name: "graphqls/instance.graphqls", Input: sourceData("graphqls/instance.graphqls"), BuiltIn: false},
 	{Name: "graphqls/log.graphqls", Input: sourceData("graphqls/log.graphqls"), BuiltIn: false},
-	{Name: "graphqls/maskinporten.graphqls", Input: sourceData("graphqls/maskinporten.graphqls"), BuiltIn: false},
 	{Name: "graphqls/naisjob.graphqls", Input: sourceData("graphqls/naisjob.graphqls"), BuiltIn: false},
 	{Name: "graphqls/resources.graphqls", Input: sourceData("graphqls/resources.graphqls"), BuiltIn: false},
 	{Name: "graphqls/scalars.graphqls", Input: sourceData("graphqls/scalars.graphqls"), BuiltIn: false},
@@ -3274,9 +3269,7 @@ var sources = []*ast.Source{
 	{Name: "graphqls/search.graphqls", Input: sourceData("graphqls/search.graphqls"), BuiltIn: false},
 	{Name: "graphqls/storage.graphqls", Input: sourceData("graphqls/storage.graphqls"), BuiltIn: false},
 	{Name: "graphqls/team.graphqls", Input: sourceData("graphqls/team.graphqls"), BuiltIn: false},
-	{Name: "graphqls/tokenx.graphqls", Input: sourceData("graphqls/tokenx.graphqls"), BuiltIn: false},
 	{Name: "graphqls/user.graphqls", Input: sourceData("graphqls/user.graphqls"), BuiltIn: false},
-	{Name: "graphqls/variable.graphqls", Input: sourceData("graphqls/variable.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
