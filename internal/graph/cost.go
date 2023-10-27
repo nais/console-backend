@@ -11,7 +11,7 @@ import (
 
 type (
 	dailyCosts       map[string]map[scalar.Date]float64
-	sortedDailyCosts map[string][]*model.CostEntry
+	sortedDailyCosts map[string][]model.CostEntry
 )
 
 // DailyCostsFromDatabaseRows will convert a slice of cost rows from the database to a sortedDailyCosts map.
@@ -70,9 +70,9 @@ func DailyCostsForTeamPerEnvFromDatabaseRows(from, to scalar.Date, rows []*gensq
 func normalizeDailyCosts(from, to scalar.Date, costs dailyCosts) sortedDailyCosts {
 	start, _ := time.Parse(scalar.DateFormat, string(from))
 	end, _ := time.Parse(scalar.DateFormat, string(to))
-	sortedDailyCost := make(map[string][]*model.CostEntry)
+	sortedDailyCost := make(sortedDailyCosts)
 	for k, daysInSeries := range costs {
-		data := make([]*model.CostEntry, 0)
+		data := make([]model.CostEntry, 0)
 		for day := start; !day.After(end); day = day.AddDate(0, 0, 1) {
 			date := scalar.NewDate(day)
 			cost := 0.0
@@ -80,7 +80,7 @@ func normalizeDailyCosts(from, to scalar.Date, costs dailyCosts) sortedDailyCost
 				cost = c
 			}
 
-			data = append(data, &model.CostEntry{
+			data = append(data, model.CostEntry{
 				Date: date,
 				Cost: cost,
 			})

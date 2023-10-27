@@ -122,7 +122,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	return app, nil
 }
 
-func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv string, outboundRule *model.Rule) error {
+func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv string, outboundRule model.Rule) error {
 	outboundEnv := oEnv
 	if outboundRule.Cluster != "" {
 		outboundEnv = outboundRule.Cluster
@@ -180,7 +180,7 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 	return nil
 }
 
-func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule *model.Rule) error {
+func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule model.Rule) error {
 	inboundEnv := oEnv
 	if inboundRule.Cluster != "" {
 		inboundEnv = inboundRule.Cluster
@@ -238,7 +238,7 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 	return nil
 }
 
-func (c *Client) getAppInformer(outboundEnv string, rule *model.Rule) *Informers {
+func (c *Client) getAppInformer(outboundEnv string, rule model.Rule) *Informers {
 	inf, ok := c.informers[outboundEnv]
 	if !ok {
 		c.log.Warn("no informers for cluster ", outboundEnv)
@@ -256,7 +256,7 @@ func (c *Client) getAppInformer(outboundEnv string, rule *model.Rule) *Informers
 	return inf
 }
 
-func checkNoZeroTrust(env string, rule *model.Rule) bool {
+func checkNoZeroTrust(env string, rule model.Rule) bool {
 	if strings.Contains(env, "-fss") {
 		rule.MutualExplanation = "NO_ZERO_TRUST"
 		rule.Mutual = true
@@ -284,7 +284,7 @@ func checkNoZeroTrust(env string, rule *model.Rule) bool {
 	return false
 }
 
-func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule *model.Rule, env string) (*model.App, error) {
+func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule model.Rule, env string) (*model.App, error) {
 	obj, err := inf.AppInformer.Lister().ByNamespace(team).Get(rule.Application)
 	if err != nil {
 		c.log.Infof("get application %s:%s in %s: %v", team, rule.Application, env, err)
@@ -303,7 +303,7 @@ func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule *
 	return app, nil
 }
 
-func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*model.Topic, error) {
+func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]model.Topic, error) {
 	// HACK: dev-fss and prod-fss have topic resources in dev-gcp and prod-gcp respectively.
 	topicEnv := env
 	if env == "dev-fss" {
@@ -318,7 +318,7 @@ func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*mode
 		return nil, c.error(ctx, err, "listing topics")
 	}
 
-	ret := []*model.Topic{}
+	ret := make([]model.Topic, 0)
 	for _, topic := range topics {
 		u := topic.(*unstructured.Unstructured)
 		t, err := toTopic(u, name, team)
@@ -328,7 +328,7 @@ func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*mode
 
 		for _, acl := range t.ACL {
 			if acl.Team == team && acl.Application == name {
-				ret = append(ret, t)
+				ret = append(ret, *t)
 			}
 		}
 	}
@@ -366,7 +366,7 @@ func (c *Client) Manifest(ctx context.Context, name, team, env string) (string, 
 }
 
 func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
-	ret := []*model.App{}
+	ret := make([]*model.App, 0)
 
 	for env, infs := range c.informers {
 		objs, err := infs.AppInformer.Lister().ByNamespace(team).List(labels.Everything())
@@ -427,7 +427,7 @@ func (c *Client) Instances(ctx context.Context, team, env, name string) ([]*mode
 		return nil, c.error(ctx, err, "listing pods")
 	}
 
-	ret := []*model.Instance{}
+	ret := make([]*model.Instance, 0)
 	for _, pod := range pods {
 		instance := Instance(pod, env)
 		ret = append(ret, instance)
@@ -510,7 +510,7 @@ func appContainerStatus(pod *corev1.Pod, appName string) *corev1.ContainerStatus
 	return nil
 }
 
-func (c *Client) toApp(ctx context.Context, u *unstructured.Unstructured, env string) (*model.App, error) {
+func (c *Client) toApp(_ context.Context, u *unstructured.Unstructured, env string) (*model.App, error) {
 	app := &naisv1alpha1.Application{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, app); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
@@ -547,7 +547,7 @@ func (c *Client) toApp(ctx context.Context, u *unstructured.Unstructured, env st
 
 	ret.Image = app.Spec.Image
 
-	ingresses := []string{}
+	ingresses := make([]string, 0)
 	if err := convert(app.Spec.Ingresses, &ingresses); err != nil {
 		return nil, fmt.Errorf("converting ingresses: %w", err)
 	}
@@ -620,7 +620,7 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 	} else {
 		ret.Name = topic.GetName()
 	}
-	ret.ACL = []*model.ACL{}
+	ret.ACL = make([]model.ACL, 0)
 
 	for _, v := range topic.Spec.ACL {
 		acl := &model.ACL{}
@@ -628,7 +628,7 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 			return nil, fmt.Errorf("converting acl: %w", err)
 		}
 		if acl.Team == team && acl.Application == name {
-			ret.ACL = append(ret.ACL, acl)
+			ret.ACL = append(ret.ACL, *acl)
 		}
 	}
 
@@ -655,7 +655,7 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 			Revision: app.DeployInfo.CommitSha,
 			Level:    model.ErrorLevelWarning,
 			FailingInstances: func() []string {
-				ret := []string{}
+				ret := make([]string, 0)
 				for _, instance := range instances {
 					if instance.State == model.InstanceStateFailing {
 						ret = append(ret, instance.Name)
@@ -783,13 +783,13 @@ func getCurrentCondition(conditions []metav1.Condition) AppCondition {
 	return AppConditionUnknown
 }
 
-func appStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.Storage, error) {
+func appStorage(u *unstructured.Unstructured, topics []model.Topic) ([]model.Storage, error) {
 	app := &naisv1alpha1.Application{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, app); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
 	}
 
-	ret := []model.Storage{}
+	ret := make([]model.Storage, 0)
 
 	if app.Spec.GCP != nil {
 		for _, v := range app.Spec.GCP.Buckets {
@@ -857,7 +857,7 @@ func appStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.St
 }
 
 func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
-	ret := []model.Authz{}
+	ret := make([]model.Authz, 0)
 	if app.Spec.Azure != nil {
 		isApp := app.Spec.Azure.Application != nil && app.Spec.Azure.Application.Enabled
 		isSidecar := app.Spec.Azure.Sidecar != nil && app.Spec.Azure.Sidecar.Enabled

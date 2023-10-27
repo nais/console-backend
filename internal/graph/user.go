@@ -6,23 +6,23 @@ import (
 	t "github.com/nais/console-backend/internal/teams"
 )
 
-func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []*model.TeamEdge {
-	edges := []*model.TeamEdge{}
+func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []model.TeamEdge {
+	edges := make([]model.TeamEdge, 0)
 	start, end := p.ForSlice(len(teams))
 
 	for i, team := range teams[start:end] {
 		team := team
-		edges = append(edges, &model.TeamEdge{
+		edges = append(edges, model.TeamEdge{
 			Cursor: scalar.Cursor{Offset: start + i},
-			Node: &model.Team{
+			Node: model.Team{
 				ID:           scalar.TeamIdent(team.Team.Slug),
 				Name:         team.Team.Slug,
 				Description:  team.Team.Purpose,
 				SlackChannel: team.Team.SlackChannel,
-				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []*model.SlackAlertsChannel {
-					ret := make([]*model.SlackAlertsChannel, 0)
+				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {
+					ret := make([]model.SlackAlertsChannel, 0)
 					for _, v := range t {
-						ret = append(ret, &model.SlackAlertsChannel{
+						ret = append(ret, model.SlackAlertsChannel{
 							Env:  v.Environment,
 							Name: v.ChannelName,
 						})

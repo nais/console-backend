@@ -52,7 +52,7 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 
 	return &model.DeploymentConnection{
 		Edges: e,
-		PageInfo: &model.PageInfo{
+		PageInfo: model.PageInfo{
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 			HasNextPage:     hasNext,

@@ -42,13 +42,13 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 		return nil, err
 	}
 
-	e := userTeamEdges(teams, pagination)
+	edges := userTeamEdges(teams, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
 	}
 
 	hasNext := len(teams) > pagination.First()+pagination.After().Offset+1
@@ -61,8 +61,8 @@ func (r *userResolver) Teams(ctx context.Context, obj *model.User, first *int, a
 
 	return &model.TeamConnection{
 		TotalCount: len(teams),
-		Edges:      e,
-		PageInfo: &model.PageInfo{
+		Edges:      edges,
+		PageInfo: model.PageInfo{
 			HasNextPage:     hasNext,
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,

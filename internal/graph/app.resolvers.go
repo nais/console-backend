@@ -12,13 +12,18 @@ import (
 )
 
 // Instances is the resolver for the instances field.
-func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error) {
+func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]model.Instance, error) {
 	instances, err := r.k8sClient.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting instances from Kubernetes: %w", err)
 	}
 
-	return instances, nil
+	ret := make([]model.Instance, 0)
+	for _, instance := range instances {
+		ret = append(ret, *instance)
+	}
+
+	return ret, nil
 }
 
 // Manifest is the resolver for the manifest field.

@@ -38,7 +38,7 @@ func (r *queryResolver) Search(ctx context.Context, query string, filter *model.
 	return &model.SearchConnection{
 		TotalCount: len(results),
 		Edges:      edges,
-		PageInfo: &model.PageInfo{
+		PageInfo: model.PageInfo{
 			HasNextPage:     hasNext,
 			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
