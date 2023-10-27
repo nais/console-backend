@@ -74,6 +74,10 @@ models:
     extraFields:
       GQLVars:
         type: "github.com/nais/console-backend/internal/graph/model.NaisJobGQLVars"
+  Topic:
+    extraFields:
+      UID:
+        type: "k8s.io/apimachinery/pkg/types.UID"
 
 # Setting this to false will generate type instances for required struct fields, and type pointers for optional fields
 struct_fields_always_pointers: false

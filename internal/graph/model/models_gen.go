@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/scalar"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type Authz interface {
@@ -1024,8 +1025,9 @@ type TokenX struct {
 func (TokenX) IsAuthz() {}
 
 type Topic struct {
-	Name string `json:"name"`
-	ACL  []ACL  `json:"acl"`
+	Name string    `json:"name"`
+	ACL  []ACL     `json:"acl"`
+	UID  types.UID `json:"-"`
 }
 
 type User struct {

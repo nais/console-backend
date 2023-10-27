@@ -95,7 +95,10 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		}
 	}
 
-	topics, err := c.getTopics(ctx, name, team, env)
+	topics, exists := c.TopicsCache[fmt.Sprintf("%s|%s|%s", env, team, name)]
+	if !exists {
+		//...
+	}
 	if err != nil {
 		return nil, c.error(ctx, err, "getting topics")
 	}
@@ -303,7 +306,7 @@ func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule m
 	return app, nil
 }
 
-func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]model.Topic, error) {
+func (c *Client) getTopics(ctx context.Context, appName, team, env string) ([]model.Topic, error) {
 	// HACK: dev-fss and prod-fss have topic resources in dev-gcp and prod-gcp respectively.
 	topicEnv := env
 	if env == "dev-fss" {
@@ -321,13 +324,13 @@ func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]model
 	ret := make([]model.Topic, 0)
 	for _, topic := range topics {
 		u := topic.(*unstructured.Unstructured)
-		t, err := toTopic(u, name, team)
+		t, err := ToTopic(u, appName, team)
 		if err != nil {
 			return nil, c.error(ctx, err, "converting to topic")
 		}
 
 		for _, acl := range t.ACL {
-			if acl.Team == team && acl.Application == name {
+			if acl.Team == team && acl.Application == appName {
 				ret = append(ret, *t)
 			}
 		}
@@ -596,7 +599,7 @@ func (c *Client) toApp(_ context.Context, u *unstructured.Unstructured, env stri
 	return ret, nil
 }
 
-func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, error) {
+func ToTopic(u *unstructured.Unstructured, appName, team string) (*model.Topic, error) {
 	topic := &kafka_nais_io_v1.Topic{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, topic); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)
@@ -616,7 +619,7 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 		if err := convert(v, acl); err != nil {
 			return nil, fmt.Errorf("converting acl: %w", err)
 		}
-		if acl.Team == team && acl.Application == name {
+		if acl.Team == team && acl.Application == appName {
 			ret.ACL = append(ret.ACL, *acl)
 		}
 	}
