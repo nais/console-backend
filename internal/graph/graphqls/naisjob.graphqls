@@ -39,12 +39,12 @@ type NaisJob implements Node {
     deployInfo: DeployInfo!
     env: Env!
     image: String!
-    runs: [Run!]!
-    manifest: String!
+    runs: [Run!]! @goField(forceResolver: true)
+    manifest: String! @goField(forceResolver: true)
     name: String!
     resources: Resources!
     schedule: String!
-    team: Team!
+    team: Team! @goField(forceResolver: true)
     storage: [Storage!]!
     authz: [Authz!]!
     completions: Int!

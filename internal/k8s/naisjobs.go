@@ -514,12 +514,12 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	ret := &model.NaisJob{}
 	ret.ID = scalar.JobIdent("job_" + env + "_" + naisjob.GetNamespace() + "_" + naisjob.GetName())
 	ret.Name = naisjob.GetName()
-	ret.Env = &model.Env{
+	ret.Env = model.Env{
 		Name: env,
 		ID:   scalar.EnvIdent(env),
 	}
 
-	ret.DeployInfo = &model.DeployInfo{
+	ret.DeployInfo = model.DeployInfo{
 		CommitSha: naisjob.GetAnnotations()["deploy.nais.io/github-sha"],
 		Deployer:  naisjob.GetAnnotations()["deploy.nais.io/github-actor"],
 		URL:       naisjob.GetAnnotations()["deploy.nais.io/github-workflow-run-url"],
@@ -537,7 +537,7 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 	if err := convert(naisjob.Spec.AccessPolicy, &ap); err != nil {
 		return nil, fmt.Errorf("converting accessPolicy: %w", err)
 	}
-	ret.AccessPolicy = &ap
+	ret.AccessPolicy = ap
 
 	r := model.Resources{}
 	if err := convert(naisjob.Spec.Resources, &r); err != nil {
@@ -546,7 +546,7 @@ func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error)
 
 	r.Requests = model.Requests{}
 	r.Limits = model.Limits{}
-	ret.Resources = &r
+	ret.Resources = r
 
 	ret.Schedule = naisjob.Spec.Schedule
 
