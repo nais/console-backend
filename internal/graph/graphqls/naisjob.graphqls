@@ -1,3 +1,17 @@
+extend type Query {
+    "Get a naisjob by name, team and env."
+    naisjob(
+        "The name of the naisjob."
+        name: String!,
+
+        "The name of the team who owns the naisjob."
+        team: String!,
+
+        "The environment the naisjob is deployed in."
+        env: String!
+    ): NaisJob!
+}
+
 type NaisJobConnection implements Connection {
     totalCount: Int!
     pageInfo: PageInfo!
@@ -51,8 +65,4 @@ type NaisJob implements Node {
     parallelism: Int!
     retries: Int!
     jobState: JobState!
-}
-
-extend type Query {
-    naisjob(name: String!, team: String!, env: String!): NaisJob!
 }
