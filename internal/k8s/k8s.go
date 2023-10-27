@@ -29,10 +29,11 @@ import (
 )
 
 type Client struct {
-	informers  map[string]*Informers
-	ClientSets map[string]*kubernetes.Clientset
-	log        logrus.FieldLogger
-	errors     metric.Int64Counter
+	informers   map[string]*Informers
+	ClientSets  map[string]*kubernetes.Clientset
+	log         logrus.FieldLogger
+	errors      metric.Int64Counter
+	TopicsCache map[string][]model.Topic
 }
 
 type Informers struct {
@@ -93,10 +94,11 @@ func New(cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*C
 	}
 
 	return &Client{
-		informers:  infs,
-		log:        log,
-		errors:     errors,
-		ClientSets: clientSets,
+		informers:   infs,
+		log:         log,
+		errors:      errors,
+		ClientSets:  clientSets,
+		TopicsCache: make(map[string][]model.Topic),
 	}, nil
 }
 
