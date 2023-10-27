@@ -70,6 +70,33 @@ type ACL struct {
 	Team        string `json:"team"`
 }
 
+type App struct {
+	ID           scalar.Ident `json:"id"`
+	Name         string       `json:"name"`
+	Image        string       `json:"image"`
+	DeployInfo   DeployInfo   `json:"deployInfo"`
+	Env          Env          `json:"env"`
+	Ingresses    []string     `json:"ingresses"`
+	Instances    []Instance   `json:"instances"`
+	AccessPolicy AccessPolicy `json:"accessPolicy"`
+	Resources    Resources    `json:"resources"`
+	AutoScaling  AutoScaling  `json:"autoScaling"`
+	Storage      []Storage    `json:"storage"`
+	Variables    []Variable   `json:"variables"`
+	Authz        []Authz      `json:"authz"`
+	Manifest     string       `json:"manifest"`
+	Team         Team         `json:"team"`
+	AppState     AppState     `json:"appState"`
+	GQLVars      AppGQLVars   `json:"-"`
+}
+
+func (App) IsNode() {}
+
+// The unique ID of an object.
+func (this App) GetID() scalar.Ident { return this.ID }
+
+func (App) IsSearchNode() {}
+
 type AppConnection struct {
 	TotalCount int       `json:"totalCount"`
 	PageInfo   PageInfo  `json:"pageInfo"`

@@ -520,7 +520,7 @@ func (c *Client) toApp(_ context.Context, u *unstructured.Unstructured, env stri
 	ret.ID = scalar.AppIdent("app_" + env + "_" + app.GetNamespace() + "_" + app.GetName())
 	ret.Name = app.GetName()
 
-	ret.Env = &model.Env{
+	ret.Env = model.Env{
 		Name: env,
 		ID:   scalar.EnvIdent(env),
 	}
@@ -591,10 +591,6 @@ func (c *Client) toApp(_ context.Context, u *unstructured.Unstructured, env stri
 			Value: v.Value,
 		}
 		ret.Variables = append(ret.Variables, m)
-	}
-
-	if app.Status.RolloutCompleteTime > 0 {
-		ret.Deployed = time.Unix(0, app.Status.RolloutCompleteTime)
 	}
 
 	/*instances, err := c.Instances(ctx, app.GetNamespace(), env, app.GetName())

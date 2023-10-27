@@ -145,7 +145,7 @@ func TestSetStatus(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		app := &model.App{Image: tc.image, Ingresses: tc.ingresses, Env: &model.Env{Name: "prod-gcp"}}
+		app := &model.App{Image: tc.image, Ingresses: tc.ingresses, Env: model.Env{Name: "prod-gcp"}}
 		fmt.Println(tc.name)
 		setStatus(app, []metav1.Condition{{Status: metav1.ConditionTrue, Reason: string(tc.appCondition)}}, asInstances(tc.instanceStates))
 
