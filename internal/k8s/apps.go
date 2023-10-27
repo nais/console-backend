@@ -95,10 +95,13 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		}
 	}
 
-	topics, exists := c.TopicsCache[fmt.Sprintf("%s|%s|%s", env, team, name)]
+	c.TopicsCache.TopicsMutex.RLock()
+	topics, exists := c.TopicsCache.Topics[fmt.Sprintf("%s|%s|%s", env, team, name)]
+	c.TopicsCache.TopicsMutex.RUnlock()
 	if !exists {
-		//...
+		c.log.Warn("no topics in cache for ", env, "|", team, "|", name)
 	}
+
 	if err != nil {
 		return nil, c.error(ctx, err, "getting topics")
 	}

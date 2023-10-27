@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/nais/console-backend/internal/config"
@@ -28,12 +29,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type TopicsCache struct {
+	Topics      map[string][]model.Topic
+	TopicsMutex sync.RWMutex
+}
+
 type Client struct {
 	informers   map[string]*Informers
 	ClientSets  map[string]*kubernetes.Clientset
 	log         logrus.FieldLogger
 	errors      metric.Int64Counter
-	TopicsCache map[string][]model.Topic
+	TopicsCache TopicsCache
 }
 
 type Informers struct {
@@ -94,11 +100,14 @@ func New(cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*C
 	}
 
 	return &Client{
-		informers:   infs,
-		log:         log,
-		errors:      errors,
-		ClientSets:  clientSets,
-		TopicsCache: make(map[string][]model.Topic),
+		informers:  infs,
+		log:        log,
+		errors:     errors,
+		ClientSets: clientSets,
+		TopicsCache: TopicsCache{
+			Topics:      make(map[string][]model.Topic),
+			TopicsMutex: sync.RWMutex{},
+		},
 	}, nil
 }
 

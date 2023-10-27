@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	kafka_nais_io_v1 "github.com/nais/liberator/pkg/apis/kafka.nais.io/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	kafka_nais_io_v1 "github.com/nais/liberator/pkg/apis/kafka.nais.io/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/go-chi/chi/v5"
@@ -120,6 +121,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 			if informer.TopicInformer != nil {
 				_, err := informer.TopicInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 					AddFunc: func(obj interface{}) {
+						k8sClient.TopicsCache.TopicsMutex.Lock()
 						t, _ := obj.(*unstructured.Unstructured)
 						topic := &kafka_nais_io_v1.Topic{}
 						if err := runtime.DefaultUnstructuredConverter.FromUnstructured(t.Object, topic); err != nil {
@@ -130,14 +132,16 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 							t, _ := k8s.ToTopic(t, acl.Application, acl.Team)
 							t.UID = topic.UID
 							cacheKey := fmt.Sprintf("%s|%s|%s", cluster, acl.Team, acl.Application)
-							k8sClient.TopicsCache[cacheKey] = append(k8sClient.TopicsCache[cacheKey], *t)
+							k8sClient.TopicsCache.Topics[cacheKey] = append(k8sClient.TopicsCache.Topics[cacheKey], *t)
 
 							log.Infof("added topic to cache: %s", cacheKey)
 						}
+						k8sClient.TopicsCache.TopicsMutex.Unlock()
 					},
 					UpdateFunc: func(oldObj, newObj interface{}) {
 						// iterate over the cache and replace oldObj with newObj
-						for cacheKey, topics := range k8sClient.TopicsCache {
+						k8sClient.TopicsCache.TopicsMutex.Lock()
+						for cacheKey, topics := range k8sClient.TopicsCache.Topics {
 							for i, topic := range topics {
 								if topic.UID == oldObj.(*unstructured.Unstructured).GetUID() {
 									t, _ := newObj.(*unstructured.Unstructured)
@@ -149,16 +153,34 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 									for _, acl := range topic.Spec.ACL {
 										t, _ := k8s.ToTopic(t, acl.Application, acl.Team)
 										t.UID = topic.UID
-										k8sClient.TopicsCache[cacheKey][i] = *t
+
+										k8sClient.TopicsCache.Topics[cacheKey][i] = *t
 
 										log.Infof("updated topic in cache: %s", cacheKey)
 									}
 								}
 							}
 						}
+						k8sClient.TopicsCache.TopicsMutex.Unlock()
 					},
 					DeleteFunc: func(obj interface{}) {
-						//log.Infof("deleted topic: %s", obj.(*unstructured.Unstructured).GetName())
+						t, _ := obj.(*unstructured.Unstructured)
+						topicToDelete := &kafka_nais_io_v1.Topic{}
+						if err := runtime.DefaultUnstructuredConverter.FromUnstructured(t.Object, topicToDelete); err != nil {
+							return
+						}
+
+						k8sClient.TopicsCache.TopicsMutex.Lock()
+						for cacheKey, topic := range k8sClient.TopicsCache.Topics {
+							for i, t := range topic {
+								if t.UID == topicToDelete.UID {
+									k8sClient.TopicsCache.Topics[cacheKey] = append(k8sClient.TopicsCache.Topics[cacheKey][:i], k8sClient.TopicsCache.Topics[cacheKey][i+1:]...)
+									log.Infof("deleted topic %q from cache with cacheKey %q", topicToDelete.UID, cacheKey)
+								}
+							}
+						}
+						k8sClient.TopicsCache.TopicsMutex.Unlock()
+
 					},
 				})
 				if err != nil {
