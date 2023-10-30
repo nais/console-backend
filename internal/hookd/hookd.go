@@ -207,7 +207,7 @@ func (c *client) DeployKey(ctx context.Context, team string) (*DeployKey, error)
 	ret := &DeployKey{}
 	err = json.Unmarshal(data, ret)
 	if err != nil {
-		return nil, c.error(ctx, err, "unmarshal reply from deploy API")
+		return nil, c.error(ctx, err, "invalid reply from server")
 	}
 
 	return ret, nil

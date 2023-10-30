@@ -21,7 +21,7 @@ import (
 
 const token = "token"
 
-func TestClient_Deployments(t *testing.T) {
+func TestClient(t *testing.T) {
 	ctx := context.Background()
 
 	logger, _ := test.NewNullLogger()
@@ -35,7 +35,7 @@ func TestClient_Deployments(t *testing.T) {
 		PSK: token,
 	}
 
-	t.Run("empty response", func(t *testing.T) {
+	t.Run("empty response when fetching deployments", func(t *testing.T) {
 		hookdServer := httptest.NewHttpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, token, r.Header.Get("X-PSK"))
@@ -54,7 +54,7 @@ func TestClient_Deployments(t *testing.T) {
 		assert.Empty(t, deployments)
 	})
 
-	t.Run("options are applied", func(t *testing.T) {
+	t.Run("fetch deployment with request options", func(t *testing.T) {
 		hookdServer := httptest.NewHttpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "team", r.URL.Query().Get("team"))
@@ -73,7 +73,7 @@ func TestClient_Deployments(t *testing.T) {
 		assert.Empty(t, deployments)
 	})
 
-	t.Run("deployments from backend", func(t *testing.T) {
+	t.Run("fetch deployments", func(t *testing.T) {
 		hookdServer := httptest.NewHttpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
 				d := time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)
@@ -112,6 +112,52 @@ func TestClient_Deployments(t *testing.T) {
 		assert.Equal(t, "3", deployments[0].DeploymentInfo.ID)
 		assert.Equal(t, "2", deployments[1].DeploymentInfo.ID)
 		assert.Equal(t, "1", deployments[2].DeploymentInfo.ID)
+	})
+
+	t.Run("get deploykey errors when error is returned from backend", func(t *testing.T) {
+		hookdServer := httptest.NewHttpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			},
+		})
+
+		cfg.Endpoint = hookdServer.URL
+		client := hookd.New(cfg, counter, logger)
+
+		deployments, err := client.DeployKey(ctx, "team")
+		assert.Nil(t, deployments)
+		assert.ErrorContains(t, err, "Internal Server Error")
+	})
+
+	t.Run("get deploykey errors when response from server is invalid", func(t *testing.T) {
+		hookdServer := httptest.NewHttpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("some string"))
+			},
+		})
+
+		cfg.Endpoint = hookdServer.URL
+		client := hookd.New(cfg, counter, logger)
+
+		key, err := client.DeployKey(ctx, "team")
+		assert.Nil(t, key)
+		assert.ErrorContains(t, err, "invalid reply from server")
+	})
+
+	t.Run("get deploykey", func(t *testing.T) {
+		hookdServer := httptest.NewHttpServerWithHandlers(t, []http.HandlerFunc{
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(`{"team":"some-team", "key":"some-key"}`))
+			},
+		})
+
+		cfg.Endpoint = hookdServer.URL
+		client := hookd.New(cfg, counter, logger)
+
+		key, err := client.DeployKey(ctx, "team")
+		assert.NoError(t, err)
+		assert.Equal(t, "some-team", key.Team)
+		assert.Equal(t, "some-key", key.Key)
 	})
 }
 
