@@ -4,6 +4,24 @@ extend type Query {
         team: String!
         app: String!
     ): [ResourceUsageValue!]!
+
+    dailyMemoryUsageForApp(
+        env: String!
+        team: String!
+        app: String!
+    ): [ResourceUsageValue!]!
+
+    dailyCpuRequestForApp(
+        env: String!
+        team: String!
+        app: String!
+    ) : [ResourceUsageValue!]!
+
+    dailyMemoryRequestForApp(
+        env: String!
+        team: String!
+        app: String!
+    ) : [ResourceUsageValue!]!
 }
 
 type ResourceUsageValue {

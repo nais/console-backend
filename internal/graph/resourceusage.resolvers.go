@@ -8,23 +8,24 @@ import (
 	"context"
 
 	"github.com/nais/console-backend/internal/graph/model"
-	prom "github.com/prometheus/common/model"
 )
 
 // DailyCPUUsageForApp is the resolver for the dailyCpuUsageForApp field.
 func (r *queryResolver) DailyCPUUsageForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
-	values, err := r.resourceUsageClient.Query(ctx, env, team, app)
-	if err != nil {
-		return nil, err
-	}
+	return r.resourceUsageClient.DailyCpuUsageForApp(ctx, env, team, app)
+}
 
-	usage := make([]model.ResourceUsageValue, 0)
-	for _, val := range values.(prom.Matrix)[0].Values {
-		usage = append(usage, model.ResourceUsageValue{
-			Timestamp: val.Timestamp.Time(),
-			Value:     float64(val.Value),
-		})
-	}
+// DailyMemoryUsageForApp is the resolver for the dailyMemoryUsageForApp field.
+func (r *queryResolver) DailyMemoryUsageForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
+	return r.resourceUsageClient.DailyMemoryUsageForApp(ctx, env, team, app)
+}
 
-	return usage, nil
+// DailyCPURequestForApp is the resolver for the dailyCpuRequestForApp field.
+func (r *queryResolver) DailyCPURequestForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
+	return r.resourceUsageClient.DailyCpuRequestForApp(ctx, env, team, app)
+}
+
+// DailyMemoryRequestForApp is the resolver for the dailyMemoryRequestForApp field.
+func (r *queryResolver) DailyMemoryRequestForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
+	return r.resourceUsageClient.DailyMemoryRequestForApp(ctx, env, team, app)
 }
