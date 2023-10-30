@@ -2380,24 +2380,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.App(childComplexity, args["name"].(string), args["team"].(string), args["env"].(string)), true
 
-	case "Query.dailyCpuRequestForApp":
+	case "Query.dailyCPURequestForApp":
 		if e.complexity.Query.DailyCPURequestForApp == nil {
 			break
 		}
 
-		args, err := ec.field_Query_dailyCpuRequestForApp_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_dailyCPURequestForApp_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
 		return e.complexity.Query.DailyCPURequestForApp(childComplexity, args["env"].(string), args["team"].(string), args["app"].(string)), true
 
-	case "Query.dailyCpuUsageForApp":
+	case "Query.dailyCPUUsageForApp":
 		if e.complexity.Query.DailyCPUUsageForApp == nil {
 			break
 		}
 
-		args, err := ec.field_Query_dailyCpuUsageForApp_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_dailyCPUUsageForApp_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
@@ -3458,6 +3458,72 @@ func (ec *executionContext) field_Query_app_args(ctx context.Context, rawArgs ma
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_dailyCPURequestForApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["env"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["env"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["team"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["team"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["app"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["app"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dailyCPUUsageForApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["env"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["env"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["team"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["team"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["app"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["app"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_dailyCostForApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3539,72 +3605,6 @@ func (ec *executionContext) field_Query_dailyCostForTeam_args(ctx context.Contex
 		}
 	}
 	args["to"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_dailyCpuRequestForApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["env"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["env"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["team"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["team"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["app"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["app"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_dailyCpuUsageForApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["env"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["env"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["team"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["team"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["app"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["app"] = arg2
 	return args, nil
 }
 
@@ -15490,8 +15490,8 @@ func (ec *executionContext) fieldContext_Query_naisjob(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_dailyCpuUsageForApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_dailyCpuUsageForApp(ctx, field)
+func (ec *executionContext) _Query_dailyCPUUsageForApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_dailyCPUUsageForApp(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15521,7 +15521,7 @@ func (ec *executionContext) _Query_dailyCpuUsageForApp(ctx context.Context, fiel
 	return ec.marshalNResourceUsageValue2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUsageValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_dailyCpuUsageForApp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_dailyCPUUsageForApp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -15544,7 +15544,7 @@ func (ec *executionContext) fieldContext_Query_dailyCpuUsageForApp(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_dailyCpuUsageForApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_dailyCPUUsageForApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -15612,8 +15612,8 @@ func (ec *executionContext) fieldContext_Query_dailyMemoryUsageForApp(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_dailyCpuRequestForApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_dailyCpuRequestForApp(ctx, field)
+func (ec *executionContext) _Query_dailyCPURequestForApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_dailyCPURequestForApp(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15643,7 +15643,7 @@ func (ec *executionContext) _Query_dailyCpuRequestForApp(ctx context.Context, fi
 	return ec.marshalNResourceUsageValue2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUsageValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_dailyCpuRequestForApp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_dailyCPURequestForApp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -15666,7 +15666,7 @@ func (ec *executionContext) fieldContext_Query_dailyCpuRequestForApp(ctx context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_dailyCpuRequestForApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_dailyCPURequestForApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -26488,7 +26488,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "dailyCpuUsageForApp":
+		case "dailyCPUUsageForApp":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -26497,7 +26497,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_dailyCpuUsageForApp(ctx, field)
+				res = ec._Query_dailyCPUUsageForApp(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -26532,7 +26532,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "dailyCpuRequestForApp":
+		case "dailyCPURequestForApp":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -26541,7 +26541,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_dailyCpuRequestForApp(ctx, field)
+				res = ec._Query_dailyCPURequestForApp(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

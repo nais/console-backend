@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-
 	"github.com/nais/console-backend/internal/graph/model"
 )
 

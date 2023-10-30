@@ -1,5 +1,5 @@
 extend type Query {
-    dailyCpuUsageForApp(
+    dailyCPUUsageForApp(
         env: String!
         team: String!
         app: String!
@@ -11,7 +11,7 @@ extend type Query {
         app: String!
     ): [ResourceUsageValue!]!
 
-    dailyCpuRequestForApp(
+    dailyCPURequestForApp(
         env: String!
         team: String!
         app: String!
