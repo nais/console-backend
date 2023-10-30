@@ -1,0 +1,12 @@
+extend type Query {
+    dailyCpuUsageForApp(
+        env: String!
+        team: String!
+        app: String!
+    ): [ResourceUsageValue!]!
+}
+
+type ResourceUsageValue {
+    timestamp: Time!
+    value: Float!
+}

@@ -768,6 +768,11 @@ type Requests struct {
 	Memory string `json:"memory"`
 }
 
+type ResourceUsageValue struct {
+	Timestamp time.Time `json:"timestamp"`
+	Value     float64   `json:"value"`
+}
+
 type Resources struct {
 	Limits   Limits   `json:"limits"`
 	Requests Requests `json:"requests"`
