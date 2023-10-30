@@ -103,7 +103,7 @@ func (c *client) DailyMemoryRequestForApp(ctx context.Context, env, team, app st
 
 func rangedQuery(ctx context.Context, client promv1.API, query string) ([]model.ResourceUsageValue, error) {
 	to := time.Now()
-	from := to.Add(-24 * time.Hour * 30)
+	from := to.Add(-24 * time.Hour)
 	value, _, err := client.QueryRange(ctx, query, promv1.Range{
 		Start: from,
 		End:   to,
