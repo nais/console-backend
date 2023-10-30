@@ -10,11 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/go-chi/chi/v5"
-
 	"cloud.google.com/go/bigquery"
+	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi/v5"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/cost"
@@ -24,6 +23,7 @@ import (
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/logger"
+	"github.com/nais/console-backend/internal/resourceusage"
 	"github.com/nais/console-backend/internal/teams"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -93,12 +93,19 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	}
 	defer closer()
 
-	k8sClient, teamsBackendClient, hookdClient, err := setupClients(cfg, errorsCounter, log)
+	k8sClient, err := k8s.New(cfg.Tenant, cfg.K8S, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
-		return fmt.Errorf("setup clients: %w", err)
+		return fmt.Errorf("create k8s client: %w", err)
 	}
 
-	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, querier, cfg.K8S.Clusters, log)
+	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
+	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
+	resourceUsageClient, err := resourceusage.New(cfg.K8S.AllClusterNames, cfg.Tenant, log)
+	if err != nil {
+		return fmt.Errorf("create resource usage client: %w", err)
+	}
+
+	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
@@ -122,7 +129,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	// cost updater
 	go func() {
 		defer cancel()
-		err = runCostUpdater(ctx, querier, cfg.Cost, log)
+		err = runCostUpdater(ctx, querier, cfg.Tenant, cfg.Cost, log)
 		if err != nil {
 			log.WithError(err).Errorf("error in cost updater")
 		}
@@ -195,7 +202,7 @@ func getBigQueryClient(ctx context.Context, projectID string) (*bigquery.Client,
 }
 
 // getBigQueryClient will return a new cost updater instance
-func getUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) (*cost.Updater, error) {
+func getUpdater(ctx context.Context, querier gensql.Querier, tenant string, cfg config.Cost, log logrus.FieldLogger) (*cost.Updater, error) {
 	bigQueryClient, err := getBigQueryClient(ctx, cfg.BigQueryProjectID)
 	if err != nil {
 		return nil, err
@@ -209,7 +216,7 @@ func getUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, lo
 	return cost.NewCostUpdater(
 		bigQueryClient,
 		querier,
-		cfg.Tenant,
+		tenant,
 		log.WithField("subsystem", "cost_updater"),
 		opts...,
 	), nil
@@ -217,8 +224,8 @@ func getUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, lo
 
 // runCostUpdater will create an instance of the cost updater, and update the costs on a schedule. This function will
 // block until the context is cancelled, so it should be run in a goroutine.
-func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) error {
-	updater, err := getUpdater(ctx, querier, cfg, log)
+func runCostUpdater(ctx context.Context, querier gensql.Querier, tenant string, cfg config.Cost, log logrus.FieldLogger) error {
+	updater, err := getUpdater(ctx, querier, tenant, cfg, log)
 	if err != nil {
 		return fmt.Errorf("unable to set up and run cost updater: %w", err)
 	}
@@ -284,18 +291,4 @@ func getMetricMeter() (met.Meter, error) {
 
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	return provider.Meter("github.com/nais/console-backend"), nil
-}
-
-// setupClients will create and return the clients used by the application
-func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, hookd.Client, error) {
-	loggerFieldKey := "client"
-	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("create k8s client: %w", err)
-	}
-
-	teamsClient := teams.New(cfg.Teams, errorsCounter, log.WithField(loggerFieldKey, "teams"))
-	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
-
-	return k8sClient, teamsClient, hookdClient, nil
 }

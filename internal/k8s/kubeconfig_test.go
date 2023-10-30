@@ -15,9 +15,8 @@ func TestCreateClusterConfigMap(t *testing.T) {
 	t.Run("valid configuration with no static clusters", func(t *testing.T) {
 		cfg := config.K8S{
 			Clusters: []string{"cluster"},
-			Tenant:   tenant,
 		}
-		configMap, err := k8s.CreateClusterConfigMap(cfg)
+		configMap, err := k8s.CreateClusterConfigMap(tenant, cfg)
 		assert.Equal(t, "https://apiserver.cluster.tenant.cloud.nais.io", configMap["cluster"].Host)
 		assert.NoError(t, err)
 	})
@@ -26,9 +25,8 @@ func TestCreateClusterConfigMap(t *testing.T) {
 		cfg := config.K8S{
 			Clusters:       []string{"cluster"},
 			StaticClusters: []config.StaticCluster{{Name: "static-cluster", Host: "host", Token: "token"}},
-			Tenant:         tenant,
 		}
-		configMap, err := k8s.CreateClusterConfigMap(cfg)
+		configMap, err := k8s.CreateClusterConfigMap(tenant, cfg)
 		assert.Equal(t, "https://apiserver.cluster.tenant.cloud.nais.io", configMap["cluster"].Host)
 		assert.Equal(t, "host", configMap["static-cluster"].Host)
 		assert.Equal(t, "token", configMap["static-cluster"].BearerToken)
