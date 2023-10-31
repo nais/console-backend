@@ -1,0 +1,14 @@
+type DependencyTrack {
+    projectUUID: String!
+    projectName: String!
+    findingsLink: String!
+    vulnerabilities: [Vulnerability!]
+}
+
+type Vulnerability {
+    id: String!
+    severity: String!
+    severityRank: Int!
+    name: String!
+    componentPurl: String!
+}

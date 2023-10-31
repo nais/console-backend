@@ -12,6 +12,7 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
+	dependencytrack "github.com/nais/dependencytrack/pkg/client"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -21,25 +22,27 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	hookdClient hookd.Client
-	teamsClient *teams.Client
-	k8sClient   *k8s.Client
-	searcher    *search.Searcher
-	log         logrus.FieldLogger
-	querier     gensql.Querier
-	clusters    []string
+	hookdClient  hookd.Client
+	teamsClient  *teams.Client
+	k8sClient    *k8s.Client
+	dtrackClient dependencytrack.Client
+	searcher     *search.Searcher
+	log          logrus.FieldLogger
+	querier      gensql.Querier
+	clusters     []string
 }
 
 // NewResolver creates a new GraphQL resolver with the given dependencies
-func NewResolver(hookdClient hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
+func NewResolver(hookdClient hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, client dependencytrack.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
 	return &Resolver{
-		hookdClient: hookdClient,
-		teamsClient: teamsClient,
-		k8sClient:   k8sClient,
-		searcher:    search.New(teamsClient, k8sClient),
-		log:         log,
-		querier:     querier,
-		clusters:    clusters,
+		hookdClient:  hookdClient,
+		teamsClient:  teamsClient,
+		k8sClient:    k8sClient,
+		dtrackClient: client,
+		searcher:     search.New(teamsClient, k8sClient),
+		log:          log,
+		querier:      querier,
+		clusters:     clusters,
 	}
 }
 

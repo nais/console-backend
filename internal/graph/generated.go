@@ -69,22 +69,23 @@ type ComplexityRoot struct {
 	}
 
 	App struct {
-		AccessPolicy func(childComplexity int) int
-		AppState     func(childComplexity int) int
-		Authz        func(childComplexity int) int
-		AutoScaling  func(childComplexity int) int
-		DeployInfo   func(childComplexity int) int
-		Env          func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Image        func(childComplexity int) int
-		Ingresses    func(childComplexity int) int
-		Instances    func(childComplexity int) int
-		Manifest     func(childComplexity int) int
-		Name         func(childComplexity int) int
-		Resources    func(childComplexity int) int
-		Storage      func(childComplexity int) int
-		Team         func(childComplexity int) int
-		Variables    func(childComplexity int) int
+		AccessPolicy    func(childComplexity int) int
+		AppState        func(childComplexity int) int
+		Authz           func(childComplexity int) int
+		AutoScaling     func(childComplexity int) int
+		DependencyTrack func(childComplexity int) int
+		DeployInfo      func(childComplexity int) int
+		Env             func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Image           func(childComplexity int) int
+		Ingresses       func(childComplexity int) int
+		Instances       func(childComplexity int) int
+		Manifest        func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Resources       func(childComplexity int) int
+		Storage         func(childComplexity int) int
+		Team            func(childComplexity int) int
+		Variables       func(childComplexity int) int
 	}
 
 	AppConnection struct {
@@ -182,6 +183,13 @@ type ComplexityRoot struct {
 
 	DatabaseUser struct {
 		Name func(childComplexity int) int
+	}
+
+	DependencyTrack struct {
+		FindingsLink    func(childComplexity int) int
+		ProjectName     func(childComplexity int) int
+		ProjectUUID     func(childComplexity int) int
+		Vulnerabilities func(childComplexity int) int
 	}
 
 	DeployInfo struct {
@@ -653,6 +661,14 @@ type ComplexityRoot struct {
 		Name  func(childComplexity int) int
 		Value func(childComplexity int) int
 	}
+
+	Vulnerability struct {
+		ComponentPurl func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Severity      func(childComplexity int) int
+		SeverityRank  func(childComplexity int) int
+	}
 }
 
 type AppResolver interface {
@@ -660,6 +676,8 @@ type AppResolver interface {
 
 	Manifest(ctx context.Context, obj *model.App) (string, error)
 	Team(ctx context.Context, obj *model.App) (*model.Team, error)
+
+	DependencyTrack(ctx context.Context, obj *model.App) (*model.DependencyTrack, error)
 }
 type DeployInfoResolver interface {
 	History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (model.DeploymentResponse, error)
@@ -790,6 +808,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.AutoScaling(childComplexity), true
+
+	case "App.dependencyTrack":
+		if e.complexity.App.DependencyTrack == nil {
+			break
+		}
+
+		return e.complexity.App.DependencyTrack(childComplexity), true
 
 	case "App.deployInfo":
 		if e.complexity.App.DeployInfo == nil {
@@ -1196,6 +1221,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DatabaseUser.Name(childComplexity), true
+
+	case "DependencyTrack.findingsLink":
+		if e.complexity.DependencyTrack.FindingsLink == nil {
+			break
+		}
+
+		return e.complexity.DependencyTrack.FindingsLink(childComplexity), true
+
+	case "DependencyTrack.projectName":
+		if e.complexity.DependencyTrack.ProjectName == nil {
+			break
+		}
+
+		return e.complexity.DependencyTrack.ProjectName(childComplexity), true
+
+	case "DependencyTrack.projectUUID":
+		if e.complexity.DependencyTrack.ProjectUUID == nil {
+			break
+		}
+
+		return e.complexity.DependencyTrack.ProjectUUID(childComplexity), true
+
+	case "DependencyTrack.vulnerabilities":
+		if e.complexity.DependencyTrack.Vulnerabilities == nil {
+			break
+		}
+
+		return e.complexity.DependencyTrack.Vulnerabilities(childComplexity), true
 
 	case "DeployInfo.commitSha":
 		if e.complexity.DeployInfo.CommitSha == nil {
@@ -3117,6 +3170,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Variable.Value(childComplexity), true
 
+	case "Vulnerability.componentPurl":
+		if e.complexity.Vulnerability.ComponentPurl == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.ComponentPurl(childComplexity), true
+
+	case "Vulnerability.id":
+		if e.complexity.Vulnerability.ID == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.ID(childComplexity), true
+
+	case "Vulnerability.name":
+		if e.complexity.Vulnerability.Name == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.Name(childComplexity), true
+
+	case "Vulnerability.severity":
+		if e.complexity.Vulnerability.Severity == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.Severity(childComplexity), true
+
+	case "Vulnerability.severityRank":
+		if e.complexity.Vulnerability.SeverityRank == nil {
+			break
+		}
+
+		return e.complexity.Vulnerability.SeverityRank(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -3242,7 +3330,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "graphqls/accesspolicy.graphqls" "graphqls/app.graphqls" "graphqls/authz.graphqls" "graphqls/cost.graphqls" "graphqls/deploy.graphqls" "graphqls/deployinfo.graphqls" "graphqls/directives.graphqls" "graphqls/log.graphqls" "graphqls/naisjob.graphqls" "graphqls/resources.graphqls" "graphqls/scalars.graphqls" "graphqls/schema.graphqls" "graphqls/search.graphqls" "graphqls/storage.graphqls" "graphqls/team.graphqls" "graphqls/user.graphqls"
+//go:embed "graphqls/accesspolicy.graphqls" "graphqls/app.graphqls" "graphqls/authz.graphqls" "graphqls/cost.graphqls" "graphqls/dependencytrack.graphqls" "graphqls/deploy.graphqls" "graphqls/deployinfo.graphqls" "graphqls/directives.graphqls" "graphqls/log.graphqls" "graphqls/naisjob.graphqls" "graphqls/resources.graphqls" "graphqls/scalars.graphqls" "graphqls/schema.graphqls" "graphqls/search.graphqls" "graphqls/storage.graphqls" "graphqls/team.graphqls" "graphqls/user.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -3258,6 +3346,7 @@ var sources = []*ast.Source{
 	{Name: "graphqls/app.graphqls", Input: sourceData("graphqls/app.graphqls"), BuiltIn: false},
 	{Name: "graphqls/authz.graphqls", Input: sourceData("graphqls/authz.graphqls"), BuiltIn: false},
 	{Name: "graphqls/cost.graphqls", Input: sourceData("graphqls/cost.graphqls"), BuiltIn: false},
+	{Name: "graphqls/dependencytrack.graphqls", Input: sourceData("graphqls/dependencytrack.graphqls"), BuiltIn: false},
 	{Name: "graphqls/deploy.graphqls", Input: sourceData("graphqls/deploy.graphqls"), BuiltIn: false},
 	{Name: "graphqls/deployinfo.graphqls", Input: sourceData("graphqls/deployinfo.graphqls"), BuiltIn: false},
 	{Name: "graphqls/directives.graphqls", Input: sourceData("graphqls/directives.graphqls"), BuiltIn: false},
@@ -5040,6 +5129,57 @@ func (ec *executionContext) fieldContext_App_appState(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _App_dependencyTrack(ctx context.Context, field graphql.CollectedField, obj *model.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_dependencyTrack(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().DependencyTrack(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.DependencyTrack)
+	fc.Result = res
+	return ec.marshalODependencyTrack2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDependencyTrack(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_dependencyTrack(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "projectUUID":
+				return ec.fieldContext_DependencyTrack_projectUUID(ctx, field)
+			case "projectName":
+				return ec.fieldContext_DependencyTrack_projectName(ctx, field)
+			case "findingsLink":
+				return ec.fieldContext_DependencyTrack_findingsLink(ctx, field)
+			case "vulnerabilities":
+				return ec.fieldContext_DependencyTrack_vulnerabilities(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DependencyTrack", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AppConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppConnection_totalCount(ctx, field)
 	if err != nil {
@@ -5445,6 +5585,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_team(ctx, field)
 			case "appState":
 				return ec.fieldContext_App_appState(ctx, field)
+			case "dependencyTrack":
+				return ec.fieldContext_App_dependencyTrack(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -7161,6 +7303,191 @@ func (ec *executionContext) fieldContext_DatabaseUser_name(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DependencyTrack_projectUUID(ctx context.Context, field graphql.CollectedField, obj *model.DependencyTrack) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DependencyTrack_projectUUID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProjectUUID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DependencyTrack_projectUUID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DependencyTrack",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DependencyTrack_projectName(ctx context.Context, field graphql.CollectedField, obj *model.DependencyTrack) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DependencyTrack_projectName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProjectName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DependencyTrack_projectName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DependencyTrack",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DependencyTrack_findingsLink(ctx context.Context, field graphql.CollectedField, obj *model.DependencyTrack) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DependencyTrack_findingsLink(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FindingsLink, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DependencyTrack_findingsLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DependencyTrack",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DependencyTrack_vulnerabilities(ctx context.Context, field graphql.CollectedField, obj *model.DependencyTrack) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DependencyTrack_vulnerabilities(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Vulnerabilities, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]model.Vulnerability)
+	fc.Result = res
+	return ec.marshalOVulnerability2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilityᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DependencyTrack_vulnerabilities(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DependencyTrack",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Vulnerability_id(ctx, field)
+			case "severity":
+				return ec.fieldContext_Vulnerability_severity(ctx, field)
+			case "severityRank":
+				return ec.fieldContext_Vulnerability_severityRank(ctx, field)
+			case "name":
+				return ec.fieldContext_Vulnerability_name(ctx, field)
+			case "componentPurl":
+				return ec.fieldContext_Vulnerability_componentPurl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Vulnerability", field.Name)
 		},
 	}
 	return fc, nil
@@ -14864,6 +15191,8 @@ func (ec *executionContext) fieldContext_Query_app(ctx context.Context, field gr
 				return ec.fieldContext_App_team(ctx, field)
 			case "appState":
 				return ec.fieldContext_App_appState(ctx, field)
+			case "dependencyTrack":
+				return ec.fieldContext_App_dependencyTrack(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -19693,6 +20022,226 @@ func (ec *executionContext) fieldContext_Variable_value(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Vulnerability_id(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vulnerability_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vulnerability_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vulnerability_severity(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vulnerability_severity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Severity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vulnerability_severity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vulnerability_severityRank(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vulnerability_severityRank(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SeverityRank, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vulnerability_severityRank(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vulnerability_name(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vulnerability_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vulnerability_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vulnerability_componentPurl(ctx context.Context, field graphql.CollectedField, obj *model.Vulnerability) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vulnerability_componentPurl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ComponentPurl, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vulnerability_componentPurl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vulnerability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext___Directive_name(ctx, field)
 	if err != nil {
@@ -22340,6 +22889,39 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "dependencyTrack":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_dependencyTrack(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23142,6 +23724,57 @@ func (ec *executionContext) _DatabaseUser(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dependencyTrackImplementors = []string{"DependencyTrack"}
+
+func (ec *executionContext) _DependencyTrack(ctx context.Context, sel ast.SelectionSet, obj *model.DependencyTrack) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dependencyTrackImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DependencyTrack")
+		case "projectUUID":
+			out.Values[i] = ec._DependencyTrack_projectUUID(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectName":
+			out.Values[i] = ec._DependencyTrack_projectName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "findingsLink":
+			out.Values[i] = ec._DependencyTrack_findingsLink(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "vulnerabilities":
+			out.Values[i] = ec._DependencyTrack_vulnerabilities(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -27455,6 +28088,65 @@ func (ec *executionContext) _Variable(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var vulnerabilityImplementors = []string{"Vulnerability"}
+
+func (ec *executionContext) _Vulnerability(ctx context.Context, sel ast.SelectionSet, obj *model.Vulnerability) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, vulnerabilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Vulnerability")
+		case "id":
+			out.Values[i] = ec._Vulnerability_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "severity":
+			out.Values[i] = ec._Vulnerability_severity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "severityRank":
+			out.Values[i] = ec._Vulnerability_severityRank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Vulnerability_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "componentPurl":
+			out.Values[i] = ec._Vulnerability_componentPurl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var __DirectiveImplementors = []string{"__Directive"}
 
 func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionSet, obj *introspection.Directive) graphql.Marshaler {
@@ -29876,6 +30568,10 @@ func (ec *executionContext) marshalNVariable2ᚕgithubᚗcomᚋnaisᚋconsoleᚑ
 	return ret
 }
 
+func (ec *executionContext) marshalNVulnerability2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerability(ctx context.Context, sel ast.SelectionSet, v model.Vulnerability) graphql.Marshaler {
+	return ec._Vulnerability(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -30178,6 +30874,13 @@ func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑba
 	return graphql.WrapContextMarshaler(ctx, v)
 }
 
+func (ec *executionContext) marshalODependencyTrack2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDependencyTrack(ctx context.Context, sel ast.SelectionSet, v *model.DependencyTrack) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DependencyTrack(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOIDPortenSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐIDPortenSidecar(ctx context.Context, sel ast.SelectionSet, v *model.IDPortenSidecar) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -30354,6 +31057,53 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	}
 	res := graphql.MarshalTime(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOVulnerability2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilityᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Vulnerability) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNVulnerability2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerability(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

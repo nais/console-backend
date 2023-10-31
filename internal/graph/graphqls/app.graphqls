@@ -29,6 +29,7 @@ type App implements Node {
     manifest: String! @goField(forceResolver: true)
     team: Team! @goField(forceResolver: true)
     appState: AppState!
+    dependencyTrack: DependencyTrack @goField(forceResolver: true)
 }
 
 type AppConnection implements Connection {

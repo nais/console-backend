@@ -7,8 +7,10 @@ package graph
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	dependencytrack "github.com/nais/dependencytrack/pkg/client"
 )
 
 // Instances is the resolver for the instances field.
@@ -38,6 +40,52 @@ func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, err
 // Team is the resolver for the team field.
 func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, error) {
 	return r.teamsClient.GetTeam(ctx, obj.GQLVars.Team)
+}
+
+// DependencyTrack is the resolver for the dependencyTrack field.
+func (r *appResolver) DependencyTrack(ctx context.Context, obj *model.App) (*model.DependencyTrack, error) {
+	tag := url.QueryEscape(obj.Image)
+	projects, err := r.dtrackClient.GetProjectsByTag(ctx, tag)
+	if err != nil {
+		return nil, fmt.Errorf("getting projects from DependencyTrack: %w", err)
+	}
+	if len(projects) == 0 {
+		return nil, nil
+	}
+
+	var p *dependencytrack.Project
+	for _, project := range projects {
+		for _, t := range project.Tags {
+			if t.Name == obj.Env.Name {
+				p = project
+				break
+			}
+		}
+	}
+	if p == nil {
+		return nil, nil
+	}
+
+	// TODO: use salsa frontend url, not client baseurl
+	findingsLink := fmt.Sprintf("%s/projects/%s/findings", r.dtrackClient.BaseURL(), p.Uuid)
+
+	// https://salsa.nav.cloud.nais.io/projects/4381f963-e53b-4804-8084-7ede767f9006/findings
+
+	v := make([]model.Vulnerability, 0)
+	v = append(v, model.Vulnerability{
+		ID:            "myid",
+		Severity:      "HIGH",
+		SeverityRank:  1,
+		Name:          "CWE-123 something",
+		ComponentPurl: "purl",
+	})
+	d := &model.DependencyTrack{
+		ProjectUUID:     p.Uuid,
+		ProjectName:     p.Name,
+		FindingsLink:    findingsLink,
+		Vulnerabilities: v,
+	}
+	return d, nil
 }
 
 // App is the resolver for the app field.

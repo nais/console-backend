@@ -71,23 +71,24 @@ type ACL struct {
 }
 
 type App struct {
-	ID           scalar.Ident `json:"id"`
-	Name         string       `json:"name"`
-	Image        string       `json:"image"`
-	DeployInfo   DeployInfo   `json:"deployInfo"`
-	Env          Env          `json:"env"`
-	Ingresses    []string     `json:"ingresses"`
-	Instances    []Instance   `json:"instances"`
-	AccessPolicy AccessPolicy `json:"accessPolicy"`
-	Resources    Resources    `json:"resources"`
-	AutoScaling  AutoScaling  `json:"autoScaling"`
-	Storage      []Storage    `json:"storage"`
-	Variables    []Variable   `json:"variables"`
-	Authz        []Authz      `json:"authz"`
-	Manifest     string       `json:"manifest"`
-	Team         Team         `json:"team"`
-	AppState     AppState     `json:"appState"`
-	GQLVars      AppGQLVars   `json:"-"`
+	ID              scalar.Ident     `json:"id"`
+	Name            string           `json:"name"`
+	Image           string           `json:"image"`
+	DeployInfo      DeployInfo       `json:"deployInfo"`
+	Env             Env              `json:"env"`
+	Ingresses       []string         `json:"ingresses"`
+	Instances       []Instance       `json:"instances"`
+	AccessPolicy    AccessPolicy     `json:"accessPolicy"`
+	Resources       Resources        `json:"resources"`
+	AutoScaling     AutoScaling      `json:"autoScaling"`
+	Storage         []Storage        `json:"storage"`
+	Variables       []Variable       `json:"variables"`
+	Authz           []Authz          `json:"authz"`
+	Manifest        string           `json:"manifest"`
+	Team            Team             `json:"team"`
+	AppState        AppState         `json:"appState"`
+	DependencyTrack *DependencyTrack `json:"dependencyTrack,omitempty"`
+	GQLVars         AppGQLVars       `json:"-"`
 }
 
 func (App) IsNode() {}
@@ -240,6 +241,13 @@ type Database struct {
 
 type DatabaseUser struct {
 	Name string `json:"name"`
+}
+
+type DependencyTrack struct {
+	ProjectUUID     string          `json:"projectUUID"`
+	ProjectName     string          `json:"projectName"`
+	FindingsLink    string          `json:"findingsLink"`
+	Vulnerabilities []Vulnerability `json:"vulnerabilities,omitempty"`
 }
 
 type DeployInfo struct {
@@ -1047,6 +1055,14 @@ func (this User) GetID() scalar.Ident { return this.ID }
 type Variable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type Vulnerability struct {
+	ID            string `json:"id"`
+	Severity      string `json:"severity"`
+	SeverityRank  int    `json:"severityRank"`
+	Name          string `json:"name"`
+	ComponentPurl string `json:"componentPurl"`
 }
 
 type ErrorLevel string

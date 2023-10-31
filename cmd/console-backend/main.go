@@ -25,6 +25,7 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/logger"
 	"github.com/nais/console-backend/internal/teams"
+	dependencytrack "github.com/nais/dependencytrack/pkg/client"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/sethvargo/go-envconfig"
@@ -93,12 +94,12 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	}
 	defer closer()
 
-	k8sClient, teamsBackendClient, hookdClient, err := setupClients(cfg, errorsCounter, log)
+	k8sClient, teamsBackendClient, hookdClient, dtrackClient, err := setupClients(cfg, errorsCounter, log)
 	if err != nil {
 		return fmt.Errorf("setup clients: %w", err)
 	}
 
-	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, querier, cfg.K8S.Clusters, log)
+	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, dtrackClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
@@ -287,15 +288,16 @@ func getMetricMeter() (met.Meter, error) {
 }
 
 // setupClients will create and return the clients used by the application
-func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, hookd.Client, error) {
+func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, hookd.Client, dependencytrack.Client, error) {
 	loggerFieldKey := "client"
 	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("create k8s client: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("create k8s client: %w", err)
 	}
 
 	teamsClient := teams.New(cfg.Teams, errorsCounter, log.WithField(loggerFieldKey, "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
+	dtrackClient := dependencytrack.New(cfg.DTrack.BaseURL, cfg.DTrack.Username, cfg.DTrack.Password)
 
-	return k8sClient, teamsClient, hookdClient, nil
+	return k8sClient, teamsClient, hookdClient, dtrackClient, nil
 }

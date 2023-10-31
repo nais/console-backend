@@ -28,6 +28,12 @@ type K8S struct {
 	Tenant         string          `env:"TENANT,default=dev-nais"`
 }
 
+type DTrack struct {
+	BaseURL  string `env:"DTRACK_BASEURL"`
+	Username string `env:"DTRACK_USERNAME"`
+	Password string `env:"DTRACK_PASSWORD"`
+}
+
 // Logger is the configuration for the logger
 type Logger struct {
 	Format string `env:"LOG_FORMAT,default=json"`
@@ -45,6 +51,7 @@ type Config struct {
 	Cost   Cost
 	Hookd  Hookd
 	K8S    K8S
+	DTrack DTrack
 	Logger Logger
 	Teams  Teams
 
