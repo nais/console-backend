@@ -31,9 +31,10 @@ portforward-teams:
 	kubectl port-forward -n nais-system --context nav-management-v2 svc/teams-backend 8181:80
 
 local-nav:
-	DTRACK_BASEURL="https://dependencytrack-backend.nav.cloud.nais.io" \
-	DTRACK_USERNAME="todo" \
-	DTRACK_PASSWORD="todo" \
+	DEPENDENCYTRACK_ENDPOINT="https://dependencytrack-backend.nav.cloud.nais.io" \
+	DEPENDENCYTRACK_FRONTEND="https://salsa.nav.cloud.nais.io" \
+	DEPENDENCYTRACK_USERNAME="todo" \
+	DEPENDENCYTRACK_PASSWORD="todo" \
 	BIGQUERY_PROJECTID="nais-io" \
 	HOOKD_ENDPOINT="http://localhost:8282" \
 	HOOKD_PSK="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \

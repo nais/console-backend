@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+	"github.com/nais/console-backend/internal/dtrack"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -12,7 +13,6 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/search"
 	"github.com/nais/console-backend/internal/teams"
-	dependencytrack "github.com/nais/dependencytrack/pkg/client"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -25,7 +25,7 @@ type Resolver struct {
 	hookdClient  hookd.Client
 	teamsClient  *teams.Client
 	k8sClient    *k8s.Client
-	dtrackClient dependencytrack.Client
+	dtrackClient *dtrack.Client
 	searcher     *search.Searcher
 	log          logrus.FieldLogger
 	querier      gensql.Querier
@@ -33,7 +33,7 @@ type Resolver struct {
 }
 
 // NewResolver creates a new GraphQL resolver with the given dependencies
-func NewResolver(hookdClient hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, client dependencytrack.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
+func NewResolver(hookdClient hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, client *dtrack.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
 	return &Resolver{
 		hookdClient:  hookdClient,
 		teamsClient:  teamsClient,

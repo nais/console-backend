@@ -3,17 +3,103 @@ package dtrack
 import (
 	"context"
 	"fmt"
+	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
 	dependencytrack "github.com/nais/dependencytrack/pkg/client"
+	"github.com/sirupsen/logrus"
+	api "go.opentelemetry.io/otel/metric"
 	"net/url"
+	"strings"
 )
 
-func VulnerabilitySummary(ctx context.Context, dtrackClient dependencytrack.Client, cluster, image string) (*model.DependencyTrack, error) {
+type Client struct {
+	client      dependencytrack.Client
+	frontendUrl string
+	log         logrus.FieldLogger
+	errors      api.Int64Counter
+}
+
+func New(cfg config.DTrack, errors api.Int64Counter, log *logrus.Entry) *Client {
+	c := dependencytrack.New(cfg.Endpoint, cfg.Username, cfg.Password, dependencytrack.WithLogger(log))
+	return &Client{
+		client:      c,
+		frontendUrl: cfg.Frontend,
+		log:         log,
+		errors:      errors,
+	}
+}
+
+func (c *Client) WithClient(client dependencytrack.Client) *Client {
+	c.client = client
+	return c
+}
+
+func (c *Client) VulnerabilitySummary(ctx context.Context, cluster, image string) (*model.DependencyTrack, error) {
+	p, err := c.projectByImageAndCluster(ctx, image, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("getting project by image %s and cluster %s: %w", image, cluster, err)
+	}
+
+	url := strings.TrimSuffix(c.frontendUrl, "/")
+	findingsLink := fmt.Sprintf("%s/projects/%s/findings", url, p.Uuid)
+
+	findings, err := c.client.GetFindings(ctx, p.Uuid)
+	if err != nil {
+		return nil, fmt.Errorf("getting findings from DependencyTrack: %w", err)
+	}
+
+	var low, medium, high, critical, unassigned int
+
+	v := make([]model.Vulnerability, 0)
+	for _, finding := range findings {
+		switch finding.Vulnerability.Severity {
+		case "LOW":
+			low += 1
+		case "MEDIUM":
+			medium += 1
+		case "HIGH":
+			high += 1
+		case "CRITICAL":
+			critical += 1
+		case "UNASSIGNED":
+			unassigned += 1
+		}
+
+		v = append(v, model.Vulnerability{
+			ID:            finding.Vulnerability.UUID,
+			Severity:      finding.Vulnerability.Severity,
+			SeverityRank:  finding.Vulnerability.SeverityRank,
+			Name:          finding.Vulnerability.Name,
+			ComponentPurl: finding.Component.PURL,
+		})
+	}
+
+	summary := model.VulnerabilitySummary{
+		Total:      len(findings),
+		Critical:   critical,
+		High:       high,
+		Medium:     medium,
+		Low:        low,
+		Unassigned: unassigned,
+	}
+
+	d := &model.DependencyTrack{
+		ProjectUUID:     p.Uuid,
+		ProjectName:     p.Name,
+		FindingsLink:    findingsLink,
+		Vulnerabilities: v,
+		Summary:         summary,
+	}
+	return d, nil
+}
+
+func (c *Client) projectByImageAndCluster(ctx context.Context, image, cluster string) (*dependencytrack.Project, error) {
 	tag := url.QueryEscape(image)
-	projects, err := dtrackClient.GetProjectsByTag(ctx, tag)
+	projects, err := c.client.GetProjectsByTag(ctx, tag)
 	if err != nil {
 		return nil, fmt.Errorf("getting projects from DependencyTrack: %w", err)
 	}
+
 	if len(projects) == 0 {
 		return nil, nil
 	}
@@ -27,65 +113,5 @@ func VulnerabilitySummary(ctx context.Context, dtrackClient dependencytrack.Clie
 			}
 		}
 	}
-	if p == nil {
-		return nil, nil
-	}
-
-	// TODO: use salsa frontend url, not client baseurl
-	findingsLink := fmt.Sprintf("%s/projects/%s/findings", "baseurl", p.Uuid)
-
-	// https://salsa.nav.cloud.nais.io/projects/4381f963-e53b-4804-8084-7ede767f9006/findings
-
-	findings, err := dtrackClient.GetFindings(ctx, p.Uuid)
-	if err != nil {
-		return nil, fmt.Errorf("getting findings from DependencyTrack: %w", err)
-	}
-	//fmt.Printf("findings: %+v\n", findings)
-
-	low := make([]*dependencytrack.Finding, 0)
-	medium := make([]*dependencytrack.Finding, 0)
-	high := make([]*dependencytrack.Finding, 0)
-	critical := make([]*dependencytrack.Finding, 0)
-	unassigned := make([]*dependencytrack.Finding, 0)
-	v := make([]model.Vulnerability, 0)
-	for _, finding := range findings {
-		switch finding.Vulnerability.Severity {
-		case "LOW":
-			low = append(low, finding)
-		case "MEDIUM":
-			medium = append(medium, finding)
-		case "HIGH":
-			high = append(high, finding)
-		case "CRITICAL":
-			critical = append(critical, finding)
-		case "UNASSIGNED":
-			unassigned = append(unassigned, finding)
-		}
-		v = append(v, model.Vulnerability{
-			ID:            finding.Vulnerability.UUID,
-			Severity:      finding.Vulnerability.Severity,
-			SeverityRank:  finding.Vulnerability.SeverityRank,
-			Name:          finding.Vulnerability.Name,
-			ComponentPurl: finding.Component.PURL,
-		})
-		fmt.Printf("finding: %+v\n", finding)
-	}
-
-	summary := model.VulnerabilitySummary{
-		Total:      len(low) + len(medium) + len(high) + len(critical) + len(unassigned),
-		Critical:   len(critical),
-		High:       len(high),
-		Medium:     len(medium),
-		Low:        len(low),
-		Unassigned: len(unassigned),
-	}
-
-	d := &model.DependencyTrack{
-		ProjectUUID:     p.Uuid,
-		ProjectName:     p.Name,
-		FindingsLink:    findingsLink,
-		Vulnerabilities: v,
-		Summary:         summary,
-	}
-	return d, nil
+	return p, nil
 }

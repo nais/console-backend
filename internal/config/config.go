@@ -29,9 +29,10 @@ type K8S struct {
 }
 
 type DTrack struct {
-	BaseURL  string `env:"DTRACK_BASEURL"`
-	Username string `env:"DTRACK_USERNAME"`
-	Password string `env:"DTRACK_PASSWORD"`
+	Endpoint string `env:"DEPENDENCYTRACK_ENDPOINT,default=http://dependencytrack-backend"`
+	Frontend string `env:"DEPENDENCYTRACK_FRONTEND"`
+	Username string `env:"DEPENDENCYTRACK_USERNAME,default=console"`
+	Password string `env:"DEPENDENCYTRACK_PASSWORD"`
 }
 
 // Logger is the configuration for the logger

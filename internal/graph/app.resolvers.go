@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/nais/console-backend/internal/dtrack"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
@@ -42,7 +41,7 @@ func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, er
 
 // DependencyTrack is the resolver for the dependencyTrack field.
 func (r *appResolver) DependencyTrack(ctx context.Context, obj *model.App) (*model.DependencyTrack, error) {
-	return dtrack.VulnerabilitySummary(ctx, r.dtrackClient, obj.Env.Name, obj.Image)
+	return r.dtrackClient.VulnerabilitySummary(ctx, obj.Env.Name, obj.Image)
 }
 
 // App is the resolver for the app field.

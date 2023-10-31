@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/nais/console-backend/internal/dtrack"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,7 +26,6 @@ import (
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/logger"
 	"github.com/nais/console-backend/internal/teams"
-	dependencytrack "github.com/nais/dependencytrack/pkg/client"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/sethvargo/go-envconfig"
@@ -288,7 +288,7 @@ func getMetricMeter() (met.Meter, error) {
 }
 
 // setupClients will create and return the clients used by the application
-func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, hookd.Client, dependencytrack.Client, error) {
+func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, hookd.Client, *dtrack.Client, error) {
 	loggerFieldKey := "client"
 	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
 	if err != nil {
@@ -297,7 +297,7 @@ func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus
 
 	teamsClient := teams.New(cfg.Teams, errorsCounter, log.WithField(loggerFieldKey, "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
-	dtrackClient := dependencytrack.New(cfg.DTrack.BaseURL, cfg.DTrack.Username, cfg.DTrack.Password)
+	dtrackClient := dtrack.New(cfg.DTrack, errorsCounter, log.WithField(loggerFieldKey, "dtrack"))
 
 	return k8sClient, teamsClient, hookdClient, dtrackClient, nil
 }
