@@ -79,11 +79,22 @@ func (r *appResolver) DependencyTrack(ctx context.Context, obj *model.App) (*mod
 		Name:          "CWE-123 something",
 		ComponentPurl: "purl",
 	})
+
+	summary := model.VulnerabilitySummary{
+		Total:      10,
+		Critical:   1,
+		High:       2,
+		Medium:     3,
+		Low:        4,
+		Unassigned: 0,
+	}
+
 	d := &model.DependencyTrack{
 		ProjectUUID:     p.Uuid,
 		ProjectName:     p.Name,
 		FindingsLink:    findingsLink,
 		Vulnerabilities: v,
+		Summary:         summary,
 	}
 	return d, nil
 }

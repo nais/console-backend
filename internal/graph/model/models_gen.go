@@ -244,10 +244,11 @@ type DatabaseUser struct {
 }
 
 type DependencyTrack struct {
-	ProjectUUID     string          `json:"projectUUID"`
-	ProjectName     string          `json:"projectName"`
-	FindingsLink    string          `json:"findingsLink"`
-	Vulnerabilities []Vulnerability `json:"vulnerabilities,omitempty"`
+	ProjectUUID     string               `json:"projectUUID"`
+	ProjectName     string               `json:"projectName"`
+	FindingsLink    string               `json:"findingsLink"`
+	Vulnerabilities []Vulnerability      `json:"vulnerabilities,omitempty"`
+	Summary         VulnerabilitySummary `json:"summary"`
 }
 
 type DeployInfo struct {
@@ -1063,6 +1064,15 @@ type Vulnerability struct {
 	SeverityRank  int    `json:"severityRank"`
 	Name          string `json:"name"`
 	ComponentPurl string `json:"componentPurl"`
+}
+
+type VulnerabilitySummary struct {
+	Total      int `json:"total"`
+	Critical   int `json:"critical"`
+	High       int `json:"high"`
+	Medium     int `json:"medium"`
+	Low        int `json:"low"`
+	Unassigned int `json:"unassigned"`
 }
 
 type ErrorLevel string

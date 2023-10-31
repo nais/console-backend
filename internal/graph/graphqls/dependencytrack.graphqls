@@ -3,6 +3,16 @@ type DependencyTrack {
     projectName: String!
     findingsLink: String!
     vulnerabilities: [Vulnerability!]
+    summary: VulnerabilitySummary!
+}
+
+type VulnerabilitySummary {
+    total: Int!
+    critical: Int!
+    high: Int!
+    medium: Int!
+    low: Int!
+    unassigned: Int!
 }
 
 type Vulnerability {
