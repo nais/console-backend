@@ -40,6 +40,11 @@ func (c *Client) VulnerabilitySummary(ctx context.Context, cluster, image string
 		return nil, fmt.Errorf("getting project by image %s and cluster %s: %w", image, cluster, err)
 	}
 
+	if p == nil {
+		c.log.Infof("no project found in DependencyTrack for image %s and cluster %s", image, cluster)
+		return nil, nil
+	}
+
 	url := strings.TrimSuffix(c.frontendUrl, "/")
 	findingsLink := fmt.Sprintf("%s/projects/%s/findings", url, p.Uuid)
 
