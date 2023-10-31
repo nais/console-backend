@@ -105,7 +105,7 @@ func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app str
 	utilization := make(map[time.Time]*model.ResourceUtilization)
 	timestamps := make([]time.Time, 0)
 	query := fmt.Sprintf(
-		`max(max_over_time(container_memory_usage_bytes{namespace=%q, container=%q}[1h]))`,
+		`sum(container_memory_usage_bytes{namespace=%q, container=%q})`,
 		team,
 		app,
 	)
@@ -119,12 +119,12 @@ func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app str
 		utilization[val.Timestamp.Time()] = &model.ResourceUtilization{
 			Timestamp: val.Timestamp.Time(),
 			Usage:     float64(val.Value),
-			UsageCost: 18.0 / 31.0 / 24.0 * float64(val.Value),
+			UsageCost: 18.0 / 1024 / 1024 / 1024 / 31.0 / 24.0 * float64(val.Value),
 		}
 	}
 
 	query = fmt.Sprintf(
-		`max(max_over_time(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"}[5m]))`,
+		`sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`,
 		team,
 		app,
 	)
@@ -138,7 +138,7 @@ func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app str
 		}
 		u := utilization[val.Timestamp.Time()]
 		u.Request = float64(val.Value)
-		u.RequestCost = 131.0 / 31.0 / 24.0 * float64(val.Value)
+		u.RequestCost = 18.0 / 1024 / 1024 / 1024 / 31.0 / 24.0 * float64(val.Value)
 		u.RequestedFactor = u.Request / u.Usage
 	}
 
