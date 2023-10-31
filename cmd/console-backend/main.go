@@ -93,11 +93,12 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	}
 	defer closer()
 
-	k8sClient, teamsBackendClient, hookdClient, err := setupClients(cfg, errorsCounter, log)
+	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
-		return fmt.Errorf("setup clients: %w", err)
+		return fmt.Errorf("create k8s client: %w", err)
 	}
-
+	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
+	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
 	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
 	if err != nil {
@@ -284,18 +285,4 @@ func getMetricMeter() (met.Meter, error) {
 
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	return provider.Meter("github.com/nais/console-backend"), nil
-}
-
-// setupClients will create and return the clients used by the application
-func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus.FieldLogger) (*k8s.Client, *teams.Client, hookd.Client, error) {
-	loggerFieldKey := "client"
-	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField(loggerFieldKey, "k8s"))
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("create k8s client: %w", err)
-	}
-
-	teamsClient := teams.New(cfg.Teams, errorsCounter, log.WithField(loggerFieldKey, "teams"))
-	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
-
-	return k8sClient, teamsClient, hookdClient, nil
 }
