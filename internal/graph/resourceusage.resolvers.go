@@ -6,25 +6,17 @@ package graph
 
 import (
 	"context"
+	"time"
+
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
-// DailyCPUUsageForApp is the resolver for the dailyCpuUsageForApp field.
-func (r *queryResolver) DailyCPUUsageForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
-	return r.resourceUsageClient.DailyCpuUsageForApp(ctx, env, team, app)
+// MemoryUtilizationForApp is the resolver for the memoryUtilizationForApp field.
+func (r *queryResolver) MemoryUtilizationForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUtilization, error) {
+	return r.resourceUsageClient.MemoryUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour)
 }
 
-// DailyMemoryUsageForApp is the resolver for the dailyMemoryUsageForApp field.
-func (r *queryResolver) DailyMemoryUsageForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
-	return r.resourceUsageClient.DailyMemoryUsageForApp(ctx, env, team, app)
-}
-
-// DailyCPURequestForApp is the resolver for the dailyCpuRequestForApp field.
-func (r *queryResolver) DailyCPURequestForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
-	return r.resourceUsageClient.DailyCpuRequestForApp(ctx, env, team, app)
-}
-
-// DailyMemoryRequestForApp is the resolver for the dailyMemoryRequestForApp field.
-func (r *queryResolver) DailyMemoryRequestForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUsageValue, error) {
-	return r.resourceUsageClient.DailyMemoryRequestForApp(ctx, env, team, app)
+// CPUUtilizationForApp is the resolver for the CPUUtilizationForApp field.
+func (r *queryResolver) CPUUtilizationForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUtilization, error) {
+	return r.resourceUsageClient.CPUUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour)
 }

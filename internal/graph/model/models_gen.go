@@ -768,9 +768,13 @@ type Requests struct {
 	Memory string `json:"memory"`
 }
 
-type ResourceUsageValue struct {
-	Timestamp time.Time `json:"timestamp"`
-	Value     float64   `json:"value"`
+type ResourceUtilization struct {
+	Timestamp       time.Time `json:"timestamp"`
+	Request         float64   `json:"request"`
+	RequestCost     float64   `json:"requestCost"`
+	Usage           float64   `json:"usage"`
+	UsageCost       float64   `json:"usageCost"`
+	RequestedFactor float64   `json:"requestedFactor"`
 }
 
 type Resources struct {

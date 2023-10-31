@@ -1,30 +1,22 @@
 extend type Query {
-    dailyCPUUsageForApp(
+    memoryUtilizationForApp(
         env: String!
         team: String!
         app: String!
-    ): [ResourceUsageValue!]!
+    ) : [ResourceUtilization!]!
 
-    dailyMemoryUsageForApp(
+    CPUUtilizationForApp(
         env: String!
         team: String!
         app: String!
-    ): [ResourceUsageValue!]!
-
-    dailyCPURequestForApp(
-        env: String!
-        team: String!
-        app: String!
-    ) : [ResourceUsageValue!]!
-
-    dailyMemoryRequestForApp(
-        env: String!
-        team: String!
-        app: String!
-    ) : [ResourceUsageValue!]!
+    ) : [ResourceUtilization!]!
 }
 
-type ResourceUsageValue {
+type ResourceUtilization {
     timestamp: Time!
-    value: Float!
+    request: Float!
+    requestCost: Float!
+    usage: Float!
+    usageCost: Float!
+    requestedFactor: Float!
 }

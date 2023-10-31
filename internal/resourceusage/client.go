@@ -16,10 +16,8 @@ import (
 type clusterName string
 
 type Client interface {
-	DailyCpuUsageForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error)
-	DailyMemoryUsageForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error)
-	DailyCpuRequestForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error)
-	DailyMemoryRequestForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error)
+	CPUUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error)
+	MemoryUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error)
 }
 
 type client struct {
@@ -45,65 +43,115 @@ func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, erro
 	}, nil
 }
 
-func (c *client) DailyCpuUsageForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error) {
+func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error) {
 	promClient, exists := c.promClients[clusterName(env)]
 	if !exists {
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
 	}
 
+	utilization := make(map[time.Time]*model.ResourceUtilization)
+	timestamps := make([]time.Time, 0)
 	query := fmt.Sprintf(
 		`sum(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[1h]))`,
 		team,
 		app,
 	)
-	return rangedQuery(ctx, promClient, query)
+	values, err := rangedQuery(ctx, promClient, query, now, dur)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, val := range values {
+		timestamps = append(timestamps, val.Timestamp.Time())
+		utilization[val.Timestamp.Time()] = &model.ResourceUtilization{
+			Timestamp: val.Timestamp.Time(),
+			Usage:     float64(val.Value),
+			UsageCost: 131.0 / 31.0 / 24.0 * float64(val.Value),
+		}
+	}
+
+	query = fmt.Sprintf(
+		`max(max_over_time(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"}[5m]))`,
+		team,
+		app,
+	)
+	values, err = rangedQuery(ctx, promClient, query, now, dur)
+	if err != nil {
+		return nil, err
+	}
+	for _, val := range values {
+		if _, exists := utilization[val.Timestamp.Time()]; !exists {
+			continue
+		}
+		u := utilization[val.Timestamp.Time()]
+		u.Request = float64(val.Value)
+		u.RequestCost = 131.0 / 31.0 / 24.0 * float64(val.Value)
+		u.RequestedFactor = u.Request / u.Usage
+	}
+
+	ret := make([]model.ResourceUtilization, 0)
+	for _, t := range timestamps {
+		ret = append(ret, *utilization[t])
+	}
+	return ret, nil
 }
 
-func (c *client) DailyMemoryUsageForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error) {
+func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error) {
 	promClient, exists := c.promClients[clusterName(env)]
 	if !exists {
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
 	}
 
+	utilization := make(map[time.Time]*model.ResourceUtilization)
+	timestamps := make([]time.Time, 0)
 	query := fmt.Sprintf(
 		`max(max_over_time(container_memory_usage_bytes{namespace=%q, container=%q}[1h]))`,
 		team,
 		app,
 	)
-	return rangedQuery(ctx, promClient, query)
-}
-
-func (c *client) DailyCpuRequestForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error) {
-	promClient, exists := c.promClients[clusterName(env)]
-	if !exists {
-		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
+	values, err := rangedQuery(ctx, promClient, query, now, dur)
+	if err != nil {
+		return nil, err
 	}
 
-	query := fmt.Sprintf(
-		`max(max_over_time(kube_pod_container_resource_requests{container=%q, namespace=%q, resource="cpu", unit="core"}[5m]))`,
-		app,
-		team,
-	)
-	return rangedQuery(ctx, promClient, query)
-}
-
-func (c *client) DailyMemoryRequestForApp(ctx context.Context, env, team, app string) ([]model.ResourceUsageValue, error) {
-	promClient, exists := c.promClients[clusterName(env)]
-	if !exists {
-		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
+	for _, val := range values {
+		timestamps = append(timestamps, val.Timestamp.Time())
+		utilization[val.Timestamp.Time()] = &model.ResourceUtilization{
+			Timestamp: val.Timestamp.Time(),
+			Usage:     float64(val.Value),
+			UsageCost: 18.0 / 31.0 / 24.0 * float64(val.Value),
+		}
 	}
 
-	query := fmt.Sprintf(
-		`max(max_over_time(kube_pod_container_resource_requests{container=%q, namespace=%q, resource="memory", unit="byte"}[5m]))`,
-		app,
+	query = fmt.Sprintf(
+		`max(max_over_time(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"}[5m]))`,
 		team,
+		app,
 	)
-	return rangedQuery(ctx, promClient, query)
+	values, err = rangedQuery(ctx, promClient, query, now, dur)
+	if err != nil {
+		return nil, err
+	}
+	for _, val := range values {
+		if _, exists := utilization[val.Timestamp.Time()]; !exists {
+			continue
+		}
+		u := utilization[val.Timestamp.Time()]
+		u.Request = float64(val.Value)
+		u.RequestCost = 131.0 / 31.0 / 24.0 * float64(val.Value)
+		u.RequestedFactor = u.Request / u.Usage
+	}
+
+	ret := make([]model.ResourceUtilization, 0)
+	for _, t := range timestamps {
+		ret = append(ret, *utilization[t])
+	}
+	return ret, nil
 }
 
-func rangedQuery(ctx context.Context, client promv1.API, query string) ([]model.ResourceUsageValue, error) {
-	to := time.Now()
-	from := to.Add(-24 * time.Hour)
+func rangedQuery(ctx context.Context, client promv1.API, query string, ts time.Time, dur time.Duration) ([]prom.SamplePair, error) {
+	to := time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), 0, 0, 0, ts.Location())
+	from := to.Add(-dur)
 	value, _, err := client.QueryRange(ctx, query, promv1.Range{
 		Start: from,
 		End:   to,
@@ -113,17 +161,9 @@ func rangedQuery(ctx context.Context, client promv1.API, query string) ([]model.
 		return nil, err
 	}
 
-	usage := make([]model.ResourceUsageValue, 0)
 	if len(value.(prom.Matrix)) == 0 {
-		return usage, nil
+		return make([]prom.SamplePair, 0), nil
 	}
 
-	for _, val := range value.(prom.Matrix)[0].Values {
-		usage = append(usage, model.ResourceUsageValue{
-			Timestamp: val.Timestamp.Time(),
-			Value:     float64(val.Value),
-		})
-	}
-
-	return usage, nil
+	return value.(prom.Matrix)[0].Values, nil
 }
