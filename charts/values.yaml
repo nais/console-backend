@@ -17,6 +17,11 @@ teams:
 hookd:
   psk: ""
 
+dependencytrack:
+  frontend: ""
+  password: ""
+
+
 serviceaccount:
   email: ""
 

@@ -67,3 +67,13 @@ values:
     displayName: teams pre-shared key
     computed:
       template: '"{{.Management.console_teams_api_key}}"'
+  dependencytrack.frontend:
+    description: The baseurl of the frontend for dependencytrack (used to generate links)
+    displayName: dependencytrack frontend url
+    computed:
+      template: '"{{ subdomain . "https://salsa" }}"'
+  dependencytrack.password:
+    description: The password for the dependencytrack console user
+    displayName: dependencytrack console password
+    computed:
+      template: '"{{.Management.console_dependencytrack_password}}"'

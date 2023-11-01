@@ -29,7 +29,7 @@ type K8S struct {
 }
 
 type DTrack struct {
-	Endpoint string `env:"DEPENDENCYTRACK_ENDPOINT,default=http://dependencytrack-backend"`
+	Endpoint string `env:"DEPENDENCYTRACK_ENDPOINT,default=http://dependencytrack-backend:8080"`
 	Frontend string `env:"DEPENDENCYTRACK_FRONTEND"`
 	Username string `env:"DEPENDENCYTRACK_USERNAME,default=console"`
 	Password string `env:"DEPENDENCYTRACK_PASSWORD"`
