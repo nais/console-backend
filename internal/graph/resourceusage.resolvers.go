@@ -13,10 +13,10 @@ import (
 
 // MemoryUtilizationForApp is the resolver for the memoryUtilizationForApp field.
 func (r *queryResolver) MemoryUtilizationForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUtilization, error) {
-	return r.resourceUsageClient.MemoryUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour)
+	return r.resourceUsageClient.MemoryUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour, time.Hour)
 }
 
 // CPUUtilizationForApp is the resolver for the CPUUtilizationForApp field.
 func (r *queryResolver) CPUUtilizationForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUtilization, error) {
-	return r.resourceUsageClient.CPUUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour)
+	return r.resourceUsageClient.CPUUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour, time.Hour)
 }

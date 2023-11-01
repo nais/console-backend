@@ -16,8 +16,8 @@ import (
 type clusterName string
 
 type Client interface {
-	CPUUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error)
-	MemoryUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error)
+	CPUUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur, step time.Duration) ([]model.ResourceUtilization, error)
+	MemoryUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur, step time.Duration) ([]model.ResourceUtilization, error)
 }
 
 type client struct {
@@ -43,7 +43,7 @@ func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, erro
 	}, nil
 }
 
-func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error) {
+func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur, step time.Duration) ([]model.ResourceUtilization, error) {
 	promClient, exists := c.promClients[clusterName(env)]
 	if !exists {
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
@@ -56,7 +56,7 @@ func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string
 		team,
 		app,
 	)
-	values, err := rangedQuery(ctx, promClient, query, now, dur)
+	values, err := rangedQuery(ctx, promClient, query, now, dur, step)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string
 		team,
 		app,
 	)
-	values, err = rangedQuery(ctx, promClient, query, now, dur)
+	values, err = rangedQuery(ctx, promClient, query, now, dur, step)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string
 	return ret, nil
 }
 
-func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur time.Duration) ([]model.ResourceUtilization, error) {
+func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app string, now time.Time, dur, step time.Duration) ([]model.ResourceUtilization, error) {
 	promClient, exists := c.promClients[clusterName(env)]
 	if !exists {
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
@@ -109,7 +109,7 @@ func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app str
 		team,
 		app,
 	)
-	values, err := rangedQuery(ctx, promClient, query, now, dur)
+	values, err := rangedQuery(ctx, promClient, query, now, dur, step)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app str
 		team,
 		app,
 	)
-	values, err = rangedQuery(ctx, promClient, query, now, dur)
+	values, err = rangedQuery(ctx, promClient, query, now, dur, step)
 	if err != nil {
 		return nil, err
 	}
@@ -149,13 +149,13 @@ func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app str
 	return ret, nil
 }
 
-func rangedQuery(ctx context.Context, client promv1.API, query string, ts time.Time, dur time.Duration) ([]prom.SamplePair, error) {
+func rangedQuery(ctx context.Context, client promv1.API, query string, ts time.Time, dur, step time.Duration) ([]prom.SamplePair, error) {
 	to := time.Date(ts.Year(), ts.Month(), ts.Day(), ts.Hour(), 0, 0, 0, ts.Location())
 	from := to.Add(-dur)
 	value, _, err := client.QueryRange(ctx, query, promv1.Range{
 		Start: from,
 		End:   to,
-		Step:  time.Hour,
+		Step:  step,
 	})
 	if err != nil {
 		return nil, err
