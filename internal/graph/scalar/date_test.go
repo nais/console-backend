@@ -19,7 +19,7 @@ func TestDate_NewDate(t *testing.T) {
 
 func TestDate_PgDate(t *testing.T) {
 	date := scalar.NewDate(tm)
-	assert.Equal(t, "2020-04-20", date.PgDate().Time.Format(scalar.DateFormat))
+	assert.Equal(t, "2020-04-20", date.PgDate().Time.Format(scalar.DateFormatYYYYMMDD))
 }
 
 func TestDate_MarshalGQLContext(t *testing.T) {

@@ -6,17 +6,21 @@ package graph
 
 import (
 	"context"
-	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
-// MemoryUtilizationForApp is the resolver for the memoryUtilizationForApp field.
-func (r *queryResolver) MemoryUtilizationForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUtilization, error) {
-	return r.resourceUsageClient.MemoryUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour, time.Hour)
-}
+// ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.
+func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date, resolution *model.Resolution) ([]model.ResourceUtilization, error) {
+	start, end, step, err := r.getStartEndAndStep(from, to, resolution)
+	if err != nil {
+		return nil, err
+	}
 
-// CPUUtilizationForApp is the resolver for the CPUUtilizationForApp field.
-func (r *queryResolver) CPUUtilizationForApp(ctx context.Context, env string, team string, app string) ([]model.ResourceUtilization, error) {
-	return r.resourceUsageClient.CPUUtilizationForApp(ctx, env, team, app, time.Now(), 24*time.Hour, time.Hour)
+	if resource == model.ResourceTypeMemory {
+		return r.resourceUsageClient.MemoryUtilizationForApp(ctx, env, team, app, start, end, step)
+	}
+
+	return r.resourceUsageClient.CPUUtilizationForApp(ctx, env, team, app, start, end, step)
 }
