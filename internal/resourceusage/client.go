@@ -43,10 +43,10 @@ func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, erro
 }
 
 const (
-	cpuUsageQuery      = `rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[1h])`
-	cpuRequestQuery    = `sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"}[5m])`
-	memoryUsageQuery   = `sum(container_memory_usage_bytes{namespace=%q, container=%q})`
-	memoryRequestQuery = `sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
+	cpuUsageQuery      = `max(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[1h]))`
+	cpuRequestQuery    = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"})`
+	memoryUsageQuery   = `max(container_memory_usage_bytes{namespace=%q, container=%q})`
+	memoryRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
 )
 
 func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, resolution model.Resolution, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error) {
