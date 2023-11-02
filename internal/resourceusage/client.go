@@ -16,8 +16,7 @@ import (
 type clusterName string
 
 type Client interface {
-	CPUUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error)
-	MemoryUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error)
+	UtilizationForApp(ctx context.Context, resource model.ResourceType, resolution model.Resolution, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error)
 }
 
 type client struct {
@@ -43,7 +42,14 @@ func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, erro
 	}, nil
 }
 
-func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error) {
+const (
+	cpuUsageQuery      = `sum(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[1h]))`
+	cpuRequestQuery    = `sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"}[5m]))`
+	memoryUsageQuery   = `sum(container_memory_usage_bytes{namespace=%q, container=%q})`
+	memoryRequestQuery = `sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
+)
+
+func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, resolution model.Resolution, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error) {
 	promClient, exists := c.promClients[clusterName(env)]
 	if !exists {
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
@@ -51,12 +57,9 @@ func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string
 
 	utilization := make(map[time.Time]*model.ResourceUtilization)
 	timestamps := make([]time.Time, 0)
-	query := fmt.Sprintf(
-		`sum(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[1h]))`,
-		team,
-		app,
-	)
-	values, err := rangedQuery(ctx, promClient, query, start, end, step)
+
+	usageQuery, requestQuery := getQueries(resourceType, team, app)
+	values, err := rangedQuery(ctx, promClient, usageQuery, start, end, step)
 	if err != nil {
 		return nil, err
 	}
@@ -66,16 +69,11 @@ func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string
 		utilization[val.Timestamp.Time()] = &model.ResourceUtilization{
 			Timestamp: val.Timestamp.Time(),
 			Usage:     float64(val.Value),
-			UsageCost: 131.0 / 31.0 / 24.0 * float64(val.Value),
+			UsageCost: cost(resourceType, float64(val.Value), resolution),
 		}
 	}
 
-	query = fmt.Sprintf(
-		`max(max_over_time(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"}[5m]))`,
-		team,
-		app,
-	)
-	values, err = rangedQuery(ctx, promClient, query, start, end, step)
+	values, err = rangedQuery(ctx, promClient, requestQuery, start, end, step)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +83,7 @@ func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string
 		}
 		u := utilization[val.Timestamp.Time()]
 		u.Request = float64(val.Value)
-		u.RequestCost = 131.0 / 31.0 / 24.0 * float64(val.Value)
+		u.RequestCost = cost(resourceType, float64(val.Value), resolution)
 		u.RequestedFactor = u.Request / u.Usage
 	}
 
@@ -96,57 +94,30 @@ func (c *client) CPUUtilizationForApp(ctx context.Context, env, team, app string
 	return ret, nil
 }
 
-func (c *client) MemoryUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error) {
-	promClient, exists := c.promClients[clusterName(env)]
-	if !exists {
-		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
+func getQueries(resourceType model.ResourceType, team, app string) (usageQuery, requestQuery string) {
+	if resourceType == model.ResourceTypeCPU {
+		usageQuery = cpuUsageQuery
+		requestQuery = cpuRequestQuery
+	} else {
+		usageQuery = memoryUsageQuery
+		requestQuery = memoryRequestQuery
 	}
 
-	utilization := make(map[time.Time]*model.ResourceUtilization)
-	timestamps := make([]time.Time, 0)
-	query := fmt.Sprintf(
-		`sum(container_memory_usage_bytes{namespace=%q, container=%q})`,
-		team,
-		app,
-	)
-	values, err := rangedQuery(ctx, promClient, query, start, end, step)
-	if err != nil {
-		return nil, err
+	return fmt.Sprintf(usageQuery, team, app), fmt.Sprintf(requestQuery, team, app)
+}
+
+func cost(resourceType model.ResourceType, value float64, resolution model.Resolution) (cost float64) {
+	if resourceType == model.ResourceTypeCPU {
+		cost = 131.0 / 31.0 * value
+	} else {
+		cost = 18.0 / 1024 / 1024 / 1024 / 31.0 * value
 	}
 
-	for _, val := range values {
-		timestamps = append(timestamps, val.Timestamp.Time())
-		utilization[val.Timestamp.Time()] = &model.ResourceUtilization{
-			Timestamp: val.Timestamp.Time(),
-			Usage:     float64(val.Value),
-			UsageCost: 18.0 / 1024 / 1024 / 1024 / 31.0 / 24.0 * float64(val.Value),
-		}
+	if resolution == model.ResolutionHourly {
+		cost /= 24.0
 	}
 
-	query = fmt.Sprintf(
-		`sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`,
-		team,
-		app,
-	)
-	values, err = rangedQuery(ctx, promClient, query, start, end, step)
-	if err != nil {
-		return nil, err
-	}
-	for _, val := range values {
-		if _, exists := utilization[val.Timestamp.Time()]; !exists {
-			continue
-		}
-		u := utilization[val.Timestamp.Time()]
-		u.Request = float64(val.Value)
-		u.RequestCost = 18.0 / 1024 / 1024 / 1024 / 31.0 / 24.0 * float64(val.Value)
-		u.RequestedFactor = u.Request / u.Usage
-	}
-
-	ret := make([]model.ResourceUtilization, 0)
-	for _, t := range timestamps {
-		ret = append(ret, *utilization[t])
-	}
-	return ret, nil
+	return cost
 }
 
 func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time, step time.Duration) ([]prom.SamplePair, error) {

@@ -3,18 +3,12 @@ package graph
 import (
 	"time"
 
-	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
-func (r *queryResolver) getStartEndAndStep(from *scalar.Date, to *scalar.Date, resolution *model.Resolution) (start time.Time, end time.Time, step time.Duration, err error) {
+func (r *queryResolver) getStartAndEnd(from *scalar.Date, to *scalar.Date) (start time.Time, end time.Time, err error) {
 	end = time.Now()
 	start = end.Add(-24 * time.Hour * 6)
-	step = 24 * time.Hour
-
-	if resolution != nil && *resolution == model.ResolutionHourly {
-		step = time.Hour
-	}
 
 	if to != nil {
 		end, err = time.Parse(scalar.DateFormatYYYYMMDD, to.String())

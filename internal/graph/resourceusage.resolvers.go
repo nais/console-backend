@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -13,14 +14,21 @@ import (
 
 // ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.
 func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date, resolution *model.Resolution) ([]model.ResourceUtilization, error) {
-	start, end, step, err := r.getStartEndAndStep(from, to, resolution)
+	start, end, err := r.getStartAndEnd(from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	if resource == model.ResourceTypeMemory {
-		return r.resourceUsageClient.MemoryUtilizationForApp(ctx, env, team, app, start, end, step)
+	if resolution == nil {
+		res := model.ResolutionHourly
+		resolution = &res
 	}
 
-	return r.resourceUsageClient.CPUUtilizationForApp(ctx, env, team, app, start, end, step)
+	step := 24 * time.Hour
+
+	if *resolution == model.ResolutionHourly {
+		step = time.Hour
+	}
+
+	return r.resourceUsageClient.UtilizationForApp(ctx, resource, *resolution, env, team, app, start, end, step)
 }
