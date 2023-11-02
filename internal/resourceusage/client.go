@@ -43,8 +43,8 @@ func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, erro
 }
 
 const (
-	cpuUsageQuery      = `sum(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[1h]))`
-	cpuRequestQuery    = `sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"}[5m]))`
+	cpuUsageQuery      = `rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[1h])`
+	cpuRequestQuery    = `sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"}[5m])`
 	memoryUsageQuery   = `sum(container_memory_usage_bytes{namespace=%q, container=%q})`
 	memoryRequestQuery = `sum(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
 )
