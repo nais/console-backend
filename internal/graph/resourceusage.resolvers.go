@@ -13,13 +13,19 @@ import (
 )
 
 // ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.
-func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date, resolution *model.Resolution) ([]model.ResourceUtilization, error) {
+func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error) {
 	start, end, err := r.getStartAndEnd(from, to)
 	if err != nil {
 		return nil, err
 	}
 
-	if resolution == nil {
+	var resolution *model.Resolution
+	duration := end.Sub(start)
+
+	if duration > 7*24*time.Hour {
+		res := model.ResolutionDaily
+		resolution = &res
+	} else {
 		res := model.ResolutionHourly
 		resolution = &res
 	}
