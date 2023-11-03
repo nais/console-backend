@@ -4,3 +4,4 @@ values.json
 .idea
 /bin
 .env
+.vscode/
