@@ -4,7 +4,7 @@ CREATE TYPE resource_type AS ENUM (
     'memory'
 );
 
-CREATE TABLE utilization_lowres (
+CREATE TABLE lowres_resource_utilization_metrics (
     id serial PRIMARY KEY,
     date date NOT NULL,
     env text,
@@ -16,7 +16,7 @@ CREATE TABLE utilization_lowres (
     CONSTRAINT lowres_metric UNIQUE (date, env, team, app, resource_type)
 );
 
-CREATE TABLE utilization_highres (
+CREATE TABLE highres_resource_utilization_metrics (
     id serial PRIMARY KEY,
     date date NOT NULL,
     env text,
@@ -29,5 +29,5 @@ CREATE TABLE utilization_highres (
 );
 
 -- +goose Down
-DROP TABLE resource_utilization_lowres, resource_utilization_highres;
+DROP TABLE lowres_resource_utilization_metrics, highres_resource_utilization_metrics;
 DROP TYPE resource_type;
