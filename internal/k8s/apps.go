@@ -81,18 +81,20 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		return nil, c.error(ctx, err, "converting to app")
 	}
 
-	for _, rule := range app.AccessPolicy.Outbound.Rules {
-		err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
+	for i, rule := range app.AccessPolicy.Outbound.Rules {
+		err = c.setHasMutualOnOutbound(ctx, name, team, env, &rule)
 		if err != nil {
 			return nil, c.error(ctx, err, "setting hasMutual on outbound")
 		}
+		app.AccessPolicy.Outbound.Rules[i] = rule
 	}
 
-	for _, rule := range app.AccessPolicy.Inbound.Rules {
-		err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
+	for i, rule := range app.AccessPolicy.Inbound.Rules {
+		err = c.setHasMutualOnInbound(ctx, name, team, env, &rule)
 		if err != nil {
 			return nil, c.error(ctx, err, "setting hasMutual on inbound")
 		}
+		app.AccessPolicy.Inbound.Rules[i] = rule
 	}
 
 	topics, err := c.getTopics(ctx, name, team, env)
@@ -122,7 +124,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	return app, nil
 }
 
-func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv string, outboundRule model.Rule) error {
+func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv string, outboundRule *model.Rule) error {
 	outboundEnv := oEnv
 	if outboundRule.Cluster != "" {
 		outboundEnv = outboundRule.Cluster
@@ -180,7 +182,7 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 	return nil
 }
 
-func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule model.Rule) error {
+func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv string, inboundRule *model.Rule) error {
 	inboundEnv := oEnv
 	if inboundRule.Cluster != "" {
 		inboundEnv = inboundRule.Cluster
@@ -238,25 +240,19 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 	return nil
 }
 
-func (c *Client) getAppInformer(outboundEnv string, rule model.Rule) *Informers {
+func (c *Client) getAppInformer(outboundEnv string, rule *model.Rule) *Informers {
 	inf, ok := c.informers[outboundEnv]
-	if !ok {
+	if !ok || inf.AppInformer == nil {
 		c.log.Warn("no informers for cluster ", outboundEnv)
 		rule.MutualExplanation = "CLUSTER_NOT_FOUND"
 		rule.Mutual = false
 		return nil
 	}
 
-	if inf.AppInformer == nil {
-		c.log.Warn("no app informer for cluster ", outboundEnv)
-		rule.MutualExplanation = "CLUSTER_NOT_FOUND"
-		rule.Mutual = false
-		return nil
-	}
 	return inf
 }
 
-func checkNoZeroTrust(env string, rule model.Rule) bool {
+func checkNoZeroTrust(env string, rule *model.Rule) bool {
 	if strings.Contains(env, "-fss") {
 		rule.MutualExplanation = "NO_ZERO_TRUST"
 		rule.Mutual = true
@@ -284,7 +280,7 @@ func checkNoZeroTrust(env string, rule model.Rule) bool {
 	return false
 }
 
-func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule model.Rule, env string) (*model.App, error) {
+func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule *model.Rule, env string) (*model.App, error) {
 	obj, err := inf.AppInformer.Lister().ByNamespace(team).Get(rule.Application)
 	if err != nil {
 		c.log.Infof("get application %s:%s in %s: %v", team, rule.Application, env, err)
@@ -380,18 +376,20 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 				return nil, c.error(ctx, err, "converting to app")
 			}
 
-			for _, rule := range app.AccessPolicy.Outbound.Rules {
-				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
+			for i, rule := range app.AccessPolicy.Outbound.Rules {
+				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, &rule)
 				if err != nil {
 					return nil, c.error(ctx, err, "setting hasMutual on outbound")
 				}
+				app.AccessPolicy.Outbound.Rules[i] = rule
 			}
 
-			for _, rule := range app.AccessPolicy.Inbound.Rules {
-				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
+			for i, rule := range app.AccessPolicy.Inbound.Rules {
+				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, &rule)
 				if err != nil {
 					return nil, c.error(ctx, err, "setting hasMutual on inbound")
 				}
+				app.AccessPolicy.Inbound.Rules[i] = rule
 			}
 
 			instances, err := c.Instances(ctx, team, env, app.Name)
