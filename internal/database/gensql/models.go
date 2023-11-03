@@ -5,8 +5,69 @@
 package gensql
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type ResourceType string
+
+const (
+	ResourceTypeCpu    ResourceType = "cpu"
+	ResourceTypeMemory ResourceType = "memory"
+)
+
+func (e *ResourceType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ResourceType(s)
+	case string:
+		*e = ResourceType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ResourceType: %T", src)
+	}
+	return nil
+}
+
+type NullResourceType struct {
+	ResourceType ResourceType
+	Valid        bool // Valid is true if ResourceType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullResourceType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ResourceType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ResourceType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullResourceType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ResourceType), nil
+}
+
+func (e ResourceType) Valid() bool {
+	switch e {
+	case ResourceTypeCpu,
+		ResourceTypeMemory:
+		return true
+	}
+	return false
+}
+
+func AllResourceTypeValues() []ResourceType {
+	return []ResourceType{
+		ResourceTypeCpu,
+		ResourceTypeMemory,
+	}
+}
 
 type Cost struct {
 	ID        int32
@@ -16,4 +77,26 @@ type Cost struct {
 	CostType  string
 	Date      pgtype.Date
 	DailyCost float32
+}
+
+type UtilizationHighre struct {
+	ID           int32
+	Date         pgtype.Date
+	Env          *string
+	Team         *string
+	App          *string
+	ResourceType ResourceType
+	Usage        float32
+	Request      float32
+}
+
+type UtilizationLowre struct {
+	ID           int32
+	Date         pgtype.Date
+	Env          *string
+	Team         *string
+	App          *string
+	ResourceType ResourceType
+	Usage        float32
+	Request      float32
 }
