@@ -1,55 +1,77 @@
 extend type Query {
-  "Get the resource utilization for a specific app within a team and environment."
-  resourceUtilizationForApp(
-    "Resource type."
-    resource: ResourceType!
+    "Get the resource utilization for an app."
+    resourceUtilizationForApp(
+        "Resource type."
+        resource: ResourceType!
 
-    "The environment where the app is running."
+        "The environment where the app is running."
+        env: String!
+
+        "The team who owns the app."
+        team: String!
+
+        "Optional name of an app."
+        app: String!
+
+        "Fetch resource utilization from this date. Defaults to 7 days before the to date."
+        from: Date
+
+        "Fetch resource utilization until this date. Defaults to today."
+        to: Date
+    ): [ResourceUtilization!]!
+
+    "Get the resource utilization for a team, across all environments for the last 30 days."
+    resourceUtilizationForTeam(
+        "Resource type."
+        resource: ResourceType!
+
+        "The name of the team."
+        team: String!
+    ): ResourceUtilizationForTeam!
+}
+
+type ResourceUtilizationForTeam {
+    sumUsageCost: Float!
+    sumRequestCost: Float!
+    envs: [ResourceUtilizationForEnv!]!
+}
+
+type ResourceUtilizationForEnv {
     env: String!
-
-    "The team who owns the app."
-    team: String!
-
-    "The name of the app."
-    app: String!
-
-    "Fetch resource utilization from this date. Defaults to 7 days before the to date."
-    from: Date
-
-    "Fetch resource utilization until this date. Defaults to today."
-    to: Date
-  ): [ResourceUtilization!]!
+    sumUsageCost: Float!
+    sumRequestCost: Float!
+    values: [ResourceUtilization!]!
 }
 
 "Resource utilization type."
 type ResourceUtilization {
-  "Timestamp of the value."
-  timestamp: Time!
+    "Timestamp of the value."
+    timestamp: Time!
 
-  "The requested resource amount."
-  request: Float!
+    "The requested resource amount."
+    request: Float!
 
-  "The cost of the requested resource amount."
-  requestCost: Float!
+    "The cost of the requested resource amount."
+    requestCost: Float!
 
-  "The actual resource usage."
-  usage: Float!
+    "The actual resource usage."
+    usage: Float!
 
-  "The cost of the actual resource usage."
-  usageCost: Float!
+    "The cost of the actual resource usage."
+    usageCost: Float!
 
-  "The requested resource amount divided by the actual resource usage."
-  requestedFactor: Float!
+    "The requested resource amount divided by the actual resource usage."
+    requestedFactor: Float!
 }
 
 "Resource type."
 enum ResourceType {
-  CPU
-  MEMORY
+    CPU
+    MEMORY
 }
 
 "Resolution type."
 enum Resolution {
-  DAILY
-  HOURLY
+    DAILY
+    HOURLY
 }

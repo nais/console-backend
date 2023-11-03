@@ -784,6 +784,19 @@ type ResourceUtilization struct {
 	RequestedFactor float64 `json:"requestedFactor"`
 }
 
+type ResourceUtilizationForEnv struct {
+	Env            string                `json:"env"`
+	SumUsageCost   float64               `json:"sumUsageCost"`
+	SumRequestCost float64               `json:"sumRequestCost"`
+	Values         []ResourceUtilization `json:"values"`
+}
+
+type ResourceUtilizationForTeam struct {
+	SumUsageCost   float64                     `json:"sumUsageCost"`
+	SumRequestCost float64                     `json:"sumRequestCost"`
+	Envs           []ResourceUtilizationForEnv `json:"envs"`
+}
+
 type Resources struct {
 	Limits   Limits   `json:"limits"`
 	Requests Requests `json:"requests"`

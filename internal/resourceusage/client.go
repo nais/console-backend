@@ -3,6 +3,7 @@ package resourceusage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -17,6 +18,7 @@ type clusterName string
 
 type Client interface {
 	UtilizationForApp(ctx context.Context, resource model.ResourceType, resolution model.Resolution, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error)
+	UtilizationForTeam(ctx context.Context, resource model.ResourceType, env, team string) ([]model.ResourceUtilization, error)
 }
 
 type client struct {
@@ -43,11 +45,25 @@ func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, erro
 }
 
 const (
-	cpuUsageQuery      = `max(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[5m]))`
-	cpuRequestQuery    = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"})`
-	memoryUsageQuery   = `max(container_memory_usage_bytes{namespace=%q, container=%q})`
-	memoryRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
+	cpuTeamUsageQuery      = `max(rate(container_cpu_usage_seconds_total{namespace=%q, container!~%q}[24h])`
+	cpuTeamRequestQuery    = `max(kube_pod_container_resource_requests{namespace=%q, container!~%q, resource="cpu", unit="core"})`
+	memoryTeamUsageQuery   = `max(container_memory_usage_bytes{namespace=%q, container!~%q})`
+	memoryTeamRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container!~%q, resource="memory", unit="byte"})`
+
+	cpuAppUsageQuery      = `max(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[5m]))`
+	cpuAppRequestQuery    = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"})`
+	memoryAppUsageQuery   = `max(container_memory_usage_bytes{namespace=%q, container=%q})`
+	memoryAppRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
 )
+
+var containersToIgnore = []string{
+	"cloudsql-proxy",
+	"linkerd-proxy",
+	"secure-logs-configmap-reload",
+	"secure-logs-fluentd",
+	"vault-sidekick",
+	"wonderwall",
+}
 
 func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, resolution model.Resolution, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error) {
 	promClient, exists := c.promClients[clusterName(env)]
@@ -58,7 +74,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 	utilization := make(map[time.Time]*model.ResourceUtilization)
 	timestamps := make([]time.Time, 0)
 
-	usageQuery, requestQuery := getQueries(resourceType, team, app)
+	usageQuery, requestQuery := getAppQueries(resourceType, team, app)
 	values, err := rangedQuery(ctx, promClient, usageQuery, start, end, step)
 	if err != nil {
 		return nil, err
@@ -94,16 +110,75 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 	return ret, nil
 }
 
-func getQueries(resourceType model.ResourceType, team, app string) (usageQuery, requestQuery string) {
-	if resourceType == model.ResourceTypeCPU {
-		usageQuery = cpuUsageQuery
-		requestQuery = cpuRequestQuery
-	} else {
-		usageQuery = memoryUsageQuery
-		requestQuery = memoryRequestQuery
+func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string) ([]model.ResourceUtilization, error) {
+	promClient, exists := c.promClients[clusterName(env)]
+	if !exists {
+		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
 	}
 
+	utilization := make(map[time.Time]*model.ResourceUtilization)
+	timestamps := make([]time.Time, 0)
+
+	usageQuery, requestQuery := getTeamQueries(resourceType, team)
+	end := time.Now()
+	start := end.AddDate(0, 0, -4)
+	step := 24 * time.Hour
+	values, err := rangedQuery(ctx, promClient, usageQuery, start, end, step)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, val := range values {
+		timestamps = append(timestamps, val.Timestamp.Time())
+		utilization[val.Timestamp.Time()] = &model.ResourceUtilization{
+			Timestamp: val.Timestamp.Time(),
+			Usage:     float64(val.Value),
+			UsageCost: cost(resourceType, float64(val.Value), model.ResolutionDaily),
+		}
+	}
+
+	values, err = rangedQuery(ctx, promClient, requestQuery, start, end, step)
+	if err != nil {
+		return nil, err
+	}
+	for _, val := range values {
+		if _, exists := utilization[val.Timestamp.Time()]; !exists {
+			continue
+		}
+		u := utilization[val.Timestamp.Time()]
+		u.Request = float64(val.Value)
+		u.RequestCost = cost(resourceType, float64(val.Value), model.ResolutionDaily)
+		u.RequestedFactor = u.Request / u.Usage
+	}
+
+	ret := make([]model.ResourceUtilization, 0)
+	for _, t := range timestamps {
+		ret = append(ret, *utilization[t])
+	}
+	return ret, nil
+}
+
+func getAppQueries(resourceType model.ResourceType, team string, app string) (usageQuery, requestQuery string) {
+	if resourceType == model.ResourceTypeCPU {
+		usageQuery = cpuAppUsageQuery
+		requestQuery = cpuAppRequestQuery
+	} else {
+		usageQuery = memoryAppUsageQuery
+		requestQuery = memoryAppRequestQuery
+	}
 	return fmt.Sprintf(usageQuery, team, app), fmt.Sprintf(requestQuery, team, app)
+}
+
+func getTeamQueries(resourceType model.ResourceType, team string) (usageQuery, requestQuery string) {
+	if resourceType == model.ResourceTypeCPU {
+		usageQuery = cpuTeamUsageQuery
+		requestQuery = cpuTeamRequestQuery
+	} else {
+		usageQuery = memoryTeamUsageQuery
+		requestQuery = memoryTeamRequestQuery
+	}
+	containers := strings.Join(containersToIgnore, "|") + "|"
+	return fmt.Sprintf(usageQuery, team, containers), fmt.Sprintf(requestQuery, team, containers)
 }
 
 func cost(resourceType model.ResourceType, value float64, resolution model.Resolution) (cost float64) {
