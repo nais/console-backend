@@ -47,7 +47,12 @@ func (d Date) String() string {
 }
 
 // PgDate returns the Date as a pgtype.Date instance
-func (d Date) PgDate() (date pgtype.Date) {
-	date.Scan(string(d))
-	return date
+func (d Date) PgDate() (date pgtype.Date, err error) {
+	err = date.Scan(string(d))
+	return
+}
+
+// Time returns the Date as a time.Time instance
+func (d Date) Time() (time.Time, error) {
+	return time.Parse(DateFormatYYYYMMDD, string(d))
 }

@@ -19,14 +19,14 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 
 	var err error
 	if to != nil {
-		end, err = time.Parse(scalar.DateFormatYYYYMMDD, to.String())
+		end, err = to.Time()
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if from != nil {
-		start, err = time.Parse(scalar.DateFormatYYYYMMDD, from.String())
+		start, err = from.Time()
 		if err != nil {
 			return nil, err
 		}

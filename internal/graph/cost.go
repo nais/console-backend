@@ -68,8 +68,8 @@ func DailyCostsForTeamPerEnvFromDatabaseRows(from, to scalar.Date, rows []*gensq
 // normalizeDailyCosts will make sure all dates in the "from -> to" range are present in the returned map for all cost
 // types. The dates will also be sorted in ascending order.
 func normalizeDailyCosts(from, to scalar.Date, costs dailyCosts) sortedDailyCosts {
-	start, _ := time.Parse(scalar.DateFormatYYYYMMDD, string(from))
-	end, _ := time.Parse(scalar.DateFormatYYYYMMDD, string(to))
+	start, _ := from.Time()
+	end, _ := to.Time()
 	sortedDailyCost := make(sortedDailyCosts)
 	for k, daysInSeries := range costs {
 		data := make([]model.CostEntry, 0)
