@@ -10,3 +10,9 @@ packages:
   github.com/nais/console-backend/internal/hookd:
     interfaces:
       Client:
+  github.com/nais/console-backend/internal/teams:
+    interfaces:
+      Client:
+  github.com/nais/console-backend/internal/resourceusage:
+    interfaces:
+      Client:

@@ -72,7 +72,18 @@ type TeamUser struct {
 	Email string `json:"email"`
 }
 
-type Client struct {
+type Client interface {
+	Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result
+	GetTeam(ctx context.Context, teamSlug string) (*model.Team, error)
+	GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error)
+	GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error)
+	GetTeams(ctx context.Context) ([]Team, error)
+	GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error)
+	GetUserByID(ctx context.Context, id string) (*model.User, error)
+	GetUser(ctx context.Context, email string) (*User, error)
+}
+
+type client struct {
 	endpoint   string
 	httpClient *httpClient
 	lock       sync.RWMutex
@@ -82,8 +93,8 @@ type Client struct {
 	errors     metric.Int64Counter
 }
 
-func New(cfg config.Teams, errors metric.Int64Counter, log logrus.FieldLogger) *Client {
-	return &Client{
+func New(cfg config.Teams, errors metric.Int64Counter, log logrus.FieldLogger) Client {
+	return &client{
 		endpoint: cfg.Endpoint,
 		httpClient: &httpClient{
 			client:   &http.Client{},
@@ -95,7 +106,7 @@ func New(cfg config.Teams, errors metric.Int64Counter, log logrus.FieldLogger) *
 }
 
 // Search searches for teams matching the query
-func (c *Client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result {
+func (c *client) Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result {
 	if !isTeamFilterOrNoFilter(filter) {
 		return nil
 	}
@@ -119,7 +130,7 @@ func (c *Client) Search(ctx context.Context, query string, filter *model.SearchF
 }
 
 // GetTeam get a team by the team slug
-func (c *Client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
+func (c *client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
 	c.updateTeams(ctx)
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -133,7 +144,7 @@ func (c *Client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, err
 }
 
 // GetGithubRepositories get a list of GitHub repositories for a specific team
-func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error) {
+func (c *client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error) {
 	query := `query ($slug: Slug!) {
 		team(slug: $slug) {
 			gitHubRepositories {
@@ -165,7 +176,7 @@ func (c *Client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]
 }
 
 // GetTeamMembers get a list of team members for a specific team
-func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error) {
+func (c *client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error) {
 	query := `query ($slug: Slug!) {
 		team(slug: $slug) {
 			members {
@@ -200,7 +211,7 @@ func (c *Client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member,
 	return respBody.Data.Team.Members, nil
 }
 
-func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
+func (c *client) GetTeams(ctx context.Context) ([]Team, error) {
 	query := `query {
 		teams {
 			slug
@@ -234,7 +245,7 @@ func (c *Client) GetTeams(ctx context.Context) ([]Team, error) {
 	return respBody.Data.Teams, nil
 }
 
-func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
+func (c *client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
 	query := `query ($email: String!) {
 		userByEmail(email: $email) {
 			teams {
@@ -264,7 +275,7 @@ func (c *Client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 	return respBody.Data.UserByEmail.Teams, nil
 }
 
-func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+func (c *client) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	query := `query ($id: UUID!) {
 		user(id: $id) {
 			name
@@ -299,7 +310,7 @@ func (c *Client) GetUserByID(ctx context.Context, id string) (*model.User, error
 }
 
 // GetUser get a user by email
-func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
+func (c *client) GetUser(ctx context.Context, email string) (*User, error) {
 	query := `query ($email: String!) {
 		userByEmail(email: $email) {
 			name
@@ -329,7 +340,7 @@ func (c *Client) GetUser(ctx context.Context, email string) (*User, error) {
 	return respBody.Data.UserByEmail, nil
 }
 
-func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]string, respBody interface{}) error {
+func (c *client) teamsQuery(ctx context.Context, query string, vars map[string]string, respBody interface{}) error {
 	q := struct {
 		Query     string            `json:"query"`
 		Variables map[string]string `json:"variables"`
@@ -366,14 +377,14 @@ func (c *Client) teamsQuery(ctx context.Context, query string, vars map[string]s
 	return nil
 }
 
-func (c *Client) error(ctx context.Context, err error, msg string) error {
+func (c *client) error(ctx context.Context, err error, msg string) error {
 	c.errors.Add(ctx, 1, metric.WithAttributes(attribute.String("component", "teams-client")))
 	c.log.WithError(err).Error(msg)
 	return fmt.Errorf("%s: %w", msg, err)
 }
 
 // updateTeams update the teams cache when necessary
-func (c *Client) updateTeams(ctx context.Context) error {
+func (c *client) updateTeams(ctx context.Context) error {
 	c.lock.RLock()
 	if time.Since(c.updated) < teamsCacheTTL {
 		c.lock.RUnlock()

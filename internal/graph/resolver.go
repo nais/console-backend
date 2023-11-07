@@ -23,7 +23,7 @@ import (
 
 type Resolver struct {
 	hookdClient         hookd.Client
-	teamsClient         *teams.Client
+	teamsClient         teams.Client
 	k8sClient           *k8s.Client
 	resourceUsageClient resourceusage.Client
 	searcher            *search.Searcher
@@ -33,7 +33,7 @@ type Resolver struct {
 }
 
 // NewResolver creates a new GraphQL resolver with the given dependencies
-func NewResolver(hookdClient hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, resourceUsageClient resourceusage.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
+func NewResolver(hookdClient hookd.Client, teamsClient teams.Client, k8sClient *k8s.Client, resourceUsageClient resourceusage.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
 	return &Resolver{
 		hookdClient:         hookdClient,
 		teamsClient:         teamsClient,
