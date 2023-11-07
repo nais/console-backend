@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	YYYYMMDD        = "2006-01-02"
 	UpsertBatchSize = 100000
 	daysToFetch     = 5
 	reimport        = false
@@ -91,7 +92,7 @@ func (c *Updater) ShouldUpdateCosts(ctx context.Context) (bool, error) {
 		return false, err
 	}
 
-	if lastDate.Time.Day() == time.Now().Day() {
+	if lastDate.Time.Format(YYYYMMDD) == time.Now().Format(YYYYMMDD) {
 		// already have todays date in the costs, no need for another update
 		return false, nil
 	}
