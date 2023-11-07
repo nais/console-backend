@@ -41,9 +41,6 @@ type ResourceUtilization {
     "The requested resource amount per pod."
     request: Float!
 
-    "The total requested resource amount."
-    requestTotal: Float!
-
     "The actual resource usage."
     pods: [ResourceUtilizationPodUsage!]!
 }

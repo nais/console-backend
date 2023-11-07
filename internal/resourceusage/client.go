@@ -127,11 +127,10 @@ func utilizationMapToResourceUtilization(utilization utilizationMap, resourceTyp
 
 		req := utilization[ts].request
 		ret = append(ret, model.ResourceUtilization{
-			Resource:     resourceType,
-			Timestamp:    ts,
-			Request:      req,
-			RequestTotal: req * float64(len(pods)),
-			Pods:         pods,
+			Resource:  resourceType,
+			Timestamp: ts,
+			Request:   req,
+			Pods:      pods,
 		})
 	}
 	return ret

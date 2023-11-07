@@ -776,8 +776,6 @@ type ResourceUtilization struct {
 	Timestamp time.Time `json:"timestamp"`
 	// The requested resource amount per pod.
 	Request float64 `json:"request"`
-	// The total requested resource amount.
-	RequestTotal float64 `json:"requestTotal"`
 	// The actual resource usage.
 	Pods []ResourceUtilizationPodUsage `json:"pods"`
 }
