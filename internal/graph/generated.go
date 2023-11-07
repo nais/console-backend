@@ -502,18 +502,19 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		App              func(childComplexity int, name string, team string, env string) int
-		DailyCostForApp  func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
-		DailyCostForTeam func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
-		Deployments      func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
-		EnvCost          func(childComplexity int, filter model.EnvCostFilter) int
-		MonthlyCost      func(childComplexity int, filter model.MonthlyCostFilter) int
-		Naisjob          func(childComplexity int, name string, team string, env string) int
-		Node             func(childComplexity int, id scalar.Ident) int
-		Search           func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
-		Team             func(childComplexity int, name string) int
-		Teams            func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
-		User             func(childComplexity int) int
+		App                    func(childComplexity int, name string, team string, env string) int
+		DailyCostForApp        func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
+		DailyCostForTeam       func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
+		Deployments            func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
+		EnvCost                func(childComplexity int, filter model.EnvCostFilter) int
+		MonthlyCost            func(childComplexity int, filter model.MonthlyCostFilter) int
+		Naisjob                func(childComplexity int, name string, team string, env string) int
+		Node                   func(childComplexity int, id scalar.Ident) int
+		Search                 func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		Team                   func(childComplexity int, name string) int
+		Teams                  func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		User                   func(childComplexity int) int
+		VulnerabilitiesForTeam func(childComplexity int, team string, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.AppsOrderBy) int
 	}
 
 	Redis struct {
@@ -712,6 +713,7 @@ type QueryResolver interface {
 	DailyCostForTeam(ctx context.Context, team string, from scalar.Date, to scalar.Date) (*model.DailyCost, error)
 	MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error)
 	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]model.EnvCost, error)
+	VulnerabilitiesForTeam(ctx context.Context, team string, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.AppsOrderBy) ([]*model.DependencyTrack, error)
 	Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error)
@@ -2564,6 +2566,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.User(childComplexity), true
 
+	case "Query.vulnerabilitiesForTeam":
+		if e.complexity.Query.VulnerabilitiesForTeam == nil {
+			break
+		}
+
+		args, err := ec.field_Query_vulnerabilitiesForTeam_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.VulnerabilitiesForTeam(childComplexity, args["team"].(string), args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.AppsOrderBy)), true
+
 	case "Redis.access":
 		if e.complexity.Redis.Access == nil {
 			break
@@ -3272,6 +3286,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAppsOrderBy,
 		ec.unmarshalInputEnvCostFilter,
 		ec.unmarshalInputLogSubscriptionInput,
 		ec.unmarshalInputMonthlyCostFilter,
@@ -3857,6 +3872,66 @@ func (ec *executionContext) field_Query_teams_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["before"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_vulnerabilitiesForTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["team"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["team"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg2
+	var arg3 *scalar.Cursor
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg3
+	var arg4 *scalar.Cursor
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg4, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg4
+	var arg5 *model.AppsOrderBy
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg5, err = ec.unmarshalOAppsOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppsOrderBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg5
 	return args, nil
 }
 
@@ -15576,6 +15651,73 @@ func (ec *executionContext) fieldContext_Query_envCost(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_vulnerabilitiesForTeam(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_vulnerabilitiesForTeam(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().VulnerabilitiesForTeam(rctx, fc.Args["team"].(string), fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["orderBy"].(*model.AppsOrderBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DependencyTrack)
+	fc.Result = res
+	return ec.marshalNDependencyTrack2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDependencyTrack(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_vulnerabilitiesForTeam(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "projectUUID":
+				return ec.fieldContext_DependencyTrack_projectUUID(ctx, field)
+			case "projectName":
+				return ec.fieldContext_DependencyTrack_projectName(ctx, field)
+			case "findingsLink":
+				return ec.fieldContext_DependencyTrack_findingsLink(ctx, field)
+			case "vulnerabilities":
+				return ec.fieldContext_DependencyTrack_vulnerabilities(ctx, field)
+			case "summary":
+				return ec.fieldContext_DependencyTrack_summary(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DependencyTrack", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_vulnerabilitiesForTeam_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_deployments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_deployments(ctx, field)
 	if err != nil {
@@ -22398,6 +22540,44 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAppsOrderBy(ctx context.Context, obj interface{}) (model.AppsOrderBy, error) {
+	var it model.AppsOrderBy
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalOSort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSort(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalOAppsOrderByField2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppsOrderByField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputEnvCostFilter(ctx context.Context, obj interface{}) (model.EnvCostFilter, error) {
 	var it model.EnvCostFilter
 	asMap := map[string]interface{}{}
@@ -26925,6 +27105,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "vulnerabilitiesForTeam":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_vulnerabilitiesForTeam(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "deployments":
 			field := field
 
@@ -29504,6 +29706,44 @@ func (ec *executionContext) marshalNDate2githubᚗcomᚋnaisᚋconsoleᚑbackend
 	return graphql.WrapContextMarshaler(ctx, v)
 }
 
+func (ec *executionContext) marshalNDependencyTrack2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDependencyTrack(ctx context.Context, sel ast.SelectionSet, v []*model.DependencyTrack) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalODependencyTrack2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDependencyTrack(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) marshalNDeployInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployInfo(ctx context.Context, sel ast.SelectionSet, v model.DeployInfo) graphql.Marshaler {
 	return ec._DeployInfo(ctx, sel, &v)
 }
@@ -31281,6 +31521,30 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalOAppsOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppsOrderBy(ctx context.Context, v interface{}) (*model.AppsOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAppsOrderBy(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOAppsOrderByField2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppsOrderByField(ctx context.Context, v interface{}) (*model.AppsOrderByField, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.AppsOrderByField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAppsOrderByField2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppsOrderByField(ctx context.Context, sel ast.SelectionSet, v *model.AppsOrderByField) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) marshalOAzureApplication2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAzureApplication(ctx context.Context, sel ast.SelectionSet, v *model.AzureApplication) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -31411,6 +31675,22 @@ func (ec *executionContext) marshalOSidecar2ᚖgithubᚗcomᚋnaisᚋconsoleᚑb
 		return graphql.Null
 	}
 	return ec._Sidecar(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSort(ctx context.Context, v interface{}) (*model.Sort, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.Sort)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSort2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSort(ctx context.Context, sel ast.SelectionSet, v *model.Sort) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {

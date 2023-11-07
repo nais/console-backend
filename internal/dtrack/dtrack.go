@@ -20,13 +20,27 @@ type Client struct {
 }
 
 func New(cfg config.DTrack, errors api.Int64Counter, log *logrus.Entry) *Client {
-	c := dependencytrack.New(cfg.Endpoint, cfg.Username, cfg.Password, dependencytrack.WithLogger(log))
+	c := dependencytrack.New(
+		cfg.Endpoint,
+		cfg.Username,
+		cfg.Password,
+		dependencytrack.WithApiKeySource("Administrators"),
+		dependencytrack.WithLogger(log),
+	)
 	return &Client{
 		client:      c,
 		frontendUrl: cfg.Frontend,
 		log:         log,
 		errors:      errors,
 	}
+}
+
+func (c *Client) Init(ctx context.Context) error {
+	_, err := c.client.Headers(ctx)
+	if err != nil {
+		return fmt.Errorf("initializing DependencyTrack client: %w", err)
+	}
+	return nil
 }
 
 func (c *Client) WithClient(client dependencytrack.Client) *Client {

@@ -298,6 +298,10 @@ func setupClients(cfg *config.Config, errorsCounter met.Int64Counter, log logrus
 	teamsClient := teams.New(cfg.Teams, errorsCounter, log.WithField(loggerFieldKey, "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField(loggerFieldKey, "hookd"))
 	dtrackClient := dtrack.New(cfg.DTrack, errorsCounter, log.WithField(loggerFieldKey, "dtrack"))
+	err = dtrackClient.Init(context.Background())
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("initialize dtrack client: %w", err)
+	}
 
 	return k8sClient, teamsClient, hookdClient, dtrackClient, nil
 }
