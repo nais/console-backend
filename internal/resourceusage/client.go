@@ -6,7 +6,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/prometheus/client_golang/api"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -22,7 +21,6 @@ type clusterName string
 
 type client struct {
 	promClients map[clusterName]promv1.API
-	querier     gensql.Querier
 	log         logrus.FieldLogger
 }
 
@@ -40,7 +38,7 @@ const (
 	memoryAppRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
 )
 
-func New(clusters []string, tenant string, querier gensql.Querier, log logrus.FieldLogger) (Client, error) {
+func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, error) {
 	promClients := map[clusterName]promv1.API{}
 	for _, cluster := range clusters {
 		promClient, err := api.NewClient(api.Config{
@@ -54,7 +52,6 @@ func New(clusters []string, tenant string, querier gensql.Querier, log logrus.Fi
 
 	return &client{
 		promClients: promClients,
-		querier:     querier,
 		log:         log,
 	}, nil
 }
