@@ -144,35 +144,69 @@ func (c *Client) setHasMutualOnOutbound(ctx context.Context, oApp, oTeam, oEnv s
 		return nil
 	}
 
-	inf := c.getAppInformer(outboundEnv, outboundRule)
+	inf := c.getInformers(outboundEnv)
 	if inf == nil {
 		return nil
 	}
 
-	app, err := c.getApp(ctx, inf, outboundTeam, outboundRule, outboundEnv)
-	if app == nil {
+	app, err := c.getApp(ctx, inf, outboundEnv, outboundTeam, outboundRule.Application)
+	if err != nil {
+		c.log.Debug("no app found for inbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
+	}
+
+	naisjob, err := c.getNaisJob(ctx, inf, outboundEnv, outboundTeam, outboundRule.Application)
+	if err != nil {
+		c.log.Debug("no job found for inbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
+	}
+
+	if naisjob == nil && app == nil {
 		c.log.Debug("no app found for inbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
 		outboundRule.Mutual = false
 		outboundRule.MutualExplanation = "APP_NOT_FOUND"
 		return nil
 	}
 
-	for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
-		if inboundRuleOnOutboundApp.Cluster != "" {
-			if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
-				continue
+	if app != nil {
+		for _, inboundRuleOnOutboundApp := range app.AccessPolicy.Inbound.Rules {
+			if inboundRuleOnOutboundApp.Cluster != "" {
+				if inboundRuleOnOutboundApp.Cluster != "*" && oEnv != inboundRuleOnOutboundApp.Cluster {
+					continue
+				}
+			}
+
+			if inboundRuleOnOutboundApp.Namespace != "" {
+				if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
+					continue
+				}
+			}
+
+			if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
+				outboundRule.Mutual = true
+				return nil
 			}
 		}
+	}
 
-		if inboundRuleOnOutboundApp.Namespace != "" {
-			if inboundRuleOnOutboundApp.Namespace != "*" && oTeam != inboundRuleOnOutboundApp.Namespace {
-				continue
+	if naisjob != nil {
+		for _, inboundRuleOnOutboundJob := range naisjob.AccessPolicy.Inbound.Rules {
+			if inboundRuleOnOutboundJob.Cluster != "" {
+				if inboundRuleOnOutboundJob.Cluster != "*" && oEnv != inboundRuleOnOutboundJob.Cluster {
+					continue
+				}
 			}
-		}
 
-		if inboundRuleOnOutboundApp.Application == "*" || inboundRuleOnOutboundApp.Application == oApp {
-			outboundRule.Mutual = true
-			return nil
+			if inboundRuleOnOutboundJob.Namespace != "" {
+				if inboundRuleOnOutboundJob.Namespace != "*" && oTeam != inboundRuleOnOutboundJob.Namespace {
+					continue
+				}
+			}
+
+			if inboundRuleOnOutboundJob.Application == "*" || inboundRuleOnOutboundJob.Application == oApp {
+
+				outboundRule.Mutual = true
+				outboundRule.IsJob = true
+				return nil
+			}
 		}
 	}
 
@@ -196,6 +230,10 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 	if inboundRule.Application == "*" {
 		inboundRule.Mutual = true
 		return nil
+	} else if strings.EqualFold(inboundRule.Application, "localhost") {
+		inboundRule.Mutual = true
+		inboundRule.MutualExplanation = "LOCALHOST"
+		return nil
 	}
 
 	noZeroTrust := checkNoZeroTrust(oEnv, inboundRule)
@@ -203,35 +241,67 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 		return nil
 	}
 
-	inf := c.getAppInformer(inboundEnv, inboundRule)
+	inf := c.getInformers(inboundEnv)
 	if inf == nil {
 		return nil
 	}
 
-	app, err := c.getApp(ctx, inf, inboundTeam, inboundRule, inboundEnv)
-	if app == nil {
+	app, err := c.getApp(ctx, inf, inboundEnv, inboundTeam, inboundRule.Application)
+	if err != nil {
+		c.log.Debug("no app found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
+	}
+
+	naisjob, err := c.getNaisJob(ctx, inf, inboundEnv, inboundTeam, inboundRule.Application)
+	if err != nil {
+		c.log.Debug("no job found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
+	}
+
+	if naisjob == nil && app == nil {
 		c.log.Debug("no app found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
 		inboundRule.Mutual = false
 		inboundRule.MutualExplanation = "APP_NOT_FOUND"
 		return nil
 	}
+	if app != nil {
+		for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
+			if outboundRuleOnInboundApp.Cluster != "" {
+				if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
+					continue
+				}
+			}
 
-	for _, outboundRuleOnInboundApp := range app.AccessPolicy.Outbound.Rules {
-		if outboundRuleOnInboundApp.Cluster != "" {
-			if outboundRuleOnInboundApp.Cluster != "*" && oEnv != outboundRuleOnInboundApp.Cluster {
-				continue
+			if outboundRuleOnInboundApp.Namespace != "" {
+				if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
+					continue
+				}
+			}
+
+			if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
+				inboundRule.Mutual = true
+				return nil
 			}
 		}
+	}
 
-		if outboundRuleOnInboundApp.Namespace != "" {
-			if outboundRuleOnInboundApp.Namespace != "*" && oTeam != outboundRuleOnInboundApp.Namespace {
-				continue
+	if naisjob != nil {
+		for _, outboundRuleOnInboundJob := range naisjob.AccessPolicy.Outbound.Rules {
+			if outboundRuleOnInboundJob.Cluster != "" {
+				if outboundRuleOnInboundJob.Cluster != "*" && oEnv != outboundRuleOnInboundJob.Cluster {
+					continue
+				}
 			}
-		}
 
-		if outboundRuleOnInboundApp.Application == "*" || outboundRuleOnInboundApp.Application == oApp {
-			inboundRule.Mutual = true
-			return nil
+			if outboundRuleOnInboundJob.Namespace != "" {
+				if outboundRuleOnInboundJob.Namespace != "*" && oTeam != outboundRuleOnInboundJob.Namespace {
+					continue
+				}
+			}
+
+			if outboundRuleOnInboundJob.Application == "*" || outboundRuleOnInboundJob.Application == oApp {
+				inboundRule.Mutual = true
+				inboundRule.IsJob = true
+				return nil
+			}
 		}
 	}
 
@@ -240,12 +310,10 @@ func (c *Client) setHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv st
 	return nil
 }
 
-func (c *Client) getAppInformer(outboundEnv string, rule *model.Rule) *Informers {
+func (c *Client) getInformers(outboundEnv string) *Informers {
 	inf, ok := c.informers[outboundEnv]
-	if !ok || inf.AppInformer == nil {
+	if !ok {
 		c.log.Warn("no informers for cluster ", outboundEnv)
-		rule.MutualExplanation = "CLUSTER_NOT_FOUND"
-		rule.Mutual = false
 		return nil
 	}
 
@@ -280,23 +348,34 @@ func checkNoZeroTrust(env string, rule *model.Rule) bool {
 	return false
 }
 
-func (c *Client) getApp(ctx context.Context, inf *Informers, team string, rule *model.Rule, env string) (*model.App, error) {
-	obj, err := inf.AppInformer.Lister().ByNamespace(team).Get(rule.Application)
+func (c *Client) getApp(ctx context.Context, inf *Informers, env string, team string, app string) (*model.App, error) {
+	obj, err := inf.AppInformer.Lister().ByNamespace(team).Get(app)
 	if err != nil {
-		c.log.Infof("get application %s:%s in %s: %v", team, rule.Application, env, err)
-		rule.MutualExplanation = "APP_NOT_FOUND"
-		rule.Mutual = false
+		c.log.Infof("get application %s:%s in %s: %v", team, app, env, err)
 
 		return nil, nil
 	}
 
-	app, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
+	application, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
 	if err != nil {
-		rule.MutualExplanation = "APP_NOT_FOUND"
-		rule.Mutual = false
 		return nil, c.error(ctx, err, "converting to app")
 	}
-	return app, nil
+	return application, nil
+}
+
+func (c *Client) getNaisJob(ctx context.Context, inf *Informers, env, team, job string) (*model.NaisJob, error) {
+	obj, err := inf.NaisjobInformer.Lister().ByNamespace(team).Get(job)
+	if err != nil {
+		c.log.Infof("get naisjob %s:%s in %s: %v", team, job, env, err)
+
+		return nil, nil
+	}
+
+	naisjob, err := c.ToNaisJob(obj.(*unstructured.Unstructured), env)
+	if err != nil {
+		return nil, c.error(ctx, err, "converting to naisjob")
+	}
+	return naisjob, nil
 }
 
 func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]model.Topic, error) {

@@ -121,7 +121,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 				if rank == -1 {
 					continue
 				}
-				job, err := toNaisJob(u, env)
+				job, err := c.ToNaisJob(u, env)
 				if err != nil {
 					c.error(ctx, err, "converting to job")
 					return nil
