@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -18,43 +17,5 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 	if err != nil {
 		return nil, err
 	}
-
-	var resolution model.Resolution
-	duration := end.Sub(start)
-	if duration > 7*24*time.Hour {
-		resolution = model.ResolutionDaily
-	} else {
-		resolution = model.ResolutionHourly
-	}
-
-	step := 24 * time.Hour
-	if resolution == model.ResolutionHourly {
-		step = time.Hour
-	}
-
-	return r.resourceUsageClient.UtilizationForApp(ctx, resource, resolution, env, team, app, start, end, step)
-}
-
-// ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
-func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource model.ResourceType, team string) (*model.ResourceUtilizationForTeam, error) {
-	resp := &model.ResourceUtilizationForTeam{}
-	for _, env := range r.clusters {
-		values, err := r.resourceUsageClient.UtilizationForTeam(ctx, resource, env, team)
-		if err != nil {
-			return nil, err
-		}
-		m := model.ResourceUtilizationForEnv{
-			Env:    env,
-			Values: values,
-		}
-		for _, v := range values {
-			m.SumUsageCost += v.UsageCost
-			m.SumRequestCost += v.RequestCost
-		}
-		resp.SumUsageCost += m.SumUsageCost
-		resp.SumRequestCost += m.SumRequestCost
-		resp.Envs = append(resp.Envs, m)
-	}
-
-	return resp, nil
+	return r.resourceUsageClient.UtilizationForApp(ctx, resource, env, team, app, start, end)
 }

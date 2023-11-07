@@ -19,49 +19,33 @@ extend type Query {
         "Fetch resource utilization until this date. Defaults to today."
         to: Date
     ): [ResourceUtilization!]!
-
-    "Get the resource utilization for a team, across all environments for the last 30 days."
-    resourceUtilizationForTeam(
-        "Resource type."
-        resource: ResourceType!
-
-        "The name of the team."
-        team: String!
-    ): ResourceUtilizationForTeam!
 }
 
-type ResourceUtilizationForTeam {
-    sumUsageCost: Float!
-    sumRequestCost: Float!
-    envs: [ResourceUtilizationForEnv!]!
-}
+"Resource utilization pod usage type."
+type ResourceUtilizationPodUsage {
+    "The name of the pod."
+    pod: String!
 
-type ResourceUtilizationForEnv {
-    env: String!
-    sumUsageCost: Float!
-    sumRequestCost: Float!
-    values: [ResourceUtilization!]!
+    "The actual resource usage."
+    usage: Float!
 }
 
 "Resource utilization type."
 type ResourceUtilization {
+    "Resource type."
+    resource: ResourceType!
+
     "Timestamp of the value."
     timestamp: Time!
 
-    "The requested resource amount."
+    "The requested resource amount per pod."
     request: Float!
 
-    "The cost of the requested resource amount."
-    requestCost: Float!
+    "The total requested resource amount."
+    requestTotal: Float!
 
     "The actual resource usage."
-    usage: Float!
-
-    "The cost of the actual resource usage."
-    usageCost: Float!
-
-    "The requested resource amount divided by the actual resource usage."
-    requestedFactor: Float!
+    pods: [ResourceUtilizationPodUsage!]!
 }
 
 "Resource type."

@@ -770,31 +770,24 @@ type Requests struct {
 
 // Resource utilization type.
 type ResourceUtilization struct {
+	// Resource type.
+	Resource ResourceType `json:"resource"`
 	// Timestamp of the value.
 	Timestamp time.Time `json:"timestamp"`
-	// The requested resource amount.
+	// The requested resource amount per pod.
 	Request float64 `json:"request"`
-	// The cost of the requested resource amount.
-	RequestCost float64 `json:"requestCost"`
+	// The total requested resource amount.
+	RequestTotal float64 `json:"requestTotal"`
+	// The actual resource usage.
+	Pods []ResourceUtilizationPodUsage `json:"pods"`
+}
+
+// Resource utilization pod usage type.
+type ResourceUtilizationPodUsage struct {
+	// The name of the pod.
+	Pod string `json:"pod"`
 	// The actual resource usage.
 	Usage float64 `json:"usage"`
-	// The cost of the actual resource usage.
-	UsageCost float64 `json:"usageCost"`
-	// The requested resource amount divided by the actual resource usage.
-	RequestedFactor float64 `json:"requestedFactor"`
-}
-
-type ResourceUtilizationForEnv struct {
-	Env            string                `json:"env"`
-	SumUsageCost   float64               `json:"sumUsageCost"`
-	SumRequestCost float64               `json:"sumRequestCost"`
-	Values         []ResourceUtilization `json:"values"`
-}
-
-type ResourceUtilizationForTeam struct {
-	SumUsageCost   float64                     `json:"sumUsageCost"`
-	SumRequestCost float64                     `json:"sumRequestCost"`
-	Envs           []ResourceUtilizationForEnv `json:"envs"`
 }
 
 type Resources struct {

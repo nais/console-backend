@@ -15,7 +15,7 @@ import (
 )
 
 type Client interface {
-	UtilizationForApp(ctx context.Context, resource model.ResourceType, resolution model.Resolution, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error)
+	UtilizationForApp(ctx context.Context, resource model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error)
 }
 
 type clusterName string
@@ -59,7 +59,12 @@ func New(clusters []string, tenant string, querier gensql.Querier, log logrus.Fi
 	}, nil
 }
 
-func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, resolution model.Resolution, env, team, app string, start, end time.Time, step time.Duration) ([]model.ResourceUtilization, error) {
+func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {
+	step := 24 * time.Hour
+	if end.Sub(start) < 7*24*time.Hour {
+		step = time.Hour
+	}
+
 	promClient, exists := c.promClients[clusterName(env)]
 	if !exists {
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
