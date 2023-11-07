@@ -1,26 +1,3 @@
-extend type Query {
-    vulnerabilitiesForTeam(
-        "The name of the team to get vulnerabilities for."
-        team: String!
-
-        "Returns the first n entries from the list."
-        first: Int
-
-        "Returns the last n entries from the list."
-        last: Int
-
-        "Get entries after the cursor."
-        after: Cursor
-
-        "Get entries before the cursor."
-        before: Cursor
-
-        "Order apps by"
-        orderBy: AppsOrderBy
-
-    ): [DependencyTrack]!
-}
-
 input AppsOrderBy {
     "Order direction"
     direction: Sort
@@ -48,13 +25,31 @@ enum Sort {
     DESC
 }
 
+type VulnerabilitiesConnection implements Connection {
+    totalCount: Int!
+    pageInfo: PageInfo!
+    edges: [VulnerabilitiesEdge!]!
+}
 
-type DependencyTrack {
+type VulnerabilitiesEdge implements Edge {
+    cursor: Cursor!
+    node: VulnerabilitiesNode!
+}
+
+type VulnerabilitiesNode implements Node {
+    id: ID!
+    appName: String!
+    env: String!
+    project: DependencyTrack
+}
+
+type DependencyTrack implements Node {
+    id: ID!
     projectUUID: String!
     projectName: String!
     findingsLink: String!
     vulnerabilities: [Vulnerability!]
-    summary: VulnerabilitySummary!
+    summary: VulnerabilitySummary
 }
 
 type VulnerabilitySummary {

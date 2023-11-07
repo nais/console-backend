@@ -250,12 +250,18 @@ type DatabaseUser struct {
 }
 
 type DependencyTrack struct {
-	ProjectUUID     string               `json:"projectUUID"`
-	ProjectName     string               `json:"projectName"`
-	FindingsLink    string               `json:"findingsLink"`
-	Vulnerabilities []Vulnerability      `json:"vulnerabilities,omitempty"`
-	Summary         VulnerabilitySummary `json:"summary"`
+	ID              scalar.Ident          `json:"id"`
+	ProjectUUID     string                `json:"projectUUID"`
+	ProjectName     string                `json:"projectName"`
+	FindingsLink    string                `json:"findingsLink"`
+	Vulnerabilities []Vulnerability       `json:"vulnerabilities,omitempty"`
+	Summary         *VulnerabilitySummary `json:"summary,omitempty"`
 }
+
+func (DependencyTrack) IsNode() {}
+
+// The unique ID of an object.
+func (this DependencyTrack) GetID() scalar.Ident { return this.ID }
 
 type DeployInfo struct {
 	Deployer  string             `json:"deployer"`
@@ -920,6 +926,8 @@ type Team struct {
 	ViewerIsMember bool `json:"viewerIsMember"`
 	// Whether or not the viewer is an administrator of the team.
 	ViewerIsAdmin bool `json:"viewerIsAdmin"`
+	// The vulnerabilities for the team's applications.
+	VulnerabilitiesForTeam VulnerabilitiesConnection `json:"vulnerabilitiesForTeam"`
 }
 
 func (Team) IsSearchNode() {}
@@ -1063,6 +1071,54 @@ type Variable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
+
+type VulnerabilitiesConnection struct {
+	TotalCount int                   `json:"totalCount"`
+	PageInfo   PageInfo              `json:"pageInfo"`
+	Edges      []VulnerabilitiesEdge `json:"edges"`
+}
+
+func (VulnerabilitiesConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this VulnerabilitiesConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this VulnerabilitiesConnection) GetPageInfo() PageInfo { return this.PageInfo }
+
+// A list of edges.
+func (this VulnerabilitiesConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
+type VulnerabilitiesEdge struct {
+	Cursor scalar.Cursor       `json:"cursor"`
+	Node   VulnerabilitiesNode `json:"node"`
+}
+
+func (VulnerabilitiesEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this VulnerabilitiesEdge) GetCursor() scalar.Cursor { return this.Cursor }
+
+type VulnerabilitiesNode struct {
+	ID      scalar.Ident     `json:"id"`
+	AppName string           `json:"appName"`
+	Env     string           `json:"env"`
+	Project *DependencyTrack `json:"project,omitempty"`
+}
+
+func (VulnerabilitiesNode) IsNode() {}
+
+// The unique ID of an object.
+func (this VulnerabilitiesNode) GetID() scalar.Ident { return this.ID }
 
 type Vulnerability struct {
 	ID            string `json:"id"`

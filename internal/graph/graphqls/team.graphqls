@@ -170,6 +170,25 @@ type Team implements Node {
 
     "Whether or not the viewer is an administrator of the team."
     viewerIsAdmin: Boolean! @goField(forceResolver: true)
+
+    "The vulnerabilities for the team's applications."
+    vulnerabilitiesForTeam(
+        "Returns the first n entries from the list."
+        first: Int
+
+        "Returns the last n entries from the list."
+        last: Int
+
+        "Get entries after the cursor."
+        after: Cursor
+
+        "Get entries before the cursor."
+        before: Cursor
+
+        "Order apps by"
+        orderBy: AppsOrderBy
+
+    ): VulnerabilitiesConnection! @goField(forceResolver: true)
 }
 
 "Deployment key type."

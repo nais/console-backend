@@ -352,6 +352,68 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 	return false, nil
 }
 
+// VulnerabilitiesForTeam is the resolver for the vulnerabilitiesForTeam field.
+func (r *teamResolver) VulnerabilitiesForTeam(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.AppsOrderBy) (*model.VulnerabilitiesConnection, error) {
+	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
+	}
+
+	nodes := make([]*model.VulnerabilitiesNode, 0)
+	for _, app := range apps {
+		nodes = append(nodes, &model.VulnerabilitiesNode{
+			ID:      scalar.DependencyTrackIdent(app.Image),
+			Env:     app.Env.Name,
+			AppName: app.Name,
+		})
+	}
+
+	err = r.dtrackClient.AddFindings(ctx, obj.Name, nodes)
+	if err != nil {
+		return nil, fmt.Errorf("getting vulnerabilities from DependencyTrack: %w", err)
+	}
+
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
+	edges := make([]model.VulnerabilitiesEdge, 0)
+	start, end := pagination.ForSlice(len(nodes))
+
+	for i, n := range nodes[start:end] {
+		edges = append(edges, model.VulnerabilitiesEdge{
+			Cursor: scalar.Cursor{Offset: start + i},
+			Node:   *n,
+		})
+	}
+
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
+	if len(edges) > 0 {
+		startCursor = &edges[0].Cursor
+		endCursor = &edges[len(edges)-1].Cursor
+	}
+
+	hasNext := len(nodes) > pagination.First()+pagination.After().Offset+1
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
+
+	return &model.VulnerabilitiesConnection{
+		TotalCount: len(nodes),
+		Edges:      edges,
+		PageInfo: model.PageInfo{
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
