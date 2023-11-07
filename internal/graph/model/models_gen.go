@@ -779,6 +779,7 @@ type Rule struct {
 	Cluster           string `json:"cluster"`
 	Mutual            bool   `json:"mutual"`
 	MutualExplanation string `json:"mutualExplanation"`
+	IsJob             bool   `json:"isJob"`
 }
 
 type Run struct {
