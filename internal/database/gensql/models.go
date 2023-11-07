@@ -79,18 +79,7 @@ type Cost struct {
 	DailyCost float32
 }
 
-type HighresResourceUtilizationMetric struct {
-	ID           int32
-	Date         pgtype.Date
-	Env          *string
-	Team         *string
-	App          *string
-	ResourceType ResourceType
-	Usage        float32
-	Request      float32
-}
-
-type LowresResourceUtilizationMetric struct {
+type ResourceUtilizationMetric struct {
 	ID           int32
 	Date         pgtype.Date
 	Env          *string
