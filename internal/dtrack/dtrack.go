@@ -88,7 +88,7 @@ func (c *Client) AddFindings(ctx context.Context, nodes []*model.Vulnerabilities
 				return
 			}
 			if d == nil {
-				c.log.Debugf("no retrieveFindings found in DependencyTrack for app %q", app.ID())
+				c.log.Debugf("no findings found in DependencyTrack for app %q", app.ID())
 				return
 			}
 			dts = append(dts, d)
@@ -125,7 +125,7 @@ func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.D
 		return nil, err
 	}
 	if d == nil {
-		c.log.Debugf("no retrieveFindings found in DependencyTrack for project %s", p.Name)
+		c.log.Debugf("no findings found in DependencyTrack for project %s", p.Name)
 		return nil, nil
 	}
 	c.cache.Set(app.ID(), d, cache.DefaultExpiration)
@@ -134,11 +134,11 @@ func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.D
 
 func (c *Client) retrieveFindings(ctx context.Context, uuid, name string) (*model.DependencyTrack, error) {
 	u := strings.TrimSuffix(c.frontendUrl, "/")
-	findingsLink := fmt.Sprintf("%s/projects/%s/retrieveFindings", u, uuid)
+	findingsLink := fmt.Sprintf("%s/projects/%s/findings", u, uuid)
 
 	findings, err := c.client.GetFindings(ctx, uuid)
 	if err != nil {
-		return nil, fmt.Errorf("getting retrieveFindings from DependencyTrack: %w", err)
+		return nil, fmt.Errorf("retrieveFindings from DependencyTrack: %w", err)
 	}
 
 	var low, medium, high, critical, unassigned int
