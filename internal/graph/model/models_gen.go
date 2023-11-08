@@ -777,14 +777,6 @@ type ResourceUtilization struct {
 	// The requested resource amount per pod.
 	Request float64 `json:"request"`
 	// The actual resource usage.
-	Pods []ResourceUtilizationPodUsage `json:"pods"`
-}
-
-// Resource utilization pod usage type.
-type ResourceUtilizationPodUsage struct {
-	// The name of the pod.
-	Pod string `json:"pod"`
-	// The actual resource usage.
 	Usage float64 `json:"usage"`
 }
 

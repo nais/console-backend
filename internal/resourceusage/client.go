@@ -14,6 +14,7 @@ import (
 )
 
 type Client interface {
+	// UtilizationForApp returns resource utilization for the given app, in the given time range
 	UtilizationForApp(ctx context.Context, resource model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error)
 }
 
@@ -24,20 +25,16 @@ type client struct {
 	log         logrus.FieldLogger
 }
 
-type utilizationMap map[time.Time]*metrics
-
-type metrics struct {
-	request float64
-	pods    map[string]float64
-}
+type utilizationMap map[time.Time]*model.ResourceUtilization
 
 const (
-	cpuAppUsageQuery      = `rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[5m])`
+	cpuAppUsageQuery      = `max(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[5m]))`
 	cpuAppRequestQuery    = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"})`
-	memoryAppUsageQuery   = `container_memory_working_set_bytes{namespace=%q, container=%q}`
+	memoryAppUsageQuery   = `max(container_memory_working_set_bytes{namespace=%q, container=%q})`
 	memoryAppRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
 )
 
+// New creates a new resourceusage client
 func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, error) {
 	promClients := map[clusterName]promv1.API{}
 	for _, cluster := range clusters {
@@ -57,56 +54,44 @@ func New(clusters []string, tenant string, log logrus.FieldLogger) (Client, erro
 }
 
 func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {
-	step := 24 * time.Hour
-	if end.Sub(start) < 7*24*time.Hour {
-		step = time.Hour
-	}
-
 	promClient, exists := c.promClients[clusterName(env)]
 	if !exists {
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
 	}
 
-	usageQuery, requestQuery := getAppQueries(resourceType, team, app)
-	series, err := rangedQuery(ctx, promClient, usageQuery, start, end, step)
-	if err != nil {
-		return nil, err
-	}
-
+	usageQuery, requestQuery := getQueries(resourceType, team, app)
 	utilization := make(utilizationMap)
-	for _, pod := range series {
-		podName := string(pod.Metric["pod"])
-		if podName == "" {
-			podName = "<unknown>"
-		}
-		for _, val := range pod.Values {
-			ts := val.Timestamp.Time()
-			if _, exists := utilization[ts]; !exists {
-				utilization[ts] = &metrics{
-					pods: make(map[string]float64),
-				}
-			}
-			utilization[ts].pods[podName] = float64(val.Value)
-		}
-	}
 
-	series, err = rangedQuery(ctx, promClient, requestQuery, start, end, step)
+	samples, err := rangedQuery(ctx, promClient, usageQuery, start, end)
 	if err != nil {
 		return nil, err
 	}
-	for _, val := range series[0].Values {
+	for _, val := range samples {
 		ts := val.Timestamp.Time()
-		v := float64(val.Value)
+		utilization[ts] = &model.ResourceUtilization{
+			Timestamp: ts,
+			Resource:  resourceType,
+			Usage:     float64(val.Value),
+		}
+	}
+
+	samples, err = rangedQuery(ctx, promClient, requestQuery, start, end)
+	if err != nil {
+		return nil, err
+	}
+	for _, val := range samples {
+		ts := val.Timestamp.Time()
 		if _, exists := utilization[ts]; !exists {
 			continue
 		}
-		utilization[ts].request = v
+		utilization[ts].Request = float64(val.Value)
 	}
 
-	return utilizationMapToResourceUtilization(utilization, resourceType), nil
+	return mapToResourceUtilization(utilization), nil
 }
 
-func utilizationMapToResourceUtilization(utilization utilizationMap, resourceType model.ResourceType) []model.ResourceUtilization {
+// mapToResourceUtilization converts a utilizationMap to []model.ResourceUtilization, sorted by timestamp
+func mapToResourceUtilization(utilization utilizationMap) []model.ResourceUtilization {
 	timestamps := make([]time.Time, 0)
 	for ts := range utilization {
 		timestamps = append(timestamps, ts)
@@ -117,26 +102,16 @@ func utilizationMapToResourceUtilization(utilization utilizationMap, resourceTyp
 
 	ret := make([]model.ResourceUtilization, 0)
 	for _, ts := range timestamps {
-		pods := make([]model.ResourceUtilizationPodUsage, 0)
-		for podName, usage := range utilization[ts].pods {
-			pods = append(pods, model.ResourceUtilizationPodUsage{
-				Pod:   podName,
-				Usage: usage,
-			})
+		if _, exists := utilization[ts]; !exists {
+			continue
 		}
-
-		req := utilization[ts].request
-		ret = append(ret, model.ResourceUtilization{
-			Resource:  resourceType,
-			Timestamp: ts,
-			Request:   req,
-			Pods:      pods,
-		})
+		ret = append(ret, *utilization[ts])
 	}
 	return ret
 }
 
-func getAppQueries(resourceType model.ResourceType, team string, app string) (usageQuery, requestQuery string) {
+// getQueries returns the prometheus queries for the given resource type
+func getQueries(resourceType model.ResourceType, team, app string) (usageQuery, requestQuery string) {
 	if resourceType == model.ResourceTypeCPU {
 		usageQuery = cpuAppUsageQuery
 		requestQuery = cpuAppRequestQuery
@@ -147,15 +122,34 @@ func getAppQueries(resourceType model.ResourceType, team string, app string) (us
 	return fmt.Sprintf(usageQuery, team, app), fmt.Sprintf(requestQuery, team, app)
 }
 
-func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time, step time.Duration) (prom.Matrix, error) {
+// rangedQuery queries prometheus for the given query, in the given time range.
+func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time) ([]prom.SamplePair, error) {
 	value, _, err := client.QueryRange(ctx, query, promv1.Range{
-		Start: time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, time.UTC),
-		End:   time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, time.UTC),
-		Step:  step,
+		Start: time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location()),
+		End:   time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, end.Location()),
+		Step:  getStep(start, end),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return value.(prom.Matrix), nil
+	matrix, ok := value.(prom.Matrix)
+	if !ok {
+		return nil, fmt.Errorf("expected prometheus matrix, got %T", value)
+	}
+
+	if len(matrix) == 0 {
+		return nil, fmt.Errorf("no data found")
+	}
+
+	return matrix[0].Values, nil
+}
+
+// getStep returns the step to use for the given time range
+func getStep(start, end time.Time) time.Duration {
+	step := 24 * time.Hour
+	if end.Sub(start) < 7*24*time.Hour {
+		step = time.Hour
+	}
+	return step
 }
