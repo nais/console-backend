@@ -31,6 +31,8 @@ const (
 	cpuAppRequestQuery    = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"})`
 	memoryAppUsageQuery   = `max(container_memory_working_set_bytes{namespace=%q, container=%q})`
 	memoryAppRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
+
+	highResolutionStep = time.Hour
 )
 
 // New creates a new resourceusage client
@@ -61,8 +63,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 	usageQuery, requestQuery := getQueries(resourceType, team, app)
 	utilization := make(utilizationMap)
 
-	step := getStep(start, end)
-	samples, err := rangedQuery(ctx, promClient, usageQuery, start, end, step)
+	samples, err := rangedQuery(ctx, promClient, usageQuery, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 		}
 	}
 
-	samples, err = rangedQuery(ctx, promClient, requestQuery, start, end, step)
+	samples, err = rangedQuery(ctx, promClient, requestQuery, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -87,15 +88,15 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 		utilization[ts].Request = float64(val.Value)
 	}
 
-	return mapToResourceUtilization(utilization, resourceType, start, end, step), nil
+	return mapToResourceUtilization(utilization, resourceType, start, end), nil
 }
 
 // mapToResourceUtilization converts a utilizationMap to []model.ResourceUtilization, sorted by timestamp
-func mapToResourceUtilization(utilization utilizationMap, resourceType model.ResourceType, start, end time.Time, step time.Duration) []model.ResourceUtilization {
+func mapToResourceUtilization(utilization utilizationMap, resourceType model.ResourceType, start, end time.Time) []model.ResourceUtilization {
 	// fill in potential gaps in the time range
 	timestamps := make([]time.Time, 0)
 	ts := start
-	for ; ts.Before(end); ts = ts.Add(step) {
+	for ; ts.Before(end); ts = ts.Add(highResolutionStep) {
 		timestamps = append(timestamps, ts)
 	}
 	timestamps = append(timestamps, ts)
@@ -129,11 +130,11 @@ func getQueries(resourceType model.ResourceType, team, app string) (usageQuery, 
 }
 
 // rangedQuery queries prometheus for the given query, in the given time range.
-func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time, step time.Duration) ([]prom.SamplePair, error) {
+func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time) ([]prom.SamplePair, error) {
 	value, _, err := client.QueryRange(ctx, query, promv1.Range{
 		Start: time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, time.UTC),
 		End:   time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, time.UTC),
-		Step:  step,
+		Step:  highResolutionStep,
 	})
 	if err != nil {
 		return nil, err
@@ -149,13 +150,4 @@ func rangedQuery(ctx context.Context, client promv1.API, query string, start, en
 	}
 
 	return matrix[0].Values, nil
-}
-
-// getStep returns the step to use for the given time range
-func getStep(start, end time.Time) time.Duration {
-	step := 24 * time.Hour
-	if end.Sub(start) < 7*24*time.Hour {
-		step = time.Hour
-	}
-	return step
 }
