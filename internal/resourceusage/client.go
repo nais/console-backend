@@ -3,7 +3,6 @@ package resourceusage
 import (
 	"context"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/model"
@@ -62,12 +61,13 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 	usageQuery, requestQuery := getQueries(resourceType, team, app)
 	utilization := make(utilizationMap)
 
-	samples, err := rangedQuery(ctx, promClient, usageQuery, start, end)
+	step := getStep(start, end)
+	samples, err := rangedQuery(ctx, promClient, usageQuery, start, end, step)
 	if err != nil {
 		return nil, err
 	}
 	for _, val := range samples {
-		ts := val.Timestamp.Time()
+		ts := val.Timestamp.Time().UTC()
 		utilization[ts] = &model.ResourceUtilization{
 			Timestamp: ts,
 			Resource:  resourceType,
@@ -75,37 +75,43 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 		}
 	}
 
-	samples, err = rangedQuery(ctx, promClient, requestQuery, start, end)
+	samples, err = rangedQuery(ctx, promClient, requestQuery, start, end, step)
 	if err != nil {
 		return nil, err
 	}
 	for _, val := range samples {
-		ts := val.Timestamp.Time()
+		ts := val.Timestamp.Time().UTC()
 		if _, exists := utilization[ts]; !exists {
 			continue
 		}
 		utilization[ts].Request = float64(val.Value)
 	}
 
-	return mapToResourceUtilization(utilization), nil
+	return mapToResourceUtilization(utilization, resourceType, start, end, step), nil
 }
 
 // mapToResourceUtilization converts a utilizationMap to []model.ResourceUtilization, sorted by timestamp
-func mapToResourceUtilization(utilization utilizationMap) []model.ResourceUtilization {
+func mapToResourceUtilization(utilization utilizationMap, resourceType model.ResourceType, start, end time.Time, step time.Duration) []model.ResourceUtilization {
+	// fill in potential gaps in the time range
 	timestamps := make([]time.Time, 0)
-	for ts := range utilization {
+	ts := start
+	for ; ts.Before(end); ts = ts.Add(step) {
 		timestamps = append(timestamps, ts)
 	}
-	sort.Slice(timestamps, func(i, j int) bool {
-		return timestamps[i].Before(timestamps[j])
-	})
+	timestamps = append(timestamps, ts)
 
 	ret := make([]model.ResourceUtilization, 0)
 	for _, ts := range timestamps {
-		if _, exists := utilization[ts]; !exists {
-			continue
+		ut, exists := utilization[ts]
+		if !exists {
+			ut = &model.ResourceUtilization{
+				Timestamp: ts,
+				Resource:  resourceType,
+				Request:   0,
+				Usage:     0,
+			}
 		}
-		ret = append(ret, *utilization[ts])
+		ret = append(ret, *ut)
 	}
 	return ret
 }
@@ -123,11 +129,11 @@ func getQueries(resourceType model.ResourceType, team, app string) (usageQuery, 
 }
 
 // rangedQuery queries prometheus for the given query, in the given time range.
-func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time) ([]prom.SamplePair, error) {
+func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time, step time.Duration) ([]prom.SamplePair, error) {
 	value, _, err := client.QueryRange(ctx, query, promv1.Range{
-		Start: time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location()),
-		End:   time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, end.Location()),
-		Step:  getStep(start, end),
+		Start: time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, time.UTC),
+		End:   time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, time.UTC),
+		Step:  step,
 	})
 	if err != nil {
 		return nil, err
