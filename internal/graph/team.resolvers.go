@@ -352,8 +352,8 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 	return false, nil
 }
 
-// VulnerabilitiesForTeam is the resolver for the vulnerabilitiesForTeam field.
-func (r *teamResolver) VulnerabilitiesForTeam(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.AppsOrderBy) (*model.VulnerabilitiesConnection, error) {
+// Vulnerabilities is the resolver for the vulnerabilities field.
+func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.VulnerabilitiesOrderBy) (*model.VulnerabilitiesConnection, error) {
 	apps, err := r.k8sClient.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
@@ -362,15 +362,21 @@ func (r *teamResolver) VulnerabilitiesForTeam(ctx context.Context, obj *model.Te
 	nodes := make([]*model.VulnerabilitiesNode, 0)
 	for _, app := range apps {
 		nodes = append(nodes, &model.VulnerabilitiesNode{
-			ID:      scalar.DependencyTrackIdent(app.Image),
+			ID:      scalar.DependencyTrackIdent(fmt.Sprintf("%s:%s:%s:%s", app.Env.Name, obj.Name, app.Name, app.Image)),
 			Env:     app.Env.Name,
 			AppName: app.Name,
+			Image:   app.Image,
+			Team:    obj.Name,
 		})
 	}
 
-	err = r.dtrackClient.AddFindings(ctx, obj.Name, nodes)
+	err = r.dtrackClient.AddFindings(ctx, nodes)
 	if err != nil {
 		return nil, fmt.Errorf("getting vulnerabilities from DependencyTrack: %w", err)
+	}
+
+	if orderBy != nil {
+		nodes = model.NewSortableVulnerabilities(nodes, orderBy).Sort()
 	}
 
 	pagination, err := model.NewPagination(first, last, after, before)

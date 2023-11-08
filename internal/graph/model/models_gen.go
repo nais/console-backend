@@ -149,12 +149,6 @@ type AppState struct {
 	Errors []StateError `json:"errors"`
 }
 
-type AppsOrderBy struct {
-	// Order direction
-	Direction *Sort             `json:"direction,omitempty"`
-	Field     *AppsOrderByField `json:"field,omitempty"`
-}
-
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent
@@ -927,7 +921,7 @@ type Team struct {
 	// Whether or not the viewer is an administrator of the team.
 	ViewerIsAdmin bool `json:"viewerIsAdmin"`
 	// The vulnerabilities for the team's applications.
-	VulnerabilitiesForTeam VulnerabilitiesConnection `json:"vulnerabilitiesForTeam"`
+	Vulnerabilities VulnerabilitiesConnection `json:"vulnerabilities"`
 }
 
 func (Team) IsSearchNode() {}
@@ -1111,7 +1105,9 @@ func (this VulnerabilitiesEdge) GetCursor() scalar.Cursor { return this.Cursor }
 type VulnerabilitiesNode struct {
 	ID      scalar.Ident     `json:"id"`
 	AppName string           `json:"appName"`
+	Team    string           `json:"team"`
 	Env     string           `json:"env"`
+	Image   string           `json:"image"`
 	Project *DependencyTrack `json:"project,omitempty"`
 }
 
@@ -1119,6 +1115,12 @@ func (VulnerabilitiesNode) IsNode() {}
 
 // The unique ID of an object.
 func (this VulnerabilitiesNode) GetID() scalar.Ident { return this.ID }
+
+type VulnerabilitiesOrderBy struct {
+	// Order direction
+	Direction Sort                        `json:"direction"`
+	Field     VulnerabilitiesOrderByField `json:"field"`
+}
 
 type Vulnerability struct {
 	ID            string `json:"id"`
@@ -1135,58 +1137,6 @@ type VulnerabilitySummary struct {
 	Medium     int `json:"medium"`
 	Low        int `json:"low"`
 	Unassigned int `json:"unassigned"`
-}
-
-type AppsOrderByField string
-
-const (
-	// Order apps by name.
-	AppsOrderByFieldName AppsOrderByField = "NAME"
-	// Order apps by vulnerability severity critical
-	AppsOrderByFieldSeverityCritical AppsOrderByField = "SEVERITY_CRITICAL"
-	// Order apps by vulnerability severity high
-	AppsOrderByFieldSeverityHigh AppsOrderByField = "SEVERITY_HIGH"
-	// Order apps by vulnerability severity medium
-	AppsOrderByFieldSeverityMedium AppsOrderByField = "SEVERITY_MEDIUM"
-	// Order apps by vulnerability severity low
-	AppsOrderByFieldSeverityLow AppsOrderByField = "SEVERITY_LOW"
-)
-
-var AllAppsOrderByField = []AppsOrderByField{
-	AppsOrderByFieldName,
-	AppsOrderByFieldSeverityCritical,
-	AppsOrderByFieldSeverityHigh,
-	AppsOrderByFieldSeverityMedium,
-	AppsOrderByFieldSeverityLow,
-}
-
-func (e AppsOrderByField) IsValid() bool {
-	switch e {
-	case AppsOrderByFieldName, AppsOrderByFieldSeverityCritical, AppsOrderByFieldSeverityHigh, AppsOrderByFieldSeverityMedium, AppsOrderByFieldSeverityLow:
-		return true
-	}
-	return false
-}
-
-func (e AppsOrderByField) String() string {
-	return string(e)
-}
-
-func (e *AppsOrderByField) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = AppsOrderByField(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid AppsOrderByField", str)
-	}
-	return nil
-}
-
-func (e AppsOrderByField) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type ErrorLevel string
@@ -1447,5 +1397,60 @@ func (e *TeamRole) UnmarshalGQL(v interface{}) error {
 }
 
 func (e TeamRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type VulnerabilitiesOrderByField string
+
+const (
+	// Order by appName.
+	VulnerabilitiesOrderByFieldAppName VulnerabilitiesOrderByField = "APP_NAME"
+	// Order by env.
+	VulnerabilitiesOrderByFieldEnvName VulnerabilitiesOrderByField = "ENV_NAME"
+	// Order apps by vulnerability severity critical
+	VulnerabilitiesOrderByFieldSeverityCritical VulnerabilitiesOrderByField = "SEVERITY_CRITICAL"
+	// Order apps by vulnerability severity high
+	VulnerabilitiesOrderByFieldSeverityHigh VulnerabilitiesOrderByField = "SEVERITY_HIGH"
+	// Order apps by vulnerability severity medium
+	VulnerabilitiesOrderByFieldSeverityMedium VulnerabilitiesOrderByField = "SEVERITY_MEDIUM"
+	// Order apps by vulnerability severity low
+	VulnerabilitiesOrderByFieldSeverityLow VulnerabilitiesOrderByField = "SEVERITY_LOW"
+)
+
+var AllVulnerabilitiesOrderByField = []VulnerabilitiesOrderByField{
+	VulnerabilitiesOrderByFieldAppName,
+	VulnerabilitiesOrderByFieldEnvName,
+	VulnerabilitiesOrderByFieldSeverityCritical,
+	VulnerabilitiesOrderByFieldSeverityHigh,
+	VulnerabilitiesOrderByFieldSeverityMedium,
+	VulnerabilitiesOrderByFieldSeverityLow,
+}
+
+func (e VulnerabilitiesOrderByField) IsValid() bool {
+	switch e {
+	case VulnerabilitiesOrderByFieldAppName, VulnerabilitiesOrderByFieldEnvName, VulnerabilitiesOrderByFieldSeverityCritical, VulnerabilitiesOrderByFieldSeverityHigh, VulnerabilitiesOrderByFieldSeverityMedium, VulnerabilitiesOrderByFieldSeverityLow:
+		return true
+	}
+	return false
+}
+
+func (e VulnerabilitiesOrderByField) String() string {
+	return string(e)
+}
+
+func (e *VulnerabilitiesOrderByField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = VulnerabilitiesOrderByField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid VulnerabilitiesOrderByField", str)
+	}
+	return nil
+}
+
+func (e VulnerabilitiesOrderByField) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

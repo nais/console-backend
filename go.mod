@@ -13,6 +13,7 @@ require (
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/nais/dependencytrack v0.0.0-20230608082404-d08d7554dab4
 	github.com/nais/liberator v0.0.0-20231018185127-3afb82cb17e8
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pressly/goose/v3 v3.15.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/rs/cors v1.10.1

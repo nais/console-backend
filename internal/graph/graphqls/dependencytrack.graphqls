@@ -1,12 +1,14 @@
-input AppsOrderBy {
+input VulnerabilitiesOrderBy {
     "Order direction"
-    direction: Sort
-    field: AppsOrderByField
+    direction: Sort!
+    field: VulnerabilitiesOrderByField!
 }
 
-enum AppsOrderByField {
-    "Order apps by name."
-    NAME
+enum VulnerabilitiesOrderByField {
+    "Order by appName."
+    APP_NAME
+    "Order by env."
+    ENV_NAME
     "Order apps by vulnerability severity critical"
     SEVERITY_CRITICAL
     "Order apps by vulnerability severity high"
@@ -39,7 +41,9 @@ type VulnerabilitiesEdge implements Edge {
 type VulnerabilitiesNode implements Node {
     id: ID!
     appName: String!
+    team: String!
     env: String!
+    image: String!
     project: DependencyTrack
 }
 

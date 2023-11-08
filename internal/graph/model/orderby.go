@@ -1,52 +1,58 @@
 package model
 
-import (
-	"sort"
-)
+import "sort"
 
-type SortableApps struct {
-	orderBy *AppsOrderBy
-	apps    []*App
+type SortableVulnerabilities struct {
+	orderBy *VulnerabilitiesOrderBy
+	nodes   []*VulnerabilitiesNode
 }
 
-func NewSortableApps(apps []*App, orderBy *AppsOrderBy) *SortableApps {
-	return &SortableApps{orderBy: orderBy, apps: apps}
+func NewSortableVulnerabilities(nodes []*VulnerabilitiesNode, orderBy *VulnerabilitiesOrderBy) *SortableVulnerabilities {
+	return &SortableVulnerabilities{orderBy: orderBy, nodes: nodes}
 }
 
-func (a *SortableApps) Sort() []*App {
-	switch *a.orderBy.Field {
-	case AppsOrderByFieldName:
-		sort.SliceStable(a.apps, func(i, j int) bool {
-			if *a.orderBy.Direction == SortAsc {
-				return a.apps[i].Name < a.apps[j].Name
+func (s *SortableVulnerabilities) Sort() []*VulnerabilitiesNode {
+	switch s.orderBy.Field {
+	case VulnerabilitiesOrderByFieldAppName:
+		sort.SliceStable(s.nodes, func(i, j int) bool {
+			if s.orderBy.Direction == SortAsc {
+				return s.nodes[i].AppName < s.nodes[j].AppName
 			} else {
-				return a.apps[i].Name > a.apps[j].Name
+				return s.nodes[i].AppName > s.nodes[j].AppName
 			}
 		})
-	case AppsOrderByFieldSeverityCritical, AppsOrderByFieldSeverityHigh, AppsOrderByFieldSeverityMedium, AppsOrderByFieldSeverityLow:
-		sort.SliceStable(a.apps, func(i, j int) bool {
-			return a.compareVulnerabilitySummary(a.apps[i].DependencyTrack, a.apps[j].DependencyTrack)
+	case VulnerabilitiesOrderByFieldEnvName:
+		sort.SliceStable(s.nodes, func(i, j int) bool {
+			if s.orderBy.Direction == SortAsc {
+				return s.nodes[i].Env < s.nodes[j].Env
+			} else {
+				return s.nodes[i].Env > s.nodes[j].Env
+			}
+		})
+	case VulnerabilitiesOrderByFieldSeverityCritical, VulnerabilitiesOrderByFieldSeverityHigh, VulnerabilitiesOrderByFieldSeverityMedium, VulnerabilitiesOrderByFieldSeverityLow:
+		sort.SliceStable(s.nodes, func(i, j int) bool {
+			return s.compareVulnerabilitySummary(s.nodes[i].Project, s.nodes[j].Project)
 		})
 	}
-	return a.apps
+	return s.nodes
 }
 
-func (a *SortableApps) compareVulnerabilitySummary(first, second *DependencyTrack) bool {
-	if *a.orderBy.Direction == SortAsc {
+func (s *SortableVulnerabilities) compareVulnerabilitySummary(first, second *DependencyTrack) bool {
+	if s.orderBy.Direction == SortAsc {
 		if first == nil {
 			return true
 		}
 		if second == nil {
 			return false
 		}
-		switch *a.orderBy.Field {
-		case AppsOrderByFieldSeverityCritical:
+		switch s.orderBy.Field {
+		case VulnerabilitiesOrderByFieldSeverityCritical:
 			return first.Summary.Critical < second.Summary.Critical
-		case AppsOrderByFieldSeverityHigh:
+		case VulnerabilitiesOrderByFieldSeverityHigh:
 			return first.Summary.High < second.Summary.High
-		case AppsOrderByFieldSeverityMedium:
+		case VulnerabilitiesOrderByFieldSeverityMedium:
 			return first.Summary.Medium < second.Summary.Medium
-		case AppsOrderByFieldSeverityLow:
+		case VulnerabilitiesOrderByFieldSeverityLow:
 			return first.Summary.Low < second.Summary.Low
 		}
 		return true
@@ -57,14 +63,14 @@ func (a *SortableApps) compareVulnerabilitySummary(first, second *DependencyTrac
 		if second == nil {
 			return true
 		}
-		switch *a.orderBy.Field {
-		case AppsOrderByFieldSeverityCritical:
+		switch s.orderBy.Field {
+		case VulnerabilitiesOrderByFieldSeverityCritical:
 			return first.Summary.Critical > second.Summary.Critical
-		case AppsOrderByFieldSeverityHigh:
+		case VulnerabilitiesOrderByFieldSeverityHigh:
 			return first.Summary.High > second.Summary.High
-		case AppsOrderByFieldSeverityMedium:
+		case VulnerabilitiesOrderByFieldSeverityMedium:
 			return first.Summary.Medium > second.Summary.Medium
-		case AppsOrderByFieldSeverityLow:
+		case VulnerabilitiesOrderByFieldSeverityLow:
 			return first.Summary.Low > second.Summary.Low
 		}
 		return false

@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+
 	"github.com/nais/console-backend/internal/dtrack"
 
 	"github.com/99designs/gqlgen/graphql/handler"

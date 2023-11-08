@@ -172,7 +172,7 @@ type Team implements Node {
     viewerIsAdmin: Boolean! @goField(forceResolver: true)
 
     "The vulnerabilities for the team's applications."
-    vulnerabilitiesForTeam(
+    vulnerabilities(
         "Returns the first n entries from the list."
         first: Int
 
@@ -186,7 +186,7 @@ type Team implements Node {
         before: Cursor
 
         "Order apps by"
-        orderBy: AppsOrderBy
+        orderBy: VulnerabilitiesOrderBy
 
     ): VulnerabilitiesConnection! @goField(forceResolver: true)
 }
