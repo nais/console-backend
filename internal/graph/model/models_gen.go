@@ -244,12 +244,11 @@ type DatabaseUser struct {
 }
 
 type DependencyTrack struct {
-	ID              scalar.Ident          `json:"id"`
-	ProjectUUID     string                `json:"projectUUID"`
-	ProjectName     string                `json:"projectName"`
-	FindingsLink    string                `json:"findingsLink"`
-	Vulnerabilities []Vulnerability       `json:"vulnerabilities,omitempty"`
-	Summary         *VulnerabilitySummary `json:"summary,omitempty"`
+	ID           scalar.Ident          `json:"id"`
+	ProjectUUID  string                `json:"projectUUID"`
+	ProjectName  string                `json:"projectName"`
+	FindingsLink string                `json:"findingsLink"`
+	Summary      *VulnerabilitySummary `json:"summary,omitempty"`
 }
 
 func (DependencyTrack) IsNode() {}
@@ -1120,14 +1119,6 @@ type VulnerabilitiesOrderBy struct {
 	// Order direction
 	Direction Sort                        `json:"direction"`
 	Field     VulnerabilitiesOrderByField `json:"field"`
-}
-
-type Vulnerability struct {
-	ID            string `json:"id"`
-	Severity      string `json:"severity"`
-	SeverityRank  int    `json:"severityRank"`
-	Name          string `json:"name"`
-	ComponentPurl string `json:"componentPurl"`
 }
 
 type VulnerabilitySummary struct {

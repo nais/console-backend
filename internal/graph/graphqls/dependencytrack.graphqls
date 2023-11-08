@@ -52,7 +52,6 @@ type DependencyTrack implements Node {
     projectUUID: String!
     projectName: String!
     findingsLink: String!
-    vulnerabilities: [Vulnerability!]
     summary: VulnerabilitySummary
 }
 
@@ -63,12 +62,4 @@ type VulnerabilitySummary {
     medium: Int!
     low: Int!
     unassigned: Int!
-}
-
-type Vulnerability {
-    id: String!
-    severity: String!
-    severityRank: Int!
-    name: String!
-    componentPurl: String!
 }

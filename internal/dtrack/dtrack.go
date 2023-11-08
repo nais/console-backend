@@ -16,6 +16,18 @@ import (
 	"time"
 )
 
+type AppInstance struct {
+	Env, Team, App, Image string
+}
+
+func (d *AppInstance) ID() string {
+	return fmt.Sprintf("%s:%s:%s:%s", d.Env, d.Team, d.App, d.Image)
+}
+
+func (d *AppInstance) ProjectName() string {
+	return fmt.Sprintf("%s:%s:%s", d.Env, d.Team, d.App)
+}
+
 type Client struct {
 	client      dependencytrack.Client
 	frontendUrl string
@@ -57,18 +69,8 @@ func (c *Client) WithClient(client dependencytrack.Client) *Client {
 	return c
 }
 
-func (c *Client) VulnerabilitySummary(ctx context.Context, env, app, image string) (*model.DependencyTrack, error) {
-	p, err := c.projectByImageAndCluster(ctx, env, app, image)
-	if err != nil {
-		return nil, fmt.Errorf("getting project by env %q app %q image %q: %w", env, app, image, err)
-	}
-
-	if p == nil {
-		c.log.Infof("no project found in DependencyTrack for env %q app %q image %q:", env, app, image)
-		return nil, nil
-	}
-
-	return c.findings(ctx, p.Uuid, p.Name)
+func (c *Client) VulnerabilitySummary(ctx context.Context, app *AppInstance) (*model.DependencyTrack, error) {
+	return c.findingsForApp(ctx, app)
 }
 
 func (c *Client) AddFindings(ctx context.Context, nodes []*model.VulnerabilitiesNode) error {
@@ -78,33 +80,23 @@ func (c *Client) AddFindings(ctx context.Context, nodes []*model.Vulnerabilities
 	dts := make([]*model.DependencyTrack, 0)
 	for _, n := range nodes {
 		wg.Add(1)
-		go func(env, team, app, image string) {
+		go func(app *AppInstance) {
 			defer wg.Done()
-			p, err := c.projectByImage(ctx, image, env, team, app)
+			d, err := c.findingsForApp(ctx, app)
 			if err != nil {
-				return
-			}
-			if p == nil {
-				return
-			}
-
-			d, err := c.findings(ctx, p.Uuid, p.Name)
-			if err != nil {
-				c.log.Errorf("getting findings for project %s: %v", p.Name, err)
+				c.log.Errorf("retrieveFindings for app %q: %v", app.ID(), err)
 				return
 			}
 			if d == nil {
-				c.log.Infof("no findings found in DependencyTrack for project %s", p.Name)
+				c.log.Debugf("no retrieveFindings found in DependencyTrack for app %q", app.ID())
 				return
 			}
 			dts = append(dts, d)
-		}(n.Env, n.Team, n.AppName, n.Image)
+		}(&AppInstance{n.Env, n.Team, n.AppName, n.Image})
 	}
 	wg.Wait()
-	fmt.Printf("DependencyTrack fetch: %v\n", time.Since(now))
 
 	for _, node := range nodes {
-		fmt.Printf("App: %s, Env: %s, Image:%s\n", node.AppName, node.Env, node.Image)
 		for _, d := range dts {
 			if d.ProjectName == fmt.Sprintf("%s:%s:%s", node.Env, node.Team, node.AppName) {
 				node.Project = d
@@ -112,21 +104,45 @@ func (c *Client) AddFindings(ctx context.Context, nodes []*model.Vulnerabilities
 			}
 		}
 	}
+	fmt.Printf("DependencyTrack fetch: %v\n", time.Since(now))
 	return nil
 }
 
-func (c *Client) findings(ctx context.Context, uuid, name string) (*model.DependencyTrack, error) {
-	url := strings.TrimSuffix(c.frontendUrl, "/")
-	findingsLink := fmt.Sprintf("%s/projects/%s/findings", url, uuid)
+func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.DependencyTrack, error) {
+	if d, ok := c.cache.Get(app.ID()); ok {
+		return d.(*model.DependencyTrack), nil
+	}
+	p, err := c.retrieveProject(ctx, app)
+	if err != nil {
+		return nil, fmt.Errorf("getting project by app %s: %w", app.ID(), err)
+	}
+	if p == nil {
+		return nil, nil
+	}
+
+	d, err := c.retrieveFindings(ctx, p.Uuid, p.Name)
+	if err != nil {
+		return nil, err
+	}
+	if d == nil {
+		c.log.Debugf("no retrieveFindings found in DependencyTrack for project %s", p.Name)
+		return nil, nil
+	}
+	c.cache.Set(app.ID(), d, cache.DefaultExpiration)
+	return d, nil
+}
+
+func (c *Client) retrieveFindings(ctx context.Context, uuid, name string) (*model.DependencyTrack, error) {
+	u := strings.TrimSuffix(c.frontendUrl, "/")
+	findingsLink := fmt.Sprintf("%s/projects/%s/retrieveFindings", u, uuid)
 
 	findings, err := c.client.GetFindings(ctx, uuid)
 	if err != nil {
-		return nil, fmt.Errorf("getting findings from DependencyTrack: %w", err)
+		return nil, fmt.Errorf("getting retrieveFindings from DependencyTrack: %w", err)
 	}
 
 	var low, medium, high, critical, unassigned int
 
-	v := make([]model.Vulnerability, 0)
 	for _, finding := range findings {
 		switch finding.Vulnerability.Severity {
 		case "LOW":
@@ -140,14 +156,6 @@ func (c *Client) findings(ctx context.Context, uuid, name string) (*model.Depend
 		case "UNASSIGNED":
 			unassigned += 1
 		}
-
-		v = append(v, model.Vulnerability{
-			ID:            finding.Vulnerability.UUID,
-			Severity:      finding.Vulnerability.Severity,
-			SeverityRank:  finding.Vulnerability.SeverityRank,
-			Name:          finding.Vulnerability.Name,
-			ComponentPurl: finding.Component.PURL,
-		})
 	}
 
 	summary := model.VulnerabilitySummary{
@@ -160,18 +168,17 @@ func (c *Client) findings(ctx context.Context, uuid, name string) (*model.Depend
 	}
 
 	d := &model.DependencyTrack{
-		ID:              scalar.DependencyTrackIdent(uuid),
-		ProjectUUID:     uuid,
-		ProjectName:     name,
-		FindingsLink:    findingsLink,
-		Vulnerabilities: v,
-		Summary:         &summary,
+		ID:           scalar.DependencyTrackIdent(uuid),
+		ProjectUUID:  uuid,
+		ProjectName:  name,
+		FindingsLink: findingsLink,
+		Summary:      &summary,
 	}
 	return d, nil
 }
 
-func (c *Client) projectByImage(ctx context.Context, image string, tags ...string) (*dependencytrack.Project, error) {
-	tag := url.QueryEscape(image)
+func (c *Client) retrieveProject(ctx context.Context, app *AppInstance) (*dependencytrack.Project, error) {
+	tag := url.QueryEscape(app.Image)
 	projects, err := c.client.GetProjectsByTag(ctx, tag)
 	if err != nil {
 		return nil, fmt.Errorf("getting projects from DependencyTrack: %w", err)
@@ -182,28 +189,7 @@ func (c *Client) projectByImage(ctx context.Context, image string, tags ...strin
 	}
 	var p *dependencytrack.Project
 	for _, project := range projects {
-		if containsAllTags(project.Tags, tags...) {
-			p = project
-			break
-		}
-	}
-	return p, nil
-}
-
-func (c *Client) projectByImageAndCluster(ctx context.Context, env, app, image string) (*dependencytrack.Project, error) {
-	tag := url.QueryEscape(image)
-	projects, err := c.client.GetProjectsByTag(ctx, tag)
-	if err != nil {
-		return nil, fmt.Errorf("getting projects from DependencyTrack: %w", err)
-	}
-
-	if len(projects) == 0 {
-		return nil, nil
-	}
-
-	var p *dependencytrack.Project
-	for _, project := range projects {
-		if containsAllTags(project.Tags, env, app, image) {
+		if containsAllTags(project.Tags, app.Env, app.Team, app.App) {
 			p = project
 			break
 		}
@@ -222,29 +208,4 @@ func containsAllTags(tags []dependencytrack.Tag, s ...string) bool {
 		}
 	}
 	return found == len(s)
-}
-
-func (c *Client) getProjects(ctx context.Context, apps []*model.VulnerabilitiesNode) []*dependencytrack.Project {
-	var wg sync.WaitGroup
-	projects := make([]*dependencytrack.Project, 0)
-	for _, app := range apps {
-		wg.Add(1)
-		go func(env, app, image string) {
-			defer wg.Done()
-
-			p, err := c.projectByImageAndCluster(ctx, env, app, image)
-			if err != nil {
-				c.log.Errorf("getting project by image %s and cluster %s: %v", image, env, err)
-				//c.errors.Add(ctx, 1)
-				return
-			}
-			if p == nil {
-				c.log.Infof("no project found in DependencyTrack for image %s and cluster %s", image, env)
-				return
-			}
-			projects = append(projects, p)
-		}(app.Env, app.AppName, app.Image)
-	}
-	wg.Wait()
-	return projects
 }
