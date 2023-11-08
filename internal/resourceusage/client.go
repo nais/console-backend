@@ -31,8 +31,7 @@ const (
 	cpuAppRequestQuery    = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"})`
 	memoryAppUsageQuery   = `max(container_memory_working_set_bytes{namespace=%q, container=%q})`
 	memoryAppRequestQuery = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
-
-	highResolutionStep = time.Hour
+	step                  = time.Hour
 )
 
 // New creates a new resourceusage client
@@ -96,7 +95,7 @@ func mapToResourceUtilization(utilization utilizationMap, resourceType model.Res
 	// fill in potential gaps in the time range
 	timestamps := make([]time.Time, 0)
 	ts := start
-	for ; ts.Before(end); ts = ts.Add(highResolutionStep) {
+	for ; ts.Before(end); ts = ts.Add(step) {
 		timestamps = append(timestamps, ts)
 	}
 	timestamps = append(timestamps, ts)
@@ -134,7 +133,7 @@ func rangedQuery(ctx context.Context, client promv1.API, query string, start, en
 	value, _, err := client.QueryRange(ctx, query, promv1.Range{
 		Start: time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, time.UTC),
 		End:   time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, time.UTC),
-		Step:  highResolutionStep,
+		Step:  step,
 	})
 	if err != nil {
 		return nil, err
