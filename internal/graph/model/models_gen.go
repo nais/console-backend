@@ -790,8 +790,10 @@ type ResourceUtilization struct {
 type ResourceUtilizationInEnv struct {
 	// Name of the environment.
 	Env string `json:"env"`
-	// Resource utilization data for the environment.
-	Data []ResourceUtilization `json:"data"`
+	// CPU resource utilization data for the environment.
+	CPU []ResourceUtilization `json:"cpu"`
+	// Memory resource utilization data for the environment.
+	Memory []ResourceUtilization `json:"memory"`
 }
 
 type Resources struct {

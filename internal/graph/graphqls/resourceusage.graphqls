@@ -1,9 +1,6 @@
 extend type Query {
     "Get the resource utilization for a team."
     resourceUtilizationForTeam(
-        "Resource type."
-        resource: ResourceType!
-
         "The team to fetch data for."
         team: String!
 
@@ -41,8 +38,11 @@ type ResourceUtilizationInEnv {
     "Name of the environment."
     env: String!
 
-    "Resource utilization data for the environment."
-    data: [ResourceUtilization!]!
+    "CPU resource utilization data for the environment."
+    cpu: [ResourceUtilization!]!
+
+    "Memory resource utilization data for the environment."
+    memory: [ResourceUtilization!]!
 }
 
 "Resource utilization type."

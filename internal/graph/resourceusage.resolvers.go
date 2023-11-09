@@ -13,7 +13,7 @@ import (
 )
 
 // ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
-func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource model.ResourceType, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationInEnv, error) {
+func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationInEnv, error) {
 	end := time.Now()
 	start := end.Add(-24 * time.Hour * 6)
 
@@ -34,13 +34,20 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource
 
 	ret := make([]model.ResourceUtilizationInEnv, 0)
 	for _, env := range r.clusters {
-		data, err := r.resourceUsageClient.UtilizationForTeam(ctx, resource, env, team, start, end)
+		cpuData, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeCPU, env, team, start, end)
 		if err != nil {
 			return nil, err
 		}
+
+		memoryData, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeMemory, env, team, start, end)
+		if err != nil {
+			return nil, err
+		}
+
 		ret = append(ret, model.ResourceUtilizationInEnv{
-			Env:  env,
-			Data: data,
+			Env:    env,
+			CPU:    cpuData,
+			Memory: memoryData,
 		})
 	}
 	return ret, nil

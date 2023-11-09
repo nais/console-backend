@@ -502,7 +502,7 @@ type ComplexityRoot struct {
 		Naisjob                    func(childComplexity int, name string, team string, env string) int
 		Node                       func(childComplexity int, id scalar.Ident) int
 		ResourceUtilizationForApp  func(childComplexity int, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) int
-		ResourceUtilizationForTeam func(childComplexity int, resource model.ResourceType, team string, from *scalar.Date, to *scalar.Date) int
+		ResourceUtilizationForTeam func(childComplexity int, team string, from *scalar.Date, to *scalar.Date) int
 		Search                     func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		Team                       func(childComplexity int, name string) int
 		Teams                      func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
@@ -530,8 +530,9 @@ type ComplexityRoot struct {
 	}
 
 	ResourceUtilizationInEnv struct {
-		Data func(childComplexity int) int
-		Env  func(childComplexity int) int
+		CPU    func(childComplexity int) int
+		Env    func(childComplexity int) int
+		Memory func(childComplexity int) int
 	}
 
 	Resources struct {
@@ -704,7 +705,7 @@ type QueryResolver interface {
 	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]model.EnvCost, error)
 	Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
-	ResourceUtilizationForTeam(ctx context.Context, resource model.ResourceType, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationInEnv, error)
+	ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationInEnv, error)
 	ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error)
 	Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error)
@@ -2493,7 +2494,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ResourceUtilizationForTeam(childComplexity, args["resource"].(model.ResourceType), args["team"].(string), args["from"].(*scalar.Date), args["to"].(*scalar.Date)), true
+		return e.complexity.Query.ResourceUtilizationForTeam(childComplexity, args["team"].(string), args["from"].(*scalar.Date), args["to"].(*scalar.Date)), true
 
 	case "Query.search":
 		if e.complexity.Query.Search == nil {
@@ -2615,12 +2616,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ResourceUtilization.UsageCost(childComplexity), true
 
-	case "ResourceUtilizationInEnv.data":
-		if e.complexity.ResourceUtilizationInEnv.Data == nil {
+	case "ResourceUtilizationInEnv.cpu":
+		if e.complexity.ResourceUtilizationInEnv.CPU == nil {
 			break
 		}
 
-		return e.complexity.ResourceUtilizationInEnv.Data(childComplexity), true
+		return e.complexity.ResourceUtilizationInEnv.CPU(childComplexity), true
 
 	case "ResourceUtilizationInEnv.env":
 		if e.complexity.ResourceUtilizationInEnv.Env == nil {
@@ -2628,6 +2629,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ResourceUtilizationInEnv.Env(childComplexity), true
+
+	case "ResourceUtilizationInEnv.memory":
+		if e.complexity.ResourceUtilizationInEnv.Memory == nil {
+			break
+		}
+
+		return e.complexity.ResourceUtilizationInEnv.Memory(childComplexity), true
 
 	case "Resources.limits":
 		if e.complexity.Resources.Limits == nil {
@@ -3773,42 +3781,33 @@ func (ec *executionContext) field_Query_resourceUtilizationForApp_args(ctx conte
 func (ec *executionContext) field_Query_resourceUtilizationForTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.ResourceType
-	if tmp, ok := rawArgs["resource"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
-		arg0, err = ec.unmarshalNResourceType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["resource"] = arg0
-	var arg1 string
+	var arg0 string
 	if tmp, ok := rawArgs["team"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["team"] = arg1
-	var arg2 *scalar.Date
+	args["team"] = arg0
+	var arg1 *scalar.Date
 	if tmp, ok := rawArgs["from"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg1, err = ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg1
+	var arg2 *scalar.Date
+	if tmp, ok := rawArgs["to"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
 		arg2, err = ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["from"] = arg2
-	var arg3 *scalar.Date
-	if tmp, ok := rawArgs["to"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg3, err = ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["to"] = arg3
+	args["to"] = arg2
 	return args, nil
 }
 
@@ -15521,7 +15520,7 @@ func (ec *executionContext) _Query_resourceUtilizationForTeam(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ResourceUtilizationForTeam(rctx, fc.Args["resource"].(model.ResourceType), fc.Args["team"].(string), fc.Args["from"].(*scalar.Date), fc.Args["to"].(*scalar.Date))
+		return ec.resolvers.Query().ResourceUtilizationForTeam(rctx, fc.Args["team"].(string), fc.Args["from"].(*scalar.Date), fc.Args["to"].(*scalar.Date))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15548,8 +15547,10 @@ func (ec *executionContext) fieldContext_Query_resourceUtilizationForTeam(ctx co
 			switch field.Name {
 			case "env":
 				return ec.fieldContext_ResourceUtilizationInEnv_env(ctx, field)
-			case "data":
-				return ec.fieldContext_ResourceUtilizationInEnv_data(ctx, field)
+			case "cpu":
+				return ec.fieldContext_ResourceUtilizationInEnv_cpu(ctx, field)
+			case "memory":
+				return ec.fieldContext_ResourceUtilizationInEnv_memory(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilizationInEnv", field.Name)
 		},
@@ -16561,8 +16562,8 @@ func (ec *executionContext) fieldContext_ResourceUtilizationInEnv_env(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _ResourceUtilizationInEnv_data(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilizationInEnv) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ResourceUtilizationInEnv_data(ctx, field)
+func (ec *executionContext) _ResourceUtilizationInEnv_cpu(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilizationInEnv) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ResourceUtilizationInEnv_cpu(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16575,7 +16576,7 @@ func (ec *executionContext) _ResourceUtilizationInEnv_data(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Data, nil
+		return obj.CPU, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16592,7 +16593,67 @@ func (ec *executionContext) _ResourceUtilizationInEnv_data(ctx context.Context, 
 	return ec.marshalNResourceUtilization2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilizationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ResourceUtilizationInEnv_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ResourceUtilizationInEnv_cpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUtilizationInEnv",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "resource":
+				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
+			case "request":
+				return ec.fieldContext_ResourceUtilization_request(ctx, field)
+			case "requestCost":
+				return ec.fieldContext_ResourceUtilization_requestCost(ctx, field)
+			case "usage":
+				return ec.fieldContext_ResourceUtilization_usage(ctx, field)
+			case "usageCost":
+				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
+			case "requestCostOverage":
+				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUtilizationInEnv_memory(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilizationInEnv) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ResourceUtilizationInEnv_memory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Memory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.ResourceUtilization)
+	fc.Result = res
+	return ec.marshalNResourceUtilization2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilizationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ResourceUtilizationInEnv_memory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ResourceUtilizationInEnv",
 		Field:      field,
@@ -27097,8 +27158,13 @@ func (ec *executionContext) _ResourceUtilizationInEnv(ctx context.Context, sel a
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "data":
-			out.Values[i] = ec._ResourceUtilizationInEnv_data(ctx, field, obj)
+		case "cpu":
+			out.Values[i] = ec._ResourceUtilizationInEnv_cpu(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memory":
+			out.Values[i] = ec._ResourceUtilizationInEnv_memory(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
