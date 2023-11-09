@@ -74,9 +74,3 @@ enum ResourceType {
     CPU
     MEMORY
 }
-
-"Resolution type."
-enum Resolution {
-    DAILY
-    HOURLY
-}

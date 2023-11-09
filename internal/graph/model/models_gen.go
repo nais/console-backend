@@ -1165,48 +1165,6 @@ func (e InstanceState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-// Resolution type.
-type Resolution string
-
-const (
-	ResolutionDaily  Resolution = "DAILY"
-	ResolutionHourly Resolution = "HOURLY"
-)
-
-var AllResolution = []Resolution{
-	ResolutionDaily,
-	ResolutionHourly,
-}
-
-func (e Resolution) IsValid() bool {
-	switch e {
-	case ResolutionDaily, ResolutionHourly:
-		return true
-	}
-	return false
-}
-
-func (e Resolution) String() string {
-	return string(e)
-}
-
-func (e *Resolution) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Resolution(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Resolution", str)
-	}
-	return nil
-}
-
-func (e Resolution) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
 // Resource type.
 type ResourceType string
 
