@@ -32,5 +32,17 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 		}
 	}
 
-	return r.resourceUsageClient.UtilizationForApp(ctx, resource, env, team, app, start, end)
+	util, err := r.resourceUsageClient.UtilizationForApp(ctx, resource, env, team, app, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]model.ResourceUtilization, 0)
+	for _, u := range util {
+		ret = append(ret, model.ResourceUtilization{
+			Usage:   u.Usage,
+			Request: u.Request,
+		})
+	}
+	return ret, nil
 }

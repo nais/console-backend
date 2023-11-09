@@ -42,7 +42,8 @@ const (
 )
 
 const (
-	costUpdateSchedule = 1 * time.Hour
+	costUpdateSchedule     = time.Hour
+	resourceUpdateSchedule = time.Hour
 )
 
 func main() {
@@ -100,7 +101,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 
 	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
-	resourceUsageClient, err := resourceusage.New(cfg.K8S.AllClusterNames, cfg.Tenant, log)
+	resourceUsageClient, err := resourceusage.New(cfg.K8S.AllClusterNames, cfg.Tenant, querier, log)
 	if err != nil {
 		return fmt.Errorf("create resource usage client: %w", err)
 	}
@@ -126,10 +127,19 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		}
 	}()
 
+	// resource usage updater
+	go func() {
+		defer cancel()
+		err = runResourceUsageUpdater(ctx, resourceUsageClient, log.WithField("task", "resource_updater"))
+		if err != nil {
+			log.WithError(err).Errorf("error in resource usage updater")
+		}
+	}()
+
 	// cost updater
 	go func() {
 		defer cancel()
-		err = runCostUpdater(ctx, querier, cfg.Tenant, cfg.Cost, log)
+		err = runCostUpdater(ctx, querier, cfg.Tenant, cfg.Cost, log.WithField("task", "cost_updater"))
 		if err != nil {
 			log.WithError(err).Errorf("error in cost updater")
 		}
@@ -278,6 +288,31 @@ func runCostUpdater(ctx context.Context, querier gensql.Querier, tenant string, 
 					"duration": time.Since(start),
 				}).Infof("cost update run finished")
 			}()
+		}
+	}
+}
+
+// runResourceUsageUpdater will update resource usage data hourly. This function will block until the context is
+// cancelled, so it should be run in a goroutine.
+func runResourceUsageUpdater(ctx context.Context, client resourceusage.Client, log logrus.FieldLogger) error {
+	ticker := time.NewTicker(time.Second) // initial run
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			ticker.Reset(resourceUpdateSchedule) // regular schedule
+			start := time.Now()
+			log.Infof("start scheduled resource usage update run")
+			rows := client.UpdateResourceUsage(ctx)
+			log.
+				WithFields(logrus.Fields{
+					"rows_upserted": rows,
+					"duration":      time.Since(start),
+				}).
+				Infof("scheduled resource usage update run finished")
 		}
 	}
 }

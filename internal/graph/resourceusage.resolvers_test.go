@@ -49,7 +49,7 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 				assert.WithinDuration(t, end, time.Now(), allowedDelta)
 				assert.WithinDuration(t, start, time.Now(), 24*6*time.Hour+allowedDelta)
 			}).
-			Return([]model.ResourceUtilization{}, nil)
+			Return([]resourceusage.ResourceUtilization{}, nil)
 
 		_, err := graph.
 			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).
@@ -72,7 +72,7 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 				assert.Equal(t, fromTime, start)
 				assert.Equal(t, toTime, end)
 			}).
-			Return([]model.ResourceUtilization{}, nil)
+			Return([]resourceusage.ResourceUtilization{}, nil)
 
 		resp, err := graph.
 			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).

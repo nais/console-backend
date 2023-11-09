@@ -81,11 +81,11 @@ type Cost struct {
 
 type ResourceUtilizationMetric struct {
 	ID           int32
-	Date         pgtype.Date
-	Env          *string
-	Team         *string
-	App          *string
+	Date         pgtype.Timestamptz
+	Env          string
+	Team         string
+	App          string
 	ResourceType ResourceType
-	Usage        float32
-	Request      float32
+	Usage        float64
+	Request      float64
 }

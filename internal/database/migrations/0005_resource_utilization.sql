@@ -6,14 +6,14 @@ CREATE TYPE resource_type AS ENUM (
 
 CREATE TABLE resource_utilization_metrics (
     id serial PRIMARY KEY,
-    date date NOT NULL,
-    env text,
-    team text,
-    app text,
+    date timestamp with time zone NOT NULL,
+    env text NOT NULL,
+    team text NOT NULL,
+    app text NOT NULL,
     resource_type resource_type NOT NULL,
-    usage real NOT NULL,
-    request real NOT NULL,
-    CONSTRAINT lowres_metric UNIQUE (date, env, team, app, resource_type)
+    usage double precision NOT NULL,
+    request double precision NOT NULL,
+    CONSTRAINT resource_utilization_metric UNIQUE (date, env, team, app, resource_type)
 );
 
 -- +goose Down

@@ -78,3 +78,65 @@ func (b *CostUpsertBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }
+
+const resourceUtilizationUpsert = `-- name: ResourceUtilizationUpsert :batchexec
+INSERT INTO resource_utilization_metrics (date, env, team, app, resource_type, usage, request)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT ON CONSTRAINT resource_utilization_metric DO NOTHING
+`
+
+type ResourceUtilizationUpsertBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+type ResourceUtilizationUpsertParams struct {
+	Date         pgtype.Timestamptz
+	Env          string
+	Team         string
+	App          string
+	ResourceType ResourceType
+	Usage        float64
+	Request      float64
+}
+
+// ResourceUtilizationUpsert will insert or update resource utilization records.
+func (q *Queries) ResourceUtilizationUpsert(ctx context.Context, arg []ResourceUtilizationUpsertParams) *ResourceUtilizationUpsertBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range arg {
+		vals := []interface{}{
+			a.Date,
+			a.Env,
+			a.Team,
+			a.App,
+			a.ResourceType,
+			a.Usage,
+			a.Request,
+		}
+		batch.Queue(resourceUtilizationUpsert, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &ResourceUtilizationUpsertBatchResults{br, len(arg), false}
+}
+
+func (b *ResourceUtilizationUpsertBatchResults) Exec(f func(int, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		if b.closed {
+			if f != nil {
+				f(t, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		_, err := b.br.Exec()
+		if f != nil {
+			f(t, err)
+		}
+	}
+}
+
+func (b *ResourceUtilizationUpsertBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
