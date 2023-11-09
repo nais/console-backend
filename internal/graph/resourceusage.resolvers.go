@@ -13,7 +13,7 @@ import (
 )
 
 // ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
-func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationInEnv, error) {
+func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationForEnv, error) {
 	end := time.Now()
 	start := end.Add(-24 * time.Hour * 6)
 
@@ -32,11 +32,11 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team str
 		}
 	}
 
-	ret := make([]model.ResourceUtilizationInEnv, 0)
+	ret := make([]model.ResourceUtilizationForEnv, 0)
 	for _, env := range r.clusters {
-		ret = append(ret, model.ResourceUtilizationInEnv{
+		ret = append(ret, model.ResourceUtilizationForEnv{
 			Env: env,
-			GQLVars: model.ResourceUtilizationInEnvGQLVars{
+			GQLVars: model.ResourceUtilizationForEnvGQLVars{
 				Start: start,
 				End:   end,
 				Team:  team,
@@ -70,18 +70,18 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 }
 
 // CPU is the resolver for the cpu field.
-func (r *resourceUtilizationInEnvResolver) CPU(ctx context.Context, obj *model.ResourceUtilizationInEnv) ([]model.ResourceUtilization, error) {
+func (r *resourceUtilizationForEnvResolver) CPU(ctx context.Context, obj *model.ResourceUtilizationForEnv) ([]model.ResourceUtilization, error) {
 	return r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeCPU, obj.Env, obj.GQLVars.Team, obj.GQLVars.Start, obj.GQLVars.End)
 }
 
 // Memory is the resolver for the memory field.
-func (r *resourceUtilizationInEnvResolver) Memory(ctx context.Context, obj *model.ResourceUtilizationInEnv) ([]model.ResourceUtilization, error) {
+func (r *resourceUtilizationForEnvResolver) Memory(ctx context.Context, obj *model.ResourceUtilizationForEnv) ([]model.ResourceUtilization, error) {
 	return r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeMemory, obj.Env, obj.GQLVars.Team, obj.GQLVars.Start, obj.GQLVars.End)
 }
 
-// ResourceUtilizationInEnv returns ResourceUtilizationInEnvResolver implementation.
-func (r *Resolver) ResourceUtilizationInEnv() ResourceUtilizationInEnvResolver {
-	return &resourceUtilizationInEnvResolver{r}
+// ResourceUtilizationForEnv returns ResourceUtilizationForEnvResolver implementation.
+func (r *Resolver) ResourceUtilizationForEnv() ResourceUtilizationForEnvResolver {
+	return &resourceUtilizationForEnvResolver{r}
 }
 
-type resourceUtilizationInEnvResolver struct{ *Resolver }
+type resourceUtilizationForEnvResolver struct{ *Resolver }

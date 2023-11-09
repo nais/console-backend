@@ -9,7 +9,7 @@ extend type Query {
 
         "Fetch resource utilization until this date. Defaults to today."
         to: Date
-    ): [ResourceUtilizationInEnv!]!
+    ): [ResourceUtilizationForEnv!]!
 
     "Get the resource utilization for an app."
     resourceUtilizationForApp(
@@ -33,8 +33,8 @@ extend type Query {
     ): [ResourceUtilization!]!
 }
 
-"ResourceUtilization in env type."
-type ResourceUtilizationInEnv {
+"Resource utilization for env type."
+type ResourceUtilizationForEnv {
     "Name of the environment."
     env: String!
 

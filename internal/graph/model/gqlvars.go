@@ -30,7 +30,7 @@ type (
 		NaisJob string
 	}
 
-	ResourceUtilizationInEnvGQLVars struct {
+	ResourceUtilizationForEnvGQLVars struct {
 		Start time.Time
 		End   time.Time
 		Team  string
