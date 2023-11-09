@@ -9,6 +9,7 @@ import (
 
 // Cost is the configuration for the cost service
 type Cost struct {
+	ImportEnabled     bool   `env:"COST_DATA_IMPORT_ENABLED,default=false"`
 	Reimport          bool   `env:"COST_DATA_REIMPORT,default=false"`
 	BigQueryProjectID string `env:"BIGQUERY_PROJECTID,default=*detect-project-id*"`
 }
@@ -33,6 +34,11 @@ type Logger struct {
 	Level  string `env:"LOG_LEVEL,default=info"`
 }
 
+// ResourceUtilization is the configuration for the resource utilization service
+type ResourceUtilization struct {
+	ImportEnabled bool `env:"RESOURCE_UTILIZATION_IMPORT_ENABLED,default=false"`
+}
+
 // Teams is the configuration for the teams backend service
 type Teams struct {
 	Endpoint string `env:"TEAMS_ENDPOINT,default=http://teams-backend/query"`
@@ -41,11 +47,12 @@ type Teams struct {
 
 // Config is the configuration for the console-backend application
 type Config struct {
-	Cost   Cost
-	Hookd  Hookd
-	K8S    K8S
-	Logger Logger
-	Teams  Teams
+	Cost                Cost
+	Hookd               Hookd
+	K8S                 K8S
+	Logger              Logger
+	ResourceUtilization ResourceUtilization
+	Teams               Teams
 
 	// IapAudience is the audience for the IAP JWT token. Will not be used when RUN_AS_USER is set
 	IapAudience string `env:"IAP_AUDIENCE"`

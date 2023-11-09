@@ -129,6 +129,11 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 
 	// resource usage updater
 	go func() {
+		if !cfg.ResourceUtilization.ImportEnabled {
+			log.Warningf("resource utilization import is not enabled")
+			return
+		}
+
 		defer cancel()
 		err = runResourceUsageUpdater(ctx, resourceUsageClient, log.WithField("task", "resource_updater"))
 		if err != nil {
@@ -138,6 +143,11 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 
 	// cost updater
 	go func() {
+		if !cfg.Cost.ImportEnabled {
+			log.Warningf("cost import is not enabled")
+			return
+		}
+
 		defer cancel()
 		err = runCostUpdater(ctx, querier, cfg.Tenant, cfg.Cost, log.WithField("task", "cost_updater"))
 		if err != nil {
