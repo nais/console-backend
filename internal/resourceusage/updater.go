@@ -15,6 +15,34 @@ import (
 // utilizationMapForEnv is a map of team -> app -> utilizationMap
 type utilizationMapForEnv map[string]map[string]utilizationMap
 
+const (
+	cpuUsageForEnv      = `max(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
+	cpuRequestForEnv    = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
+	memoryUsageForEnv   = `max(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
+	memoryRequestForEnv = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
+)
+
+var (
+	namespacesToIgnore = []string{
+		"default",
+		"kube-system",
+		"kyverno",
+		"linkerd",
+		"nais",
+		"nais-system",
+	}
+
+	containersToIgnore = []string{
+		"cloudsql-proxy",
+		"elector",
+		"linkerd-proxy",
+		"secure-logs-configmap-reload",
+		"secure-logs-fluentd",
+		"vks-sidecar",
+		"wonderwall",
+	}
+)
+
 func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int) {
 	start := normalizeTime(time.Now().AddDate(0, 0, -30))
 	end := start.Add(24 * time.Hour)
@@ -136,4 +164,18 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 		}
 	}
 	return params
+}
+
+// getEnvQueries returns the prometheus queries for the given resource type
+func getEnvQueries(resourceType model.ResourceType) (usageQuery, requestQuery string) {
+	if resourceType == model.ResourceTypeCPU {
+		usageQuery = cpuUsageForEnv
+		requestQuery = cpuRequestForEnv
+	} else {
+		usageQuery = memoryUsageForEnv
+		requestQuery = memoryRequestForEnv
+	}
+	ignoreNamespaces := strings.Join(namespacesToIgnore, "|") + "|"
+	ignoreContainers := strings.Join(containersToIgnore, "|") + "|"
+	return fmt.Sprintf(usageQuery, ignoreNamespaces, ignoreContainers), fmt.Sprintf(requestQuery, ignoreNamespaces, ignoreContainers)
 }

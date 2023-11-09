@@ -41,38 +41,12 @@ const (
 	memoryUsageForTeam   = `sum(container_memory_working_set_bytes{namespace=%q, container!~%q})`
 	memoryRequestForTeam = `sum(kube_pod_container_resource_requests{namespace=%q, container!~%q, resource="memory", unit="byte"})`
 
-	cpuUsageForEnv      = `max(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
-	cpuRequestForEnv    = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
-	memoryUsageForEnv   = `max(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
-	memoryRequestForEnv = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
-
 	cpuUsageForApp      = `max(rate(container_cpu_usage_seconds_total{namespace=%q, container=%q}[5m]))`
 	cpuRequestForApp    = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="cpu", unit="core"})`
 	memoryUsageForApp   = `max(container_memory_working_set_bytes{namespace=%q, container=%q})`
 	memoryRequestForApp = `max(kube_pod_container_resource_requests{namespace=%q, container=%q, resource="memory", unit="byte"})`
 
 	rangedQueryStep = time.Hour
-)
-
-var (
-	namespacesToIgnore = []string{
-		"default",
-		"kube-system",
-		"kyverno",
-		"linkerd",
-		"nais",
-		"nais-system",
-	}
-
-	containersToIgnore = []string{
-		"cloudsql-proxy",
-		"elector",
-		"linkerd-proxy",
-		"secure-logs-configmap-reload",
-		"secure-logs-fluentd",
-		"vks-sidecar",
-		"wonderwall",
-	}
 )
 
 // New creates a new resourceusage client
@@ -222,20 +196,6 @@ func getAppQueries(resourceType model.ResourceType, team, app string) (usageQuer
 		requestQuery = memoryRequestForApp
 	}
 	return fmt.Sprintf(usageQuery, team, app), fmt.Sprintf(requestQuery, team, app)
-}
-
-// getEnvQueries returns the prometheus queries for the given resource type
-func getEnvQueries(resourceType model.ResourceType) (usageQuery, requestQuery string) {
-	if resourceType == model.ResourceTypeCPU {
-		usageQuery = cpuUsageForEnv
-		requestQuery = cpuRequestForEnv
-	} else {
-		usageQuery = memoryUsageForEnv
-		requestQuery = memoryRequestForEnv
-	}
-	ignoreNamespaces := strings.Join(namespacesToIgnore, "|") + "|"
-	ignoreContainers := strings.Join(containersToIgnore, "|") + "|"
-	return fmt.Sprintf(usageQuery, ignoreNamespaces, ignoreContainers), fmt.Sprintf(requestQuery, ignoreNamespaces, ignoreContainers)
 }
 
 // getTeamQueries returns the prometheus queries for the given team and resource type
