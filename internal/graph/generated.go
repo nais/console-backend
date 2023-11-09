@@ -48,6 +48,7 @@ type ResolverRoot interface {
 	NaisJob() NaisJobResolver
 	PageInfo() PageInfoResolver
 	Query() QueryResolver
+	ResourceUtilizationInEnv() ResourceUtilizationInEnvResolver
 	Subscription() SubscriptionResolver
 	Team() TeamResolver
 	User() UserResolver
@@ -711,6 +712,10 @@ type QueryResolver interface {
 	Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error)
 	Team(ctx context.Context, name string) (*model.Team, error)
 	User(ctx context.Context) (*model.User, error)
+}
+type ResourceUtilizationInEnvResolver interface {
+	CPU(ctx context.Context, obj *model.ResourceUtilizationInEnv) ([]model.ResourceUtilization, error)
+	Memory(ctx context.Context, obj *model.ResourceUtilizationInEnv) ([]model.ResourceUtilization, error)
 }
 type SubscriptionResolver interface {
 	Log(ctx context.Context, input *model.LogSubscriptionInput) (<-chan *model.LogLine, error)
@@ -16576,7 +16581,7 @@ func (ec *executionContext) _ResourceUtilizationInEnv_cpu(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CPU, nil
+		return ec.resolvers.ResourceUtilizationInEnv().CPU(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16597,8 +16602,8 @@ func (ec *executionContext) fieldContext_ResourceUtilizationInEnv_cpu(ctx contex
 	fc = &graphql.FieldContext{
 		Object:     "ResourceUtilizationInEnv",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "resource":
@@ -16636,7 +16641,7 @@ func (ec *executionContext) _ResourceUtilizationInEnv_memory(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Memory, nil
+		return ec.resolvers.ResourceUtilizationInEnv().Memory(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16657,8 +16662,8 @@ func (ec *executionContext) fieldContext_ResourceUtilizationInEnv_memory(ctx con
 	fc = &graphql.FieldContext{
 		Object:     "ResourceUtilizationInEnv",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "resource":
@@ -27156,18 +27161,80 @@ func (ec *executionContext) _ResourceUtilizationInEnv(ctx context.Context, sel a
 		case "env":
 			out.Values[i] = ec._ResourceUtilizationInEnv_env(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "cpu":
-			out.Values[i] = ec._ResourceUtilizationInEnv_cpu(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ResourceUtilizationInEnv_cpu(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "memory":
-			out.Values[i] = ec._ResourceUtilizationInEnv_memory(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ResourceUtilizationInEnv_memory(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

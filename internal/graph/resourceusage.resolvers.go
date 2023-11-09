@@ -34,20 +34,13 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team str
 
 	ret := make([]model.ResourceUtilizationInEnv, 0)
 	for _, env := range r.clusters {
-		cpuData, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeCPU, env, team, start, end)
-		if err != nil {
-			return nil, err
-		}
-
-		memoryData, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeMemory, env, team, start, end)
-		if err != nil {
-			return nil, err
-		}
-
 		ret = append(ret, model.ResourceUtilizationInEnv{
-			Env:    env,
-			CPU:    cpuData,
-			Memory: memoryData,
+			Env: env,
+			GQLVars: model.ResourceUtilizationInEnvGQLVars{
+				Start: start,
+				End:   end,
+				Team:  team,
+			},
 		})
 	}
 	return ret, nil
@@ -75,3 +68,20 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 
 	return r.resourceUsageClient.UtilizationForApp(ctx, resource, env, team, app, start, end)
 }
+
+// CPU is the resolver for the cpu field.
+func (r *resourceUtilizationInEnvResolver) CPU(ctx context.Context, obj *model.ResourceUtilizationInEnv) ([]model.ResourceUtilization, error) {
+	return r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeCPU, obj.Env, obj.GQLVars.Team, obj.GQLVars.Start, obj.GQLVars.End)
+}
+
+// Memory is the resolver for the memory field.
+func (r *resourceUtilizationInEnvResolver) Memory(ctx context.Context, obj *model.ResourceUtilizationInEnv) ([]model.ResourceUtilization, error) {
+	return r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeMemory, obj.Env, obj.GQLVars.Team, obj.GQLVars.Start, obj.GQLVars.End)
+}
+
+// ResourceUtilizationInEnv returns ResourceUtilizationInEnvResolver implementation.
+func (r *Resolver) ResourceUtilizationInEnv() ResourceUtilizationInEnvResolver {
+	return &resourceUtilizationInEnvResolver{r}
+}
+
+type resourceUtilizationInEnvResolver struct{ *Resolver }

@@ -39,10 +39,10 @@ type ResourceUtilizationInEnv {
     env: String!
 
     "CPU resource utilization data for the environment."
-    cpu: [ResourceUtilization!]!
+    cpu: [ResourceUtilization!]! @goField(forceResolver: true)
 
     "Memory resource utilization data for the environment."
-    memory: [ResourceUtilization!]!
+    memory: [ResourceUtilization!]! @goField(forceResolver: true)
 }
 
 "Resource utilization type."

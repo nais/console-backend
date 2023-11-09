@@ -793,7 +793,8 @@ type ResourceUtilizationInEnv struct {
 	// CPU resource utilization data for the environment.
 	CPU []ResourceUtilization `json:"cpu"`
 	// Memory resource utilization data for the environment.
-	Memory []ResourceUtilization `json:"memory"`
+	Memory  []ResourceUtilization           `json:"memory"`
+	GQLVars ResourceUtilizationInEnvGQLVars `json:"-"`
 }
 
 type Resources struct {
