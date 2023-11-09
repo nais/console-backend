@@ -493,19 +493,20 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		App                       func(childComplexity int, name string, team string, env string) int
-		DailyCostForApp           func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
-		DailyCostForTeam          func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
-		Deployments               func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
-		EnvCost                   func(childComplexity int, filter model.EnvCostFilter) int
-		MonthlyCost               func(childComplexity int, filter model.MonthlyCostFilter) int
-		Naisjob                   func(childComplexity int, name string, team string, env string) int
-		Node                      func(childComplexity int, id scalar.Ident) int
-		ResourceUtilizationForApp func(childComplexity int, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) int
-		Search                    func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
-		Team                      func(childComplexity int, name string) int
-		Teams                     func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
-		User                      func(childComplexity int) int
+		App                        func(childComplexity int, name string, team string, env string) int
+		DailyCostForApp            func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
+		DailyCostForTeam           func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
+		Deployments                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
+		EnvCost                    func(childComplexity int, filter model.EnvCostFilter) int
+		MonthlyCost                func(childComplexity int, filter model.MonthlyCostFilter) int
+		Naisjob                    func(childComplexity int, name string, team string, env string) int
+		Node                       func(childComplexity int, id scalar.Ident) int
+		ResourceUtilizationForApp  func(childComplexity int, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) int
+		ResourceUtilizationForTeam func(childComplexity int, resource model.ResourceType, env string, team string, from *scalar.Date, to *scalar.Date) int
+		Search                     func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		Team                       func(childComplexity int, name string) int
+		Teams                      func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		User                       func(childComplexity int) int
 	}
 
 	Redis struct {
@@ -695,6 +696,7 @@ type QueryResolver interface {
 	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]model.EnvCost, error)
 	Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
+	ResourceUtilizationForTeam(ctx context.Context, resource model.ResourceType, env string, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error)
 	ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error)
 	Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error)
@@ -2473,6 +2475,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.ResourceUtilizationForApp(childComplexity, args["resource"].(model.ResourceType), args["env"].(string), args["team"].(string), args["app"].(string), args["from"].(*scalar.Date), args["to"].(*scalar.Date)), true
 
+	case "Query.resourceUtilizationForTeam":
+		if e.complexity.Query.ResourceUtilizationForTeam == nil {
+			break
+		}
+
+		args, err := ec.field_Query_resourceUtilizationForTeam_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ResourceUtilizationForTeam(childComplexity, args["resource"].(model.ResourceType), args["env"].(string), args["team"].(string), args["from"].(*scalar.Date), args["to"].(*scalar.Date)), true
+
 	case "Query.search":
 		if e.complexity.Query.Search == nil {
 			break
@@ -3710,6 +3724,57 @@ func (ec *executionContext) field_Query_resourceUtilizationForApp_args(ctx conte
 		}
 	}
 	args["to"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_resourceUtilizationForTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ResourceType
+	if tmp, ok := rawArgs["resource"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
+		arg0, err = ec.unmarshalNResourceType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["resource"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["env"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["env"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["team"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["team"] = arg2
+	var arg3 *scalar.Date
+	if tmp, ok := rawArgs["from"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+		arg3, err = ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["from"] = arg3
+	var arg4 *scalar.Date
+	if tmp, ok := rawArgs["to"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+		arg4, err = ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["to"] = arg4
 	return args, nil
 }
 
@@ -15408,6 +15473,71 @@ func (ec *executionContext) fieldContext_Query_naisjob(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_resourceUtilizationForTeam(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_resourceUtilizationForTeam(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ResourceUtilizationForTeam(rctx, fc.Args["resource"].(model.ResourceType), fc.Args["env"].(string), fc.Args["team"].(string), fc.Args["from"].(*scalar.Date), fc.Args["to"].(*scalar.Date))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.ResourceUtilization)
+	fc.Result = res
+	return ec.marshalNResourceUtilization2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilizationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_resourceUtilizationForTeam(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "resource":
+				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
+			case "request":
+				return ec.fieldContext_ResourceUtilization_request(ctx, field)
+			case "usage":
+				return ec.fieldContext_ResourceUtilization_usage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_resourceUtilizationForTeam_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_resourceUtilizationForApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_resourceUtilizationForApp(ctx, field)
 	if err != nil {
@@ -26347,6 +26477,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_naisjob(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "resourceUtilizationForTeam":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_resourceUtilizationForTeam(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

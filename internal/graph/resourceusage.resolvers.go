@@ -12,6 +12,43 @@ import (
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
+// ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
+func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource model.ResourceType, env string, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error) {
+	end := time.Now()
+	start := end.Add(-24 * time.Hour * 6)
+
+	var err error
+	if to != nil {
+		end, err = to.Time()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if from != nil {
+		start, err = from.Time()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	util, err := r.resourceUsageClient.UtilizationForTeam(ctx, resource, env, team, start, end)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]model.ResourceUtilization, 0)
+	for _, u := range util {
+		ret = append(ret, model.ResourceUtilization{
+			Resource:  u.Resource,
+			Timestamp: u.Timestamp,
+			Usage:     u.Usage,
+			Request:   u.Request,
+		})
+	}
+	return ret, nil
+}
+
 // ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.
 func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error) {
 	end := time.Now()
@@ -40,8 +77,10 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 	ret := make([]model.ResourceUtilization, 0)
 	for _, u := range util {
 		ret = append(ret, model.ResourceUtilization{
-			Usage:   u.Usage,
-			Request: u.Request,
+			Resource:  u.Resource,
+			Timestamp: u.Timestamp,
+			Usage:     u.Usage,
+			Request:   u.Request,
 		})
 	}
 	return ret, nil

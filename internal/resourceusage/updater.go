@@ -57,7 +57,7 @@ func getBatchParams(env string, values []ResourceUtilization) []gensql.ResourceU
 			Date:         pgtype.Timestamptz{Time: value.Timestamp.In(time.UTC), Valid: true},
 			Env:          env,
 			Team:         value.Team,
-			App:          value.App,
+			App:          *value.App,
 			ResourceType: gensql.ResourceType(strings.ToLower(string(value.Resource))),
 			Usage:        value.Usage,
 			Request:      value.Request,

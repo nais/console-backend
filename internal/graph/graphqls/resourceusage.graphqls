@@ -1,4 +1,22 @@
 extend type Query {
+    "Get the resource utilization for a team."
+    resourceUtilizationForTeam(
+        "Resource type."
+        resource: ResourceType!
+
+        "The environment to fetch data for."
+        env: String!
+
+        "The team to fetch data for."
+        team: String!
+
+        "Fetch resource utilization from this date. Defaults to 7 days before the to date."
+        from: Date
+
+        "Fetch resource utilization until this date. Defaults to today."
+        to: Date
+    ): [ResourceUtilization!]!
+
     "Get the resource utilization for an app."
     resourceUtilizationForApp(
         "Resource type."
