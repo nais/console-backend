@@ -119,7 +119,10 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 		log.WithError(err).Errorf("unable to query prometheus for usage data")
 	} else if len(usage) > 0 {
 		for _, val := range usage[0].Values {
-			utilization[val.Timestamp.Time().UTC()].Usage = float64(val.Value)
+			ts := val.Timestamp.Time().UTC()
+			v := float64(val.Value)
+			utilization[ts].Usage = v
+			utilization[ts].UsageCost = cost(resourceType, v)
 		}
 	} else {
 		log.Warningf("no usage data found")
@@ -130,7 +133,11 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 		log.WithError(err).Errorf("unable to query prometheus for request data")
 	} else if len(request) > 0 {
 		for _, val := range request[0].Values {
-			utilization[val.Timestamp.Time().UTC()].Request = float64(val.Value)
+			ts := val.Timestamp.Time().UTC()
+			v := float64(val.Value)
+			utilization[ts].Request = v
+			utilization[ts].RequestCost = cost(resourceType, v)
+			utilization[ts].RequestCostOverage = utilization[ts].RequestCost - utilization[ts].UsageCost
 		}
 	} else {
 		log.Warningf("no request data found")
@@ -160,7 +167,10 @@ func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.Reso
 		log.WithError(err).Errorf("unable to query prometheus for usage data")
 	} else if len(usage) > 0 {
 		for _, val := range usage[0].Values {
-			utilization[val.Timestamp.Time().UTC()].Usage = float64(val.Value)
+			ts := val.Timestamp.Time().UTC()
+			v := float64(val.Value)
+			utilization[ts].Usage = v
+			utilization[ts].UsageCost = cost(resourceType, v)
 		}
 	} else {
 		log.Warningf("no usage data found")
@@ -171,7 +181,11 @@ func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.Reso
 		log.WithError(err).Errorf("unable to query prometheus for request data")
 	} else if len(request) > 0 {
 		for _, val := range request[0].Values {
-			utilization[val.Timestamp.Time().UTC()].Request = float64(val.Value)
+			ts := val.Timestamp.Time().UTC()
+			v := float64(val.Value)
+			utilization[ts].Request = v
+			utilization[ts].RequestCost = cost(resourceType, v)
+			utilization[ts].RequestCostOverage = utilization[ts].RequestCost - utilization[ts].UsageCost
 		}
 	} else {
 		log.Warningf("no request data found")
@@ -193,8 +207,6 @@ func initUtilizationMap(resourceType model.ResourceType, start, end time.Time) u
 		utilization[ts] = &model.ResourceUtilization{
 			Timestamp: ts,
 			Resource:  resourceType,
-			Request:   0,
-			Usage:     0,
 		}
 	}
 	return utilization
@@ -273,4 +285,15 @@ func utilizationMapToSlice(util utilizationMap) []model.ResourceUtilization {
 		return ret[i].Timestamp.Before(ret[j].Timestamp)
 	})
 	return ret
+}
+
+// cost calculates the cost for the given resource type
+func cost(resourceType model.ResourceType, value float64) (cost float64) {
+	if resourceType == model.ResourceTypeCPU {
+		cost = 131.0 / 30.0 * value
+	} else {
+		cost = 18.0 / 1024 / 1024 / 1024 / 30.0 * value
+	}
+
+	return cost / 24.0
 }

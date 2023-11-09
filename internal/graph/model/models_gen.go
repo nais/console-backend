@@ -776,8 +776,14 @@ type ResourceUtilization struct {
 	Timestamp time.Time `json:"timestamp"`
 	// The requested resource amount per pod.
 	Request float64 `json:"request"`
+	// The cost associated with the requested resource amount.
+	RequestCost float64 `json:"requestCost"`
 	// The actual resource usage.
 	Usage float64 `json:"usage"`
+	// The cost associated with the actual resource usage.
+	UsageCost float64 `json:"usageCost"`
+	// The overage of the requested resource amount.
+	RequestCostOverage float64 `json:"requestCostOverage"`
 }
 
 // ResourceUtilization in env type.
