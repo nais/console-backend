@@ -34,24 +34,13 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource
 
 	ret := make([]model.ResourceUtilizationInEnv, 0)
 	for _, env := range r.clusters {
-		util, err := r.resourceUsageClient.UtilizationForTeam(ctx, resource, env, team, start, end)
+		data, err := r.resourceUsageClient.UtilizationForTeam(ctx, resource, env, team, start, end)
 		if err != nil {
 			return nil, err
 		}
-
-		resourceUtilization := make([]model.ResourceUtilization, 0)
-		for _, u := range util {
-			resourceUtilization = append(resourceUtilization, model.ResourceUtilization{
-				Resource:  u.Resource,
-				Timestamp: u.Timestamp,
-				Usage:     u.Usage,
-				Request:   u.Request,
-			})
-		}
-
 		ret = append(ret, model.ResourceUtilizationInEnv{
 			Env:  env,
-			Data: resourceUtilization,
+			Data: data,
 		})
 	}
 	return ret, nil
@@ -77,19 +66,5 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 		}
 	}
 
-	util, err := r.resourceUsageClient.UtilizationForApp(ctx, resource, env, team, app, start, end)
-	if err != nil {
-		return nil, err
-	}
-
-	ret := make([]model.ResourceUtilization, 0)
-	for _, u := range util {
-		ret = append(ret, model.ResourceUtilization{
-			Resource:  u.Resource,
-			Timestamp: u.Timestamp,
-			Usage:     u.Usage,
-			Request:   u.Request,
-		})
-	}
-	return ret, nil
+	return r.resourceUsageClient.UtilizationForApp(ctx, resource, env, team, app, start, end)
 }

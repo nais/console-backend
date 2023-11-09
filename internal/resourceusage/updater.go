@@ -2,6 +2,7 @@ package resourceusage
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,6 +11,9 @@ import (
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/sirupsen/logrus"
 )
+
+// utilizationMapForEnv is a map of team -> app -> utilizationMap
+type utilizationMapForEnv map[string]map[string]utilizationMap
 
 func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int) {
 	start := normalizeTime(time.Now().AddDate(0, 0, -30))
@@ -25,7 +29,7 @@ func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int) {
 		for _, resourceType := range resourceTypes {
 			log = log.WithField("resource_type", resourceType)
 			log.Debugf("fetch data from prometheus")
-			values, err := c.UtilizationInEnv(ctx, resourceType, env, start, end)
+			values, err := c.utilizationInEnv(ctx, resourceType, env, start, end)
 			if err != nil {
 				log.WithError(err).Errorf("unable to fetch resource usage")
 				continue
@@ -49,19 +53,87 @@ func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int) {
 	return rowsUpserted
 }
 
+// utilizationInEnv returns resource utilization (usage and request) for all teams and apps in a given env
+func (c *client) utilizationInEnv(ctx context.Context, resourceType model.ResourceType, env string, start, end time.Time) (utilizationMapForEnv, error) {
+	start = normalizeTime(start)
+	end = normalizeTime(end)
+	log := c.log.WithFields(logrus.Fields{
+		"env":           env,
+		"resource_type": resourceType,
+	})
+
+	utilization := make(utilizationMapForEnv)
+	promClient, exists := c.promClients[env]
+	if !exists {
+		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
+	}
+
+	usageQuery, requestQuery := getEnvQueries(resourceType)
+	usage, err := rangedQuery(ctx, promClient, usageQuery, start, end)
+	if err != nil {
+		log.WithError(err).Errorf("unable to query prometheus for usage data")
+	} else {
+		for _, sample := range usage {
+			for _, val := range sample.Values {
+				ts := val.Timestamp.Time().UTC()
+				team := string(sample.Metric["namespace"])
+				app := string(sample.Metric["container"])
+
+				if _, exists := utilization[team]; !exists {
+					utilization[team] = make(map[string]utilizationMap)
+				}
+
+				if _, exists := utilization[team][app]; !exists {
+					utilization[team][app] = initUtilizationMap(resourceType, start, end)
+				}
+
+				utilization[team][app][ts].Usage = float64(val.Value)
+			}
+		}
+	}
+
+	request, err := rangedQuery(ctx, promClient, requestQuery, start, end)
+	if err != nil {
+		log.WithError(err).Errorf("unable to query prometheus for request data")
+	} else {
+		for _, sample := range request {
+			for _, val := range sample.Values {
+				ts := val.Timestamp.Time().UTC()
+				team := string(sample.Metric["namespace"])
+				app := string(sample.Metric["container"])
+
+				if _, exists := utilization[team]; !exists {
+					utilization[team] = make(map[string]utilizationMap)
+				}
+
+				if _, exists := utilization[team][app]; !exists {
+					utilization[team][app] = initUtilizationMap(resourceType, start, end)
+				}
+
+				utilization[team][app][ts].Request = float64(val.Value)
+			}
+		}
+	}
+	return utilization, nil
+}
+
 // getBatchParams converts ResourceUtilization to ResourceUtilizationUpsertParams
-func getBatchParams(env string, values []ResourceUtilization) []gensql.ResourceUtilizationUpsertParams {
+func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.ResourceUtilizationUpsertParams {
 	params := make([]gensql.ResourceUtilizationUpsertParams, 0)
-	for _, value := range values {
-		params = append(params, gensql.ResourceUtilizationUpsertParams{
-			Date:         pgtype.Timestamptz{Time: value.Timestamp.In(time.UTC), Valid: true},
-			Env:          env,
-			Team:         value.Team,
-			App:          *value.App,
-			ResourceType: gensql.ResourceType(strings.ToLower(string(value.Resource))),
-			Usage:        value.Usage,
-			Request:      value.Request,
-		})
+	for team, apps := range utilization {
+		for app, timestamps := range apps {
+			for _, value := range timestamps {
+				params = append(params, gensql.ResourceUtilizationUpsertParams{
+					Date:         pgtype.Timestamptz{Time: value.Timestamp.In(time.UTC), Valid: true},
+					Env:          env,
+					Team:         team,
+					App:          app,
+					ResourceType: gensql.ResourceType(strings.ToLower(string(value.Resource))),
+					Usage:        value.Usage,
+					Request:      value.Request,
+				})
+			}
+		}
 	}
 	return params
 }

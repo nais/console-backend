@@ -15,31 +15,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type (
-	// envUtilizationMap is a map of team -> app -> utilizationMap
-	envUtilizationMap map[string]map[string]utilizationMap
-	utilizationMap    map[time.Time]*ResourceUtilization
-)
-
 type Client interface {
 	// UpdateResourceUsage will update resource usage data for all teams in all environments.
 	UpdateResourceUsage(ctx context.Context) (rowsUpserted int)
 
 	// UtilizationForApp returns resource utilization (usage and request) for the given app, in the given time range
-	UtilizationForApp(ctx context.Context, resource model.ResourceType, env, team, app string, start, end time.Time) ([]ResourceUtilization, error)
+	UtilizationForApp(ctx context.Context, resource model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error)
 
 	// UtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
-	UtilizationForTeam(ctx context.Context, resource model.ResourceType, env, team string, start, end time.Time) ([]ResourceUtilization, error)
-
-	// UtilizationInEnv returns resource utilization (usage and request) for all teams and apps in a given env
-	UtilizationInEnv(ctx context.Context, resourceType model.ResourceType, env string, start, end time.Time) ([]ResourceUtilization, error)
+	UtilizationForTeam(ctx context.Context, resource model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error)
 }
 
-type ResourceUtilization struct {
-	*model.ResourceUtilization
-	Team string
-	App  *string
-}
+type utilizationMap map[time.Time]*model.ResourceUtilization
 
 type client struct {
 	clusters    []string
@@ -109,79 +96,7 @@ func New(clusters []string, tenant string, querier gensql.Querier, log logrus.Fi
 	}, nil
 }
 
-func (c *client) UtilizationInEnv(ctx context.Context, resourceType model.ResourceType, env string, start, end time.Time) ([]ResourceUtilization, error) {
-	start = normalizeTime(start)
-	end = normalizeTime(end)
-	log := c.log.WithFields(logrus.Fields{
-		"env":           env,
-		"resource_type": resourceType,
-	})
-
-	utilization := make(envUtilizationMap)
-	promClient, exists := c.promClients[env]
-	if !exists {
-		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
-	}
-
-	usageQuery, requestQuery := getEnvQueries(resourceType)
-	usage, err := rangedQuery(ctx, promClient, usageQuery, start, end)
-	if err != nil {
-		log.WithError(err).Errorf("unable to query prometheus for usage data")
-	} else {
-		for _, sample := range usage {
-			for _, val := range sample.Values {
-				ts := val.Timestamp.Time().UTC()
-				team := string(sample.Metric["namespace"])
-				app := string(sample.Metric["container"])
-
-				if _, exists := utilization[team]; !exists {
-					utilization[team] = make(map[string]utilizationMap)
-				}
-
-				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = initUtilizationMap(resourceType, team, &app, start, end)
-				}
-
-				utilization[team][app][ts].Usage = float64(val.Value)
-			}
-		}
-	}
-
-	request, err := rangedQuery(ctx, promClient, requestQuery, start, end)
-	if err != nil {
-		log.WithError(err).Errorf("unable to query prometheus for request data")
-	} else {
-		for _, sample := range request {
-			for _, val := range sample.Values {
-				ts := val.Timestamp.Time().UTC()
-				team := string(sample.Metric["namespace"])
-				app := string(sample.Metric["container"])
-
-				if _, exists := utilization[team]; !exists {
-					utilization[team] = make(map[string]utilizationMap)
-				}
-
-				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = initUtilizationMap(resourceType, team, &app, start, end)
-				}
-
-				utilization[team][app][ts].Request = float64(val.Value)
-			}
-		}
-	}
-
-	ret := make([]ResourceUtilization, 0)
-	for _, apps := range utilization {
-		for _, timestamps := range apps {
-			for _, util := range timestamps {
-				ret = append(ret, *util)
-			}
-		}
-	}
-	return ret, nil
-}
-
-func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]ResourceUtilization, error) {
+func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {
 	start = normalizeTime(start)
 	end = normalizeTime(end)
 	log := c.log.WithFields(logrus.Fields{
@@ -196,7 +111,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
 	}
 
-	utilization := initUtilizationMap(resourceType, team, &app, start, end)
+	utilization := initUtilizationMap(resourceType, start, end)
 	usageQuery, requestQuery := getAppQueries(resourceType, team, app)
 
 	usage, err := rangedQuery(ctx, promClient, usageQuery, start, end)
@@ -224,7 +139,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 	return utilizationMapToSlice(utilization), nil
 }
 
-func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end time.Time) ([]ResourceUtilization, error) {
+func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error) {
 	start = normalizeTime(start)
 	end = normalizeTime(end)
 	log := c.log.WithFields(logrus.Fields{
@@ -237,7 +152,7 @@ func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.Reso
 		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
 	}
 
-	utilization := initUtilizationMap(resourceType, team, nil, start, end)
+	utilization := initUtilizationMap(resourceType, start, end)
 	usageQuery, requestQuery := getTeamQueries(resourceType, team)
 
 	usage, err := rangedQuery(ctx, promClient, usageQuery, start, end)
@@ -266,7 +181,7 @@ func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.Reso
 }
 
 // initUtilizationMap initializes a utilizationMap with the given time range without gaps
-func initUtilizationMap(resourceType model.ResourceType, team string, app *string, start, end time.Time) utilizationMap {
+func initUtilizationMap(resourceType model.ResourceType, start, end time.Time) utilizationMap {
 	timestamps := make([]time.Time, 0)
 	ts := start
 	for ; ts.Before(end); ts = ts.Add(rangedQueryStep) {
@@ -275,18 +190,13 @@ func initUtilizationMap(resourceType model.ResourceType, team string, app *strin
 	timestamps = append(timestamps, ts)
 	utilization := make(utilizationMap)
 	for _, ts := range timestamps {
-		utilization[ts] = &ResourceUtilization{
-			ResourceUtilization: &model.ResourceUtilization{
-				Timestamp: ts,
-				Resource:  resourceType,
-				Request:   0,
-				Usage:     0,
-			},
-			Team: team,
-			App:  app,
+		utilization[ts] = &model.ResourceUtilization{
+			Timestamp: ts,
+			Resource:  resourceType,
+			Request:   0,
+			Usage:     0,
 		}
 	}
-
 	return utilization
 }
 
@@ -354,8 +264,8 @@ func normalizeTime(ts time.Time) time.Time {
 }
 
 // utilizationMapToSlice converts a utilizationMap to a slice of ResourceUtilization, sorted by the timestamp
-func utilizationMapToSlice(util utilizationMap) []ResourceUtilization {
-	ret := make([]ResourceUtilization, 0)
+func utilizationMapToSlice(util utilizationMap) []model.ResourceUtilization {
+	ret := make([]model.ResourceUtilization, 0)
 	for _, u := range util {
 		ret = append(ret, *u)
 	}
