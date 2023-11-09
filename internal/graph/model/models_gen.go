@@ -780,6 +780,14 @@ type ResourceUtilization struct {
 	Usage float64 `json:"usage"`
 }
 
+// ResourceUtilization in env type.
+type ResourceUtilizationInEnv struct {
+	// Name of the environment.
+	Env string `json:"env"`
+	// Resource utilization data for the environment.
+	Data []ResourceUtilization `json:"data"`
+}
+
 type Resources struct {
 	Limits   Limits   `json:"limits"`
 	Requests Requests `json:"requests"`

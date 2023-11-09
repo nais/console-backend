@@ -13,7 +13,7 @@ import (
 )
 
 // ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
-func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource model.ResourceType, env string, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error) {
+func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource model.ResourceType, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationInEnv, error) {
 	end := time.Now()
 	start := end.Add(-24 * time.Hour * 6)
 
@@ -32,18 +32,26 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, resource
 		}
 	}
 
-	util, err := r.resourceUsageClient.UtilizationForTeam(ctx, resource, env, team, start, end)
-	if err != nil {
-		return nil, err
-	}
+	ret := make([]model.ResourceUtilizationInEnv, 0)
+	for _, env := range r.clusters {
+		util, err := r.resourceUsageClient.UtilizationForTeam(ctx, resource, env, team, start, end)
+		if err != nil {
+			return nil, err
+		}
 
-	ret := make([]model.ResourceUtilization, 0)
-	for _, u := range util {
-		ret = append(ret, model.ResourceUtilization{
-			Resource:  u.Resource,
-			Timestamp: u.Timestamp,
-			Usage:     u.Usage,
-			Request:   u.Request,
+		resourceUtilization := make([]model.ResourceUtilization, 0)
+		for _, u := range util {
+			resourceUtilization = append(resourceUtilization, model.ResourceUtilization{
+				Resource:  u.Resource,
+				Timestamp: u.Timestamp,
+				Usage:     u.Usage,
+				Request:   u.Request,
+			})
+		}
+
+		ret = append(ret, model.ResourceUtilizationInEnv{
+			Env:  env,
+			Data: resourceUtilization,
 		})
 	}
 	return ret, nil
