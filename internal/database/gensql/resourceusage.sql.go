@@ -84,3 +84,63 @@ func (q *Queries) ResourceUtilizationForApp(ctx context.Context, arg ResourceUti
 	}
 	return items, nil
 }
+
+const resourceUtilizationForTeam = `-- name: ResourceUtilizationForTeam :many
+SELECT
+    SUM(usage)::double precision AS usage,
+    SUM(request)::double precision AS request,
+    timestamp
+FROM
+    resource_utilization_metrics
+WHERE
+    env = $1
+    AND team = $2
+    AND resource_type = $3
+    AND timestamp >= $4::timestamptz
+    AND timestamp <= $5::timestamptz
+GROUP BY
+    timestamp
+ORDER BY
+    timestamp ASC
+`
+
+type ResourceUtilizationForTeamParams struct {
+	Env          string
+	Team         string
+	ResourceType ResourceType
+	Start        pgtype.Timestamptz
+	End          pgtype.Timestamptz
+}
+
+type ResourceUtilizationForTeamRow struct {
+	Usage     float64
+	Request   float64
+	Timestamp pgtype.Timestamptz
+}
+
+// ResourceUtilizationForTeam will return resource utilization records for a given team.
+func (q *Queries) ResourceUtilizationForTeam(ctx context.Context, arg ResourceUtilizationForTeamParams) ([]*ResourceUtilizationForTeamRow, error) {
+	rows, err := q.db.Query(ctx, resourceUtilizationForTeam,
+		arg.Env,
+		arg.Team,
+		arg.ResourceType,
+		arg.Start,
+		arg.End,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ResourceUtilizationForTeamRow
+	for rows.Next() {
+		var i ResourceUtilizationForTeamRow
+		if err := rows.Scan(&i.Usage, &i.Request, &i.Timestamp); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

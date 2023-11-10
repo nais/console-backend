@@ -29,6 +29,8 @@ type Querier interface {
 	MonthlyCostForTeam(ctx context.Context, team *string) ([]*MonthlyCostForTeamRow, error)
 	// ResourceUtilizationForApp will return resource utilization records for a given app.
 	ResourceUtilizationForApp(ctx context.Context, arg ResourceUtilizationForAppParams) ([]*ResourceUtilizationMetric, error)
+	// ResourceUtilizationForTeam will return resource utilization records for a given team.
+	ResourceUtilizationForTeam(ctx context.Context, arg ResourceUtilizationForTeamParams) ([]*ResourceUtilizationForTeamRow, error)
 	// ResourceUtilizationUpsert will insert or update resource utilization records.
 	ResourceUtilizationUpsert(ctx context.Context, arg []ResourceUtilizationUpsertParams) *ResourceUtilizationUpsertBatchResults
 	// TruncateCostTable will truncate the cost table before doing a complete reimport.

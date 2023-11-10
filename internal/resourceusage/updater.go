@@ -9,6 +9,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
+	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prom "github.com/prometheus/common/model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,6 +22,8 @@ const (
 	cpuRequestForEnv    = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
 	memoryUsageForEnv   = `max(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
 	memoryRequestForEnv = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
+
+	rangedQueryStep = time.Hour
 )
 
 var (
@@ -197,4 +201,41 @@ func getQueryRange(start time.Time) (time.Time, time.Time) {
 	}
 
 	return start.UTC(), end.UTC()
+}
+
+// initUtilizationMap initializes a utilizationMap with the given time range without gaps
+func initUtilizationMap(resourceType model.ResourceType, start, end time.Time) utilizationMap {
+	timestamps := make([]time.Time, 0)
+	ts := start
+	for ; ts.Before(end); ts = ts.Add(rangedQueryStep) {
+		timestamps = append(timestamps, ts)
+	}
+	timestamps = append(timestamps, ts)
+	utilization := make(utilizationMap)
+	for _, ts := range timestamps {
+		utilization[ts] = &model.ResourceUtilization{
+			Timestamp: ts,
+			Resource:  resourceType,
+		}
+	}
+	return utilization
+}
+
+// rangedQuery queries prometheus for the given query in the given time range
+func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time) (prom.Matrix, error) {
+	value, _, err := client.QueryRange(ctx, query, promv1.Range{
+		Start: start,
+		End:   end,
+		Step:  rangedQueryStep,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	matrix, ok := value.(prom.Matrix)
+	if !ok {
+		return nil, fmt.Errorf("expected prometheus matrix, got %T", value)
+	}
+
+	return matrix, nil
 }

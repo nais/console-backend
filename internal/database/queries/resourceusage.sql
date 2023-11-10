@@ -23,3 +23,22 @@ WHERE
     AND timestamp <= sqlc.arg('end')::timestamptz
 ORDER BY
     timestamp ASC;
+
+-- ResourceUtilizationForTeam will return resource utilization records for a given team.
+-- name: ResourceUtilizationForTeam :many
+SELECT
+    SUM(usage)::double precision AS usage,
+    SUM(request)::double precision AS request,
+    timestamp
+FROM
+    resource_utilization_metrics
+WHERE
+    env = $1
+    AND team = $2
+    AND resource_type = $3
+    AND timestamp >= sqlc.arg('start')::timestamptz
+    AND timestamp <= sqlc.arg('end')::timestamptz
+GROUP BY
+    timestamp
+ORDER BY
+    timestamp ASC;
