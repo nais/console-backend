@@ -1,10 +1,4 @@
-input VulnerabilitiesOrderBy {
-    "Order direction"
-    direction: Sort!
-    field: VulnerabilitiesOrderByField!
-}
-
-enum VulnerabilitiesOrderByField {
+extend enum OrderByField {
     "Order by appName."
     APP_NAME
     "Order by env."
@@ -19,14 +13,6 @@ enum VulnerabilitiesOrderByField {
     SEVERITY_MEDIUM
     "Order apps by vulnerability severity low"
     SEVERITY_LOW
-}
-
-enum Sort {
-    "Ascending sort order."
-    ASC
-
-    "Descending sort order."
-    DESC
 }
 
 type VulnerabilitiesConnection implements Connection {

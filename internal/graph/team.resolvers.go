@@ -7,11 +7,11 @@ package graph
 import (
 	"context"
 	"fmt"
+	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"strings"
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
-	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 )
@@ -125,12 +125,23 @@ func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int,
 }
 
 // Apps is the resolver for the apps field.
-func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.AppConnection, error) {
+func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.AppConnection, error) {
 	apps, err := r.k8sClient.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
-
+	if orderBy != nil {
+		switch orderBy.Field {
+		case "NAME":
+			model.SortWith(apps, func(a, b *model.App) bool {
+				return model.Compare(a.Name, b.Name, orderBy.Direction)
+			})
+		case "ENV":
+			model.SortWith(apps, func(a, b *model.App) bool {
+				return model.Compare(a.Env.Name, b.Env.Name, orderBy.Direction)
+			})
+		}
+	}
 	pagination, err := model.NewPagination(first, last, after, before)
 	if err != nil {
 		return nil, err
@@ -354,7 +365,7 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
-func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.VulnerabilitiesOrderBy) (*model.VulnerabilitiesConnection, error) {
+func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.VulnerabilitiesConnection, error) {
 	apps, err := r.k8sClient.Apps(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
@@ -377,7 +388,7 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 	}
 
 	if orderBy != nil {
-		vulnerabilities.Sort(nodes, orderBy.Field, model.SortOrder(orderBy.Direction))
+		vulnerabilities.Sort(nodes, orderBy.Field, orderBy.Direction)
 	}
 
 	pagination, err := model.NewPagination(first, last, after, before)

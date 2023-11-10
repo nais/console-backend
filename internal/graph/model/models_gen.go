@@ -737,6 +737,12 @@ type OpenSearch struct {
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
+type OrderBy struct {
+	// Order direction
+	Direction SortOrder    `json:"direction"`
+	Field     OrderByField `json:"field"`
+}
+
 type Outbound struct {
 	Rules    []Rule     `json:"rules"`
 	External []External `json:"external"`
@@ -1116,12 +1122,6 @@ func (VulnerabilitiesNode) IsNode() {}
 // The unique ID of an object.
 func (this VulnerabilitiesNode) GetID() scalar.Ident { return this.ID }
 
-type VulnerabilitiesOrderBy struct {
-	// Order direction
-	Direction Sort                        `json:"direction"`
-	Field     VulnerabilitiesOrderByField `json:"field"`
-}
-
 type VulnerabilitySummary struct {
 	Total      int     `json:"total"`
 	RiskScore  float64 `json:"riskScore"`
@@ -1218,6 +1218,70 @@ func (e InstanceState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type OrderByField string
+
+const (
+	// Order by name
+	OrderByFieldName OrderByField = "NAME"
+	// Order by env
+	OrderByFieldEnv OrderByField = "ENV"
+	// Order by appName.
+	OrderByFieldAppName OrderByField = "APP_NAME"
+	// Order by env.
+	OrderByFieldEnvName OrderByField = "ENV_NAME"
+	// Order by risk score
+	OrderByFieldRiskScore OrderByField = "RISK_SCORE"
+	// Order apps by vulnerability severity critical
+	OrderByFieldSeverityCritical OrderByField = "SEVERITY_CRITICAL"
+	// Order apps by vulnerability severity high
+	OrderByFieldSeverityHigh OrderByField = "SEVERITY_HIGH"
+	// Order apps by vulnerability severity medium
+	OrderByFieldSeverityMedium OrderByField = "SEVERITY_MEDIUM"
+	// Order apps by vulnerability severity low
+	OrderByFieldSeverityLow OrderByField = "SEVERITY_LOW"
+)
+
+var AllOrderByField = []OrderByField{
+	OrderByFieldName,
+	OrderByFieldEnv,
+	OrderByFieldAppName,
+	OrderByFieldEnvName,
+	OrderByFieldRiskScore,
+	OrderByFieldSeverityCritical,
+	OrderByFieldSeverityHigh,
+	OrderByFieldSeverityMedium,
+	OrderByFieldSeverityLow,
+}
+
+func (e OrderByField) IsValid() bool {
+	switch e {
+	case OrderByFieldName, OrderByFieldEnv, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow:
+		return true
+	}
+	return false
+}
+
+func (e OrderByField) String() string {
+	return string(e)
+}
+
+func (e *OrderByField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderByField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderByField", str)
+	}
+	return nil
+}
+
+func (e OrderByField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type SearchType string
 
 const (
@@ -1258,49 +1322,6 @@ func (e *SearchType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e SearchType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type Sort string
-
-const (
-	// Ascending sort order.
-	SortAsc Sort = "ASC"
-	// Descending sort order.
-	SortDesc Sort = "DESC"
-)
-
-var AllSort = []Sort{
-	SortAsc,
-	SortDesc,
-}
-
-func (e Sort) IsValid() bool {
-	switch e {
-	case SortAsc, SortDesc:
-		return true
-	}
-	return false
-}
-
-func (e Sort) String() string {
-	return string(e)
-}
-
-func (e *Sort) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Sort(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Sort", str)
-	}
-	return nil
-}
-
-func (e Sort) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
@@ -1433,63 +1454,5 @@ func (e *TeamRole) UnmarshalGQL(v interface{}) error {
 }
 
 func (e TeamRole) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type VulnerabilitiesOrderByField string
-
-const (
-	// Order by appName.
-	VulnerabilitiesOrderByFieldAppName VulnerabilitiesOrderByField = "APP_NAME"
-	// Order by env.
-	VulnerabilitiesOrderByFieldEnvName VulnerabilitiesOrderByField = "ENV_NAME"
-	// Order by risk score
-	VulnerabilitiesOrderByFieldRiskScore VulnerabilitiesOrderByField = "RISK_SCORE"
-	// Order apps by vulnerability severity critical
-	VulnerabilitiesOrderByFieldSeverityCritical VulnerabilitiesOrderByField = "SEVERITY_CRITICAL"
-	// Order apps by vulnerability severity high
-	VulnerabilitiesOrderByFieldSeverityHigh VulnerabilitiesOrderByField = "SEVERITY_HIGH"
-	// Order apps by vulnerability severity medium
-	VulnerabilitiesOrderByFieldSeverityMedium VulnerabilitiesOrderByField = "SEVERITY_MEDIUM"
-	// Order apps by vulnerability severity low
-	VulnerabilitiesOrderByFieldSeverityLow VulnerabilitiesOrderByField = "SEVERITY_LOW"
-)
-
-var AllVulnerabilitiesOrderByField = []VulnerabilitiesOrderByField{
-	VulnerabilitiesOrderByFieldAppName,
-	VulnerabilitiesOrderByFieldEnvName,
-	VulnerabilitiesOrderByFieldRiskScore,
-	VulnerabilitiesOrderByFieldSeverityCritical,
-	VulnerabilitiesOrderByFieldSeverityHigh,
-	VulnerabilitiesOrderByFieldSeverityMedium,
-	VulnerabilitiesOrderByFieldSeverityLow,
-}
-
-func (e VulnerabilitiesOrderByField) IsValid() bool {
-	switch e {
-	case VulnerabilitiesOrderByFieldAppName, VulnerabilitiesOrderByFieldEnvName, VulnerabilitiesOrderByFieldRiskScore, VulnerabilitiesOrderByFieldSeverityCritical, VulnerabilitiesOrderByFieldSeverityHigh, VulnerabilitiesOrderByFieldSeverityMedium, VulnerabilitiesOrderByFieldSeverityLow:
-		return true
-	}
-	return false
-}
-
-func (e VulnerabilitiesOrderByField) String() string {
-	return string(e)
-}
-
-func (e *VulnerabilitiesOrderByField) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = VulnerabilitiesOrderByField(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid VulnerabilitiesOrderByField", str)
-	}
-	return nil
-}
-
-func (e VulnerabilitiesOrderByField) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

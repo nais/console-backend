@@ -110,6 +110,9 @@ type Team implements Node {
 
         "Get entries before the cursor."
         before: Cursor
+
+        "Order apps by"
+        orderBy: OrderBy
     ): AppConnection! @goField(forceResolver: true)
 
     "The NAIS jobs owned by the team."
@@ -186,7 +189,7 @@ type Team implements Node {
         before: Cursor
 
         "Order apps by"
-        orderBy: VulnerabilitiesOrderBy
+        orderBy: OrderBy
 
     ): VulnerabilitiesConnection! @goField(forceResolver: true)
 }

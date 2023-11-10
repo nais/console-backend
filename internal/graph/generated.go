@@ -598,7 +598,7 @@ type ComplexityRoot struct {
 	}
 
 	Team struct {
-		Apps                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		Apps                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
 		DeployKey           func(childComplexity int) int
 		Deployments         func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
 		Description         func(childComplexity int) int
@@ -612,7 +612,7 @@ type ComplexityRoot struct {
 		SlackChannel        func(childComplexity int) int
 		ViewerIsAdmin       func(childComplexity int) int
 		ViewerIsMember      func(childComplexity int) int
-		Vulnerabilities     func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.VulnerabilitiesOrderBy) int
+		Vulnerabilities     func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
 	}
 
 	TeamConnection struct {
@@ -739,7 +739,7 @@ type SubscriptionResolver interface {
 }
 type TeamResolver interface {
 	Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error)
-	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.AppConnection, error)
+	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.AppConnection, error)
 	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.NaisJobConnection, error)
 	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *scalar.Cursor) (*model.GithubRepositoryConnection, error)
 
@@ -747,7 +747,7 @@ type TeamResolver interface {
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
 	ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error)
 	ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error)
-	Vulnerabilities(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.VulnerabilitiesOrderBy) (*model.VulnerabilitiesConnection, error)
+	Vulnerabilities(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.VulnerabilitiesConnection, error)
 }
 type UserResolver interface {
 	Teams(ctx context.Context, obj *model.User, first *int, after *scalar.Cursor, last *int, before *scalar.Cursor) (*model.TeamConnection, error)
@@ -2931,7 +2931,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Apps(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
+		return e.complexity.Team.Apps(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.OrderBy)), true
 
 	case "Team.deployKey":
 		if e.complexity.Team.DeployKey == nil {
@@ -3054,7 +3054,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Vulnerabilities(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.VulnerabilitiesOrderBy)), true
+		return e.complexity.Team.Vulnerabilities(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.OrderBy)), true
 
 	case "TeamConnection.edges":
 		if e.complexity.TeamConnection.Edges == nil {
@@ -3359,8 +3359,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputEnvCostFilter,
 		ec.unmarshalInputLogSubscriptionInput,
 		ec.unmarshalInputMonthlyCostFilter,
+		ec.unmarshalInputOrderBy,
 		ec.unmarshalInputSearchFilter,
-		ec.unmarshalInputVulnerabilitiesOrderBy,
 	)
 	first := true
 
@@ -3999,6 +3999,15 @@ func (ec *executionContext) field_Team_apps_args(ctx context.Context, rawArgs ma
 		}
 	}
 	args["before"] = arg3
+	var arg4 *model.OrderBy
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -4200,10 +4209,10 @@ func (ec *executionContext) field_Team_vulnerabilities_args(ctx context.Context,
 		}
 	}
 	args["before"] = arg3
-	var arg4 *model.VulnerabilitiesOrderBy
+	var arg4 *model.OrderBy
 	if tmp, ok := rawArgs["orderBy"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-		arg4, err = ec.unmarshalOVulnerabilitiesOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitiesOrderBy(ctx, tmp)
+		arg4, err = ec.unmarshalOOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderBy(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -18676,7 +18685,7 @@ func (ec *executionContext) _Team_apps(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Apps(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
+		return ec.resolvers.Team().Apps(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["orderBy"].(*model.OrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19216,7 +19225,7 @@ func (ec *executionContext) _Team_vulnerabilities(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Vulnerabilities(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["orderBy"].(*model.VulnerabilitiesOrderBy))
+		return ec.resolvers.Team().Vulnerabilities(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["orderBy"].(*model.OrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23155,6 +23164,44 @@ func (ec *executionContext) unmarshalInputMonthlyCostFilter(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputOrderBy(ctx context.Context, obj interface{}) (model.OrderBy, error) {
+	var it model.OrderBy
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNSortOrder2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSortOrder(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNOrderByField2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderByField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSearchFilter(ctx context.Context, obj interface{}) (model.SearchFilter, error) {
 	var it model.SearchFilter
 	asMap := map[string]interface{}{}
@@ -23178,44 +23225,6 @@ func (ec *executionContext) unmarshalInputSearchFilter(ctx context.Context, obj 
 				return it, err
 			}
 			it.Type = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputVulnerabilitiesOrderBy(ctx context.Context, obj interface{}) (model.VulnerabilitiesOrderBy, error) {
-	var it model.VulnerabilitiesOrderBy
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNSort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSort(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNVulnerabilitiesOrderByField2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitiesOrderByField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
 		}
 	}
 
@@ -31103,6 +31112,16 @@ func (ec *executionContext) marshalNNaisJobEdge2ᚕgithubᚗcomᚋnaisᚋconsole
 	return ret
 }
 
+func (ec *executionContext) unmarshalNOrderByField2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderByField(ctx context.Context, v interface{}) (model.OrderByField, error) {
+	var res model.OrderByField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrderByField2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderByField(ctx context.Context, sel ast.SelectionSet, v model.OrderByField) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNOutbound2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOutbound(ctx context.Context, sel ast.SelectionSet, v model.Outbound) graphql.Marshaler {
 	return ec._Outbound(ctx, sel, &v)
 }
@@ -31383,13 +31402,13 @@ func (ec *executionContext) marshalNSlackAlertsChannel2ᚕgithubᚗcomᚋnaisᚋ
 	return ret
 }
 
-func (ec *executionContext) unmarshalNSort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSort(ctx context.Context, v interface{}) (model.Sort, error) {
-	var res model.Sort
+func (ec *executionContext) unmarshalNSortOrder2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (model.SortOrder, error) {
+	var res model.SortOrder
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSort2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSort(ctx context.Context, sel ast.SelectionSet, v model.Sort) graphql.Marshaler {
+func (ec *executionContext) marshalNSortOrder2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v model.SortOrder) graphql.Marshaler {
 	return v
 }
 
@@ -31901,16 +31920,6 @@ func (ec *executionContext) marshalNVulnerabilitiesNode2githubᚗcomᚋnaisᚋco
 	return ec._VulnerabilitiesNode(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNVulnerabilitiesOrderByField2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitiesOrderByField(ctx context.Context, v interface{}) (model.VulnerabilitiesOrderByField, error) {
-	var res model.VulnerabilitiesOrderByField
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNVulnerabilitiesOrderByField2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitiesOrderByField(ctx context.Context, sel ast.SelectionSet, v model.VulnerabilitiesOrderByField) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -32258,6 +32267,14 @@ func (ec *executionContext) marshalONode2githubᚗcomᚋnaisᚋconsoleᚑbackend
 	return ec._Node(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderBy(ctx context.Context, v interface{}) (*model.OrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputOrderBy(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOResources2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResources(ctx context.Context, sel ast.SelectionSet, v *model.Resources) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -32396,14 +32413,6 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	}
 	res := graphql.MarshalTime(*v)
 	return res
-}
-
-func (ec *executionContext) unmarshalOVulnerabilitiesOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitiesOrderBy(ctx context.Context, v interface{}) (*model.VulnerabilitiesOrderBy, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputVulnerabilitiesOrderBy(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOVulnerabilitySummary2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitySummary(ctx context.Context, sel ast.SelectionSet, v *model.VulnerabilitySummary) graphql.Marshaler {

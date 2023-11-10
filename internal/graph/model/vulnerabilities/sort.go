@@ -2,17 +2,17 @@ package vulnerabilities
 
 import "github.com/nais/console-backend/internal/graph/model"
 
-func Sort(v []*model.VulnerabilitiesNode, field model.VulnerabilitiesOrderByField, direction model.SortOrder) {
+func Sort(v []*model.VulnerabilitiesNode, field model.OrderByField, direction model.SortOrder) {
 	switch field {
-	case model.VulnerabilitiesOrderByFieldAppName:
+	case model.OrderByFieldName:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			return model.Compare(a.AppName, b.AppName, direction)
 		})
-	case model.VulnerabilitiesOrderByFieldEnvName:
+	case model.OrderByFieldEnv:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			return model.Compare(a.Env, b.Env, direction)
 		})
-	case model.VulnerabilitiesOrderByFieldRiskScore:
+	case model.OrderByFieldRiskScore:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			isNil, returnValue := summaryIsNil(a, b, direction)
 			if isNil {
@@ -20,7 +20,7 @@ func Sort(v []*model.VulnerabilitiesNode, field model.VulnerabilitiesOrderByFiel
 			}
 			return model.Compare(a.Project.Summary.RiskScore, b.Project.Summary.RiskScore, direction)
 		})
-	case model.VulnerabilitiesOrderByFieldSeverityCritical:
+	case model.OrderByFieldSeverityCritical:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			isNil, returnValue := summaryIsNil(a, b, direction)
 			if isNil {
@@ -28,7 +28,7 @@ func Sort(v []*model.VulnerabilitiesNode, field model.VulnerabilitiesOrderByFiel
 			}
 			return model.Compare(a.Project.Summary.Critical, b.Project.Summary.Critical, direction)
 		})
-	case model.VulnerabilitiesOrderByFieldSeverityHigh:
+	case model.OrderByFieldSeverityHigh:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			isNil, returnValue := summaryIsNil(a, b, direction)
 			if isNil {
@@ -36,7 +36,7 @@ func Sort(v []*model.VulnerabilitiesNode, field model.VulnerabilitiesOrderByFiel
 			}
 			return model.Compare(a.Project.Summary.High, b.Project.Summary.High, direction)
 		})
-	case model.VulnerabilitiesOrderByFieldSeverityMedium:
+	case model.OrderByFieldSeverityMedium:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			isNil, returnValue := summaryIsNil(a, b, direction)
 			if isNil {
@@ -44,7 +44,7 @@ func Sort(v []*model.VulnerabilitiesNode, field model.VulnerabilitiesOrderByFiel
 			}
 			return model.Compare(a.Project.Summary.Medium, b.Project.Summary.Medium, direction)
 		})
-	case model.VulnerabilitiesOrderByFieldSeverityLow:
+	case model.OrderByFieldSeverityLow:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			isNil, returnValue := summaryIsNil(a, b, direction)
 			if isNil {

@@ -60,6 +60,19 @@ type Env implements Node {
     name: String!
 }
 
+input OrderBy {
+    "Order direction"
+    direction: SortOrder!
+    field: OrderByField!
+}
+
+enum OrderByField {
+    "Order by name"
+    NAME
+    "Order by env"
+    ENV
+}
+
 enum SortOrder {
     "Ascending sort order."
     ASC
