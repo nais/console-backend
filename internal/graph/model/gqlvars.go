@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 type (
 	AppGQLVars struct {
 		Team string
@@ -28,11 +26,5 @@ type (
 		Env     string
 		Team    string
 		NaisJob string
-	}
-
-	ResourceUtilizationForEnvGQLVars struct {
-		Start time.Time
-		End   time.Time
-		Team  string
 	}
 )

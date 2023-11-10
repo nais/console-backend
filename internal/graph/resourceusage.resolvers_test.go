@@ -23,7 +23,7 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		resp, err := graph.
 			NewResolver(nil, nil, nil, nil, nil, nil, nil).
 			Query().
-			ResourceUtilizationForApp(ctx, model.ResourceTypeCPU, "env", "team", "app", &fromDate, nil)
+			ResourceUtilizationForApp(ctx, "env", "team", "app", &fromDate, nil)
 		assert.Nil(t, resp)
 		assert.ErrorContains(t, err, fmt.Sprintf("cannot parse %q", from))
 	})
@@ -34,12 +34,15 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		resp, err := graph.
 			NewResolver(nil, nil, nil, nil, nil, nil, nil).
 			Query().
-			ResourceUtilizationForApp(ctx, model.ResourceTypeCPU, "env", "team", "app", nil, &toDate)
+			ResourceUtilizationForApp(ctx, "env", "team", "app", nil, &toDate)
 		assert.Nil(t, resp)
 		assert.ErrorContains(t, err, fmt.Sprintf("cannot parse %q", to))
 	})
 
 	t.Run("no dates specified", func(t *testing.T) {
+		cpuData := make([]model.ResourceUtilization, 0)
+		memoryData := make([]model.ResourceUtilization, 0)
+
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.
 			EXPECT().
@@ -49,12 +52,24 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 				assert.WithinDuration(t, end, time.Now(), allowedDelta)
 				assert.WithinDuration(t, start, time.Now(), 24*6*time.Hour+allowedDelta)
 			}).
-			Return([]model.ResourceUtilization{}, nil)
+			Return(cpuData, nil)
 
-		_, err := graph.
+		resourceUsageClient.
+			EXPECT().
+			UtilizationForApp(ctx, model.ResourceTypeMemory, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
+			Run(func(_ context.Context, _ model.ResourceType, _, _, _ string, start time.Time, end time.Time) {
+				allowedDelta := time.Second
+				assert.WithinDuration(t, end, time.Now(), allowedDelta)
+				assert.WithinDuration(t, start, time.Now(), 24*6*time.Hour+allowedDelta)
+			}).
+			Return(memoryData, nil)
+
+		resp, err := graph.
 			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).
 			Query().
-			ResourceUtilizationForApp(ctx, model.ResourceTypeCPU, "env", "team", "app", nil, nil)
+			ResourceUtilizationForApp(ctx, "env", "team", "app", nil, nil)
+		assert.Equal(t, cpuData, resp.CPU)
+		assert.Equal(t, memoryData, resp.Memory)
 		assert.NoError(t, err)
 	})
 
@@ -64,6 +79,9 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		toTime := time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
 		to := scalar.NewDate(toTime)
 
+		cpuData := make([]model.ResourceUtilization, 0)
+		memoryData := make([]model.ResourceUtilization, 0)
+
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.
 			EXPECT().
@@ -72,13 +90,23 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 				assert.Equal(t, fromTime, start)
 				assert.Equal(t, toTime, end)
 			}).
-			Return([]model.ResourceUtilization{}, nil)
+			Return(cpuData, nil)
+
+		resourceUsageClient.
+			EXPECT().
+			UtilizationForApp(ctx, model.ResourceTypeMemory, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
+			Run(func(_ context.Context, _ model.ResourceType, _, _, _ string, start time.Time, end time.Time) {
+				assert.Equal(t, fromTime, start)
+				assert.Equal(t, toTime, end)
+			}).
+			Return(memoryData, nil)
 
 		resp, err := graph.
 			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).
 			Query().
-			ResourceUtilizationForApp(ctx, model.ResourceTypeCPU, "env", "team", "app", &from, &to)
+			ResourceUtilizationForApp(ctx, "env", "team", "app", &from, &to)
 		assert.NoError(t, err)
-		assert.Equal(t, []model.ResourceUtilization{}, resp)
+		assert.Equal(t, cpuData, resp.CPU)
+		assert.Equal(t, memoryData, resp.Memory)
 	})
 }

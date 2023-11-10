@@ -786,6 +786,14 @@ type ResourceUtilization struct {
 	RequestCostOverage float64 `json:"requestCostOverage"`
 }
 
+// Resource utilization for app type.
+type ResourceUtilizationForApp struct {
+	// CPU resource utilization data for the environment.
+	CPU []ResourceUtilization `json:"cpu"`
+	// Memory resource utilization data for the environment.
+	Memory []ResourceUtilization `json:"memory"`
+}
+
 // Resource utilization for env type.
 type ResourceUtilizationForEnv struct {
 	// Name of the environment.
@@ -793,8 +801,7 @@ type ResourceUtilizationForEnv struct {
 	// CPU resource utilization data for the environment.
 	CPU []ResourceUtilization `json:"cpu"`
 	// Memory resource utilization data for the environment.
-	Memory  []ResourceUtilization            `json:"memory"`
-	GQLVars ResourceUtilizationForEnvGQLVars `json:"-"`
+	Memory []ResourceUtilization `json:"memory"`
 }
 
 type Resources struct {

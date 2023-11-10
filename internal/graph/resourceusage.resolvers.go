@@ -34,20 +34,27 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team str
 
 	ret := make([]model.ResourceUtilizationForEnv, 0)
 	for _, env := range r.clusters {
+		cpu, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeCPU, env, team, start, end)
+		if err != nil {
+			return nil, err
+		}
+
+		memory, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeMemory, env, team, start, end)
+		if err != nil {
+			return nil, err
+		}
+
 		ret = append(ret, model.ResourceUtilizationForEnv{
-			Env: env,
-			GQLVars: model.ResourceUtilizationForEnvGQLVars{
-				Start: start,
-				End:   end,
-				Team:  team,
-			},
+			Env:    env,
+			CPU:    cpu,
+			Memory: memory,
 		})
 	}
 	return ret, nil
 }
 
 // ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.
-func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilization, error) {
+func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, env string, team string, app string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationForApp, error) {
 	end := time.Now()
 	start := end.Add(-24 * time.Hour * 6)
 
@@ -66,22 +73,18 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, resource 
 		}
 	}
 
-	return r.resourceUsageClient.UtilizationForApp(ctx, resource, env, team, app, start, end)
-}
+	cpu, err := r.resourceUsageClient.UtilizationForApp(ctx, model.ResourceTypeCPU, env, team, app, start, end)
+	if err != nil {
+		return nil, err
+	}
 
-// CPU is the resolver for the cpu field.
-func (r *resourceUtilizationForEnvResolver) CPU(ctx context.Context, obj *model.ResourceUtilizationForEnv) ([]model.ResourceUtilization, error) {
-	return r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeCPU, obj.Env, obj.GQLVars.Team, obj.GQLVars.Start, obj.GQLVars.End)
-}
+	memory, err := r.resourceUsageClient.UtilizationForApp(ctx, model.ResourceTypeMemory, env, team, app, start, end)
+	if err != nil {
+		return nil, err
+	}
 
-// Memory is the resolver for the memory field.
-func (r *resourceUtilizationForEnvResolver) Memory(ctx context.Context, obj *model.ResourceUtilizationForEnv) ([]model.ResourceUtilization, error) {
-	return r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeMemory, obj.Env, obj.GQLVars.Team, obj.GQLVars.Start, obj.GQLVars.End)
+	return &model.ResourceUtilizationForApp{
+		CPU:    cpu,
+		Memory: memory,
+	}, nil
 }
-
-// ResourceUtilizationForEnv returns ResourceUtilizationForEnvResolver implementation.
-func (r *Resolver) ResourceUtilizationForEnv() ResourceUtilizationForEnvResolver {
-	return &resourceUtilizationForEnvResolver{r}
-}
-
-type resourceUtilizationForEnvResolver struct{ *Resolver }

@@ -1,5 +1,5 @@
 extend type Query {
-    "Get the resource utilization for a team."
+    "Get the resource utilization for a team across all environments."
     resourceUtilizationForTeam(
         "The team to fetch data for."
         team: String!
@@ -13,9 +13,6 @@ extend type Query {
 
     "Get the resource utilization for an app."
     resourceUtilizationForApp(
-        "Resource type."
-        resource: ResourceType!
-
         "The environment where the app is running."
         env: String!
 
@@ -30,7 +27,7 @@ extend type Query {
 
         "Fetch resource utilization until this date. Defaults to today."
         to: Date
-    ): [ResourceUtilization!]!
+    ): ResourceUtilizationForApp!
 }
 
 "Resource utilization for env type."
@@ -39,10 +36,19 @@ type ResourceUtilizationForEnv {
     env: String!
 
     "CPU resource utilization data for the environment."
-    cpu: [ResourceUtilization!]! @goField(forceResolver: true)
+    cpu: [ResourceUtilization!]!
 
     "Memory resource utilization data for the environment."
-    memory: [ResourceUtilization!]! @goField(forceResolver: true)
+    memory: [ResourceUtilization!]!
+}
+
+"Resource utilization for app type."
+type ResourceUtilizationForApp {
+    "CPU resource utilization data for the environment."
+    cpu: [ResourceUtilization!]!
+
+    "Memory resource utilization data for the environment."
+    memory: [ResourceUtilization!]!
 }
 
 "Resource utilization type."
