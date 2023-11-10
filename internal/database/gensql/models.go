@@ -81,7 +81,7 @@ type Cost struct {
 
 type ResourceUtilizationMetric struct {
 	ID           int32
-	Date         pgtype.Timestamptz
+	Timestamp    pgtype.Timestamptz
 	Env          string
 	Team         string
 	App          string

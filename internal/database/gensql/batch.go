@@ -80,7 +80,7 @@ func (b *CostUpsertBatchResults) Close() error {
 }
 
 const resourceUtilizationUpsert = `-- name: ResourceUtilizationUpsert :batchexec
-INSERT INTO resource_utilization_metrics (date, env, team, app, resource_type, usage, request)
+INSERT INTO resource_utilization_metrics (timestamp, env, team, app, resource_type, usage, request)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT ON CONSTRAINT resource_utilization_metric DO NOTHING
 `
@@ -92,7 +92,7 @@ type ResourceUtilizationUpsertBatchResults struct {
 }
 
 type ResourceUtilizationUpsertParams struct {
-	Date         pgtype.Timestamptz
+	Timestamp    pgtype.Timestamptz
 	Env          string
 	Team         string
 	App          string
@@ -106,7 +106,7 @@ func (q *Queries) ResourceUtilizationUpsert(ctx context.Context, arg []ResourceU
 	batch := &pgx.Batch{}
 	for _, a := range arg {
 		vals := []interface{}{
-			a.Date,
+			a.Timestamp,
 			a.Env,
 			a.Team,
 			a.App,

@@ -5,4 +5,20 @@
 
 package gensql
 
-import ()
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+const maxResourceUtilizationDate = `-- name: MaxResourceUtilizationDate :one
+SELECT MAX(timestamp)::timestamptz FROM resource_utilization_metrics
+`
+
+// MaxResourceUtilizationDate will return the max date for resource utilization records.
+func (q *Queries) MaxResourceUtilizationDate(ctx context.Context) (pgtype.Timestamptz, error) {
+	row := q.db.QueryRow(ctx, maxResourceUtilizationDate)
+	var column_1 pgtype.Timestamptz
+	err := row.Scan(&column_1)
+	return column_1, err
+}

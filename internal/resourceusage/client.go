@@ -17,7 +17,7 @@ import (
 
 type Client interface {
 	// UpdateResourceUsage will update resource usage data for all teams in all environments.
-	UpdateResourceUsage(ctx context.Context) (rowsUpserted int)
+	UpdateResourceUsage(ctx context.Context) (rowsUpserted int, err error)
 
 	// UtilizationForApp returns resource utilization (usage and request) for the given app, in the given time range
 	UtilizationForApp(ctx context.Context, resource model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error)

@@ -43,9 +43,13 @@ var (
 	}
 )
 
-func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int) {
-	start := normalizeTime(time.Now().AddDate(0, 0, -30))
-	end := start.Add(24 * time.Hour)
+func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, err error) {
+	maxTimestamp, err := c.querier.MaxResourceUtilizationDate(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("unable to fetch max timestamp from database: %w", err)
+	}
+
+	start, end := getQueryRange(maxTimestamp.Time)
 
 	resourceTypes := []model.ResourceType{
 		model.ResourceTypeCPU,
@@ -78,7 +82,7 @@ func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int) {
 		}
 	}
 
-	return rowsUpserted
+	return rowsUpserted, nil
 }
 
 // utilizationInEnv returns resource utilization (usage and request) for all teams and apps in a given env
@@ -152,7 +156,7 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 		for app, timestamps := range apps {
 			for _, value := range timestamps {
 				params = append(params, gensql.ResourceUtilizationUpsertParams{
-					Date:         pgtype.Timestamptz{Time: value.Timestamp.In(time.UTC), Valid: true},
+					Timestamp:    pgtype.Timestamptz{Time: value.Timestamp.In(time.UTC), Valid: true},
 					Env:          env,
 					Team:         team,
 					App:          app,
@@ -178,4 +182,19 @@ func getEnvQueries(resourceType model.ResourceType) (usageQuery, requestQuery st
 	ignoreNamespaces := strings.Join(namespacesToIgnore, "|") + "|"
 	ignoreContainers := strings.Join(containersToIgnore, "|") + "|"
 	return fmt.Sprintf(usageQuery, ignoreNamespaces, ignoreContainers), fmt.Sprintf(requestQuery, ignoreNamespaces, ignoreContainers)
+}
+
+// getQueryRange returns the start and end time in UTC for a query, based on the given start time
+func getQueryRange(start time.Time) (time.Time, time.Time) {
+	now := time.Now()
+	if start.IsZero() {
+		start = now.AddDate(0, 0, -30)
+	}
+
+	end := start.Add(7 * 24 * time.Hour)
+	if end.After(now) {
+		end = now
+	}
+
+	return start.UTC(), end.UTC()
 }

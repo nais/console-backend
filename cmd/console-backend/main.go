@@ -316,7 +316,10 @@ func runResourceUsageUpdater(ctx context.Context, client resourceusage.Client, l
 			ticker.Reset(resourceUpdateSchedule) // regular schedule
 			start := time.Now()
 			log.Infof("start scheduled resource usage update run")
-			rows := client.UpdateResourceUsage(ctx)
+			rows, err := client.UpdateResourceUsage(ctx)
+			if err != nil {
+				log = log.WithError(err)
+			}
 			log.
 				WithFields(logrus.Fields{
 					"rows_upserted": rows,
