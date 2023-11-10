@@ -446,6 +446,61 @@ func (_c *MockQuerier_MonthlyCostForTeam_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// ResourceUtilizationForApp provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) ResourceUtilizationForApp(ctx context.Context, arg ResourceUtilizationForAppParams) ([]*ResourceUtilizationMetric, error) {
+	ret := _m.Called(ctx, arg)
+
+	var r0 []*ResourceUtilizationMetric
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationForAppParams) ([]*ResourceUtilizationMetric, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationForAppParams) []*ResourceUtilizationMetric); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*ResourceUtilizationMetric)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ResourceUtilizationForAppParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_ResourceUtilizationForApp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationForApp'
+type MockQuerier_ResourceUtilizationForApp_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationForApp is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg ResourceUtilizationForAppParams
+func (_e *MockQuerier_Expecter) ResourceUtilizationForApp(ctx interface{}, arg interface{}) *MockQuerier_ResourceUtilizationForApp_Call {
+	return &MockQuerier_ResourceUtilizationForApp_Call{Call: _e.mock.On("ResourceUtilizationForApp", ctx, arg)}
+}
+
+func (_c *MockQuerier_ResourceUtilizationForApp_Call) Run(run func(ctx context.Context, arg ResourceUtilizationForAppParams)) *MockQuerier_ResourceUtilizationForApp_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(ResourceUtilizationForAppParams))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationForApp_Call) Return(_a0 []*ResourceUtilizationMetric, _a1 error) *MockQuerier_ResourceUtilizationForApp_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationForApp_Call) RunAndReturn(run func(context.Context, ResourceUtilizationForAppParams) ([]*ResourceUtilizationMetric, error)) *MockQuerier_ResourceUtilizationForApp_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResourceUtilizationUpsert provides a mock function with given fields: ctx, arg
 func (_m *MockQuerier) ResourceUtilizationUpsert(ctx context.Context, arg []ResourceUtilizationUpsertParams) *ResourceUtilizationUpsertBatchResults {
 	ret := _m.Called(ctx, arg)

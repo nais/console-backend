@@ -22,3 +22,65 @@ func (q *Queries) MaxResourceUtilizationDate(ctx context.Context) (pgtype.Timest
 	err := row.Scan(&column_1)
 	return column_1, err
 }
+
+const resourceUtilizationForApp = `-- name: ResourceUtilizationForApp :many
+SELECT
+    id, timestamp, env, team, app, resource_type, usage, request
+FROM
+    resource_utilization_metrics
+WHERE
+    env = $1
+    AND team = $2
+    AND app = $3
+    AND resource_type = $4
+    AND timestamp >= $5::timestamptz
+    AND timestamp <= $6::timestamptz
+ORDER BY
+    timestamp ASC
+`
+
+type ResourceUtilizationForAppParams struct {
+	Env          string
+	Team         string
+	App          string
+	ResourceType ResourceType
+	Start        pgtype.Timestamptz
+	End          pgtype.Timestamptz
+}
+
+// ResourceUtilizationForApp will return resource utilization records for a given app.
+func (q *Queries) ResourceUtilizationForApp(ctx context.Context, arg ResourceUtilizationForAppParams) ([]*ResourceUtilizationMetric, error) {
+	rows, err := q.db.Query(ctx, resourceUtilizationForApp,
+		arg.Env,
+		arg.Team,
+		arg.App,
+		arg.ResourceType,
+		arg.Start,
+		arg.End,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ResourceUtilizationMetric
+	for rows.Next() {
+		var i ResourceUtilizationMetric
+		if err := rows.Scan(
+			&i.ID,
+			&i.Timestamp,
+			&i.Env,
+			&i.Team,
+			&i.App,
+			&i.ResourceType,
+			&i.Usage,
+			&i.Request,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
