@@ -12,6 +12,14 @@ func Sort(v []*model.VulnerabilitiesNode, field model.VulnerabilitiesOrderByFiel
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			return model.Compare(a.Env, b.Env, direction)
 		})
+	case model.VulnerabilitiesOrderByFieldRiskScore:
+		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
+			isNil, returnValue := summaryIsNil(a, b, direction)
+			if isNil {
+				return returnValue
+			}
+			return model.Compare(a.Project.Summary.RiskScore, b.Project.Summary.RiskScore, direction)
+		})
 	case model.VulnerabilitiesOrderByFieldSeverityCritical:
 		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
 			isNil, returnValue := summaryIsNil(a, b, direction)

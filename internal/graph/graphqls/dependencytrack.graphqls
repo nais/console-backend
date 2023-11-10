@@ -9,6 +9,8 @@ enum VulnerabilitiesOrderByField {
     APP_NAME
     "Order by env."
     ENV_NAME
+    "Order by risk score"
+    RISK_SCORE
     "Order apps by vulnerability severity critical"
     SEVERITY_CRITICAL
     "Order apps by vulnerability severity high"
@@ -53,10 +55,12 @@ type DependencyTrack implements Node {
     projectName: String!
     findingsLink: String!
     summary: VulnerabilitySummary
+    hasBom: Boolean!
 }
 
 type VulnerabilitySummary {
     total: Int!
+    riskScore: Float!
     critical: Int!
     high: Int!
     medium: Int!

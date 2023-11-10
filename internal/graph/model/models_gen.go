@@ -249,6 +249,7 @@ type DependencyTrack struct {
 	ProjectName  string                `json:"projectName"`
 	FindingsLink string                `json:"findingsLink"`
 	Summary      *VulnerabilitySummary `json:"summary,omitempty"`
+	HasBom       bool                  `json:"hasBom"`
 }
 
 func (DependencyTrack) IsNode() {}
@@ -1122,12 +1123,13 @@ type VulnerabilitiesOrderBy struct {
 }
 
 type VulnerabilitySummary struct {
-	Total      int `json:"total"`
-	Critical   int `json:"critical"`
-	High       int `json:"high"`
-	Medium     int `json:"medium"`
-	Low        int `json:"low"`
-	Unassigned int `json:"unassigned"`
+	Total      int     `json:"total"`
+	RiskScore  float64 `json:"riskScore"`
+	Critical   int     `json:"critical"`
+	High       int     `json:"high"`
+	Medium     int     `json:"medium"`
+	Low        int     `json:"low"`
+	Unassigned int     `json:"unassigned"`
 }
 
 type ErrorLevel string
@@ -1441,6 +1443,8 @@ const (
 	VulnerabilitiesOrderByFieldAppName VulnerabilitiesOrderByField = "APP_NAME"
 	// Order by env.
 	VulnerabilitiesOrderByFieldEnvName VulnerabilitiesOrderByField = "ENV_NAME"
+	// Order by risk score
+	VulnerabilitiesOrderByFieldRiskScore VulnerabilitiesOrderByField = "RISK_SCORE"
 	// Order apps by vulnerability severity critical
 	VulnerabilitiesOrderByFieldSeverityCritical VulnerabilitiesOrderByField = "SEVERITY_CRITICAL"
 	// Order apps by vulnerability severity high
@@ -1454,6 +1458,7 @@ const (
 var AllVulnerabilitiesOrderByField = []VulnerabilitiesOrderByField{
 	VulnerabilitiesOrderByFieldAppName,
 	VulnerabilitiesOrderByFieldEnvName,
+	VulnerabilitiesOrderByFieldRiskScore,
 	VulnerabilitiesOrderByFieldSeverityCritical,
 	VulnerabilitiesOrderByFieldSeverityHigh,
 	VulnerabilitiesOrderByFieldSeverityMedium,
@@ -1462,7 +1467,7 @@ var AllVulnerabilitiesOrderByField = []VulnerabilitiesOrderByField{
 
 func (e VulnerabilitiesOrderByField) IsValid() bool {
 	switch e {
-	case VulnerabilitiesOrderByFieldAppName, VulnerabilitiesOrderByFieldEnvName, VulnerabilitiesOrderByFieldSeverityCritical, VulnerabilitiesOrderByFieldSeverityHigh, VulnerabilitiesOrderByFieldSeverityMedium, VulnerabilitiesOrderByFieldSeverityLow:
+	case VulnerabilitiesOrderByFieldAppName, VulnerabilitiesOrderByFieldEnvName, VulnerabilitiesOrderByFieldRiskScore, VulnerabilitiesOrderByFieldSeverityCritical, VulnerabilitiesOrderByFieldSeverityHigh, VulnerabilitiesOrderByFieldSeverityMedium, VulnerabilitiesOrderByFieldSeverityLow:
 		return true
 	}
 	return false

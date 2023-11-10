@@ -187,6 +187,7 @@ type ComplexityRoot struct {
 
 	DependencyTrack struct {
 		FindingsLink func(childComplexity int) int
+		HasBom       func(childComplexity int) int
 		ID           func(childComplexity int) int
 		ProjectName  func(childComplexity int) int
 		ProjectUUID  func(childComplexity int) int
@@ -689,6 +690,7 @@ type ComplexityRoot struct {
 		High       func(childComplexity int) int
 		Low        func(childComplexity int) int
 		Medium     func(childComplexity int) int
+		RiskScore  func(childComplexity int) int
 		Total      func(childComplexity int) int
 		Unassigned func(childComplexity int) int
 	}
@@ -1252,6 +1254,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.DependencyTrack.FindingsLink(childComplexity), true
+
+	case "DependencyTrack.hasBom":
+		if e.complexity.DependencyTrack.HasBom == nil {
+			break
+		}
+
+		return e.complexity.DependencyTrack.HasBom(childComplexity), true
 
 	case "DependencyTrack.id":
 		if e.complexity.DependencyTrack.ID == nil {
@@ -3318,6 +3327,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VulnerabilitySummary.Medium(childComplexity), true
 
+	case "VulnerabilitySummary.riskScore":
+		if e.complexity.VulnerabilitySummary.RiskScore == nil {
+			break
+		}
+
+		return e.complexity.VulnerabilitySummary.RiskScore(childComplexity), true
+
 	case "VulnerabilitySummary.total":
 		if e.complexity.VulnerabilitySummary.Total == nil {
 			break
@@ -5356,6 +5372,8 @@ func (ec *executionContext) fieldContext_App_dependencyTrack(ctx context.Context
 				return ec.fieldContext_DependencyTrack_findingsLink(ctx, field)
 			case "summary":
 				return ec.fieldContext_DependencyTrack_summary(ctx, field)
+			case "hasBom":
+				return ec.fieldContext_DependencyTrack_hasBom(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DependencyTrack", field.Name)
 		},
@@ -7705,6 +7723,8 @@ func (ec *executionContext) fieldContext_DependencyTrack_summary(ctx context.Con
 			switch field.Name {
 			case "total":
 				return ec.fieldContext_VulnerabilitySummary_total(ctx, field)
+			case "riskScore":
+				return ec.fieldContext_VulnerabilitySummary_riskScore(ctx, field)
 			case "critical":
 				return ec.fieldContext_VulnerabilitySummary_critical(ctx, field)
 			case "high":
@@ -7717,6 +7737,50 @@ func (ec *executionContext) fieldContext_DependencyTrack_summary(ctx context.Con
 				return ec.fieldContext_VulnerabilitySummary_unassigned(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VulnerabilitySummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DependencyTrack_hasBom(ctx context.Context, field graphql.CollectedField, obj *model.DependencyTrack) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DependencyTrack_hasBom(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasBom, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DependencyTrack_hasBom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DependencyTrack",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -20842,6 +20906,8 @@ func (ec *executionContext) fieldContext_VulnerabilitiesNode_project(ctx context
 				return ec.fieldContext_DependencyTrack_findingsLink(ctx, field)
 			case "summary":
 				return ec.fieldContext_DependencyTrack_summary(ctx, field)
+			case "hasBom":
+				return ec.fieldContext_DependencyTrack_hasBom(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DependencyTrack", field.Name)
 		},
@@ -20888,6 +20954,50 @@ func (ec *executionContext) fieldContext_VulnerabilitySummary_total(ctx context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VulnerabilitySummary_riskScore(ctx context.Context, field graphql.CollectedField, obj *model.VulnerabilitySummary) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VulnerabilitySummary_riskScore(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RiskScore, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VulnerabilitySummary_riskScore(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VulnerabilitySummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -24717,6 +24827,11 @@ func (ec *executionContext) _DependencyTrack(ctx context.Context, sel ast.Select
 			}
 		case "summary":
 			out.Values[i] = ec._DependencyTrack_summary(ctx, field, obj)
+		case "hasBom":
+			out.Values[i] = ec._DependencyTrack_hasBom(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -29233,6 +29348,11 @@ func (ec *executionContext) _VulnerabilitySummary(ctx context.Context, sel ast.S
 			out.Values[i] = graphql.MarshalString("VulnerabilitySummary")
 		case "total":
 			out.Values[i] = ec._VulnerabilitySummary_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "riskScore":
+			out.Values[i] = ec._VulnerabilitySummary_riskScore(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

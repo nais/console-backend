@@ -104,7 +104,7 @@ func (c *Client) AddFindings(ctx context.Context, nodes []*model.Vulnerabilities
 			}
 		}
 	}
-	fmt.Printf("DependencyTrack fetch: %v\n", time.Since(now))
+	c.log.Debugf("DependencyTrack fetch: %v\n", time.Since(now))
 	return nil
 }
 
@@ -120,28 +120,62 @@ func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.D
 		return nil, nil
 	}
 
-	d, err := c.retrieveFindings(ctx, p.Uuid, p.Name)
+	u := strings.TrimSuffix(c.frontendUrl, "/")
+	findingsLink := fmt.Sprintf("%s/projects/%s/findings", u, p.Uuid)
+
+	d := &model.DependencyTrack{
+		ID:           scalar.DependencyTrackIdent(p.Uuid),
+		ProjectUUID:  p.Uuid,
+		ProjectName:  p.Name,
+		FindingsLink: findingsLink,
+		HasBom:       p.LastBomImportFormat != "",
+	}
+
+	if !d.HasBom {
+		c.log.Debugf("no bom found in DependencyTrack for project %s", p.Name)
+		d.Summary = c.createSummary([]*dependencytrack.Finding{}, p.LastInheritedRiskScore)
+		c.cache.Set(app.ID(), d, cache.DefaultExpiration)
+		return d, nil
+	}
+
+	f, err := c.retrieveFindings(ctx, p.Uuid)
 	if err != nil {
 		return nil, err
 	}
+
+	d.Summary = c.createSummary(f, p.LastInheritedRiskScore)
+
 	if d == nil {
 		c.log.Debugf("no findings found in DependencyTrack for project %s", p.Name)
 		return nil, nil
 	}
+
 	c.cache.Set(app.ID(), d, cache.DefaultExpiration)
 	return d, nil
 }
 
-func (c *Client) retrieveFindings(ctx context.Context, uuid, name string) (*model.DependencyTrack, error) {
-	u := strings.TrimSuffix(c.frontendUrl, "/")
-	findingsLink := fmt.Sprintf("%s/projects/%s/findings", u, uuid)
-
+func (c *Client) retrieveFindings(ctx context.Context, uuid string) ([]*dependencytrack.Finding, error) {
 	findings, err := c.client.GetFindings(ctx, uuid)
 	if err != nil {
 		return nil, fmt.Errorf("retrieveFindings from DependencyTrack: %w", err)
 	}
 
+	return findings, nil
+}
+
+func (c *Client) createSummary(findings []*dependencytrack.Finding, riskScore float64) *model.VulnerabilitySummary {
 	var low, medium, high, critical, unassigned int
+	if len(findings) == 0 {
+		return &model.VulnerabilitySummary{
+			RiskScore:  riskScore,
+			Total:      -1,
+			Critical:   -1,
+			High:       -1,
+			Medium:     -1,
+			Low:        -1,
+			Unassigned: -1,
+		}
+	}
 
 	for _, finding := range findings {
 		switch finding.Vulnerability.Severity {
@@ -158,25 +192,16 @@ func (c *Client) retrieveFindings(ctx context.Context, uuid, name string) (*mode
 		}
 	}
 
-	summary := model.VulnerabilitySummary{
+	return &model.VulnerabilitySummary{
 		Total:      len(findings),
+		RiskScore:  riskScore,
 		Critical:   critical,
 		High:       high,
 		Medium:     medium,
 		Low:        low,
 		Unassigned: unassigned,
 	}
-
-	d := &model.DependencyTrack{
-		ID:           scalar.DependencyTrackIdent(uuid),
-		ProjectUUID:  uuid,
-		ProjectName:  name,
-		FindingsLink: findingsLink,
-		Summary:      &summary,
-	}
-	return d, nil
 }
-
 func (c *Client) retrieveProject(ctx context.Context, app *AppInstance) (*dependencytrack.Project, error) {
 	tag := url.QueryEscape(app.Image)
 	projects, err := c.client.GetProjectsByTag(ctx, tag)
