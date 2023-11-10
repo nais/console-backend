@@ -7,8 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/nais/console-backend/internal/dtrack"
 
+	"github.com/nais/console-backend/internal/dtrack"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 

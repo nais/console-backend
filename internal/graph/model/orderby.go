@@ -1,6 +1,10 @@
 package model
 
-import "sort"
+import (
+	"sort"
+
+	"golang.org/x/exp/constraints"
+)
 
 type SortableVulnerabilities struct {
 	orderBy *VulnerabilitiesOrderBy
@@ -9,6 +13,35 @@ type SortableVulnerabilities struct {
 
 func NewSortableVulnerabilities(nodes []*VulnerabilitiesNode, orderBy *VulnerabilitiesOrderBy) *SortableVulnerabilities {
 	return &SortableVulnerabilities{orderBy: orderBy, nodes: nodes}
+}
+
+func sortBy[T any](x []T, less func(a, b T) bool) {
+	n := len(x)
+	for {
+		swapped := false
+		for i := 1; i < n; i++ {
+			if less(x[i], x[i-1]) {
+				x[i-1], x[i] = x[i], x[i-1]
+				swapped = true
+			}
+		}
+		if !swapped {
+			return
+		}
+	}
+}
+
+func SortWith[T any](slice []T, eval func(a, b T) bool) {
+	sort.SliceStable(slice, func(i, j int) bool {
+		return eval(slice[i], slice[j])
+	})
+}
+
+func Compare[T constraints.Ordered](a, b T, direction SortOrder) bool {
+	if direction == SortOrderAsc {
+		return a < b
+	}
+	return a > b
 }
 
 func (s *SortableVulnerabilities) Sort() []*VulnerabilitiesNode {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 )
@@ -376,7 +377,7 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 	}
 
 	if orderBy != nil {
-		nodes = model.NewSortableVulnerabilities(nodes, orderBy).Sort()
+		vulnerabilities.Sort(nodes, orderBy.Field, model.SortOrder(orderBy.Direction))
 	}
 
 	pagination, err := model.NewPagination(first, last, after, before)
