@@ -24,58 +24,6 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
-// UpdateResourceUsage provides a mock function with given fields: ctx
-func (_m *MockClient) UpdateResourceUsage(ctx context.Context) (int, error) {
-	ret := _m.Called(ctx)
-
-	var r0 int
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (int, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) int); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockClient_UpdateResourceUsage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateResourceUsage'
-type MockClient_UpdateResourceUsage_Call struct {
-	*mock.Call
-}
-
-// UpdateResourceUsage is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockClient_Expecter) UpdateResourceUsage(ctx interface{}) *MockClient_UpdateResourceUsage_Call {
-	return &MockClient_UpdateResourceUsage_Call{Call: _e.mock.On("UpdateResourceUsage", ctx)}
-}
-
-func (_c *MockClient_UpdateResourceUsage_Call) Run(run func(ctx context.Context)) *MockClient_UpdateResourceUsage_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockClient_UpdateResourceUsage_Call) Return(rowsUpserted int, err error) *MockClient_UpdateResourceUsage_Call {
-	_c.Call.Return(rowsUpserted, err)
-	return _c
-}
-
-func (_c *MockClient_UpdateResourceUsage_Call) RunAndReturn(run func(context.Context) (int, error)) *MockClient_UpdateResourceUsage_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // UtilizationForApp provides a mock function with given fields: ctx, resource, env, team, app, start, end
 func (_m *MockClient) UtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, start time.Time, end time.Time) ([]model.ResourceUtilization, error) {
 	ret := _m.Called(ctx, resource, env, team, app, start, end)

@@ -25,6 +25,8 @@ import (
 	"github.com/nais/console-backend/internal/logger"
 	"github.com/nais/console-backend/internal/resourceusage"
 	"github.com/nais/console-backend/internal/teams"
+	"github.com/prometheus/client_golang/api"
+	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/sethvargo/go-envconfig"
@@ -101,10 +103,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 
 	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
-	resourceUsageClient, err := resourceusage.New(cfg.K8S.AllClusterNames, cfg.Tenant, querier, log)
-	if err != nil {
-		return fmt.Errorf("create resource usage client: %w", err)
-	}
+	resourceUsageClient := resourceusage.NewClient(querier, log)
 
 	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
@@ -134,8 +133,19 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 			return
 		}
 
+		promClients, err := getPrometheusClients(cfg.K8S.AllClusterNames, cfg.Tenant)
+		if err != nil {
+			log.WithError(err).Errorf("create prometheus clients")
+			return
+		}
+		resourceUsageUpdater := resourceusage.NewUpdater(promClients, querier, log)
+		if err != nil {
+			log.WithError(err).Errorf("create resource usage updater")
+			return
+		}
+
 		defer cancel()
-		err = runResourceUsageUpdater(ctx, resourceUsageClient, log.WithField("task", "resource_updater"))
+		err = runResourceUsageUpdater(ctx, resourceUsageUpdater, log.WithField("task", "resource_updater"))
 		if err != nil {
 			log.WithError(err).Errorf("error in resource usage updater")
 		}
@@ -304,7 +314,7 @@ func runCostUpdater(ctx context.Context, querier gensql.Querier, tenant string, 
 
 // runResourceUsageUpdater will update resource usage data hourly. This function will block until the context is
 // cancelled, so it should be run in a goroutine.
-func runResourceUsageUpdater(ctx context.Context, client resourceusage.Client, log logrus.FieldLogger) error {
+func runResourceUsageUpdater(ctx context.Context, updater *resourceusage.Updater, log logrus.FieldLogger) error {
 	ticker := time.NewTicker(time.Second) // initial run
 	defer ticker.Stop()
 
@@ -316,7 +326,7 @@ func runResourceUsageUpdater(ctx context.Context, client resourceusage.Client, l
 			ticker.Reset(resourceUpdateSchedule) // regular schedule
 			start := time.Now()
 			log.Infof("start scheduled resource usage update run")
-			rows, err := client.UpdateResourceUsage(ctx)
+			rows, err := updater.UpdateResourceUsage(ctx)
 			if err != nil {
 				log = log.WithError(err)
 			}
@@ -339,4 +349,19 @@ func getMetricMeter() (met.Meter, error) {
 
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	return provider.Meter("github.com/nais/console-backend"), nil
+}
+
+// getPrometheusClients will return a map of Prometheus clients, one for each cluster
+func getPrometheusClients(clusters []string, tenant string) (map[string]promv1.API, error) {
+	promClients := map[string]promv1.API{}
+	for _, cluster := range clusters {
+		promClient, err := api.NewClient(api.Config{
+			Address: fmt.Sprintf("https://prometheus.%s.%s.cloud.nais.io", cluster, tenant),
+		})
+		if err != nil {
+			return nil, err
+		}
+		promClients[cluster] = promv1.NewAPI(promClient)
+	}
+	return promClients, nil
 }

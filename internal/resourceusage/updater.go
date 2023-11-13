@@ -17,11 +17,17 @@ import (
 // utilizationMapForEnv is a map of team -> app -> utilizationMap
 type utilizationMapForEnv map[string]map[string]utilizationMap
 
+type Updater struct {
+	querier     gensql.Querier
+	promClients map[string]promv1.API
+	log         logrus.FieldLogger
+}
+
 const (
-	cpuUsageForEnv      = `max(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
-	cpuRequestForEnv    = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
-	memoryUsageForEnv   = `max(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
-	memoryRequestForEnv = `max(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
+	cpuUsageForEnv      = `sum(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
+	cpuRequestForEnv    = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
+	memoryUsageForEnv   = `sum(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
+	memoryRequestForEnv = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
 
 	rangedQueryStep = time.Hour
 )
@@ -47,25 +53,33 @@ var (
 	}
 )
 
-func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, err error) {
-	maxTimestamp, err := c.querier.MaxResourceUtilizationDate(ctx)
+// NewUpdater creates a new resourceusage updater
+func NewUpdater(promClients map[string]promv1.API, querier gensql.Querier, log logrus.FieldLogger) *Updater {
+	return &Updater{
+		querier:     querier,
+		promClients: promClients,
+		log:         log,
+	}
+}
+
+func (u *Updater) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, err error) {
+	maxTimestamp, err := u.querier.MaxResourceUtilizationDate(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("unable to fetch max timestamp from database: %w", err)
 	}
 
 	start, end := getQueryRange(maxTimestamp.Time)
 
-	resourceTypes := []model.ResourceType{
-		model.ResourceTypeCPU,
-		model.ResourceTypeMemory,
+	resourceTypes := []gensql.ResourceType{
+		gensql.ResourceTypeCpu,
+		gensql.ResourceTypeMemory,
 	}
 
-	for _, env := range c.clusters {
-		log := c.log.WithField("env", env)
+	for env, promClient := range u.promClients {
+		log := u.log.WithField("env", env)
 		for _, resourceType := range resourceTypes {
 			log = log.WithField("resource_type", resourceType)
-			log.Debugf("fetch data from prometheus")
-			values, err := c.utilizationInEnv(ctx, resourceType, env, start, end)
+			values, err := utilizationInEnv(ctx, promClient, resourceType, start, end, log)
 			if err != nil {
 				log.WithError(err).Errorf("unable to fetch resource usage")
 				continue
@@ -73,7 +87,7 @@ func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, err
 
 			batchErrors := 0
 			batch := getBatchParams(env, values)
-			c.querier.ResourceUtilizationUpsert(ctx, batch).Exec(func(i int, err error) {
+			u.querier.ResourceUtilizationUpsert(ctx, batch).Exec(func(i int, err error) {
 				if err != nil {
 					batchErrors++
 				}
@@ -90,23 +104,12 @@ func (c *client) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, err
 }
 
 // utilizationInEnv returns resource utilization (usage and request) for all teams and apps in a given env
-func (c *client) utilizationInEnv(ctx context.Context, resourceType model.ResourceType, env string, start, end time.Time) (utilizationMapForEnv, error) {
-	start = normalizeTime(start)
-	end = normalizeTime(end)
-	log := c.log.WithFields(logrus.Fields{
-		"env":           env,
-		"resource_type": resourceType,
-	})
-
+func utilizationInEnv(ctx context.Context, promClient promv1.API, resourceType gensql.ResourceType, start, end time.Time, log logrus.FieldLogger) (utilizationMapForEnv, error) {
 	utilization := make(utilizationMapForEnv)
-	promClient, exists := c.promClients[env]
-	if !exists {
-		return nil, fmt.Errorf("no prometheus client for cluster: %q", env)
-	}
+	usageQuery, requestQuery := getQueries(resourceType)
 
-	usageQuery, requestQuery := getEnvQueries(resourceType)
-	usage, err := rangedQuery(ctx, promClient, usageQuery, start, end)
-	if err != nil {
+	log.WithField("query", usageQuery).Debugf("fetch usage data from prometheus")
+	if usage, err := rangedQuery(ctx, promClient, usageQuery, start, end); err != nil {
 		log.WithError(err).Errorf("unable to query prometheus for usage data")
 	} else {
 		for _, sample := range usage {
@@ -128,8 +131,8 @@ func (c *client) utilizationInEnv(ctx context.Context, resourceType model.Resour
 		}
 	}
 
-	request, err := rangedQuery(ctx, promClient, requestQuery, start, end)
-	if err != nil {
+	log.WithField("query", requestQuery).Debugf("fetch request data from prometheus")
+	if request, err := rangedQuery(ctx, promClient, requestQuery, start, end); err != nil {
 		log.WithError(err).Errorf("unable to query prometheus for request data")
 	} else {
 		for _, sample := range request {
@@ -159,8 +162,11 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 	for team, apps := range utilization {
 		for app, timestamps := range apps {
 			for _, value := range timestamps {
+				ts := &pgtype.Timestamptz{}
+				_ = ts.Scan(value.Timestamp.UTC())
+
 				params = append(params, gensql.ResourceUtilizationUpsertParams{
-					Timestamp:    pgtype.Timestamptz{Time: value.Timestamp.In(time.UTC), Valid: true},
+					Timestamp:    *ts,
 					Env:          env,
 					Team:         team,
 					App:          app,
@@ -174,9 +180,9 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 	return params
 }
 
-// getEnvQueries returns the prometheus queries for the given resource type
-func getEnvQueries(resourceType model.ResourceType) (usageQuery, requestQuery string) {
-	if resourceType == model.ResourceTypeCPU {
+// getQueries returns the prometheus queries for the given resource type
+func getQueries(resourceType gensql.ResourceType) (usageQuery, requestQuery string) {
+	if resourceType == gensql.ResourceTypeCpu {
 		usageQuery = cpuUsageForEnv
 		requestQuery = cpuRequestForEnv
 	} else {
@@ -200,11 +206,11 @@ func getQueryRange(start time.Time) (time.Time, time.Time) {
 		end = now
 	}
 
-	return start.UTC(), end.UTC()
+	return normalizeTime(start), normalizeTime(end)
 }
 
 // initUtilizationMap initializes a utilizationMap with the given time range without gaps
-func initUtilizationMap(resourceType model.ResourceType, start, end time.Time) utilizationMap {
+func initUtilizationMap(resourceType gensql.ResourceType, start, end time.Time) utilizationMap {
 	timestamps := make([]time.Time, 0)
 	ts := start
 	for ; ts.Before(end); ts = ts.Add(rangedQueryStep) {
@@ -215,7 +221,7 @@ func initUtilizationMap(resourceType model.ResourceType, start, end time.Time) u
 	for _, ts := range timestamps {
 		utilization[ts] = &model.ResourceUtilization{
 			Timestamp: ts,
-			Resource:  resourceType,
+			Resource:  model.ResourceType(strings.ToUpper(string(resourceType))),
 		}
 	}
 	return utilization
@@ -223,13 +229,16 @@ func initUtilizationMap(resourceType model.ResourceType, start, end time.Time) u
 
 // rangedQuery queries prometheus for the given query in the given time range
 func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time) (prom.Matrix, error) {
-	value, _, err := client.QueryRange(ctx, query, promv1.Range{
+	value, warnings, err := client.QueryRange(ctx, query, promv1.Range{
 		Start: start,
 		End:   end,
 		Step:  rangedQueryStep,
 	})
 	if err != nil {
 		return nil, err
+	}
+	if len(warnings) > 0 {
+		return nil, fmt.Errorf("prometheus query warnings: %s", strings.Join(warnings, ", "))
 	}
 
 	matrix, ok := value.(prom.Matrix)
