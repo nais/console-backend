@@ -148,6 +148,13 @@ type AppState struct {
 	Errors []StateError `json:"errors"`
 }
 
+type AppWithResourceUtilizationOverage struct {
+	Team    string  `json:"team"`
+	App     string  `json:"app"`
+	Env     string  `json:"env"`
+	Overage float64 `json:"overage"`
+}
+
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent
@@ -786,6 +793,14 @@ type ResourceUtilization struct {
 	RequestCostOverage float64 `json:"requestCostOverage"`
 }
 
+// Date range type.
+type ResourceUtilizationDateRange struct {
+	// The start of the range.
+	From *scalar.Date `json:"from,omitempty"`
+	// The end of the range.
+	To *scalar.Date `json:"to,omitempty"`
+}
+
 // Resource utilization for app type.
 type ResourceUtilizationForApp struct {
 	// CPU resource utilization data for the environment.
@@ -802,6 +817,11 @@ type ResourceUtilizationForEnv struct {
 	CPU []ResourceUtilization `json:"cpu"`
 	// Memory resource utilization data for the environment.
 	Memory []ResourceUtilization `json:"memory"`
+}
+
+type ResourceUtilizationOverageForTeam struct {
+	Sum  float64                             `json:"sum"`
+	Apps []AppWithResourceUtilizationOverage `json:"apps"`
 }
 
 type Resources struct {

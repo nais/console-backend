@@ -12,6 +12,29 @@ import (
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
+// ResourceUtilizationOverageForTeam is the resolver for the resourceUtilizationOverageForTeam field.
+func (r *queryResolver) ResourceUtilizationOverageForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageForTeam, error) {
+	end := time.Now()
+	start := end.Add(-24 * time.Hour * 6)
+
+	var err error
+	if to != nil {
+		end, err = to.Time()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if from != nil {
+		start, err = from.Time()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return r.resourceUsageClient.ResourceUtilizationOverageForTeam(ctx, team, start, end)
+}
+
 // ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
 func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationForEnv, error) {
 	end := time.Now()
@@ -51,6 +74,16 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team str
 		})
 	}
 	return ret, nil
+}
+
+// ResourceUtilizationDateRangeForTeam is the resolver for the resourceUtilizationDateRangeForTeam field.
+func (r *queryResolver) ResourceUtilizationDateRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error) {
+	return r.resourceUsageClient.ResourceUtilizationRangeForTeam(ctx, team)
+}
+
+// ResourceUtilizationDateRangeForApp is the resolver for the resourceUtilizationDateRangeForApp field.
+func (r *queryResolver) ResourceUtilizationDateRangeForApp(ctx context.Context, env string, team string, app string) (*model.ResourceUtilizationDateRange, error) {
+	return r.resourceUsageClient.ResourceUtilizationRangeForApp(ctx, env, team, app)
 }
 
 // ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.

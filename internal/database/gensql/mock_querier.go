@@ -556,6 +556,171 @@ func (_c *MockQuerier_ResourceUtilizationForTeam_Call) RunAndReturn(run func(con
 	return _c
 }
 
+// ResourceUtilizationOverageForTeam provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) ResourceUtilizationOverageForTeam(ctx context.Context, arg ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error) {
+	ret := _m.Called(ctx, arg)
+
+	var r0 []*ResourceUtilizationOverageForTeamRow
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationOverageForTeamParams) []*ResourceUtilizationOverageForTeamRow); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*ResourceUtilizationOverageForTeamRow)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ResourceUtilizationOverageForTeamParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_ResourceUtilizationOverageForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationOverageForTeam'
+type MockQuerier_ResourceUtilizationOverageForTeam_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationOverageForTeam is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg ResourceUtilizationOverageForTeamParams
+func (_e *MockQuerier_Expecter) ResourceUtilizationOverageForTeam(ctx interface{}, arg interface{}) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
+	return &MockQuerier_ResourceUtilizationOverageForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageForTeam", ctx, arg)}
+}
+
+func (_c *MockQuerier_ResourceUtilizationOverageForTeam_Call) Run(run func(ctx context.Context, arg ResourceUtilizationOverageForTeamParams)) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(ResourceUtilizationOverageForTeamParams))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationOverageForTeam_Call) Return(_a0 []*ResourceUtilizationOverageForTeamRow, _a1 error) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationOverageForTeam_Call) RunAndReturn(run func(context.Context, ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error)) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResourceUtilizationRangeForApp provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) ResourceUtilizationRangeForApp(ctx context.Context, arg ResourceUtilizationRangeForAppParams) (*ResourceUtilizationRangeForAppRow, error) {
+	ret := _m.Called(ctx, arg)
+
+	var r0 *ResourceUtilizationRangeForAppRow
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationRangeForAppParams) (*ResourceUtilizationRangeForAppRow, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationRangeForAppParams) *ResourceUtilizationRangeForAppRow); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ResourceUtilizationRangeForAppRow)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, ResourceUtilizationRangeForAppParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_ResourceUtilizationRangeForApp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationRangeForApp'
+type MockQuerier_ResourceUtilizationRangeForApp_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationRangeForApp is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg ResourceUtilizationRangeForAppParams
+func (_e *MockQuerier_Expecter) ResourceUtilizationRangeForApp(ctx interface{}, arg interface{}) *MockQuerier_ResourceUtilizationRangeForApp_Call {
+	return &MockQuerier_ResourceUtilizationRangeForApp_Call{Call: _e.mock.On("ResourceUtilizationRangeForApp", ctx, arg)}
+}
+
+func (_c *MockQuerier_ResourceUtilizationRangeForApp_Call) Run(run func(ctx context.Context, arg ResourceUtilizationRangeForAppParams)) *MockQuerier_ResourceUtilizationRangeForApp_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(ResourceUtilizationRangeForAppParams))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationRangeForApp_Call) Return(_a0 *ResourceUtilizationRangeForAppRow, _a1 error) *MockQuerier_ResourceUtilizationRangeForApp_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationRangeForApp_Call) RunAndReturn(run func(context.Context, ResourceUtilizationRangeForAppParams) (*ResourceUtilizationRangeForAppRow, error)) *MockQuerier_ResourceUtilizationRangeForApp_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResourceUtilizationRangeForTeam provides a mock function with given fields: ctx, team
+func (_m *MockQuerier) ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationRangeForTeamRow, error) {
+	ret := _m.Called(ctx, team)
+
+	var r0 *ResourceUtilizationRangeForTeamRow
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*ResourceUtilizationRangeForTeamRow, error)); ok {
+		return rf(ctx, team)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *ResourceUtilizationRangeForTeamRow); ok {
+		r0 = rf(ctx, team)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ResourceUtilizationRangeForTeamRow)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, team)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_ResourceUtilizationRangeForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationRangeForTeam'
+type MockQuerier_ResourceUtilizationRangeForTeam_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationRangeForTeam is a helper method to define mock.On call
+//   - ctx context.Context
+//   - team string
+func (_e *MockQuerier_Expecter) ResourceUtilizationRangeForTeam(ctx interface{}, team interface{}) *MockQuerier_ResourceUtilizationRangeForTeam_Call {
+	return &MockQuerier_ResourceUtilizationRangeForTeam_Call{Call: _e.mock.On("ResourceUtilizationRangeForTeam", ctx, team)}
+}
+
+func (_c *MockQuerier_ResourceUtilizationRangeForTeam_Call) Run(run func(ctx context.Context, team string)) *MockQuerier_ResourceUtilizationRangeForTeam_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationRangeForTeam_Call) Return(_a0 *ResourceUtilizationRangeForTeamRow, _a1 error) *MockQuerier_ResourceUtilizationRangeForTeam_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_ResourceUtilizationRangeForTeam_Call) RunAndReturn(run func(context.Context, string) (*ResourceUtilizationRangeForTeamRow, error)) *MockQuerier_ResourceUtilizationRangeForTeam_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResourceUtilizationUpsert provides a mock function with given fields: ctx, arg
 func (_m *MockQuerier) ResourceUtilizationUpsert(ctx context.Context, arg []ResourceUtilizationUpsertParams) *ResourceUtilizationUpsertBatchResults {
 	ret := _m.Called(ctx, arg)

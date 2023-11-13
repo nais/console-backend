@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nais/console-backend/internal/graph/scalar"
+
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
@@ -17,6 +19,14 @@ type Client interface {
 
 	// UtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
 	UtilizationForTeam(ctx context.Context, resource model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error)
+
+	ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageForTeam, error)
+
+	// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app
+	ResourceUtilizationRangeForApp(ctx context.Context, env, team, app string) (*model.ResourceUtilizationDateRange, error)
+
+	// ResourceUtilizationRangeForTeam will return the min and max timestamps for a specific team
+	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
 }
 
 type utilizationMap map[time.Time]*model.ResourceUtilization
@@ -32,6 +42,60 @@ func NewClient(querier gensql.Querier, log logrus.FieldLogger) Client {
 		querier: querier,
 		log:     log,
 	}
+}
+
+func (c *client) ResourceUtilizationRangeForApp(ctx context.Context, env, team, app string) (*model.ResourceUtilizationDateRange, error) {
+	dates, err := c.querier.ResourceUtilizationRangeForApp(ctx, gensql.ResourceUtilizationRangeForAppParams{
+		Env:  env,
+		Team: team,
+		App:  app,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var from *scalar.Date
+	var to *scalar.Date
+	if !dates.From.Time.IsZero() {
+		f := scalar.NewDate(dates.From.Time)
+		from = &f
+	}
+	if !dates.To.Time.IsZero() {
+		t := scalar.NewDate(dates.To.Time)
+		to = &t
+	}
+
+	return &model.ResourceUtilizationDateRange{
+		From: from,
+		To:   to,
+	}, nil
+}
+
+func (c *client) ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error) {
+	dates, err := c.querier.ResourceUtilizationRangeForTeam(ctx, team)
+	if err != nil {
+		return nil, err
+	}
+
+	var from *scalar.Date
+	var to *scalar.Date
+	if !dates.From.Time.IsZero() {
+		f := scalar.NewDate(dates.From.Time)
+		from = &f
+	}
+	if !dates.To.Time.IsZero() {
+		t := scalar.NewDate(dates.To.Time)
+		to = &t
+	}
+
+	return &model.ResourceUtilizationDateRange{
+		From: from,
+		To:   to,
+	}, nil
+}
+
+func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageForTeam, error) {
+	return &model.ResourceUtilizationOverageForTeam{}, nil
 }
 
 func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {

@@ -24,6 +24,175 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
+// ResourceUtilizationOverageForTeam provides a mock function with given fields: ctx, team, start, end
+func (_m *MockClient) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start time.Time, end time.Time) (*model.ResourceUtilizationOverageForTeam, error) {
+	ret := _m.Called(ctx, team, start, end)
+
+	var r0 *model.ResourceUtilizationOverageForTeam
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) (*model.ResourceUtilizationOverageForTeam, error)); ok {
+		return rf(ctx, team, start, end)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) *model.ResourceUtilizationOverageForTeam); ok {
+		r0 = rf(ctx, team, start, end)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.ResourceUtilizationOverageForTeam)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, time.Time, time.Time) error); ok {
+		r1 = rf(ctx, team, start, end)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_ResourceUtilizationOverageForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationOverageForTeam'
+type MockClient_ResourceUtilizationOverageForTeam_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationOverageForTeam is a helper method to define mock.On call
+//   - ctx context.Context
+//   - team string
+//   - start time.Time
+//   - end time.Time
+func (_e *MockClient_Expecter) ResourceUtilizationOverageForTeam(ctx interface{}, team interface{}, start interface{}, end interface{}) *MockClient_ResourceUtilizationOverageForTeam_Call {
+	return &MockClient_ResourceUtilizationOverageForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageForTeam", ctx, team, start, end)}
+}
+
+func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) Run(run func(ctx context.Context, team string, start time.Time, end time.Time)) *MockClient_ResourceUtilizationOverageForTeam_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(time.Time), args[3].(time.Time))
+	})
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) Return(_a0 *model.ResourceUtilizationOverageForTeam, _a1 error) *MockClient_ResourceUtilizationOverageForTeam_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) RunAndReturn(run func(context.Context, string, time.Time, time.Time) (*model.ResourceUtilizationOverageForTeam, error)) *MockClient_ResourceUtilizationOverageForTeam_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResourceUtilizationRangeForApp provides a mock function with given fields: ctx, env, team, app
+func (_m *MockClient) ResourceUtilizationRangeForApp(ctx context.Context, env string, team string, app string) (*model.ResourceUtilizationDateRange, error) {
+	ret := _m.Called(ctx, env, team, app)
+
+	var r0 *model.ResourceUtilizationDateRange
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*model.ResourceUtilizationDateRange, error)); ok {
+		return rf(ctx, env, team, app)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *model.ResourceUtilizationDateRange); ok {
+		r0 = rf(ctx, env, team, app)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.ResourceUtilizationDateRange)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, env, team, app)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_ResourceUtilizationRangeForApp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationRangeForApp'
+type MockClient_ResourceUtilizationRangeForApp_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationRangeForApp is a helper method to define mock.On call
+//   - ctx context.Context
+//   - env string
+//   - team string
+//   - app string
+func (_e *MockClient_Expecter) ResourceUtilizationRangeForApp(ctx interface{}, env interface{}, team interface{}, app interface{}) *MockClient_ResourceUtilizationRangeForApp_Call {
+	return &MockClient_ResourceUtilizationRangeForApp_Call{Call: _e.mock.On("ResourceUtilizationRangeForApp", ctx, env, team, app)}
+}
+
+func (_c *MockClient_ResourceUtilizationRangeForApp_Call) Run(run func(ctx context.Context, env string, team string, app string)) *MockClient_ResourceUtilizationRangeForApp_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationRangeForApp_Call) Return(_a0 *model.ResourceUtilizationDateRange, _a1 error) *MockClient_ResourceUtilizationRangeForApp_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationRangeForApp_Call) RunAndReturn(run func(context.Context, string, string, string) (*model.ResourceUtilizationDateRange, error)) *MockClient_ResourceUtilizationRangeForApp_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResourceUtilizationRangeForTeam provides a mock function with given fields: ctx, team
+func (_m *MockClient) ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error) {
+	ret := _m.Called(ctx, team)
+
+	var r0 *model.ResourceUtilizationDateRange
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.ResourceUtilizationDateRange, error)); ok {
+		return rf(ctx, team)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *model.ResourceUtilizationDateRange); ok {
+		r0 = rf(ctx, team)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.ResourceUtilizationDateRange)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, team)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_ResourceUtilizationRangeForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationRangeForTeam'
+type MockClient_ResourceUtilizationRangeForTeam_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationRangeForTeam is a helper method to define mock.On call
+//   - ctx context.Context
+//   - team string
+func (_e *MockClient_Expecter) ResourceUtilizationRangeForTeam(ctx interface{}, team interface{}) *MockClient_ResourceUtilizationRangeForTeam_Call {
+	return &MockClient_ResourceUtilizationRangeForTeam_Call{Call: _e.mock.On("ResourceUtilizationRangeForTeam", ctx, team)}
+}
+
+func (_c *MockClient_ResourceUtilizationRangeForTeam_Call) Run(run func(ctx context.Context, team string)) *MockClient_ResourceUtilizationRangeForTeam_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationRangeForTeam_Call) Return(_a0 *model.ResourceUtilizationDateRange, _a1 error) *MockClient_ResourceUtilizationRangeForTeam_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationRangeForTeam_Call) RunAndReturn(run func(context.Context, string) (*model.ResourceUtilizationDateRange, error)) *MockClient_ResourceUtilizationRangeForTeam_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UtilizationForApp provides a mock function with given fields: ctx, resource, env, team, app, start, end
 func (_m *MockClient) UtilizationForApp(ctx context.Context, resource model.ResourceType, env string, team string, app string, start time.Time, end time.Time) ([]model.ResourceUtilization, error) {
 	ret := _m.Called(ctx, resource, env, team, app, start, end)

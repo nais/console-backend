@@ -144,3 +144,116 @@ func (q *Queries) ResourceUtilizationForTeam(ctx context.Context, arg ResourceUt
 	}
 	return items, nil
 }
+
+const resourceUtilizationOverageForTeam = `-- name: ResourceUtilizationOverageForTeam :many
+SELECT
+    SUM(usage)::double precision AS usage,
+    SUM(request)::double precision AS request,
+    app,
+    env,
+    resource_type
+FROM
+    resource_utilization_metrics
+WHERE
+    team = $1
+    AND timestamp >= $2::timestamptz
+    AND timestamp < $3::timestamptz
+GROUP BY
+    app, env, resource_type
+HAVING
+    SUM(request) > SUM(usage)
+`
+
+type ResourceUtilizationOverageForTeamParams struct {
+	Team  string
+	Start pgtype.Timestamptz
+	End   pgtype.Timestamptz
+}
+
+type ResourceUtilizationOverageForTeamRow struct {
+	Usage        float64
+	Request      float64
+	App          string
+	Env          string
+	ResourceType ResourceType
+}
+
+func (q *Queries) ResourceUtilizationOverageForTeam(ctx context.Context, arg ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error) {
+	rows, err := q.db.Query(ctx, resourceUtilizationOverageForTeam, arg.Team, arg.Start, arg.End)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ResourceUtilizationOverageForTeamRow
+	for rows.Next() {
+		var i ResourceUtilizationOverageForTeamRow
+		if err := rows.Scan(
+			&i.Usage,
+			&i.Request,
+			&i.App,
+			&i.Env,
+			&i.ResourceType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const resourceUtilizationRangeForApp = `-- name: ResourceUtilizationRangeForApp :one
+SELECT
+    MIN(timestamp)::timestamptz AS "from",
+    MAX(timestamp)::timestamptz AS "to"
+FROM
+    resource_utilization_metrics
+WHERE
+    env = $1
+    AND team = $2
+    AND app = $3
+`
+
+type ResourceUtilizationRangeForAppParams struct {
+	Env  string
+	Team string
+	App  string
+}
+
+type ResourceUtilizationRangeForAppRow struct {
+	From pgtype.Timestamptz
+	To   pgtype.Timestamptz
+}
+
+// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app.
+func (q *Queries) ResourceUtilizationRangeForApp(ctx context.Context, arg ResourceUtilizationRangeForAppParams) (*ResourceUtilizationRangeForAppRow, error) {
+	row := q.db.QueryRow(ctx, resourceUtilizationRangeForApp, arg.Env, arg.Team, arg.App)
+	var i ResourceUtilizationRangeForAppRow
+	err := row.Scan(&i.From, &i.To)
+	return &i, err
+}
+
+const resourceUtilizationRangeForTeam = `-- name: ResourceUtilizationRangeForTeam :one
+SELECT
+    MIN(timestamp)::timestamptz AS "from",
+    MAX(timestamp)::timestamptz AS "to"
+FROM
+    resource_utilization_metrics
+WHERE
+    team = $1
+`
+
+type ResourceUtilizationRangeForTeamRow struct {
+	From pgtype.Timestamptz
+	To   pgtype.Timestamptz
+}
+
+// ResourceUtilizationRangeForTeam will return the min and max timestamps for a specific team.
+func (q *Queries) ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationRangeForTeamRow, error) {
+	row := q.db.QueryRow(ctx, resourceUtilizationRangeForTeam, team)
+	var i ResourceUtilizationRangeForTeamRow
+	err := row.Scan(&i.From, &i.To)
+	return &i, err
+}
