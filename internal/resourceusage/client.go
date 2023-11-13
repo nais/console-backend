@@ -2,6 +2,7 @@ package resourceusage
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,7 +21,8 @@ type Client interface {
 	// UtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
 	UtilizationForTeam(ctx context.Context, resource model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error)
 
-	ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageForTeam, error)
+	// ResourceUtilizationOverageCostForTeam will return app overage cost for a given team in the given time range
+	ResourceUtilizationOverageCostForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageCostForTeam, error)
 
 	// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app
 	ResourceUtilizationRangeForApp(ctx context.Context, env, team, app string) (*model.ResourceUtilizationDateRange, error)
@@ -94,8 +96,60 @@ func (c *client) ResourceUtilizationRangeForTeam(ctx context.Context, team strin
 	}, nil
 }
 
-func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageForTeam, error) {
-	return &model.ResourceUtilizationOverageForTeam{}, nil
+func (c *client) ResourceUtilizationOverageCostForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageCostForTeam, error) {
+	startTs := pgtype.Timestamptz{}
+	err := startTs.Scan(normalizeTime(start))
+	if err != nil {
+		return nil, err
+	}
+
+	endTs := pgtype.Timestamptz{}
+	err = endTs.Scan(normalizeTime(end.Add(time.Hour * 24)))
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := c.querier.ResourceUtilizationOverageCostForTeam(ctx, gensql.ResourceUtilizationOverageCostForTeamParams{
+		Team:  team,
+		Start: startTs,
+		End:   endTs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	costMap := make(map[string]map[string]float64)
+	for _, row := range rows {
+		if _, exists := costMap[row.App]; !exists {
+			costMap[row.App] = make(map[string]float64)
+		}
+		if _, exists := costMap[row.App][row.Env]; !exists {
+			costMap[row.App][row.Env] = 0
+		}
+
+		costMap[row.App][row.Env] += cost(model.ResourceType(strings.ToUpper(string(row.ResourceType))), row.Request-row.Usage)
+	}
+
+	var sum float64
+	apps := make([]model.AppWithResourceUtilizationOverageCost, 0)
+	for app, envs := range costMap {
+		for env, cost := range envs {
+			sum += cost
+			apps = append(apps, model.AppWithResourceUtilizationOverageCost{
+				Team:    team,
+				App:     app,
+				Env:     env,
+				Overage: cost,
+			})
+		}
+	}
+	sort.Slice(apps, func(i, j int) bool {
+		return apps[i].Overage > apps[j].Overage
+	})
+	return &model.ResourceUtilizationOverageCostForTeam{
+		Sum:  sum,
+		Apps: apps,
+	}, nil
 }
 
 func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {

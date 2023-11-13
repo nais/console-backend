@@ -12,8 +12,8 @@ import (
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
-// ResourceUtilizationOverageForTeam is the resolver for the resourceUtilizationOverageForTeam field.
-func (r *queryResolver) ResourceUtilizationOverageForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageForTeam, error) {
+// ResourceUtilizationOverageCostForTeam is the resolver for the resourceUtilizationOverageCostForTeam field.
+func (r *queryResolver) ResourceUtilizationOverageCostForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageCostForTeam, error) {
 	end := time.Now()
 	start := end.Add(-24 * time.Hour * 6)
 
@@ -32,7 +32,7 @@ func (r *queryResolver) ResourceUtilizationOverageForTeam(ctx context.Context, t
 		}
 	}
 
-	return r.resourceUsageClient.ResourceUtilizationOverageForTeam(ctx, team, start, end)
+	return r.resourceUsageClient.ResourceUtilizationOverageCostForTeam(ctx, team, start, end)
 }
 
 // ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.

@@ -20,7 +20,8 @@ WHERE
     AND team = $2
     AND app = $3;
 
--- name: ResourceUtilizationOverageForTeam :many
+-- ResourceUtilizationOverageCostForTeam will return overage records for a given team.
+-- name: ResourceUtilizationOverageCostForTeam :many
 SELECT
     SUM(usage)::double precision AS usage,
     SUM(request)::double precision AS request,

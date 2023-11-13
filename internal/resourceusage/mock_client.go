@@ -24,20 +24,20 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
-// ResourceUtilizationOverageForTeam provides a mock function with given fields: ctx, team, start, end
-func (_m *MockClient) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start time.Time, end time.Time) (*model.ResourceUtilizationOverageForTeam, error) {
+// ResourceUtilizationOverageCostForTeam provides a mock function with given fields: ctx, team, start, end
+func (_m *MockClient) ResourceUtilizationOverageCostForTeam(ctx context.Context, team string, start time.Time, end time.Time) (*model.ResourceUtilizationOverageCostForTeam, error) {
 	ret := _m.Called(ctx, team, start, end)
 
-	var r0 *model.ResourceUtilizationOverageForTeam
+	var r0 *model.ResourceUtilizationOverageCostForTeam
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) (*model.ResourceUtilizationOverageForTeam, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) (*model.ResourceUtilizationOverageCostForTeam, error)); ok {
 		return rf(ctx, team, start, end)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) *model.ResourceUtilizationOverageForTeam); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) *model.ResourceUtilizationOverageCostForTeam); ok {
 		r0 = rf(ctx, team, start, end)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.ResourceUtilizationOverageForTeam)
+			r0 = ret.Get(0).(*model.ResourceUtilizationOverageCostForTeam)
 		}
 	}
 
@@ -50,33 +50,33 @@ func (_m *MockClient) ResourceUtilizationOverageForTeam(ctx context.Context, tea
 	return r0, r1
 }
 
-// MockClient_ResourceUtilizationOverageForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationOverageForTeam'
-type MockClient_ResourceUtilizationOverageForTeam_Call struct {
+// MockClient_ResourceUtilizationOverageCostForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationOverageCostForTeam'
+type MockClient_ResourceUtilizationOverageCostForTeam_Call struct {
 	*mock.Call
 }
 
-// ResourceUtilizationOverageForTeam is a helper method to define mock.On call
+// ResourceUtilizationOverageCostForTeam is a helper method to define mock.On call
 //   - ctx context.Context
 //   - team string
 //   - start time.Time
 //   - end time.Time
-func (_e *MockClient_Expecter) ResourceUtilizationOverageForTeam(ctx interface{}, team interface{}, start interface{}, end interface{}) *MockClient_ResourceUtilizationOverageForTeam_Call {
-	return &MockClient_ResourceUtilizationOverageForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageForTeam", ctx, team, start, end)}
+func (_e *MockClient_Expecter) ResourceUtilizationOverageCostForTeam(ctx interface{}, team interface{}, start interface{}, end interface{}) *MockClient_ResourceUtilizationOverageCostForTeam_Call {
+	return &MockClient_ResourceUtilizationOverageCostForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageCostForTeam", ctx, team, start, end)}
 }
 
-func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) Run(run func(ctx context.Context, team string, start time.Time, end time.Time)) *MockClient_ResourceUtilizationOverageForTeam_Call {
+func (_c *MockClient_ResourceUtilizationOverageCostForTeam_Call) Run(run func(ctx context.Context, team string, start time.Time, end time.Time)) *MockClient_ResourceUtilizationOverageCostForTeam_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(time.Time), args[3].(time.Time))
 	})
 	return _c
 }
 
-func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) Return(_a0 *model.ResourceUtilizationOverageForTeam, _a1 error) *MockClient_ResourceUtilizationOverageForTeam_Call {
+func (_c *MockClient_ResourceUtilizationOverageCostForTeam_Call) Return(_a0 *model.ResourceUtilizationOverageCostForTeam, _a1 error) *MockClient_ResourceUtilizationOverageCostForTeam_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) RunAndReturn(run func(context.Context, string, time.Time, time.Time) (*model.ResourceUtilizationOverageForTeam, error)) *MockClient_ResourceUtilizationOverageForTeam_Call {
+func (_c *MockClient_ResourceUtilizationOverageCostForTeam_Call) RunAndReturn(run func(context.Context, string, time.Time, time.Time) (*model.ResourceUtilizationOverageCostForTeam, error)) *MockClient_ResourceUtilizationOverageCostForTeam_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -145,7 +145,7 @@ func (q *Queries) ResourceUtilizationForTeam(ctx context.Context, arg ResourceUt
 	return items, nil
 }
 
-const resourceUtilizationOverageForTeam = `-- name: ResourceUtilizationOverageForTeam :many
+const resourceUtilizationOverageCostForTeam = `-- name: ResourceUtilizationOverageCostForTeam :many
 SELECT
     SUM(usage)::double precision AS usage,
     SUM(request)::double precision AS request,
@@ -164,13 +164,13 @@ HAVING
     SUM(request) > SUM(usage)
 `
 
-type ResourceUtilizationOverageForTeamParams struct {
+type ResourceUtilizationOverageCostForTeamParams struct {
 	Team  string
 	Start pgtype.Timestamptz
 	End   pgtype.Timestamptz
 }
 
-type ResourceUtilizationOverageForTeamRow struct {
+type ResourceUtilizationOverageCostForTeamRow struct {
 	Usage        float64
 	Request      float64
 	App          string
@@ -178,15 +178,16 @@ type ResourceUtilizationOverageForTeamRow struct {
 	ResourceType ResourceType
 }
 
-func (q *Queries) ResourceUtilizationOverageForTeam(ctx context.Context, arg ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error) {
-	rows, err := q.db.Query(ctx, resourceUtilizationOverageForTeam, arg.Team, arg.Start, arg.End)
+// ResourceUtilizationOverageCostForTeam will return overage records for a given team.
+func (q *Queries) ResourceUtilizationOverageCostForTeam(ctx context.Context, arg ResourceUtilizationOverageCostForTeamParams) ([]*ResourceUtilizationOverageCostForTeamRow, error) {
+	rows, err := q.db.Query(ctx, resourceUtilizationOverageCostForTeam, arg.Team, arg.Start, arg.End)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ResourceUtilizationOverageForTeamRow
+	var items []*ResourceUtilizationOverageCostForTeamRow
 	for rows.Next() {
-		var i ResourceUtilizationOverageForTeamRow
+		var i ResourceUtilizationOverageCostForTeamRow
 		if err := rows.Scan(
 			&i.Usage,
 			&i.Request,

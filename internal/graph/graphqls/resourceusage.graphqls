@@ -1,14 +1,15 @@
 extend type Query {
-    resourceUtilizationOverageForTeam(
-        "The team to fetch data for."
+    "Get resource utilization overage cost for a team."
+    resourceUtilizationOverageCostForTeam(
+        "The name of the team."
         team: String!
 
-        "Fetch resource utilization from this date. Defaults to 7 days before the to date."
+        "Fetch resource utilization overage data from this date. Defaults to 7 days before the to date."
         from: Date
 
-        "Fetch resource utilization until this date. Defaults to today."
+        "Fetch resource utilization overage until this date. Defaults to today."
         to: Date
-    ): ResourceUtilizationOverageForTeam!
+    ): ResourceUtilizationOverageCostForTeam!
 
     "Get the resource utilization for a team across all environments."
     resourceUtilizationForTeam(
@@ -63,16 +64,28 @@ type ResourceUtilizationDateRange {
     to: Date
 }
 
-type ResourceUtilizationOverageForTeam {
+"Resouce utilization overage cost for team type."
+type ResourceUtilizationOverageCostForTeam {
+    "The sum of the overage cost for all apps."
     sum: Float!
-    apps: [AppWithResourceUtilizationOverage!]!
+
+    "A list of apps with overage cost for the team, sorted by overage cost in descending order."
+    apps: [AppWithResourceUtilizationOverageCost!]!
 }
 
-type AppWithResourceUtilizationOverage {
-    team: String!
-    app: String!
-    env: String!
+"Resouce utilization overage cost for an app."
+type AppWithResourceUtilizationOverageCost {
+    "The overage cost for the app."
     overage: Float!
+
+    "The environment where the app is running."
+    env: String!
+
+    "The name of the team who owns the app."
+    team: String!
+
+    "The name of the app."
+    app: String!
 }
 
 "Resource utilization for env type."
