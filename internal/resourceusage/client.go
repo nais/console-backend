@@ -3,7 +3,6 @@ package resourceusage
 import (
 	"context"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -127,7 +126,7 @@ func (c *client) ResourceUtilizationOverageCostForTeam(ctx context.Context, team
 			costMap[row.App][row.Env] = 0
 		}
 
-		costMap[row.App][row.Env] += cost(model.ResourceType(strings.ToUpper(string(row.ResourceType))), row.Request-row.Usage)
+		costMap[row.App][row.Env] += cost(row.ResourceType, row.Request-row.Usage)
 	}
 
 	var sum float64
@@ -169,7 +168,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 		Env:          env,
 		Team:         team,
 		App:          app,
-		ResourceType: gensql.ResourceType(strings.ToLower(string(resourceType))),
+		ResourceType: resourceType.ToDatabaseEnum(),
 		Start:        startTs,
 		End:          endTs,
 	})
@@ -179,8 +178,8 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 
 	data := make([]model.ResourceUtilization, 0)
 	for _, row := range rows {
-		usageCost := cost(resourceType, row.Usage)
-		requestCost := cost(resourceType, row.Request)
+		usageCost := cost(resourceType.ToDatabaseEnum(), row.Usage)
+		requestCost := cost(resourceType.ToDatabaseEnum(), row.Request)
 		data = append(data, model.ResourceUtilization{
 			Resource:           resourceType,
 			Timestamp:          row.Timestamp.Time.UTC(),
@@ -211,7 +210,7 @@ func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.Reso
 	rows, err := c.querier.ResourceUtilizationForTeam(ctx, gensql.ResourceUtilizationForTeamParams{
 		Env:          env,
 		Team:         team,
-		ResourceType: gensql.ResourceType(strings.ToLower(string(resourceType))),
+		ResourceType: resourceType.ToDatabaseEnum(),
 		Start:        startTs,
 		End:          endTs,
 	})
@@ -221,8 +220,8 @@ func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.Reso
 
 	data := make([]model.ResourceUtilization, 0)
 	for _, row := range rows {
-		usageCost := cost(resourceType, row.Usage)
-		requestCost := cost(resourceType, row.Request)
+		usageCost := cost(resourceType.ToDatabaseEnum(), row.Usage)
+		requestCost := cost(resourceType.ToDatabaseEnum(), row.Request)
 		data = append(data, model.ResourceUtilization{
 			Resource:           resourceType,
 			Timestamp:          row.Timestamp.Time.UTC(),
@@ -243,8 +242,8 @@ func normalizeTime(ts time.Time) time.Time {
 }
 
 // cost calculates the cost for the given resource type
-func cost(resourceType model.ResourceType, value float64) (cost float64) {
-	if resourceType == model.ResourceTypeCPU {
+func cost(resourceType gensql.ResourceType, value float64) (cost float64) {
+	if resourceType == gensql.ResourceTypeCpu {
 		cost = 131.0 / 30.0 * value
 	} else {
 		cost = 18.0 / 1024 / 1024 / 1024 / 30.0 * value

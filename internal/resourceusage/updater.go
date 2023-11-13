@@ -170,7 +170,7 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 					Env:          env,
 					Team:         team,
 					App:          app,
-					ResourceType: gensql.ResourceType(strings.ToLower(string(value.Resource))),
+					ResourceType: value.Resource.ToDatabaseEnum(),
 					Usage:        value.Usage,
 					Request:      value.Request,
 				})
