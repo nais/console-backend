@@ -34,7 +34,7 @@ WHERE
     AND app = $3
     AND resource_type = $4
     AND timestamp >= $5::timestamptz
-    AND timestamp <= $6::timestamptz
+    AND timestamp < $6::timestamptz
 ORDER BY
     timestamp ASC
 `
@@ -97,7 +97,7 @@ WHERE
     AND team = $2
     AND resource_type = $3
     AND timestamp >= $4::timestamptz
-    AND timestamp <= $5::timestamptz
+    AND timestamp < $5::timestamptz
 GROUP BY
     timestamp
 ORDER BY

@@ -42,7 +42,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 	}
 
 	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(normalizeTime(end))
+	err = endTs.Scan(normalizeTime(end.Add(time.Hour * 24)))
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.Reso
 	}
 
 	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(normalizeTime(end))
+	err = endTs.Scan(normalizeTime(end.Add(time.Hour * 24)))
 	if err != nil {
 		return nil, err
 	}

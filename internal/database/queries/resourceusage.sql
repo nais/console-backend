@@ -20,7 +20,7 @@ WHERE
     AND app = $3
     AND resource_type = $4
     AND timestamp >= sqlc.arg('start')::timestamptz
-    AND timestamp <= sqlc.arg('end')::timestamptz
+    AND timestamp < sqlc.arg('end')::timestamptz
 ORDER BY
     timestamp ASC;
 
@@ -37,7 +37,7 @@ WHERE
     AND team = $2
     AND resource_type = $3
     AND timestamp >= sqlc.arg('start')::timestamptz
-    AND timestamp <= sqlc.arg('end')::timestamptz
+    AND timestamp < sqlc.arg('end')::timestamptz
 GROUP BY
     timestamp
 ORDER BY
