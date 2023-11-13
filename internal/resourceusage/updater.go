@@ -24,10 +24,10 @@ type Updater struct {
 }
 
 const (
-	cpuUsageForEnv      = `sum(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
-	cpuRequestForEnv    = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
-	memoryUsageForEnv   = `sum(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
-	memoryRequestForEnv = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
+	cpuUsage      = `sum(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
+	cpuRequest    = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
+	memoryUsage   = `sum(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
+	memoryRequest = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
 
 	rangedQueryStep = time.Hour
 )
@@ -183,11 +183,11 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 // getQueries returns the prometheus queries for the given resource type
 func getQueries(resourceType gensql.ResourceType) (usageQuery, requestQuery string) {
 	if resourceType == gensql.ResourceTypeCpu {
-		usageQuery = cpuUsageForEnv
-		requestQuery = cpuRequestForEnv
+		usageQuery = cpuUsage
+		requestQuery = cpuRequest
 	} else {
-		usageQuery = memoryUsageForEnv
-		requestQuery = memoryRequestForEnv
+		usageQuery = memoryUsage
+		requestQuery = memoryRequest
 	}
 	ignoreNamespaces := strings.Join(namespacesToIgnore, "|") + "|"
 	ignoreContainers := strings.Join(containersToIgnore, "|") + "|"
