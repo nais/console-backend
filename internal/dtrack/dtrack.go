@@ -133,7 +133,7 @@ func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.D
 
 	if !d.HasBom {
 		c.log.Debugf("no bom found in DependencyTrack for project %s", p.Name)
-		d.Summary = c.createSummary([]*dependencytrack.Finding{}, p.LastInheritedRiskScore)
+		d.Summary = c.createSummary([]*dependencytrack.Finding{})
 		c.cache.Set(app.ID(), d, cache.DefaultExpiration)
 		return d, nil
 	}
@@ -143,7 +143,7 @@ func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.D
 		return nil, err
 	}
 
-	d.Summary = c.createSummary(f, p.LastInheritedRiskScore)
+	d.Summary = c.createSummary(f)
 
 	if d == nil {
 		c.log.Debugf("no findings found in DependencyTrack for project %s", p.Name)
@@ -163,11 +163,11 @@ func (c *Client) retrieveFindings(ctx context.Context, uuid string) ([]*dependen
 	return findings, nil
 }
 
-func (c *Client) createSummary(findings []*dependencytrack.Finding, riskScore float64) *model.VulnerabilitySummary {
+func (c *Client) createSummary(findings []*dependencytrack.Finding) *model.VulnerabilitySummary {
 	var low, medium, high, critical, unassigned int
 	if len(findings) == 0 {
 		return &model.VulnerabilitySummary{
-			RiskScore:  riskScore,
+			RiskScore:  -1,
 			Total:      -1,
 			Critical:   -1,
 			High:       -1,
@@ -191,6 +191,8 @@ func (c *Client) createSummary(findings []*dependencytrack.Finding, riskScore fl
 			unassigned += 1
 		}
 	}
+	//algorithm: https://github.com/DependencyTrack/dependency-track/blob/41e2ba8afb15477ff2b7b53bd9c19130ba1053c0/src/main/java/org/dependencytrack/metrics/Metrics.java#L31-L33
+	riskScore := (critical * 10) + (high * 5) + (medium * 3) + (low * 1) + (unassigned * 5)
 
 	return &model.VulnerabilitySummary{
 		Total:      len(findings),

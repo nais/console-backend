@@ -7,11 +7,11 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"strings"
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 )

@@ -1123,13 +1123,13 @@ func (VulnerabilitiesNode) IsNode() {}
 func (this VulnerabilitiesNode) GetID() scalar.Ident { return this.ID }
 
 type VulnerabilitySummary struct {
-	Total      int     `json:"total"`
-	RiskScore  float64 `json:"riskScore"`
-	Critical   int     `json:"critical"`
-	High       int     `json:"high"`
-	Medium     int     `json:"medium"`
-	Low        int     `json:"low"`
-	Unassigned int     `json:"unassigned"`
+	Total      int `json:"total"`
+	RiskScore  int `json:"riskScore"`
+	Critical   int `json:"critical"`
+	High       int `json:"high"`
+	Medium     int `json:"medium"`
+	Low        int `json:"low"`
+	Unassigned int `json:"unassigned"`
 }
 
 type ErrorLevel string

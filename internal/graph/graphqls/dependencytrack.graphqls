@@ -46,7 +46,7 @@ type DependencyTrack implements Node {
 
 type VulnerabilitySummary {
     total: Int!
-    riskScore: Float!
+    riskScore: Int!
     critical: Int!
     high: Int!
     medium: Int!
