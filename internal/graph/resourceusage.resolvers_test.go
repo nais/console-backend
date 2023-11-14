@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nais/console-backend/internal/database/gensql"
-
 	"github.com/nais/console-backend/internal/graph"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -42,19 +40,19 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 	})
 
 	t.Run("no dates specified", func(t *testing.T) {
-		cpuData := make([]model.ResourceUtilizationMetrics, 0)
-		memoryData := make([]model.ResourceUtilizationMetrics, 0)
+		cpuData := make([]model.ResourceUtilization, 0)
+		memoryData := make([]model.ResourceUtilization, 0)
 
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.
 			EXPECT().
-			ResourceUtilization(ctx, "env", "team", "app", gensql.KindApp, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
-			Run(func(_ context.Context, _, _, _ string, _ gensql.Kind, start time.Time, end time.Time) {
+			ResourceUtilizationForApp(ctx, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
+			Run(func(_ context.Context, _, _, _ string, start time.Time, end time.Time) {
 				allowedDelta := time.Second
 				assert.WithinDuration(t, end, time.Now(), allowedDelta)
 				assert.WithinDuration(t, start, time.Now(), 24*6*time.Hour+allowedDelta)
 			}).
-			Return(&model.ResourceUtilization{
+			Return(&model.ResourceUtilizationForApp{
 				CPU:    cpuData,
 				Memory: memoryData,
 			}, nil)
@@ -74,18 +72,18 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		toTime := time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
 		to := scalar.NewDate(toTime)
 
-		cpuData := make([]model.ResourceUtilizationMetrics, 0)
-		memoryData := make([]model.ResourceUtilizationMetrics, 0)
+		cpuData := make([]model.ResourceUtilization, 0)
+		memoryData := make([]model.ResourceUtilization, 0)
 
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.
 			EXPECT().
-			ResourceUtilization(ctx, "env", "team", "app", gensql.KindApp, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
-			Run(func(_ context.Context, _, _, _ string, _ gensql.Kind, start time.Time, end time.Time) {
+			ResourceUtilizationForApp(ctx, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
+			Run(func(_ context.Context, _, _, _ string, start time.Time, end time.Time) {
 				assert.Equal(t, fromTime, start)
 				assert.Equal(t, toTime, end)
 			}).
-			Return(&model.ResourceUtilization{
+			Return(&model.ResourceUtilizationForApp{
 				CPU:    cpuData,
 				Memory: memoryData,
 			}, nil)

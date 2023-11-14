@@ -1,5 +1,5 @@
--- ResourceUtilizationDateRangeForTeam will return the min and max timestamps for a specific team.
--- name: ResourceUtilizationDateRangeForTeam :one
+-- ResourceUtilizationRangeForTeam will return the min and max timestamps for a specific team.
+-- name: ResourceUtilizationRangeForTeam :one
 SELECT
     MIN(timestamp)::timestamptz AS "from",
     MAX(timestamp)::timestamptz AS "to"
@@ -8,8 +8,8 @@ FROM
 WHERE
     team = $1;
 
--- ResourceUtilizationDateRange will return the min and max timestamps for an app/job.
--- name: ResourceUtilizationDateRange :one
+-- ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app.
+-- name: ResourceUtilizationRangeForApp :one
 SELECT
     MIN(timestamp)::timestamptz AS "from",
     MAX(timestamp)::timestamptz AS "to"
@@ -18,17 +18,15 @@ FROM
 WHERE
     env = $1
     AND team = $2
-    AND name = $3
-    AND kind = $4;
+    AND app = $3;
 
 -- ResourceUtilizationOverageCostForTeam will return overage records for a given team.
 -- name: ResourceUtilizationOverageCostForTeam :many
 SELECT
     SUM(usage)::double precision AS usage,
     SUM(request)::double precision AS request,
+    app,
     env,
-    name,
-    kind,
     resource_type
 FROM
     resource_utilization_metrics
@@ -37,15 +35,15 @@ WHERE
     AND timestamp >= sqlc.arg('start')::timestamptz
     AND timestamp < sqlc.arg('end')::timestamptz
 GROUP BY
-    env, name, kind, resource_type
+    app, env, resource_type
 HAVING
     SUM(request) > SUM(usage);
 
 
 -- ResourceUtilizationUpsert will insert or update resource utilization records.
 -- name: ResourceUtilizationUpsert :batchexec
-INSERT INTO resource_utilization_metrics (timestamp, env, team, name, kind, resource_type, usage, request)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO resource_utilization_metrics (timestamp, env, team, app, resource_type, usage, request)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT ON CONSTRAINT resource_utilization_metric DO NOTHING;
 
 -- MaxResourceUtilizationDate will return the max date for resource utilization records.
@@ -61,9 +59,8 @@ FROM
 WHERE
     env = $1
     AND team = $2
-    AND name = $3
-    AND kind = $4
-    AND resource_type = $5
+    AND app = $3
+    AND resource_type = $4
     AND timestamp >= sqlc.arg('start')::timestamptz
     AND timestamp < sqlc.arg('end')::timestamptz
 ORDER BY

@@ -23,80 +23,18 @@ func (q *Queries) MaxResourceUtilizationDate(ctx context.Context) (pgtype.Timest
 	return column_1, err
 }
 
-const resourceUtilizationDateRange = `-- name: ResourceUtilizationDateRange :one
-SELECT
-    MIN(timestamp)::timestamptz AS "from",
-    MAX(timestamp)::timestamptz AS "to"
-FROM
-    resource_utilization_metrics
-WHERE
-    env = $1
-    AND team = $2
-    AND name = $3
-    AND kind = $4
-`
-
-type ResourceUtilizationDateRangeParams struct {
-	Env  string
-	Team string
-	Name string
-	Kind Kind
-}
-
-type ResourceUtilizationDateRangeRow struct {
-	From pgtype.Timestamptz
-	To   pgtype.Timestamptz
-}
-
-// ResourceUtilizationDateRange will return the min and max timestamps for an app/job.
-func (q *Queries) ResourceUtilizationDateRange(ctx context.Context, arg ResourceUtilizationDateRangeParams) (*ResourceUtilizationDateRangeRow, error) {
-	row := q.db.QueryRow(ctx, resourceUtilizationDateRange,
-		arg.Env,
-		arg.Team,
-		arg.Name,
-		arg.Kind,
-	)
-	var i ResourceUtilizationDateRangeRow
-	err := row.Scan(&i.From, &i.To)
-	return &i, err
-}
-
-const resourceUtilizationDateRangeForTeam = `-- name: ResourceUtilizationDateRangeForTeam :one
-SELECT
-    MIN(timestamp)::timestamptz AS "from",
-    MAX(timestamp)::timestamptz AS "to"
-FROM
-    resource_utilization_metrics
-WHERE
-    team = $1
-`
-
-type ResourceUtilizationDateRangeForTeamRow struct {
-	From pgtype.Timestamptz
-	To   pgtype.Timestamptz
-}
-
-// ResourceUtilizationDateRangeForTeam will return the min and max timestamps for a specific team.
-func (q *Queries) ResourceUtilizationDateRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationDateRangeForTeamRow, error) {
-	row := q.db.QueryRow(ctx, resourceUtilizationDateRangeForTeam, team)
-	var i ResourceUtilizationDateRangeForTeamRow
-	err := row.Scan(&i.From, &i.To)
-	return &i, err
-}
-
 const resourceUtilizationForApp = `-- name: ResourceUtilizationForApp :many
 SELECT
-    id, timestamp, env, team, name, kind, resource_type, usage, request
+    id, timestamp, env, team, app, resource_type, usage, request
 FROM
     resource_utilization_metrics
 WHERE
     env = $1
     AND team = $2
-    AND name = $3
-    AND kind = $4
-    AND resource_type = $5
-    AND timestamp >= $6::timestamptz
-    AND timestamp < $7::timestamptz
+    AND app = $3
+    AND resource_type = $4
+    AND timestamp >= $5::timestamptz
+    AND timestamp < $6::timestamptz
 ORDER BY
     timestamp ASC
 `
@@ -104,8 +42,7 @@ ORDER BY
 type ResourceUtilizationForAppParams struct {
 	Env          string
 	Team         string
-	Name         string
-	Kind         Kind
+	App          string
 	ResourceType ResourceType
 	Start        pgtype.Timestamptz
 	End          pgtype.Timestamptz
@@ -116,8 +53,7 @@ func (q *Queries) ResourceUtilizationForApp(ctx context.Context, arg ResourceUti
 	rows, err := q.db.Query(ctx, resourceUtilizationForApp,
 		arg.Env,
 		arg.Team,
-		arg.Name,
-		arg.Kind,
+		arg.App,
 		arg.ResourceType,
 		arg.Start,
 		arg.End,
@@ -134,8 +70,7 @@ func (q *Queries) ResourceUtilizationForApp(ctx context.Context, arg ResourceUti
 			&i.Timestamp,
 			&i.Env,
 			&i.Team,
-			&i.Name,
-			&i.Kind,
+			&i.App,
 			&i.ResourceType,
 			&i.Usage,
 			&i.Request,
@@ -214,9 +149,8 @@ const resourceUtilizationOverageCostForTeam = `-- name: ResourceUtilizationOvera
 SELECT
     SUM(usage)::double precision AS usage,
     SUM(request)::double precision AS request,
+    app,
     env,
-    name,
-    kind,
     resource_type
 FROM
     resource_utilization_metrics
@@ -225,7 +159,7 @@ WHERE
     AND timestamp >= $2::timestamptz
     AND timestamp < $3::timestamptz
 GROUP BY
-    env, name, kind, resource_type
+    app, env, resource_type
 HAVING
     SUM(request) > SUM(usage)
 `
@@ -239,9 +173,8 @@ type ResourceUtilizationOverageCostForTeamParams struct {
 type ResourceUtilizationOverageCostForTeamRow struct {
 	Usage        float64
 	Request      float64
+	App          string
 	Env          string
-	Name         string
-	Kind         Kind
 	ResourceType ResourceType
 }
 
@@ -258,9 +191,8 @@ func (q *Queries) ResourceUtilizationOverageCostForTeam(ctx context.Context, arg
 		if err := rows.Scan(
 			&i.Usage,
 			&i.Request,
+			&i.App,
 			&i.Env,
-			&i.Name,
-			&i.Kind,
 			&i.ResourceType,
 		); err != nil {
 			return nil, err
@@ -271,4 +203,58 @@ func (q *Queries) ResourceUtilizationOverageCostForTeam(ctx context.Context, arg
 		return nil, err
 	}
 	return items, nil
+}
+
+const resourceUtilizationRangeForApp = `-- name: ResourceUtilizationRangeForApp :one
+SELECT
+    MIN(timestamp)::timestamptz AS "from",
+    MAX(timestamp)::timestamptz AS "to"
+FROM
+    resource_utilization_metrics
+WHERE
+    env = $1
+    AND team = $2
+    AND app = $3
+`
+
+type ResourceUtilizationRangeForAppParams struct {
+	Env  string
+	Team string
+	App  string
+}
+
+type ResourceUtilizationRangeForAppRow struct {
+	From pgtype.Timestamptz
+	To   pgtype.Timestamptz
+}
+
+// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app.
+func (q *Queries) ResourceUtilizationRangeForApp(ctx context.Context, arg ResourceUtilizationRangeForAppParams) (*ResourceUtilizationRangeForAppRow, error) {
+	row := q.db.QueryRow(ctx, resourceUtilizationRangeForApp, arg.Env, arg.Team, arg.App)
+	var i ResourceUtilizationRangeForAppRow
+	err := row.Scan(&i.From, &i.To)
+	return &i, err
+}
+
+const resourceUtilizationRangeForTeam = `-- name: ResourceUtilizationRangeForTeam :one
+SELECT
+    MIN(timestamp)::timestamptz AS "from",
+    MAX(timestamp)::timestamptz AS "to"
+FROM
+    resource_utilization_metrics
+WHERE
+    team = $1
+`
+
+type ResourceUtilizationRangeForTeamRow struct {
+	From pgtype.Timestamptz
+	To   pgtype.Timestamptz
+}
+
+// ResourceUtilizationRangeForTeam will return the min and max timestamps for a specific team.
+func (q *Queries) ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationRangeForTeamRow, error) {
+	row := q.db.QueryRow(ctx, resourceUtilizationRangeForTeam, team)
+	var i ResourceUtilizationRangeForTeamRow
+	err := row.Scan(&i.From, &i.To)
+	return &i, err
 }

@@ -148,6 +148,18 @@ type AppState struct {
 	Errors []StateError `json:"errors"`
 }
 
+// Resouce utilization overage cost for an app.
+type AppWithResourceUtilizationOverageCost struct {
+	// The overage cost for the app.
+	Overage float64 `json:"overage"`
+	// The environment where the app is running.
+	Env string `json:"env"`
+	// The name of the team who owns the app.
+	Team string `json:"team"`
+	// The name of the app.
+	App string `json:"app"`
+}
+
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent
@@ -737,20 +749,6 @@ func (OutboundAccessError) IsStateError()             {}
 func (this OutboundAccessError) GetRevision() string  { return this.Revision }
 func (this OutboundAccessError) GetLevel() ErrorLevel { return this.Level }
 
-// Resouce utilization overage cost entry.
-type OverageEntry struct {
-	// The overage cost for the app.
-	Overage float64 `json:"overage"`
-	// The environment where the app is running.
-	Env string `json:"env"`
-	// The name of the team who owns the app.
-	Team string `json:"team"`
-	// The name of the entry.
-	Name string `json:"name"`
-	// Whether or not the entry is an app.
-	IsApp bool `json:"isApp"`
-}
-
 // PageInfo is a type that contains pagination information in a Relay style.
 type PageInfo struct {
 	// When paginating forwards, are there more items?
@@ -784,32 +782,6 @@ type Requests struct {
 
 // Resource utilization type.
 type ResourceUtilization struct {
-	// CPU resource utilization data.
-	CPU []ResourceUtilizationMetrics `json:"cpu"`
-	// Memory resource utilization data.
-	Memory []ResourceUtilizationMetrics `json:"memory"`
-}
-
-// Date range type.
-type ResourceUtilizationDateRange struct {
-	// The start of the range.
-	From *scalar.Date `json:"from,omitempty"`
-	// The end of the range.
-	To *scalar.Date `json:"to,omitempty"`
-}
-
-// Resource utilization for env type.
-type ResourceUtilizationForEnv struct {
-	// Name of the environment.
-	Env string `json:"env"`
-	// CPU resource utilization data for the environment.
-	CPU []ResourceUtilizationMetrics `json:"cpu"`
-	// Memory resource utilization data for the environment.
-	Memory []ResourceUtilizationMetrics `json:"memory"`
-}
-
-// Resource utilization metrics type.
-type ResourceUtilizationMetrics struct {
 	// Resource type.
 	Resource ResourceType `json:"resource"`
 	// Timestamp of the value.
@@ -826,12 +798,38 @@ type ResourceUtilizationMetrics struct {
 	RequestCostOverage float64 `json:"requestCostOverage"`
 }
 
-// Resource utilization overage cost for team type.
+// Date range type.
+type ResourceUtilizationDateRange struct {
+	// The start of the range.
+	From *scalar.Date `json:"from,omitempty"`
+	// The end of the range.
+	To *scalar.Date `json:"to,omitempty"`
+}
+
+// Resource utilization for app type.
+type ResourceUtilizationForApp struct {
+	// CPU resource utilization data for the environment.
+	CPU []ResourceUtilization `json:"cpu"`
+	// Memory resource utilization data for the environment.
+	Memory []ResourceUtilization `json:"memory"`
+}
+
+// Resource utilization for env type.
+type ResourceUtilizationForEnv struct {
+	// Name of the environment.
+	Env string `json:"env"`
+	// CPU resource utilization data for the environment.
+	CPU []ResourceUtilization `json:"cpu"`
+	// Memory resource utilization data for the environment.
+	Memory []ResourceUtilization `json:"memory"`
+}
+
+// Resouce utilization overage cost for team type.
 type ResourceUtilizationOverageCostForTeam struct {
-	// The sum of the overage cost for all entries.
+	// The sum of the overage cost for all apps.
 	Sum float64 `json:"sum"`
-	// A list of entries with overage cost, sorted by the cost in descending order.
-	Entries []OverageEntry `json:"entries"`
+	// A list of apps with overage cost for the team, sorted by overage cost in descending order.
+	Apps []AppWithResourceUtilizationOverageCost `json:"apps"`
 }
 
 type Resources struct {

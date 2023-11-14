@@ -27,16 +27,16 @@ type Querier interface {
 	MaxResourceUtilizationDate(ctx context.Context) (pgtype.Timestamptz, error)
 	MonthlyCostForApp(ctx context.Context, arg MonthlyCostForAppParams) ([]*MonthlyCostForAppRow, error)
 	MonthlyCostForTeam(ctx context.Context, team *string) ([]*MonthlyCostForTeamRow, error)
-	// ResourceUtilizationDateRange will return the min and max timestamps for an app/job.
-	ResourceUtilizationDateRange(ctx context.Context, arg ResourceUtilizationDateRangeParams) (*ResourceUtilizationDateRangeRow, error)
-	// ResourceUtilizationDateRangeForTeam will return the min and max timestamps for a specific team.
-	ResourceUtilizationDateRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationDateRangeForTeamRow, error)
 	// ResourceUtilizationForApp will return resource utilization records for a given app.
 	ResourceUtilizationForApp(ctx context.Context, arg ResourceUtilizationForAppParams) ([]*ResourceUtilizationMetric, error)
 	// ResourceUtilizationForTeam will return resource utilization records for a given team.
 	ResourceUtilizationForTeam(ctx context.Context, arg ResourceUtilizationForTeamParams) ([]*ResourceUtilizationForTeamRow, error)
 	// ResourceUtilizationOverageCostForTeam will return overage records for a given team.
 	ResourceUtilizationOverageCostForTeam(ctx context.Context, arg ResourceUtilizationOverageCostForTeamParams) ([]*ResourceUtilizationOverageCostForTeamRow, error)
+	// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app.
+	ResourceUtilizationRangeForApp(ctx context.Context, arg ResourceUtilizationRangeForAppParams) (*ResourceUtilizationRangeForAppRow, error)
+	// ResourceUtilizationRangeForTeam will return the min and max timestamps for a specific team.
+	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationRangeForTeamRow, error)
 	// ResourceUtilizationUpsert will insert or update resource utilization records.
 	ResourceUtilizationUpsert(ctx context.Context, arg []ResourceUtilizationUpsertParams) *ResourceUtilizationUpsertBatchResults
 	// TruncateCostTable will truncate the cost table before doing a complete reimport.

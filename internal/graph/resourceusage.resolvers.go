@@ -8,7 +8,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
@@ -61,21 +60,16 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team str
 
 // ResourceUtilizationDateRangeForTeam is the resolver for the resourceUtilizationDateRangeForTeam field.
 func (r *queryResolver) ResourceUtilizationDateRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error) {
-	return r.resourceUsageClient.ResourceUtilizationDateRangeForTeam(ctx, team)
+	return r.resourceUsageClient.ResourceUtilizationRangeForTeam(ctx, team)
 }
 
 // ResourceUtilizationDateRangeForApp is the resolver for the resourceUtilizationDateRangeForApp field.
 func (r *queryResolver) ResourceUtilizationDateRangeForApp(ctx context.Context, env string, team string, app string) (*model.ResourceUtilizationDateRange, error) {
-	return r.resourceUsageClient.ResourceUtilizationDateRange(ctx, env, team, app, gensql.KindApp)
-}
-
-// ResourceUtilizationDateRangeForJob is the resolver for the resourceUtilizationDateRangeForJob field.
-func (r *queryResolver) ResourceUtilizationDateRangeForJob(ctx context.Context, env string, team string, job string) (*model.ResourceUtilizationDateRange, error) {
-	return r.resourceUsageClient.ResourceUtilizationDateRange(ctx, env, team, job, gensql.KindJob)
+	return r.resourceUsageClient.ResourceUtilizationRangeForApp(ctx, env, team, app)
 }
 
 // ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.
-func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, env string, team string, app string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilization, error) {
+func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, env string, team string, app string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationForApp, error) {
 	end := time.Now()
 	start := end.Add(-24 * time.Hour * 6)
 
@@ -94,28 +88,5 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, env strin
 		}
 	}
 
-	return r.resourceUsageClient.ResourceUtilization(ctx, env, team, app, gensql.KindApp, start, end)
-}
-
-// ResourceUtilizationForJob is the resolver for the resourceUtilizationForJob field.
-func (r *queryResolver) ResourceUtilizationForJob(ctx context.Context, env string, team string, job string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilization, error) {
-	end := time.Now()
-	start := end.Add(-24 * time.Hour * 6)
-
-	var err error
-	if to != nil {
-		end, err = to.Time()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if from != nil {
-		start, err = from.Time()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return r.resourceUsageClient.ResourceUtilization(ctx, env, team, job, gensql.KindJob, start, end)
+	return r.resourceUsageClient.ResourceUtilizationForApp(ctx, env, team, app, start, end)
 }

@@ -14,8 +14,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// utilizationMapForEnv is a map of team -> app -> kind -> utilizationMap
-type utilizationMapForEnv map[string]map[string]map[gensql.Kind]utilizationMap
+// utilizationMapForEnv is a map of team -> app -> utilizationMap
+type utilizationMapForEnv map[string]map[string]utilizationMap
 
 type Updater struct {
 	querier     gensql.Querier
@@ -24,10 +24,10 @@ type Updater struct {
 }
 
 const (
-	cpuUsage      = `sum by (namespace, container, owner_kind) (rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m]) + on (pod) group_left (owner_kind) kube_pod_owner{owner_kind=~"Job|ReplicaSet"})`
-	cpuRequest    = `sum by (namespace, container, owner_kind) (kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"} + on (pod) group_left (owner_kind) kube_pod_owner{owner_kind=~"Job|ReplicaSet"})`
-	memoryUsage   = `sum by (namespace, container, owner_kind) (container_memory_working_set_bytes{namespace!~%q, container!~%q} + on (pod) group_left (owner_kind) kube_pod_owner{owner_kind=~"Job|ReplicaSet"})`
-	memoryRequest = `sum by (namespace, container, owner_kind) (kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"} + on (pod) group_left (owner_kind) kube_pod_owner{owner_kind=~"Job|ReplicaSet"})`
+	cpuUsage      = `sum(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
+	cpuRequest    = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
+	memoryUsage   = `sum(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
+	memoryRequest = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
 
 	rangedQueryStep = time.Hour
 )
@@ -103,13 +103,6 @@ func (u *Updater) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, er
 	return rowsUpserted, nil
 }
 
-func getKind(kind string) gensql.Kind {
-	if kind == "Job" {
-		return gensql.KindJob
-	}
-	return gensql.KindApp
-}
-
 // utilizationInEnv returns resource utilization (usage and request) for all teams and apps in a given env
 func utilizationInEnv(ctx context.Context, promClient promv1.API, resourceType gensql.ResourceType, start, end time.Time, log logrus.FieldLogger) (utilizationMapForEnv, error) {
 	utilization := make(utilizationMapForEnv)
@@ -124,21 +117,16 @@ func utilizationInEnv(ctx context.Context, promClient promv1.API, resourceType g
 				ts := val.Timestamp.Time().UTC()
 				team := string(sample.Metric["namespace"])
 				app := string(sample.Metric["container"])
-				kind := getKind(string(sample.Metric["owner_kind"]))
 
 				if _, exists := utilization[team]; !exists {
-					utilization[team] = make(map[string]map[gensql.Kind]utilizationMap)
+					utilization[team] = make(map[string]utilizationMap)
 				}
 
 				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = make(map[gensql.Kind]utilizationMap)
+					utilization[team][app] = initUtilizationMap(resourceType, start, end)
 				}
 
-				if _, exists := utilization[team][app][kind]; !exists {
-					utilization[team][app][kind] = initUtilizationMap(resourceType, start, end)
-				}
-
-				utilization[team][app][kind][ts].Usage = float64(val.Value)
+				utilization[team][app][ts].Usage = float64(val.Value)
 			}
 		}
 	}
@@ -152,21 +140,16 @@ func utilizationInEnv(ctx context.Context, promClient promv1.API, resourceType g
 				ts := val.Timestamp.Time().UTC()
 				team := string(sample.Metric["namespace"])
 				app := string(sample.Metric["container"])
-				kind := getKind(string(sample.Metric["owner_kind"]))
 
 				if _, exists := utilization[team]; !exists {
-					utilization[team] = make(map[string]map[gensql.Kind]utilizationMap)
+					utilization[team] = make(map[string]utilizationMap)
 				}
 
 				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = make(map[gensql.Kind]utilizationMap)
+					utilization[team][app] = initUtilizationMap(resourceType, start, end)
 				}
 
-				if _, exists := utilization[team][app][kind]; !exists {
-					utilization[team][app][kind] = initUtilizationMap(resourceType, start, end)
-				}
-
-				utilization[team][app][kind][ts].Request = float64(val.Value)
+				utilization[team][app][ts].Request = float64(val.Value)
 			}
 		}
 	}
@@ -178,25 +161,19 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 	params := make([]gensql.ResourceUtilizationUpsertParams, 0)
 	for team, apps := range utilization {
 		for app, timestamps := range apps {
-			for kind, timestamps := range timestamps {
-				for _, value := range timestamps {
-					ts := &pgtype.Timestamptz{}
-					err := ts.Scan(value.Timestamp.UTC())
-					if err != nil {
-						continue
-					}
+			for _, value := range timestamps {
+				ts := &pgtype.Timestamptz{}
+				_ = ts.Scan(value.Timestamp.UTC())
 
-					params = append(params, gensql.ResourceUtilizationUpsertParams{
-						Timestamp:    *ts,
-						Env:          env,
-						Team:         team,
-						Name:         app,
-						Kind:         kind,
-						ResourceType: value.Resource.ToDatabaseEnum(),
-						Usage:        value.Usage,
-						Request:      value.Request,
-					})
-				}
+				params = append(params, gensql.ResourceUtilizationUpsertParams{
+					Timestamp:    *ts,
+					Env:          env,
+					Team:         team,
+					App:          app,
+					ResourceType: value.Resource.ToDatabaseEnum(),
+					Usage:        value.Usage,
+					Request:      value.Request,
+				})
 			}
 		}
 	}
@@ -224,7 +201,7 @@ func getQueryRange(start time.Time) (time.Time, time.Time) {
 		start = now.AddDate(0, 0, -30)
 	}
 
-	end := start.Add(2 * 24 * time.Hour)
+	end := start.Add(7 * 24 * time.Hour)
 	if end.After(now) {
 		end = now
 	}
@@ -242,7 +219,7 @@ func initUtilizationMap(resourceType gensql.ResourceType, start, end time.Time) 
 	timestamps = append(timestamps, ts)
 	utilization := make(utilizationMap)
 	for _, ts := range timestamps {
-		utilization[ts] = &model.ResourceUtilizationMetrics{
+		utilization[ts] = &model.ResourceUtilization{
 			Timestamp: ts,
 			Resource:  model.ResourceType(strings.ToUpper(string(resourceType))),
 		}
