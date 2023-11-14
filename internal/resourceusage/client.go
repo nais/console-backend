@@ -14,11 +14,11 @@ import (
 )
 
 type Client interface {
-	// UtilizationForApp returns resource utilization (usage and request) for the given app, in the given time range
-	UtilizationForApp(ctx context.Context, resource model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error)
+	// ResourceUtilizationForApp returns resource utilization (usage and request) for the given app, in the given time range
+	ResourceUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time) (*model.ResourceUtilizationForApp, error)
 
-	// UtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
-	UtilizationForTeam(ctx context.Context, resource model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error)
+	// ResourceUtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
+	ResourceUtilizationForTeam(ctx context.Context, team string, start, end time.Time) ([]model.ResourceUtilizationForEnv, error)
 
 	// ResourceUtilizationOverageCostForTeam will return app overage cost for a given team in the given time range
 	ResourceUtilizationOverageCostForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageCostForTeam, error)
@@ -30,69 +30,63 @@ type Client interface {
 	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
 }
 
-type utilizationMap map[time.Time]*model.ResourceUtilization
+type (
+	utilizationMap map[time.Time]*model.ResourceUtilization
+	overageCostMap map[string]map[string]float64 // env -> app -> cost
+)
 
 type client struct {
-	querier gensql.Querier
-	log     logrus.FieldLogger
+	clusters []string
+	querier  gensql.Querier
+	log      logrus.FieldLogger
 }
 
 // NewClient creates a new resourceusage client
-func NewClient(querier gensql.Querier, log logrus.FieldLogger) Client {
+func NewClient(clusters []string, querier gensql.Querier, log logrus.FieldLogger) Client {
 	return &client{
-		querier: querier,
-		log:     log,
+		clusters: clusters,
+		querier:  querier,
+		log:      log,
 	}
 }
 
-func (c *client) ResourceUtilizationRangeForApp(ctx context.Context, env, team, app string) (*model.ResourceUtilizationDateRange, error) {
-	dates, err := c.querier.ResourceUtilizationRangeForApp(ctx, gensql.ResourceUtilizationRangeForAppParams{
-		Env:  env,
-		Team: team,
-		App:  app,
-	})
+func (c *client) ResourceUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time) (*model.ResourceUtilizationForApp, error) {
+	cpu, err := c.resourceUtilizationForApp(ctx, model.ResourceTypeCPU, env, team, app, start, end)
 	if err != nil {
 		return nil, err
 	}
 
-	var from *scalar.Date
-	var to *scalar.Date
-	if !dates.From.Time.IsZero() {
-		f := scalar.NewDate(dates.From.Time)
-		from = &f
-	}
-	if !dates.To.Time.IsZero() {
-		t := scalar.NewDate(dates.To.Time)
-		to = &t
-	}
-
-	return &model.ResourceUtilizationDateRange{
-		From: from,
-		To:   to,
-	}, nil
-}
-
-func (c *client) ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error) {
-	dates, err := c.querier.ResourceUtilizationRangeForTeam(ctx, team)
+	memory, err := c.resourceUtilizationForApp(ctx, model.ResourceTypeMemory, env, team, app, start, end)
 	if err != nil {
 		return nil, err
 	}
 
-	var from *scalar.Date
-	var to *scalar.Date
-	if !dates.From.Time.IsZero() {
-		f := scalar.NewDate(dates.From.Time)
-		from = &f
-	}
-	if !dates.To.Time.IsZero() {
-		t := scalar.NewDate(dates.To.Time)
-		to = &t
-	}
-
-	return &model.ResourceUtilizationDateRange{
-		From: from,
-		To:   to,
+	return &model.ResourceUtilizationForApp{
+		CPU:    cpu,
+		Memory: memory,
 	}, nil
+}
+
+func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, start, end time.Time) ([]model.ResourceUtilizationForEnv, error) {
+	ret := make([]model.ResourceUtilizationForEnv, 0)
+	for _, env := range c.clusters {
+		cpu, err := c.resourceUtilizationForTeam(ctx, model.ResourceTypeCPU, env, team, start, end)
+		if err != nil {
+			return nil, err
+		}
+
+		memory, err := c.resourceUtilizationForTeam(ctx, model.ResourceTypeMemory, env, team, start, end)
+		if err != nil {
+			return nil, err
+		}
+
+		ret = append(ret, model.ResourceUtilizationForEnv{
+			Env:    env,
+			CPU:    cpu,
+			Memory: memory,
+		})
+	}
+	return ret, nil
 }
 
 func (c *client) ResourceUtilizationOverageCostForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageCostForTeam, error) {
@@ -117,24 +111,13 @@ func (c *client) ResourceUtilizationOverageCostForTeam(ctx context.Context, team
 		return nil, err
 	}
 
-	costMap := make(map[string]map[string]float64)
-	for _, row := range rows {
-		if _, exists := costMap[row.App]; !exists {
-			costMap[row.App] = make(map[string]float64)
-		}
-		if _, exists := costMap[row.App][row.Env]; !exists {
-			costMap[row.App][row.Env] = 0
-		}
-
-		costMap[row.App][row.Env] += cost(row.ResourceType, row.Request-row.Usage)
-	}
-
+	costMap := getCostMapFromRows(rows)
 	var sum float64
-	apps := make([]model.AppWithResourceUtilizationOverageCost, 0)
-	for app, envs := range costMap {
-		for env, cost := range envs {
+	ret := make([]model.AppWithResourceUtilizationOverageCost, 0)
+	for env, apps := range costMap {
+		for app, cost := range apps {
 			sum += cost
-			apps = append(apps, model.AppWithResourceUtilizationOverageCost{
+			ret = append(ret, model.AppWithResourceUtilizationOverageCost{
 				Team:    team,
 				App:     app,
 				Env:     env,
@@ -142,16 +125,36 @@ func (c *client) ResourceUtilizationOverageCostForTeam(ctx context.Context, team
 			})
 		}
 	}
-	sort.Slice(apps, func(i, j int) bool {
-		return apps[i].Overage > apps[j].Overage
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Overage > ret[j].Overage
 	})
 	return &model.ResourceUtilizationOverageCostForTeam{
 		Sum:  sum,
-		Apps: apps,
+		Apps: ret,
 	}, nil
 }
 
-func (c *client) UtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {
+func (c *client) ResourceUtilizationRangeForApp(ctx context.Context, env, team, app string) (*model.ResourceUtilizationDateRange, error) {
+	dates, err := c.querier.ResourceUtilizationRangeForApp(ctx, gensql.ResourceUtilizationRangeForAppParams{
+		Env:  env,
+		Team: team,
+		App:  app,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return getDateRange(dates.From, dates.To), nil
+}
+
+func (c *client) ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error) {
+	dates, err := c.querier.ResourceUtilizationRangeForTeam(ctx, team)
+	if err != nil {
+		return nil, err
+	}
+	return getDateRange(dates.From, dates.To), nil
+}
+
+func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {
 	startTs := pgtype.Timestamptz{}
 	err := startTs.Scan(normalizeTime(start))
 	if err != nil {
@@ -194,7 +197,7 @@ func (c *client) UtilizationForApp(ctx context.Context, resourceType model.Resou
 	return data, nil
 }
 
-func (c *client) UtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error) {
+func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error) {
 	startTs := pgtype.Timestamptz{}
 	err := startTs.Scan(normalizeTime(start))
 	if err != nil {
@@ -250,4 +253,39 @@ func cost(resourceType gensql.ResourceType, value float64) (cost float64) {
 	}
 
 	return cost / 24.0
+}
+
+// getCostMapFromRows converts a slice of ResourceUtilizationOverageCostForTeamRow to a overCostMap
+func getCostMapFromRows(rows []*gensql.ResourceUtilizationOverageCostForTeamRow) overageCostMap {
+	costMap := make(overageCostMap)
+	for _, row := range rows {
+		if _, exists := costMap[row.Env]; !exists {
+			costMap[row.Env] = make(map[string]float64)
+		}
+		if _, exists := costMap[row.Env][row.App]; !exists {
+			costMap[row.Env][row.App] = 0
+		}
+
+		costMap[row.Env][row.App] += cost(row.ResourceType, row.Request-row.Usage)
+	}
+	return costMap
+}
+
+// getDateRange returns a date range model from two timestamps
+func getDateRange(from, to pgtype.Timestamptz) *model.ResourceUtilizationDateRange {
+	var fromDate, toDate *scalar.Date
+
+	if !from.Time.IsZero() {
+		f := scalar.NewDate(from.Time)
+		fromDate = &f
+	}
+	if !to.Time.IsZero() {
+		t := scalar.NewDate(to.Time)
+		toDate = &t
+	}
+
+	return &model.ResourceUtilizationDateRange{
+		From: fromDate,
+		To:   toDate,
+	}
 }

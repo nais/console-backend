@@ -46,23 +46,16 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.
 			EXPECT().
-			UtilizationForApp(ctx, model.ResourceTypeCPU, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
-			Run(func(_ context.Context, _ model.ResourceType, _, _, _ string, start time.Time, end time.Time) {
+			ResourceUtilizationForApp(ctx, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
+			Run(func(_ context.Context, _, _, _ string, start time.Time, end time.Time) {
 				allowedDelta := time.Second
 				assert.WithinDuration(t, end, time.Now(), allowedDelta)
 				assert.WithinDuration(t, start, time.Now(), 24*6*time.Hour+allowedDelta)
 			}).
-			Return(cpuData, nil)
-
-		resourceUsageClient.
-			EXPECT().
-			UtilizationForApp(ctx, model.ResourceTypeMemory, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
-			Run(func(_ context.Context, _ model.ResourceType, _, _, _ string, start time.Time, end time.Time) {
-				allowedDelta := time.Second
-				assert.WithinDuration(t, end, time.Now(), allowedDelta)
-				assert.WithinDuration(t, start, time.Now(), 24*6*time.Hour+allowedDelta)
-			}).
-			Return(memoryData, nil)
+			Return(&model.ResourceUtilizationForApp{
+				CPU:    cpuData,
+				Memory: memoryData,
+			}, nil)
 
 		resp, err := graph.
 			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).
@@ -85,21 +78,15 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.
 			EXPECT().
-			UtilizationForApp(ctx, model.ResourceTypeCPU, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
-			Run(func(_ context.Context, _ model.ResourceType, _, _, _ string, start time.Time, end time.Time) {
+			ResourceUtilizationForApp(ctx, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
+			Run(func(_ context.Context, _, _, _ string, start time.Time, end time.Time) {
 				assert.Equal(t, fromTime, start)
 				assert.Equal(t, toTime, end)
 			}).
-			Return(cpuData, nil)
-
-		resourceUsageClient.
-			EXPECT().
-			UtilizationForApp(ctx, model.ResourceTypeMemory, "env", "team", "app", mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).
-			Run(func(_ context.Context, _ model.ResourceType, _, _, _ string, start time.Time, end time.Time) {
-				assert.Equal(t, fromTime, start)
-				assert.Equal(t, toTime, end)
-			}).
-			Return(memoryData, nil)
+			Return(&model.ResourceUtilizationForApp{
+				CPU:    cpuData,
+				Memory: memoryData,
+			}, nil)
 
 		resp, err := graph.
 			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).

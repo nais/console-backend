@@ -55,25 +55,7 @@ func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team str
 		}
 	}
 
-	ret := make([]model.ResourceUtilizationForEnv, 0)
-	for _, env := range r.clusters {
-		cpu, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeCPU, env, team, start, end)
-		if err != nil {
-			return nil, err
-		}
-
-		memory, err := r.resourceUsageClient.UtilizationForTeam(ctx, model.ResourceTypeMemory, env, team, start, end)
-		if err != nil {
-			return nil, err
-		}
-
-		ret = append(ret, model.ResourceUtilizationForEnv{
-			Env:    env,
-			CPU:    cpu,
-			Memory: memory,
-		})
-	}
-	return ret, nil
+	return r.resourceUsageClient.ResourceUtilizationForTeam(ctx, team, start, end)
 }
 
 // ResourceUtilizationDateRangeForTeam is the resolver for the resourceUtilizationDateRangeForTeam field.
@@ -106,18 +88,5 @@ func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, env strin
 		}
 	}
 
-	cpu, err := r.resourceUsageClient.UtilizationForApp(ctx, model.ResourceTypeCPU, env, team, app, start, end)
-	if err != nil {
-		return nil, err
-	}
-
-	memory, err := r.resourceUsageClient.UtilizationForApp(ctx, model.ResourceTypeMemory, env, team, app, start, end)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.ResourceUtilizationForApp{
-		CPU:    cpu,
-		Memory: memory,
-	}, nil
+	return r.resourceUsageClient.ResourceUtilizationForApp(ctx, env, team, app, start, end)
 }

@@ -103,7 +103,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 
 	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
-	resourceUsageClient := resourceusage.NewClient(querier, log)
+	resourceUsageClient := resourceusage.NewClient(cfg.K8S.AllClusterNames, querier, log)
 
 	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
