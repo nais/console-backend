@@ -224,7 +224,7 @@ func getQueryRange(start time.Time) (time.Time, time.Time) {
 		start = now.AddDate(0, 0, -30)
 	}
 
-	end := start.Add(7 * 24 * time.Hour)
+	end := start.Add(2 * 24 * time.Hour)
 	if end.After(now) {
 		end = now
 	}
