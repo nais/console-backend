@@ -11,6 +11,64 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Kind string
+
+const (
+	KindApp Kind = "app"
+	KindJob Kind = "job"
+)
+
+func (e *Kind) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Kind(s)
+	case string:
+		*e = Kind(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Kind: %T", src)
+	}
+	return nil
+}
+
+type NullKind struct {
+	Kind  Kind
+	Valid bool // Valid is true if Kind is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullKind) Scan(value interface{}) error {
+	if value == nil {
+		ns.Kind, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Kind.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullKind) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Kind), nil
+}
+
+func (e Kind) Valid() bool {
+	switch e {
+	case KindApp,
+		KindJob:
+		return true
+	}
+	return false
+}
+
+func AllKindValues() []Kind {
+	return []Kind{
+		KindApp,
+		KindJob,
+	}
+}
+
 type ResourceType string
 
 const (
@@ -84,7 +142,8 @@ type ResourceUtilizationMetric struct {
 	Timestamp    pgtype.Timestamptz
 	Env          string
 	Team         string
-	App          string
+	Name         string
+	Kind         Kind
 	ResourceType ResourceType
 	Usage        float64
 	Request      float64

@@ -31,9 +31,26 @@ extend type Query {
 
     "Get the date range for resource utilization for an app."
     resourceUtilizationDateRangeForApp(
+        "The environment where the app is running."
         env: String!
+
+        "The name of the team who owns the app."
         team: String!
+
+        "The name of the app."
         app: String!
+    ): ResourceUtilizationDateRange!
+
+    "Get the date range for resource utilization for a job."
+    resourceUtilizationDateRangeForJob(
+        "The environment where the job is running."
+        env: String!
+
+        "The name of the team who owns the job."
+        team: String!
+
+        "The name of the job."
+        job: String!
     ): ResourceUtilizationDateRange!
 
     "Get the resource utilization for an app."
@@ -44,7 +61,7 @@ extend type Query {
         "The team who owns the app."
         team: String!
 
-        "Optional name of an app."
+        "The name of the app."
         app: String!
 
         "Fetch resource utilization from this date. Defaults to 7 days before the to date."
@@ -52,7 +69,25 @@ extend type Query {
 
         "Fetch resource utilization until this date. Defaults to today."
         to: Date
-    ): ResourceUtilizationForApp!
+    ): ResourceUtilization!
+
+    "Get the resource utilization for a job."
+    resourceUtilizationForJob(
+        "The environment where the job is running."
+        env: String!
+
+        "The team who owns the job."
+        team: String!
+
+        "The name of the job."
+        job: String!
+
+        "Fetch resource utilization from this date. Defaults to 7 days before the to date."
+        from: Date
+
+        "Fetch resource utilization until this date. Defaults to today."
+        to: Date
+    ): ResourceUtilization!
 }
 
 "Date range type."
@@ -64,17 +99,17 @@ type ResourceUtilizationDateRange {
     to: Date
 }
 
-"Resouce utilization overage cost for team type."
+"Resource utilization overage cost for team type."
 type ResourceUtilizationOverageCostForTeam {
-    "The sum of the overage cost for all apps."
+    "The sum of the overage cost for all entries."
     sum: Float!
 
-    "A list of apps with overage cost for the team, sorted by overage cost in descending order."
-    apps: [AppWithResourceUtilizationOverageCost!]!
+    "A list of entries with overage cost, sorted by the cost in descending order."
+    entries: [OverageEntry!]!
 }
 
-"Resouce utilization overage cost for an app."
-type AppWithResourceUtilizationOverageCost {
+"Resouce utilization overage cost entry."
+type OverageEntry {
     "The overage cost for the app."
     overage: Float!
 
@@ -84,8 +119,11 @@ type AppWithResourceUtilizationOverageCost {
     "The name of the team who owns the app."
     team: String!
 
-    "The name of the app."
-    app: String!
+    "The name of the entry."
+    name: String!
+
+    "Whether or not the entry is an app."
+    isApp: Boolean!
 }
 
 "Resource utilization for env type."
@@ -94,23 +132,23 @@ type ResourceUtilizationForEnv {
     env: String!
 
     "CPU resource utilization data for the environment."
-    cpu: [ResourceUtilization!]!
+    cpu: [ResourceUtilizationMetrics!]!
 
     "Memory resource utilization data for the environment."
-    memory: [ResourceUtilization!]!
-}
-
-"Resource utilization for app type."
-type ResourceUtilizationForApp {
-    "CPU resource utilization data for the environment."
-    cpu: [ResourceUtilization!]!
-
-    "Memory resource utilization data for the environment."
-    memory: [ResourceUtilization!]!
+    memory: [ResourceUtilizationMetrics!]!
 }
 
 "Resource utilization type."
 type ResourceUtilization {
+    "CPU resource utilization data."
+    cpu: [ResourceUtilizationMetrics!]!
+
+    "Memory resource utilization data."
+    memory: [ResourceUtilizationMetrics!]!
+}
+
+"Resource utilization metrics type."
+type ResourceUtilizationMetrics {
     "Resource type."
     resource: ResourceType!
 
