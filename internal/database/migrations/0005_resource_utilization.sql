@@ -16,6 +16,12 @@ CREATE TABLE resource_utilization_metrics (
     CONSTRAINT resource_utilization_metric UNIQUE (timestamp, env, team, app, resource_type)
 );
 
+CREATE INDEX ON resource_utilization_metrics (app);
+CREATE INDEX ON resource_utilization_metrics (env);
+CREATE INDEX ON resource_utilization_metrics (resource_type);
+CREATE INDEX ON resource_utilization_metrics (team);
+CREATE INDEX ON resource_utilization_metrics (timestamp);
+
 -- +goose Down
 DROP TABLE resource_utilization_metrics;
 DROP TYPE resource_type;
