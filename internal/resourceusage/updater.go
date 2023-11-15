@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/k8s"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prom "github.com/prometheus/common/model"
 	"github.com/sirupsen/logrus"
@@ -18,16 +19,17 @@ import (
 type utilizationMapForEnv map[string]map[string]utilizationMap
 
 type Updater struct {
+	k8sClient   *k8s.Client
 	querier     gensql.Querier
 	promClients map[string]promv1.API
 	log         logrus.FieldLogger
 }
 
 const (
-	cpuUsage      = `sum(rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m])) by (namespace, container)`
-	cpuRequest    = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"}) by (namespace, container)`
-	memoryUsage   = `sum(container_memory_working_set_bytes{namespace!~%q, container!~%q}) by (namespace, container)`
-	memoryRequest = `sum(kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"}) by (namespace, container)`
+	cpuUsage      = `sum by (namespace, container) (rate(container_cpu_usage_seconds_total{namespace!~%q, container!~%q}[5m]))`
+	cpuRequest    = `sum by (namespace, container) (kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="cpu", unit="core"})`
+	memoryUsage   = `sum by (namespace, container) (container_memory_working_set_bytes{namespace!~%q, container!~%q})`
+	memoryRequest = `sum by (namespace, container) (kube_pod_container_resource_requests{namespace!~%q, container!~%q, resource="memory", unit="byte"})`
 
 	rangedQueryStep = time.Hour
 )
@@ -54,14 +56,16 @@ var (
 )
 
 // NewUpdater creates a new resourceusage updater
-func NewUpdater(promClients map[string]promv1.API, querier gensql.Querier, log logrus.FieldLogger) *Updater {
+func NewUpdater(k8sClient *k8s.Client, promClients map[string]promv1.API, querier gensql.Querier, log logrus.FieldLogger) *Updater {
 	return &Updater{
+		k8sClient:   k8sClient,
 		querier:     querier,
 		promClients: promClients,
 		log:         log,
 	}
 }
 
+// UpdateResourceUsage will update the resource usage from all added prometheus instances
 func (u *Updater) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, err error) {
 	maxTimestamp, err := u.querier.MaxResourceUtilizationDate(ctx)
 	if err != nil {
@@ -79,7 +83,7 @@ func (u *Updater) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, er
 		log := u.log.WithField("env", env)
 		for _, resourceType := range resourceTypes {
 			log = log.WithField("resource_type", resourceType)
-			values, err := utilizationInEnv(ctx, promClient, resourceType, start, end, log)
+			values, err := utilizationInEnv(ctx, env, u.k8sClient, promClient, resourceType, start, end, log)
 			if err != nil {
 				log.WithError(err).Errorf("unable to fetch resource usage")
 				continue
@@ -104,7 +108,7 @@ func (u *Updater) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, er
 }
 
 // utilizationInEnv returns resource utilization (usage and request) for all teams and apps in a given env
-func utilizationInEnv(ctx context.Context, promClient promv1.API, resourceType gensql.ResourceType, start, end time.Time, log logrus.FieldLogger) (utilizationMapForEnv, error) {
+func utilizationInEnv(ctx context.Context, env string, k8sClient *k8s.Client, promClient promv1.API, resourceType gensql.ResourceType, start, end time.Time, log logrus.FieldLogger) (utilizationMapForEnv, error) {
 	utilization := make(utilizationMapForEnv)
 	usageQuery, requestQuery := getQueries(resourceType)
 
@@ -113,10 +117,20 @@ func utilizationInEnv(ctx context.Context, promClient promv1.API, resourceType g
 		log.WithError(err).Errorf("unable to query prometheus for usage data")
 	} else {
 		for _, sample := range usage {
+			team := string(sample.Metric["namespace"])
+			app := string(sample.Metric["container"])
+			log = log.WithFields(logrus.Fields{
+				"team": team,
+				"app":  app,
+			})
+
+			if !k8sClient.AppExists(env, team, app) {
+				log.Debugf("app does not exist in kubernetes, skipping...")
+				continue
+			}
+
 			for _, val := range sample.Values {
 				ts := val.Timestamp.Time().UTC()
-				team := string(sample.Metric["namespace"])
-				app := string(sample.Metric["container"])
 
 				if _, exists := utilization[team]; !exists {
 					utilization[team] = make(map[string]utilizationMap)
@@ -136,10 +150,20 @@ func utilizationInEnv(ctx context.Context, promClient promv1.API, resourceType g
 		log.WithError(err).Errorf("unable to query prometheus for request data")
 	} else {
 		for _, sample := range request {
+			team := string(sample.Metric["namespace"])
+			app := string(sample.Metric["container"])
+			log = log.WithFields(logrus.Fields{
+				"team": team,
+				"app":  app,
+			})
+
+			if !k8sClient.AppExists(env, team, app) {
+				log.Debugf("app does not exist in kubernetes, skipping...")
+				continue
+			}
+
 			for _, val := range sample.Values {
 				ts := val.Timestamp.Time().UTC()
-				team := string(sample.Metric["namespace"])
-				app := string(sample.Metric["container"])
 
 				if _, exists := utilization[team]; !exists {
 					utilization[team] = make(map[string]utilizationMap)

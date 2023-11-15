@@ -17,7 +17,7 @@ func Test_updater_UpdateResourceUsage(t *testing.T) {
 		querier := gensql.NewMockQuerier(t)
 		querier.EXPECT().MaxResourceUtilizationDate(ctx).Return(pgtype.Timestamptz{}, assert.AnError)
 		log, _ := logrustest.NewNullLogger()
-		updater := resourceusage.NewUpdater(nil, querier, log)
+		updater := resourceusage.NewUpdater(nil, nil, querier, log)
 		rowsUpserted, err := updater.UpdateResourceUsage(ctx)
 		assert.Equal(t, 0, rowsUpserted)
 		assert.ErrorContains(t, err, "unable to fetch max timestamp from database")

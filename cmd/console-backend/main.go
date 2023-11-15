@@ -133,12 +133,20 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 			return
 		}
 
+		for env, informers := range k8sClient.Informers() {
+			for !informers.AppInformer.Informer().HasSynced() {
+				log.Infof("waiting for app informer in %q to sync", env)
+				time.Sleep(2 * time.Second)
+			}
+		}
+
 		promClients, err := getPrometheusClients(cfg.K8S.AllClusterNames, cfg.Tenant)
 		if err != nil {
 			log.WithError(err).Errorf("create prometheus clients")
 			return
 		}
-		resourceUsageUpdater := resourceusage.NewUpdater(promClients, querier, log)
+
+		resourceUsageUpdater := resourceusage.NewUpdater(k8sClient, promClients, querier, log)
 		if err != nil {
 			log.WithError(err).Errorf("create resource usage updater")
 			return

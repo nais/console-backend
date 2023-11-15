@@ -65,6 +65,17 @@ func getDeprecatedIngresses(cluster string) []string {
 	return ingresses
 }
 
+// AppExists returns true if the given app exists in the given environment. The app informer should be synced before
+// calling this function.
+func (c *Client) AppExists(env, team, app string) bool {
+	if c.informers[env] == nil {
+		return false
+	}
+
+	_, err := c.informers[env].AppInformer.Lister().ByNamespace(team).Get(app)
+	return err == nil
+}
+
 func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, error) {
 	c.log.Debugf("getting app %q in namespace %q in env %q", name, team, env)
 	if c.informers[env] == nil {
