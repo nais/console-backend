@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const currentResourceUtilizationForApp = `-- name: CurrentResourceUtilizationForApp :one
+SELECT
+    usage,
+    request
+FROM
+    resource_utilization_metrics
+WHERE
+    env = $1
+    AND team = $2
+    AND app = $3
+    AND resource_type = $4
+ORDER BY
+    timestamp DESC
+LIMIT
+    1
+`
+
+type CurrentResourceUtilizationForAppParams struct {
+	Env          string
+	Team         string
+	App          string
+	ResourceType ResourceType
+}
+
+type CurrentResourceUtilizationForAppRow struct {
+	Usage   float64
+	Request float64
+}
+
+// CurrentResourceUtilizationForApp will return the current (as in the latest values) resource utilization for a given
+// app.
+func (q *Queries) CurrentResourceUtilizationForApp(ctx context.Context, arg CurrentResourceUtilizationForAppParams) (*CurrentResourceUtilizationForAppRow, error) {
+	row := q.db.QueryRow(ctx, currentResourceUtilizationForApp,
+		arg.Env,
+		arg.Team,
+		arg.App,
+		arg.ResourceType,
+	)
+	var i CurrentResourceUtilizationForAppRow
+	err := row.Scan(&i.Usage, &i.Request)
+	return &i, err
+}
+
 const maxResourceUtilizationDate = `-- name: MaxResourceUtilizationDate :one
 SELECT MAX(timestamp)::timestamptz FROM resource_utilization_metrics
 `

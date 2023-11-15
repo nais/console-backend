@@ -14,6 +14,9 @@ type Querier interface {
 	// CostUpsert will insert or update a cost record. If there is a conflict on the daily_cost_key constrant, the
 	// daily_cost column will be updated.
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults
+	// CurrentResourceUtilizationForApp will return the current (as in the latest values) resource utilization for a given
+	// app.
+	CurrentResourceUtilizationForApp(ctx context.Context, arg CurrentResourceUtilizationForAppParams) (*CurrentResourceUtilizationForAppRow, error)
 	// DailyCostForApp will fetch the daily cost for a specific team app in a specific environment, across all cost types
 	// in a date range.
 	DailyCostForApp(ctx context.Context, arg DailyCostForAppParams) ([]*Cost, error)

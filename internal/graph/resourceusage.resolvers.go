@@ -12,6 +12,11 @@ import (
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
+// CurrentResourceUtilizationForApp is the resolver for the currentResourceUtilizationForApp field.
+func (r *queryResolver) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
+	return r.resourceUsageClient.CurrentResourceUtilizationForApp(ctx, env, team, app)
+}
+
 // ResourceUtilizationOverageCostForTeam is the resolver for the resourceUtilizationOverageCostForTeam field.
 func (r *queryResolver) ResourceUtilizationOverageCostForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageCostForTeam, error) {
 	end := time.Now()

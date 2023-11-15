@@ -1,4 +1,16 @@
 extend type Query {
+    "Get the current resource utilization for a specific app."
+    currentResourceUtilizationForApp(
+        "The environment where the app is running."
+        env: String!
+
+        "The name of the team."
+        team: String!
+
+        "The name of the app."
+        app: String!
+    ): CurrentResourceUtilizationForApp!
+
     "Get resource utilization overage cost for a team."
     resourceUtilizationOverageCostForTeam(
         "The name of the team."
@@ -31,8 +43,13 @@ extend type Query {
 
     "Get the date range for resource utilization for an app."
     resourceUtilizationDateRangeForApp(
+        "The environment where the app is running."
         env: String!
+
+        "The name of the team."
         team: String!
+
+        "The name of the app."
         app: String!
     ): ResourceUtilizationDateRange!
 
@@ -41,10 +58,10 @@ extend type Query {
         "The environment where the app is running."
         env: String!
 
-        "The team who owns the app."
+        "The name of the team."
         team: String!
 
-        "Optional name of an app."
+        "The name of the app."
         app: String!
 
         "Fetch resource utilization from this date. Defaults to 7 days before the to date."
@@ -53,6 +70,15 @@ extend type Query {
         "Fetch resource utilization until this date. Defaults to today."
         to: Date
     ): ResourceUtilizationForApp!
+}
+
+"Current resource utilization for app type."
+type CurrentResourceUtilizationForApp {
+    "The percentage of CPU used."
+    cpu: Float!
+
+    "The percentage of memory used."
+    memory: Float!
 }
 
 "Date range type."

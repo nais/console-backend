@@ -84,3 +84,21 @@ GROUP BY
     timestamp
 ORDER BY
     timestamp ASC;
+
+-- CurrentResourceUtilizationForApp will return the current (as in the latest values) resource utilization for a given
+-- app.
+-- name: CurrentResourceUtilizationForApp :one
+SELECT
+    usage,
+    request
+FROM
+    resource_utilization_metrics
+WHERE
+    env = $1
+    AND team = $2
+    AND app = $3
+    AND resource_type = $4
+ORDER BY
+    timestamp DESC
+LIMIT
+    1;

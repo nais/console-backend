@@ -24,6 +24,63 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
+// CurrentResourceUtilizationForApp provides a mock function with given fields: ctx, env, team, app
+func (_m *MockClient) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
+	ret := _m.Called(ctx, env, team, app)
+
+	var r0 *model.CurrentResourceUtilizationForApp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*model.CurrentResourceUtilizationForApp, error)); ok {
+		return rf(ctx, env, team, app)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *model.CurrentResourceUtilizationForApp); ok {
+		r0 = rf(ctx, env, team, app)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.CurrentResourceUtilizationForApp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, env, team, app)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_CurrentResourceUtilizationForApp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CurrentResourceUtilizationForApp'
+type MockClient_CurrentResourceUtilizationForApp_Call struct {
+	*mock.Call
+}
+
+// CurrentResourceUtilizationForApp is a helper method to define mock.On call
+//   - ctx context.Context
+//   - env string
+//   - team string
+//   - app string
+func (_e *MockClient_Expecter) CurrentResourceUtilizationForApp(ctx interface{}, env interface{}, team interface{}, app interface{}) *MockClient_CurrentResourceUtilizationForApp_Call {
+	return &MockClient_CurrentResourceUtilizationForApp_Call{Call: _e.mock.On("CurrentResourceUtilizationForApp", ctx, env, team, app)}
+}
+
+func (_c *MockClient_CurrentResourceUtilizationForApp_Call) Run(run func(ctx context.Context, env string, team string, app string)) *MockClient_CurrentResourceUtilizationForApp_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_CurrentResourceUtilizationForApp_Call) Return(_a0 *model.CurrentResourceUtilizationForApp, _a1 error) *MockClient_CurrentResourceUtilizationForApp_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_CurrentResourceUtilizationForApp_Call) RunAndReturn(run func(context.Context, string, string, string) (*model.CurrentResourceUtilizationForApp, error)) *MockClient_CurrentResourceUtilizationForApp_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResourceUtilizationForApp provides a mock function with given fields: ctx, env, team, app, start, end
 func (_m *MockClient) ResourceUtilizationForApp(ctx context.Context, env string, team string, app string, start time.Time, end time.Time) (*model.ResourceUtilizationForApp, error) {
 	ret := _m.Called(ctx, env, team, app, start, end)

@@ -2,6 +2,7 @@ package resourceusage
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"time"
 
@@ -28,6 +29,9 @@ type Client interface {
 
 	// ResourceUtilizationRangeForTeam will return the min and max timestamps for a specific team
 	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
+
+	// CurrentResourceUtilizationForApp will return the current percentages of resource utilization for an app
+	CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error)
 }
 
 type (
@@ -239,6 +243,37 @@ func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType mo
 	return data, nil
 }
 
+func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
+	cpu, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
+		Env:          env,
+		Team:         team,
+		App:          app,
+		ResourceType: gensql.ResourceTypeCpu,
+	})
+	if err != nil {
+		return nil, err
+	} else if cpu.Request == 0 {
+		return nil, fmt.Errorf("no request data for CPU")
+	}
+
+	memory, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
+		Env:          env,
+		Team:         team,
+		App:          app,
+		ResourceType: gensql.ResourceTypeMemory,
+	})
+	if err != nil {
+		return nil, err
+	} else if memory.Request == 0 {
+		return nil, fmt.Errorf("no request data for memory")
+	}
+
+	return &model.CurrentResourceUtilizationForApp{
+		CPU:    cpu.Usage / cpu.Request * 100,
+		Memory: memory.Usage / memory.Request * 100,
+	}, nil
+}
+
 // normalizeTime will truncate a time.Time down to the hour, and return it as UTC
 func normalizeTime(ts time.Time) time.Time {
 	return ts.Truncate(time.Hour).UTC()
@@ -247,9 +282,9 @@ func normalizeTime(ts time.Time) time.Time {
 // cost calculates the cost for the given resource type
 func cost(resourceType gensql.ResourceType, value float64) (cost float64) {
 	if resourceType == gensql.ResourceTypeCpu {
-		cost = 131.0 / 30.0 * value
+		cost = (131.0 / 30.0) * value
 	} else {
-		cost = 18.0 / 1024 / 1024 / 1024 / 30.0 * value
+		cost = (18.0 / 1024 / 1024 / 1024 / 30.0) * value
 	}
 
 	return cost / 24.0

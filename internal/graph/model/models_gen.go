@@ -236,6 +236,14 @@ type CostSeries struct {
 	Data []CostEntry `json:"data"`
 }
 
+// Current resource utilization for app type.
+type CurrentResourceUtilizationForApp struct {
+	// The percentage of CPU used.
+	CPU float64 `json:"cpu"`
+	// The percentage of memory used.
+	Memory float64 `json:"memory"`
+}
+
 // Daily cost type.
 type DailyCost struct {
 	// The sum of all costs in the cost series in euros.
