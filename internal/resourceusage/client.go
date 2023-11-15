@@ -287,7 +287,7 @@ func cost(resourceType gensql.ResourceType, value float64) (cost float64) {
 		cost = (18.0 / 1024 / 1024 / 1024 / 30.0) * value
 	}
 
-	return cost / 24.0
+	return cost / 24.0 / 11.5
 }
 
 // getCostMapFromRows converts a slice of ResourceUtilizationOverageCostForTeamRow to a overCostMap
