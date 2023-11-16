@@ -42,8 +42,6 @@ type Querier interface {
 	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationRangeForTeamRow, error)
 	// ResourceUtilizationUpsert will insert or update resource utilization records.
 	ResourceUtilizationUpsert(ctx context.Context, arg []ResourceUtilizationUpsertParams) *ResourceUtilizationUpsertBatchResults
-	// TruncateCostTable will truncate the cost table before doing a complete reimport.
-	TruncateCostTable(ctx context.Context) error
 }
 
 var _ Querier = (*Queries)(nil)
