@@ -130,7 +130,12 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 		return nil, fmt.Errorf("converting to application: %w", err)
 	}
 
-	setStatus(app, *tmpApp.Status.Conditions, instances)
+	conditions := tmpApp.Status.Conditions
+	if conditions == nil {
+		conditions = &[]metav1.Condition{}
+	}
+
+	setStatus(app, *conditions, instances)
 
 	return app, nil
 }
