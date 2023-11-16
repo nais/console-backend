@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -367,9 +369,10 @@ func checkNoZeroTrust(env string, rule *model.Rule) bool {
 func (c *Client) getApp(ctx context.Context, inf *Informers, env string, team string, app string) (*model.App, error) {
 	obj, err := inf.AppInformer.Lister().ByNamespace(team).Get(app)
 	if err != nil {
-		c.log.Infof("get application %s:%s in %s: %v", team, app, env, err)
-
-		return nil, nil
+		if notFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
 	}
 
 	application, err := c.toApp(ctx, obj.(*unstructured.Unstructured), env)
@@ -382,9 +385,10 @@ func (c *Client) getApp(ctx context.Context, inf *Informers, env string, team st
 func (c *Client) getNaisJob(ctx context.Context, inf *Informers, env, team, job string) (*model.NaisJob, error) {
 	obj, err := inf.NaisjobInformer.Lister().ByNamespace(team).Get(job)
 	if err != nil {
-		c.log.Infof("get naisjob %s:%s in %s: %v", team, job, env, err)
-
-		return nil, nil
+		if notFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
 	}
 
 	naisjob, err := c.ToNaisJob(obj.(*unstructured.Unstructured), env)
@@ -977,4 +981,9 @@ func appAuthz(app *naisv1alpha1.Application) ([]model.Authz, error) {
 	}
 
 	return ret, nil
+}
+
+func notFoundError(err error) bool {
+	var statusError *k8serrors.StatusError
+	return errors.As(err, &statusError) && statusError.ErrStatus.Reason == metav1.StatusReasonNotFound
 }
