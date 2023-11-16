@@ -2,7 +2,6 @@ package resourceusage
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"time"
 
@@ -252,8 +251,6 @@ func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env strin
 	})
 	if err != nil {
 		return nil, err
-	} else if cpu.Request == 0 {
-		return nil, fmt.Errorf("no request data for CPU")
 	}
 
 	memory, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
@@ -264,13 +261,19 @@ func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env strin
 	})
 	if err != nil {
 		return nil, err
-	} else if memory.Request == 0 {
-		return nil, fmt.Errorf("no request data for memory")
+	}
+
+	var cpuUtilization, memoryUtilization float64
+	if cpu.Request > 0 {
+		cpuUtilization = cpu.Usage / cpu.Request * 100
+	}
+	if memory.Request > 0 {
+		memoryUtilization = memory.Usage / memory.Request * 100
 	}
 
 	return &model.CurrentResourceUtilizationForApp{
-		CPU:    cpu.Usage / cpu.Request * 100,
-		Memory: memory.Usage / memory.Request * 100,
+		CPU:    cpuUtilization,
+		Memory: memoryUtilization,
 	}, nil
 }
 
