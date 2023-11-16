@@ -24,7 +24,7 @@ const (
 	IdentTypePod                IdentType = "pod"
 	IdentTypeTeam               IdentType = "team"
 	IdentTypeUser               IdentType = "user"
-	IdentTypeDependencyTrack    IdentType = "dependencyTrack"
+	IdentTypeVulnerabilities    IdentType = "vulnerabilities"
 )
 
 type Ident struct {
@@ -105,8 +105,8 @@ func DeploymentStatusIdent(id string) Ident {
 	return newIdent(id, IdentTypeDeploymentStatus)
 }
 
-func DependencyTrackIdent(id string) Ident {
-	return newIdent(id, IdentTypeDependencyTrack)
+func VulnerabilitiesIdent(id string) Ident {
+	return newIdent(id, IdentTypeVulnerabilities)
 }
 
 func newIdent(id string, t IdentType) Ident {

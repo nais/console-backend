@@ -29,16 +29,7 @@ type VulnerabilitiesEdge implements Edge {
 type VulnerabilitiesNode implements Node {
     id: ID!
     appName: String!
-    team: String!
-    env: String!
-    image: String!
-    project: DependencyTrack
-}
-
-type DependencyTrack implements Node {
-    id: ID!
-    projectUUID: String!
-    projectName: String!
+    env:    String!
     findingsLink: String!
     summary: VulnerabilitySummary
     hasBom: Boolean!

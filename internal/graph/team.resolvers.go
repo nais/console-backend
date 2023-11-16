@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/nais/console-backend/internal/auth"
+	"github.com/nais/console-backend/internal/dtrack"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -371,18 +372,27 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
-	nodes := make([]*model.VulnerabilitiesNode, 0)
+	/*nodes := make([]*model.VulnerabilitiesNode, 0)
 	for _, app := range apps {
 		nodes = append(nodes, &model.VulnerabilitiesNode{
-			ID:      scalar.DependencyTrackIdent(fmt.Sprintf("%s:%s:%s:%s", app.Env.Name, obj.Name, app.Name, app.Image)),
+			ID:      scalar.VulnerabilitiesIdent(fmt.Sprintf("%s:%s:%s:%s", app.Env.Name, obj.Name, app.Name, app.Image)),
 			Env:     app.Env.Name,
 			AppName: app.Name,
 			Image:   app.Image,
 			Team:    obj.Name,
 		})
+	}*/
+	instances := make([]*dtrack.AppInstance, 0)
+	for _, app := range apps {
+		instances = append(instances, &dtrack.AppInstance{
+			Env:   app.Env.Name,
+			App:   app.Name,
+			Image: app.Image,
+			Team:  obj.Name,
+		})
 	}
 
-	err = r.dtrackClient.AddFindings(ctx, nodes)
+	nodes, err := r.dtrackClient.GetVulnerabilities(ctx, instances)
 	if err != nil {
 		return nil, fmt.Errorf("getting vulnerabilities from DependencyTrack: %w", err)
 	}

@@ -71,24 +71,24 @@ type ACL struct {
 }
 
 type App struct {
-	ID              scalar.Ident     `json:"id"`
-	Name            string           `json:"name"`
-	Image           string           `json:"image"`
-	DeployInfo      DeployInfo       `json:"deployInfo"`
-	Env             Env              `json:"env"`
-	Ingresses       []string         `json:"ingresses"`
-	Instances       []Instance       `json:"instances"`
-	AccessPolicy    AccessPolicy     `json:"accessPolicy"`
-	Resources       Resources        `json:"resources"`
-	AutoScaling     AutoScaling      `json:"autoScaling"`
-	Storage         []Storage        `json:"storage"`
-	Variables       []Variable       `json:"variables"`
-	Authz           []Authz          `json:"authz"`
-	Manifest        string           `json:"manifest"`
-	Team            Team             `json:"team"`
-	AppState        AppState         `json:"appState"`
-	DependencyTrack *DependencyTrack `json:"dependencyTrack,omitempty"`
-	GQLVars         AppGQLVars       `json:"-"`
+	ID              scalar.Ident         `json:"id"`
+	Name            string               `json:"name"`
+	Image           string               `json:"image"`
+	DeployInfo      DeployInfo           `json:"deployInfo"`
+	Env             Env                  `json:"env"`
+	Ingresses       []string             `json:"ingresses"`
+	Instances       []Instance           `json:"instances"`
+	AccessPolicy    AccessPolicy         `json:"accessPolicy"`
+	Resources       Resources            `json:"resources"`
+	AutoScaling     AutoScaling          `json:"autoScaling"`
+	Storage         []Storage            `json:"storage"`
+	Variables       []Variable           `json:"variables"`
+	Authz           []Authz              `json:"authz"`
+	Manifest        string               `json:"manifest"`
+	Team            Team                 `json:"team"`
+	AppState        AppState             `json:"appState"`
+	Vulnerabilities *VulnerabilitiesNode `json:"vulnerabilities,omitempty"`
+	GQLVars         AppGQLVars           `json:"-"`
 }
 
 func (App) IsNode() {}
@@ -242,20 +242,6 @@ type Database struct {
 type DatabaseUser struct {
 	Name string `json:"name"`
 }
-
-type DependencyTrack struct {
-	ID           scalar.Ident          `json:"id"`
-	ProjectUUID  string                `json:"projectUUID"`
-	ProjectName  string                `json:"projectName"`
-	FindingsLink string                `json:"findingsLink"`
-	Summary      *VulnerabilitySummary `json:"summary,omitempty"`
-	HasBom       bool                  `json:"hasBom"`
-}
-
-func (DependencyTrack) IsNode() {}
-
-// The unique ID of an object.
-func (this DependencyTrack) GetID() scalar.Ident { return this.ID }
 
 type DeployInfo struct {
 	Deployer  string             `json:"deployer"`
@@ -1109,12 +1095,12 @@ func (VulnerabilitiesEdge) IsEdge() {}
 func (this VulnerabilitiesEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type VulnerabilitiesNode struct {
-	ID      scalar.Ident     `json:"id"`
-	AppName string           `json:"appName"`
-	Team    string           `json:"team"`
-	Env     string           `json:"env"`
-	Image   string           `json:"image"`
-	Project *DependencyTrack `json:"project,omitempty"`
+	ID           scalar.Ident          `json:"id"`
+	AppName      string                `json:"appName"`
+	Env          string                `json:"env"`
+	FindingsLink string                `json:"findingsLink"`
+	Summary      *VulnerabilitySummary `json:"summary,omitempty"`
+	HasBom       bool                  `json:"hasBom"`
 }
 
 func (VulnerabilitiesNode) IsNode() {}

@@ -41,8 +41,8 @@ func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, er
 	return r.teamsClient.GetTeam(ctx, obj.GQLVars.Team)
 }
 
-// DependencyTrack is the resolver for the dependencyTrack field.
-func (r *appResolver) DependencyTrack(ctx context.Context, obj *model.App) (*model.DependencyTrack, error) {
+// Vulnerabilities is the resolver for the vulnerabilities field.
+func (r *appResolver) Vulnerabilities(ctx context.Context, obj *model.App) (*model.VulnerabilitiesNode, error) {
 	return r.dtrackClient.VulnerabilitySummary(ctx, &dtrack.AppInstance{Env: obj.Env.Name, Team: obj.GQLVars.Team, App: obj.Name, Image: obj.Image})
 }
 
