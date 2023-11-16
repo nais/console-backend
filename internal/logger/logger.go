@@ -18,7 +18,9 @@ func New(cfg config.Logger) (logrus.FieldLogger, error) {
 	case "json":
 		log.SetFormatter(&logrus.JSONFormatter{})
 	case "text":
-		log.SetFormatter(&logrus.TextFormatter{})
+		log.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp: true,
+		})
 	default:
 		return nil, fmt.Errorf("invalid log format: %q", cfg.Format)
 	}

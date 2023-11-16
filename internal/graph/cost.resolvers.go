@@ -21,12 +21,22 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 		return nil, err
 	}
 
+	fromDate, err := from.PgDate()
+	if err != nil {
+		return nil, err
+	}
+
+	toDate, err := to.PgDate()
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := r.querier.DailyCostForApp(ctx, gensql.DailyCostForAppParams{
 		App:      app,
 		Team:     &team,
 		Env:      &env,
-		FromDate: from.PgDate(),
-		ToDate:   to.PgDate(),
+		FromDate: fromDate,
+		ToDate:   toDate,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cost query: %w", err)
@@ -59,10 +69,20 @@ func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from 
 		return nil, err
 	}
 
+	fromDate, err := from.PgDate()
+	if err != nil {
+		return nil, err
+	}
+
+	toDate, err := to.PgDate()
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := r.querier.DailyCostForTeam(ctx, gensql.DailyCostForTeamParams{
 		Team:     &team,
-		FromDate: from.PgDate(),
-		ToDate:   to.PgDate(),
+		FromDate: fromDate,
+		ToDate:   toDate,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cost query: %w", err)
@@ -146,14 +166,24 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 		return nil, err
 	}
 
+	fromDate, err := filter.From.PgDate()
+	if err != nil {
+		return nil, err
+	}
+
+	toDate, err := filter.To.PgDate()
+	if err != nil {
+		return nil, err
+	}
+
 	ret := make([]model.EnvCost, len(r.clusters))
 	for idx, cluster := range r.clusters {
 		appsCost := make([]model.AppCost, 0)
 		rows, err := r.querier.DailyEnvCostForTeam(ctx, gensql.DailyEnvCostForTeamParams{
 			Team:     &filter.Team,
 			Env:      &cluster,
-			FromDate: filter.From.PgDate(),
-			ToDate:   filter.To.PgDate(),
+			FromDate: fromDate,
+			ToDate:   toDate,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cost query: %w", err)

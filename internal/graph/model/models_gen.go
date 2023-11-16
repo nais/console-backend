@@ -148,6 +148,18 @@ type AppState struct {
 	Errors []StateError `json:"errors"`
 }
 
+// Resouce utilization overage cost for an app.
+type AppWithResourceUtilizationOverageCost struct {
+	// The overage cost for the app.
+	Overage float64 `json:"overage"`
+	// The environment where the app is running.
+	Env string `json:"env"`
+	// The name of the team who owns the app.
+	Team string `json:"team"`
+	// The name of the app.
+	App string `json:"app"`
+}
+
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent
@@ -222,6 +234,14 @@ type CostSeries struct {
 	Sum float64 `json:"sum"`
 	// The cost data.
 	Data []CostEntry `json:"data"`
+}
+
+// Current resource utilization for app type.
+type CurrentResourceUtilizationForApp struct {
+	// The percentage of CPU used.
+	CPU float64 `json:"cpu"`
+	// The percentage of memory used.
+	Memory float64 `json:"memory"`
 }
 
 // Daily cost type.
@@ -768,6 +788,58 @@ type Requests struct {
 	Memory string `json:"memory"`
 }
 
+// Resource utilization type.
+type ResourceUtilization struct {
+	// Resource type.
+	Resource ResourceType `json:"resource"`
+	// Timestamp of the value.
+	Timestamp time.Time `json:"timestamp"`
+	// The requested resource amount per pod.
+	Request float64 `json:"request"`
+	// The cost associated with the requested resource amount.
+	RequestCost float64 `json:"requestCost"`
+	// The actual resource usage.
+	Usage float64 `json:"usage"`
+	// The cost associated with the actual resource usage.
+	UsageCost float64 `json:"usageCost"`
+	// The overage of the requested resource amount.
+	RequestCostOverage float64 `json:"requestCostOverage"`
+}
+
+// Date range type.
+type ResourceUtilizationDateRange struct {
+	// The start of the range.
+	From *scalar.Date `json:"from,omitempty"`
+	// The end of the range.
+	To *scalar.Date `json:"to,omitempty"`
+}
+
+// Resource utilization for app type.
+type ResourceUtilizationForApp struct {
+	// CPU resource utilization data for the environment.
+	CPU []ResourceUtilization `json:"cpu"`
+	// Memory resource utilization data for the environment.
+	Memory []ResourceUtilization `json:"memory"`
+}
+
+// Resource utilization for env type.
+type ResourceUtilizationForEnv struct {
+	// Name of the environment.
+	Env string `json:"env"`
+	// CPU resource utilization data for the environment.
+	CPU []ResourceUtilization `json:"cpu"`
+	// Memory resource utilization data for the environment.
+	Memory []ResourceUtilization `json:"memory"`
+}
+
+// Resouce utilization overage cost for team type.
+type ResourceUtilizationOverageCostForTeam struct {
+	// The sum of the overage cost for all apps.
+	Sum float64 `json:"sum"`
+	// A list of apps with overage cost for the team, sorted by overage cost in descending order.
+	Apps []AppWithResourceUtilizationOverageCost `json:"apps"`
+}
+
 type Resources struct {
 	Limits   Limits   `json:"limits"`
 	Requests Requests `json:"requests"`
@@ -1133,6 +1205,48 @@ func (e *InstanceState) UnmarshalGQL(v interface{}) error {
 }
 
 func (e InstanceState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+// Resource type.
+type ResourceType string
+
+const (
+	ResourceTypeCPU    ResourceType = "CPU"
+	ResourceTypeMemory ResourceType = "MEMORY"
+)
+
+var AllResourceType = []ResourceType{
+	ResourceTypeCPU,
+	ResourceTypeMemory,
+}
+
+func (e ResourceType) IsValid() bool {
+	switch e {
+	case ResourceTypeCPU, ResourceTypeMemory:
+		return true
+	}
+	return false
+}
+
+func (e ResourceType) String() string {
+	return string(e)
+}
+
+func (e *ResourceType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ResourceType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ResourceType", str)
+	}
+	return nil
+}
+
+func (e ResourceType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
