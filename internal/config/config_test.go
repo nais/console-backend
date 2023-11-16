@@ -31,7 +31,6 @@ func TestNew(t *testing.T) {
 			"RUN_AS_USER": "some-user",
 		}))
 		assert.NoError(t, err)
-		assert.Equal(t, false, cfg.Cost.Reimport)
 		assert.Equal(t, bigquery.DetectProjectID, cfg.Cost.BigQueryProjectID)
 
 		assert.Equal(t, "http://hookd", cfg.Hookd.Endpoint)

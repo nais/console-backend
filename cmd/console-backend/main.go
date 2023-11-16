@@ -246,17 +246,11 @@ func getUpdater(ctx context.Context, querier gensql.Querier, tenant string, cfg 
 		return nil, err
 	}
 
-	opts := make([]cost.Option, 0)
-	if cfg.Reimport {
-		opts = append(opts, cost.WithReimport(true))
-	}
-
 	return cost.NewCostUpdater(
 		bigQueryClient,
 		querier,
 		tenant,
 		log.WithField("subsystem", "cost_updater"),
-		opts...,
 	), nil
 }
 

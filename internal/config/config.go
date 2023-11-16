@@ -10,7 +10,6 @@ import (
 // Cost is the configuration for the cost service
 type Cost struct {
 	ImportEnabled     bool   `env:"COST_DATA_IMPORT_ENABLED,default=false"`
-	Reimport          bool   `env:"COST_DATA_REIMPORT,default=false"`
 	BigQueryProjectID string `env:"BIGQUERY_PROJECTID,default=*detect-project-id*"`
 }
 
