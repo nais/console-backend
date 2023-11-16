@@ -185,8 +185,8 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 
 	data := make([]model.ResourceUtilization, 0)
 	for _, row := range rows {
-		usageCost := cost(resourceType.ToDatabaseEnum(), row.Usage)
-		requestCost := cost(resourceType.ToDatabaseEnum(), row.Request)
+		usageCost := costPerHour(resourceType.ToDatabaseEnum(), row.Usage)
+		requestCost := costPerHour(resourceType.ToDatabaseEnum(), row.Request)
 		data = append(data, model.ResourceUtilization{
 			Resource:           resourceType,
 			Timestamp:          row.Timestamp.Time.UTC(),
@@ -227,8 +227,8 @@ func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType mo
 
 	data := make([]model.ResourceUtilization, 0)
 	for _, row := range rows {
-		usageCost := cost(resourceType.ToDatabaseEnum(), row.Usage)
-		requestCost := cost(resourceType.ToDatabaseEnum(), row.Request)
+		usageCost := costPerHour(resourceType.ToDatabaseEnum(), row.Usage)
+		requestCost := costPerHour(resourceType.ToDatabaseEnum(), row.Request)
 		data = append(data, model.ResourceUtilization{
 			Resource:           resourceType,
 			Timestamp:          row.Timestamp.Time.UTC(),
@@ -279,15 +279,20 @@ func normalizeTime(ts time.Time) time.Time {
 	return ts.Truncate(time.Hour).UTC()
 }
 
-// cost calculates the cost for the given resource type
-func cost(resourceType gensql.ResourceType, value float64) (cost float64) {
+// costPerHour calculates the cost for the given resource type
+func costPerHour(resourceType gensql.ResourceType, value float64) (cost float64) {
+	const costPerCpuCorePerMonthInNok = 131
+	const costPerGBMemoryPerMonthInNok = 18
+	const eurToNokExchangeRate = 11.5
+
 	if resourceType == gensql.ResourceTypeCpu {
-		cost = (131.0 / 30.0) * value
+		cost = costPerCpuCorePerMonthInNok * value
 	} else {
-		cost = (18.0 / 1024 / 1024 / 1024 / 30.0) * value
+		// for memory the value is in bytes
+		cost = (costPerGBMemoryPerMonthInNok / 1024 / 1024 / 1024) * value
 	}
 
-	return cost / 24.0 / 11.5
+	return cost / 30.0 / 24.0 / eurToNokExchangeRate
 }
 
 // getCostMapFromRows converts a slice of ResourceUtilizationOverageCostForTeamRow to a overCostMap
@@ -301,7 +306,7 @@ func getCostMapFromRows(rows []*gensql.ResourceUtilizationOverageCostForTeamRow)
 			costMap[row.Env][row.App] = 0
 		}
 
-		costMap[row.Env][row.App] += cost(row.ResourceType, row.Request-row.Usage)
+		costMap[row.Env][row.App] += costPerHour(row.ResourceType, row.Request-row.Usage)
 	}
 	return costMap
 }
