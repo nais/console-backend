@@ -372,16 +372,6 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
-	/*nodes := make([]*model.VulnerabilitiesNode, 0)
-	for _, app := range apps {
-		nodes = append(nodes, &model.VulnerabilitiesNode{
-			ID:      scalar.VulnerabilitiesIdent(fmt.Sprintf("%s:%s:%s:%s", app.Env.Name, obj.Name, app.Name, app.Image)),
-			Env:     app.Env.Name,
-			AppName: app.Name,
-			Image:   app.Image,
-			Team:    obj.Name,
-		})
-	}*/
 	instances := make([]*dtrack.AppInstance, 0)
 	for _, app := range apps {
 		instances = append(instances, &dtrack.AppInstance{
