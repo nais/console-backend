@@ -4,18 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/nais/console-backend/internal/dtrack"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/go-chi/chi/v5"
+	"github.com/nais/console-backend/internal/dtrack"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi/v5"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/cost"
@@ -25,7 +25,10 @@ import (
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/logger"
+	"github.com/nais/console-backend/internal/resourceusage"
 	"github.com/nais/console-backend/internal/teams"
+	"github.com/prometheus/client_golang/api"
+	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/sethvargo/go-envconfig"
@@ -43,7 +46,8 @@ const (
 )
 
 const (
-	costUpdateSchedule = 1 * time.Hour
+	costUpdateSchedule     = time.Hour
+	resourceUpdateSchedule = time.Hour
 )
 
 func main() {
@@ -94,15 +98,16 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	}
 	defer closer()
 
-	k8sClient, err := k8s.New(cfg.K8S, errorsCounter, log.WithField("client", "k8s"))
+	k8sClient, err := k8s.New(cfg.Tenant, cfg.K8S, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
 		return fmt.Errorf("create k8s client: %w", err)
 	}
+
 	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
 	drackClient := dtrack.New(cfg.DTrack, errorsCounter, log.WithField("client", "dtrack"))
-
-	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, drackClient, querier, cfg.K8S.Clusters, log)
+	resourceUsageClient := resourceusage.NewClient(cfg.K8S.AllClusterNames, querier, log)
+	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, drackClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
@@ -123,10 +128,48 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		}
 	}()
 
+	// resource usage updater
+	go func() {
+		if !cfg.ResourceUtilization.ImportEnabled {
+			log.Warningf("resource utilization import is not enabled")
+			return
+		}
+
+		for env, informers := range k8sClient.Informers() {
+			for !informers.AppInformer.Informer().HasSynced() {
+				log.Infof("waiting for app informer in %q to sync", env)
+				time.Sleep(2 * time.Second)
+			}
+		}
+
+		promClients, err := getPrometheusClients(cfg.K8S.AllClusterNames, cfg.Tenant)
+		if err != nil {
+			log.WithError(err).Errorf("create prometheus clients")
+			return
+		}
+
+		resourceUsageUpdater := resourceusage.NewUpdater(k8sClient, promClients, querier, log)
+		if err != nil {
+			log.WithError(err).Errorf("create resource usage updater")
+			return
+		}
+
+		defer cancel()
+		err = runResourceUsageUpdater(ctx, resourceUsageUpdater, log.WithField("task", "resource_updater"))
+		if err != nil {
+			log.WithError(err).Errorf("error in resource usage updater")
+		}
+	}()
+
 	// cost updater
 	go func() {
+		if !cfg.Cost.ImportEnabled {
+			log.Warningf("cost import is not enabled")
+			return
+		}
+
 		defer cancel()
-		err = runCostUpdater(ctx, querier, cfg.Cost, log)
+		err = runCostUpdater(ctx, querier, cfg.Tenant, cfg.Cost, log.WithField("task", "cost_updater"))
 		if err != nil {
 			log.WithError(err).Errorf("error in cost updater")
 		}
@@ -199,30 +242,24 @@ func getBigQueryClient(ctx context.Context, projectID string) (*bigquery.Client,
 }
 
 // getBigQueryClient will return a new cost updater instance
-func getUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) (*cost.Updater, error) {
+func getUpdater(ctx context.Context, querier gensql.Querier, tenant string, cfg config.Cost, log logrus.FieldLogger) (*cost.Updater, error) {
 	bigQueryClient, err := getBigQueryClient(ctx, cfg.BigQueryProjectID)
 	if err != nil {
 		return nil, err
 	}
 
-	opts := make([]cost.Option, 0)
-	if cfg.Reimport {
-		opts = append(opts, cost.WithReimport(true))
-	}
-
 	return cost.NewCostUpdater(
 		bigQueryClient,
 		querier,
-		cfg.Tenant,
+		tenant,
 		log.WithField("subsystem", "cost_updater"),
-		opts...,
 	), nil
 }
 
 // runCostUpdater will create an instance of the cost updater, and update the costs on a schedule. This function will
 // block until the context is cancelled, so it should be run in a goroutine.
-func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost, log logrus.FieldLogger) error {
-	updater, err := getUpdater(ctx, querier, cfg, log)
+func runCostUpdater(ctx context.Context, querier gensql.Querier, tenant string, cfg config.Cost, log logrus.FieldLogger) error {
+	updater, err := getUpdater(ctx, querier, tenant, cfg, log)
 	if err != nil {
 		return fmt.Errorf("unable to set up and run cost updater: %w", err)
 	}
@@ -279,6 +316,34 @@ func runCostUpdater(ctx context.Context, querier gensql.Querier, cfg config.Cost
 	}
 }
 
+// runResourceUsageUpdater will update resource usage data hourly. This function will block until the context is
+// cancelled, so it should be run in a goroutine.
+func runResourceUsageUpdater(ctx context.Context, updater *resourceusage.Updater, log logrus.FieldLogger) error {
+	ticker := time.NewTicker(time.Second) // initial run
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			ticker.Reset(resourceUpdateSchedule) // regular schedule
+			start := time.Now()
+			log.Infof("start scheduled resource usage update run")
+			rows, err := updater.UpdateResourceUsage(ctx)
+			if err != nil {
+				log = log.WithError(err)
+			}
+			log.
+				WithFields(logrus.Fields{
+					"rows_upserted": rows,
+					"duration":      time.Since(start),
+				}).
+				Infof("scheduled resource usage update run finished")
+		}
+	}
+}
+
 // getMetricMeter will return a new metric meter that uses a Prometheus exporter
 func getMetricMeter() (met.Meter, error) {
 	exporter, err := prometheus.New()
@@ -288,4 +353,19 @@ func getMetricMeter() (met.Meter, error) {
 
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	return provider.Meter("github.com/nais/console-backend"), nil
+}
+
+// getPrometheusClients will return a map of Prometheus clients, one for each cluster
+func getPrometheusClients(clusters []string, tenant string) (map[string]promv1.API, error) {
+	promClients := map[string]promv1.API{}
+	for _, cluster := range clusters {
+		promClient, err := api.NewClient(api.Config{
+			Address: fmt.Sprintf("https://prometheus.%s.%s.cloud.nais.io", cluster, tenant),
+		})
+		if err != nil {
+			return nil, err
+		}
+		promClients[cluster] = promv1.NewAPI(promClient)
+	}
+	return promClients, nil
 }

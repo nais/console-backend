@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const DateFormat = "2006-01-02"
+const DateFormatYYYYMMDD = "2006-01-02"
 
 type Date string
 
@@ -38,7 +38,7 @@ func (d *Date) UnmarshalGQLContext(_ context.Context, v interface{}) error {
 
 // NewDate returns a Date from a time.Time
 func NewDate(t time.Time) Date {
-	return Date(t.UTC().Format(DateFormat))
+	return Date(t.UTC().Format(DateFormatYYYYMMDD))
 }
 
 // String returns the Date as a string
@@ -47,7 +47,12 @@ func (d Date) String() string {
 }
 
 // PgDate returns the Date as a pgtype.Date instance
-func (d Date) PgDate() (date pgtype.Date) {
-	date.Scan(string(d))
-	return date
+func (d Date) PgDate() (date pgtype.Date, err error) {
+	err = date.Scan(string(d))
+	return
+}
+
+// Time returns the Date as a time.Time instance
+func (d Date) Time() (time.Time, error) {
+	return time.Parse(DateFormatYYYYMMDD, string(d))
 }

@@ -18,7 +18,6 @@ const (
 	YYYYMMDD        = "2006-01-02"
 	UpsertBatchSize = 100000
 	daysToFetch     = 5
-	reimport        = false
 )
 
 // bigQueryCostTableRow is a struct that represents a row in the BigQuery table
@@ -38,7 +37,6 @@ type Updater struct {
 	bigQueryClient  *bigquery.Client
 	bigQueryTable   string
 	daysToFetch     int
-	reimport        bool
 	upsertBatchSize int
 }
 
@@ -49,13 +47,6 @@ type Option func(*Updater)
 func WithBigQueryTable(table string) Option {
 	return func(u *Updater) {
 		u.bigQueryTable = table
-	}
-}
-
-// WithReimport will set a custom BigQuery table to fetch data from
-func WithReimport(reimport bool) Option {
-	return func(u *Updater) {
-		u.reimport = reimport
 	}
 }
 
@@ -74,7 +65,6 @@ func NewCostUpdater(bigQueryClient *bigquery.Client, querier gensql.Querier, ten
 		log:             log,
 		bigQueryTable:   "nais-io.console.cost_" + tenantName,
 		daysToFetch:     daysToFetch,
-		reimport:        reimport,
 		upsertBatchSize: UpsertBatchSize,
 	}
 
@@ -202,22 +192,12 @@ func (c *Updater) upsertBatch(ctx context.Context, batch []gensql.CostUpsertPara
 	return
 }
 
-// getDayIntervalForBigQuerySql returns the number of days to fetch for the SQL query. When doing a reimport, we want to
-// fetch all data from 2020-01-01, which should be enough to get all historic data.
-func (c *Updater) getDayIntervalForBigQuerySql() int {
-	if c.reimport {
-		return int(time.Since(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)).Hours() / 24)
-	}
-
-	return c.daysToFetch
-}
-
 // getBigQueryIterator will return an iterator for the resultset of the cost query
 func (c *Updater) getBigQueryIterator(ctx context.Context) (*bigquery.RowIterator, error) {
 	sql := fmt.Sprintf(
 		"SELECT * FROM `%s` WHERE `date` >= TIMESTAMP_SUB(CURRENT_DATE(), INTERVAL %d DAY)",
 		c.bigQueryTable,
-		c.getDayIntervalForBigQuerySql(),
+		c.daysToFetch,
 	)
 
 	c.log.WithField("query", sql).Infof("fetch data from bigquery")

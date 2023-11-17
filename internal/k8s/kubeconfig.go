@@ -10,12 +10,12 @@ import (
 
 type ClusterConfigMap map[string]rest.Config
 
-func CreateClusterConfigMap(cfg config.K8S) (ClusterConfigMap, error) {
+func CreateClusterConfigMap(tenant string, cfg config.K8S) (ClusterConfigMap, error) {
 	configs := ClusterConfigMap{}
 
 	for _, cluster := range cfg.Clusters {
 		configs[cluster] = rest.Config{
-			Host: fmt.Sprintf("https://apiserver.%s.%s.cloud.nais.io", cluster, cfg.Tenant),
+			Host: fmt.Sprintf("https://apiserver.%s.%s.cloud.nais.io", cluster, tenant),
 			AuthProvider: &api.AuthProviderConfig{
 				Name: googleAuthPlugin,
 			},

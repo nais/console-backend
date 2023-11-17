@@ -44,8 +44,8 @@ type Informers struct {
 	EventInformer   corev1inf.EventInformer
 }
 
-func New(cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*Client, error) {
-	restConfigs, err := CreateClusterConfigMap(cfg)
+func New(tenant string, cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*Client, error) {
+	restConfigs, err := CreateClusterConfigMap(tenant, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
 	}
@@ -121,7 +121,7 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 				if rank == -1 {
 					continue
 				}
-				job, err := toNaisJob(u, env)
+				job, err := c.ToNaisJob(u, env)
 				if err != nil {
 					c.error(ctx, err, "converting to job")
 					return nil

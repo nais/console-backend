@@ -56,7 +56,9 @@ spec:
               value: "{{ .Values.fieldSelector }}"
             - name: CONSOLE_DATABASE_URL
               value: "postgres://{{ .Values.database.user }}@127.0.0.1:5432/{{ .Values.database.name }}?sslmode=disable"
-            - name: COST_DATA_REIMPORT
+            - name: COST_DATA_IMPORT_ENABLED
+              value: "true"
+            - name: RESOURCE_UTILIZATION_IMPORT_ENABLED
               value: "true"
             - name: DEPENDENCYTRACK_FRONTEND
               value: "{{ .Values.dependencytrack.frontend }}"

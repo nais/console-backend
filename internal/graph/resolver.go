@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/dtrack"
+	"github.com/nais/console-backend/internal/resourceusage"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -23,27 +24,29 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	hookdClient  hookd.Client
-	teamsClient  *teams.Client
-	k8sClient    *k8s.Client
-	dtrackClient *dtrack.Client
-	searcher     *search.Searcher
-	log          logrus.FieldLogger
-	querier      gensql.Querier
-	clusters     []string
+	hookdClient         hookd.Client
+	teamsClient         teams.Client
+	k8sClient           *k8s.Client
+	dtrackClient        *dtrack.Client
+	resourceUsageClient resourceusage.Client
+	searcher            *search.Searcher
+	log                 logrus.FieldLogger
+	querier             gensql.Querier
+	clusters            []string
 }
 
 // NewResolver creates a new GraphQL resolver with the given dependencies
-func NewResolver(hookdClient hookd.Client, teamsClient *teams.Client, k8sClient *k8s.Client, client *dtrack.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
+func NewResolver(hookdClient hookd.Client, teamsClient teams.Client, k8sClient *k8s.Client, client *dtrack.Client, resourceUsageClient resourceusage.Client, querier gensql.Querier, clusters []string, log logrus.FieldLogger) *Resolver {
 	return &Resolver{
-		hookdClient:  hookdClient,
-		teamsClient:  teamsClient,
-		k8sClient:    k8sClient,
-		dtrackClient: client,
-		searcher:     search.New(teamsClient, k8sClient),
-		log:          log,
-		querier:      querier,
-		clusters:     clusters,
+		hookdClient:         hookdClient,
+		teamsClient:         teamsClient,
+		k8sClient:           k8sClient,
+		dtrackClient:        client,
+		resourceUsageClient: resourceUsageClient,
+		searcher:            search.New(teamsClient, k8sClient),
+		log:                 log,
+		querier:             querier,
+		clusters:            clusters,
 	}
 }
 

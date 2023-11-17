@@ -9,9 +9,8 @@ import (
 
 // Cost is the configuration for the cost service
 type Cost struct {
-	Reimport          bool   `env:"COST_DATA_REIMPORT,default=false"`
+	ImportEnabled     bool   `env:"COST_DATA_IMPORT_ENABLED,default=false"`
 	BigQueryProjectID string `env:"BIGQUERY_PROJECTID,default=*detect-project-id*"`
-	Tenant            string `env:"TENANT,default=dev-nais"`
 }
 
 // Hookd is the configuration for the hookd service
@@ -22,10 +21,10 @@ type Hookd struct {
 
 // K8S is the configuration related to Kubernetes
 type K8S struct {
-	Clusters       []string        `env:"KUBERNETES_CLUSTERS"`
-	FieldSelector  string          `env:"KUBERNETES_FIELD_SELECTOR"`
-	StaticClusters []StaticCluster `env:"KUBERNETES_CLUSTERS_STATIC"`
-	Tenant         string          `env:"TENANT,default=dev-nais"`
+	Clusters        []string        `env:"KUBERNETES_CLUSTERS"`
+	FieldSelector   string          `env:"KUBERNETES_FIELD_SELECTOR"`
+	StaticClusters  []StaticCluster `env:"KUBERNETES_CLUSTERS_STATIC"`
+	AllClusterNames []string
 }
 
 type DTrack struct {
@@ -41,6 +40,11 @@ type Logger struct {
 	Level  string `env:"LOG_LEVEL,default=info"`
 }
 
+// ResourceUtilization is the configuration for the resource utilization service
+type ResourceUtilization struct {
+	ImportEnabled bool `env:"RESOURCE_UTILIZATION_IMPORT_ENABLED,default=false"`
+}
+
 // Teams is the configuration for the teams backend service
 type Teams struct {
 	Endpoint string `env:"TEAMS_ENDPOINT,default=http://teams-backend/query"`
@@ -49,12 +53,13 @@ type Teams struct {
 
 // Config is the configuration for the console-backend application
 type Config struct {
-	Cost   Cost
-	Hookd  Hookd
-	K8S    K8S
-	DTrack DTrack
-	Logger Logger
-	Teams  Teams
+	Cost                Cost
+	Hookd               Hookd
+	K8S                 K8S
+	Logger              Logger
+	DTrack              DTrack
+	ResourceUtilization ResourceUtilization
+	Teams               Teams
 
 	// IapAudience is the audience for the IAP JWT token. Will not be used when RUN_AS_USER is set
 	IapAudience string `env:"IAP_AUDIENCE"`
@@ -67,6 +72,9 @@ type Config struct {
 
 	// RunAsUser is the static user to run as. Used for development purposes. Will override IAP_AUDIENCE when set
 	RunAsUser string `env:"RUN_AS_USER"`
+
+	// Tenant is the active tenant
+	Tenant string `env:"TENANT,default=dev-nais"`
 }
 
 // New creates a new configuration instance from environment variables
@@ -79,5 +87,12 @@ func New(ctx context.Context, lookuper envconfig.Lookuper) (*Config, error) {
 	if cfg.RunAsUser == "" && cfg.IapAudience == "" {
 		return nil, fmt.Errorf("either RUN_AS_USER or IAP_AUDIENCE must be set")
 	}
+
+	clusterNames := cfg.K8S.Clusters
+	for _, staticCluster := range cfg.K8S.StaticClusters {
+		clusterNames = append(clusterNames, staticCluster.Name)
+	}
+	cfg.K8S.AllClusterNames = clusterNames
+
 	return cfg, nil
 }

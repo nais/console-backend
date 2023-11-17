@@ -22,14 +22,12 @@ const (
 	projectID    = "nais-io"
 	tenant       = "test"
 	daysToFetch  = 3650
-	reimport     = false
 	chanSize     = 1000
 	YYYYMMDD     = "2006-01-02"
 )
 
 var costUpdaterOpts = []cost.Option{
 	cost.WithDaysToFetch(daysToFetch),
-	cost.WithReimport(reimport),
 }
 
 func TestUpdater_FetchBigQueryData(t *testing.T) {

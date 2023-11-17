@@ -30,7 +30,7 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 		return nil, c.error(ctx, err, "getting job")
 	}
 
-	job, err := toNaisJob(obj.(*unstructured.Unstructured), env)
+	job, err := c.ToNaisJob(obj.(*unstructured.Unstructured), env)
 	if err != nil {
 		return nil, c.error(ctx, err, "converting to job")
 	}
@@ -98,12 +98,12 @@ func (c *Client) setJobHasMutualOnOutbound(ctx context.Context, oJob, oTeam, oEn
 		return nil
 	}
 
-	inf := c.getAppInformer(outboundEnv, outboundRule)
+	inf := c.getInformers(outboundEnv)
 	if inf == nil {
 		return nil
 	}
 
-	app, err := c.getApp(ctx, inf, outboundTeam, outboundRule, outboundEnv)
+	app, err := c.getApp(ctx, inf, outboundEnv, outboundTeam, outboundRule.Application)
 	if app == nil {
 		c.log.Debug("no app found for outbound rule ", outboundRule.Application, " in ", outboundEnv, " for ", outboundTeam, ": ", err)
 		outboundRule.Mutual = false
@@ -157,12 +157,12 @@ func (c *Client) setJobHasMutualOnInbound(ctx context.Context, oApp, oTeam, oEnv
 		return nil
 	}
 
-	inf := c.getAppInformer(inboundEnv, inboundRule)
+	inf := c.getInformers(inboundEnv)
 	if inf == nil {
 		return nil
 	}
 
-	app, err := c.getApp(ctx, inf, inboundTeam, inboundRule, inboundEnv)
+	app, err := c.getApp(ctx, inf, inboundEnv, inboundTeam, inboundRule.Application)
 	if app == nil {
 		c.log.Debug("no app found for inbound rule ", inboundRule.Application, " in ", inboundEnv, " for ", inboundTeam, ": ", err)
 		inboundRule.Mutual = false
@@ -300,7 +300,7 @@ func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, e
 			return nil, c.error(ctx, err, "listing jobs")
 		}
 		for _, obj := range objs {
-			job, err := toNaisJob(obj.(*unstructured.Unstructured), env)
+			job, err := c.ToNaisJob(obj.(*unstructured.Unstructured), env)
 			if err != nil {
 				return nil, c.error(ctx, err, "converting to job")
 			}
@@ -509,7 +509,7 @@ func failed(job *batchv1.Job) bool {
 	return false
 }
 
-func toNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error) {
+func (c *Client) ToNaisJob(u *unstructured.Unstructured, env string) (*model.NaisJob, error) {
 	naisjob := &naisv1.Naisjob{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, naisjob); err != nil {
 		return nil, fmt.Errorf("converting to job: %w", err)

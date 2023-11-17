@@ -3,6 +3,11 @@ package dtrack
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -10,10 +15,6 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
 	api "go.opentelemetry.io/otel/metric"
-	"net/url"
-	"strings"
-	"sync"
-	"time"
 )
 
 type AppInstance struct {
@@ -180,7 +181,7 @@ func (c *Client) createSummary(findings []*dependencytrack.Finding, hasBom bool)
 			unassigned += 1
 		}
 	}
-	//algorithm: https://github.com/DependencyTrack/dependency-track/blob/41e2ba8afb15477ff2b7b53bd9c19130ba1053c0/src/main/java/org/dependencytrack/metrics/Metrics.java#L31-L33
+	// algorithm: https://github.com/DependencyTrack/dependency-track/blob/41e2ba8afb15477ff2b7b53bd9c19130ba1053c0/src/main/java/org/dependencytrack/metrics/Metrics.java#L31-L33
 	riskScore := (critical * 10) + (high * 5) + (medium * 3) + (low * 1) + (unassigned * 5)
 
 	return &model.VulnerabilitySummary{
@@ -193,6 +194,7 @@ func (c *Client) createSummary(findings []*dependencytrack.Finding, hasBom bool)
 		Unassigned: unassigned,
 	}
 }
+
 func (c *Client) retrieveProject(ctx context.Context, app *AppInstance) (*dependencytrack.Project, error) {
 	tag := url.QueryEscape(app.Image)
 	projects, err := c.client.GetProjectsByTag(ctx, tag)
