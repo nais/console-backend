@@ -20,6 +20,10 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: hookd
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: dependencytrack
   podSelector:
     matchLabels:
       app: "{{ .Release.Name }}"
