@@ -71,23 +71,24 @@ type ACL struct {
 }
 
 type App struct {
-	ID           scalar.Ident `json:"id"`
-	Name         string       `json:"name"`
-	Image        string       `json:"image"`
-	DeployInfo   DeployInfo   `json:"deployInfo"`
-	Env          Env          `json:"env"`
-	Ingresses    []string     `json:"ingresses"`
-	Instances    []Instance   `json:"instances"`
-	AccessPolicy AccessPolicy `json:"accessPolicy"`
-	Resources    Resources    `json:"resources"`
-	AutoScaling  AutoScaling  `json:"autoScaling"`
-	Storage      []Storage    `json:"storage"`
-	Variables    []Variable   `json:"variables"`
-	Authz        []Authz      `json:"authz"`
-	Manifest     string       `json:"manifest"`
-	Team         Team         `json:"team"`
-	AppState     AppState     `json:"appState"`
-	GQLVars      AppGQLVars   `json:"-"`
+	ID              scalar.Ident         `json:"id"`
+	Name            string               `json:"name"`
+	Image           string               `json:"image"`
+	DeployInfo      DeployInfo           `json:"deployInfo"`
+	Env             Env                  `json:"env"`
+	Ingresses       []string             `json:"ingresses"`
+	Instances       []Instance           `json:"instances"`
+	AccessPolicy    AccessPolicy         `json:"accessPolicy"`
+	Resources       Resources            `json:"resources"`
+	AutoScaling     AutoScaling          `json:"autoScaling"`
+	Storage         []Storage            `json:"storage"`
+	Variables       []Variable           `json:"variables"`
+	Authz           []Authz              `json:"authz"`
+	Manifest        string               `json:"manifest"`
+	Team            Team                 `json:"team"`
+	AppState        AppState             `json:"appState"`
+	Vulnerabilities *VulnerabilitiesNode `json:"vulnerabilities,omitempty"`
+	GQLVars         AppGQLVars           `json:"-"`
 }
 
 func (App) IsNode() {}
@@ -742,6 +743,12 @@ type OpenSearch struct {
 func (OpenSearch) IsStorage()           {}
 func (this OpenSearch) GetName() string { return this.Name }
 
+type OrderBy struct {
+	// Order direction
+	Direction SortOrder    `json:"direction"`
+	Field     OrderByField `json:"field"`
+}
+
 type Outbound struct {
 	Rules    []Rule     `json:"rules"`
 	External []External `json:"external"`
@@ -978,6 +985,8 @@ type Team struct {
 	ViewerIsMember bool `json:"viewerIsMember"`
 	// Whether or not the viewer is an administrator of the team.
 	ViewerIsAdmin bool `json:"viewerIsAdmin"`
+	// The vulnerabilities for the team's applications.
+	Vulnerabilities VulnerabilitiesConnection `json:"vulnerabilities"`
 }
 
 func (Team) IsSearchNode() {}
@@ -1122,6 +1131,66 @@ type Variable struct {
 	Value string `json:"value"`
 }
 
+type VulnerabilitiesConnection struct {
+	TotalCount int                   `json:"totalCount"`
+	PageInfo   PageInfo              `json:"pageInfo"`
+	Edges      []VulnerabilitiesEdge `json:"edges"`
+}
+
+func (VulnerabilitiesConnection) IsConnection() {}
+
+// The total count of items in the connection.
+func (this VulnerabilitiesConnection) GetTotalCount() int { return this.TotalCount }
+
+// Pagination information.
+func (this VulnerabilitiesConnection) GetPageInfo() PageInfo { return this.PageInfo }
+
+// A list of edges.
+func (this VulnerabilitiesConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+
+type VulnerabilitiesEdge struct {
+	Cursor scalar.Cursor       `json:"cursor"`
+	Node   VulnerabilitiesNode `json:"node"`
+}
+
+func (VulnerabilitiesEdge) IsEdge() {}
+
+// A cursor for use in pagination.
+func (this VulnerabilitiesEdge) GetCursor() scalar.Cursor { return this.Cursor }
+
+type VulnerabilitiesNode struct {
+	ID           scalar.Ident          `json:"id"`
+	AppName      string                `json:"appName"`
+	Env          string                `json:"env"`
+	FindingsLink string                `json:"findingsLink"`
+	Summary      *VulnerabilitySummary `json:"summary,omitempty"`
+	HasBom       bool                  `json:"hasBom"`
+}
+
+func (VulnerabilitiesNode) IsNode() {}
+
+// The unique ID of an object.
+func (this VulnerabilitiesNode) GetID() scalar.Ident { return this.ID }
+
+type VulnerabilitySummary struct {
+	Total      int `json:"total"`
+	RiskScore  int `json:"riskScore"`
+	Critical   int `json:"critical"`
+	High       int `json:"high"`
+	Medium     int `json:"medium"`
+	Low        int `json:"low"`
+	Unassigned int `json:"unassigned"`
+}
+
 type ErrorLevel string
 
 const (
@@ -1208,6 +1277,70 @@ func (e InstanceState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type OrderByField string
+
+const (
+	// Order by name
+	OrderByFieldName OrderByField = "NAME"
+	// Order by env
+	OrderByFieldEnv OrderByField = "ENV"
+	// Order by appName.
+	OrderByFieldAppName OrderByField = "APP_NAME"
+	// Order by env.
+	OrderByFieldEnvName OrderByField = "ENV_NAME"
+	// Order by risk score
+	OrderByFieldRiskScore OrderByField = "RISK_SCORE"
+	// Order apps by vulnerability severity critical
+	OrderByFieldSeverityCritical OrderByField = "SEVERITY_CRITICAL"
+	// Order apps by vulnerability severity high
+	OrderByFieldSeverityHigh OrderByField = "SEVERITY_HIGH"
+	// Order apps by vulnerability severity medium
+	OrderByFieldSeverityMedium OrderByField = "SEVERITY_MEDIUM"
+	// Order apps by vulnerability severity low
+	OrderByFieldSeverityLow OrderByField = "SEVERITY_LOW"
+)
+
+var AllOrderByField = []OrderByField{
+	OrderByFieldName,
+	OrderByFieldEnv,
+	OrderByFieldAppName,
+	OrderByFieldEnvName,
+	OrderByFieldRiskScore,
+	OrderByFieldSeverityCritical,
+	OrderByFieldSeverityHigh,
+	OrderByFieldSeverityMedium,
+	OrderByFieldSeverityLow,
+}
+
+func (e OrderByField) IsValid() bool {
+	switch e {
+	case OrderByFieldName, OrderByFieldEnv, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow:
+		return true
+	}
+	return false
+}
+
+func (e OrderByField) String() string {
+	return string(e)
+}
+
+func (e *OrderByField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderByField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderByField", str)
+	}
+	return nil
+}
+
+func (e OrderByField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 // Resource type.
 type ResourceType string
 
@@ -1290,6 +1423,49 @@ func (e *SearchType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e SearchType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type SortOrder string
+
+const (
+	// Ascending sort order.
+	SortOrderAsc SortOrder = "ASC"
+	// Descending sort order.
+	SortOrderDesc SortOrder = "DESC"
+)
+
+var AllSortOrder = []SortOrder{
+	SortOrderAsc,
+	SortOrderDesc,
+}
+
+func (e SortOrder) IsValid() bool {
+	switch e {
+	case SortOrderAsc, SortOrderDesc:
+		return true
+	}
+	return false
+}
+
+func (e SortOrder) String() string {
+	return string(e)
+}
+
+func (e *SortOrder) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortOrder(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortOrder", str)
+	}
+	return nil
+}
+
+func (e SortOrder) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

@@ -21,7 +21,7 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		from := "from"
 		fromDate := scalar.Date(from)
 		resp, err := graph.
-			NewResolver(nil, nil, nil, nil, nil, nil, nil).
+			NewResolver(nil, nil, nil, nil, nil, nil, nil, nil).
 			Query().
 			ResourceUtilizationForApp(ctx, "env", "team", "app", &fromDate, nil)
 		assert.Nil(t, resp)
@@ -32,7 +32,7 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		to := "to"
 		toDate := scalar.Date(to)
 		resp, err := graph.
-			NewResolver(nil, nil, nil, nil, nil, nil, nil).
+			NewResolver(nil, nil, nil, nil, nil, nil, nil, nil).
 			Query().
 			ResourceUtilizationForApp(ctx, "env", "team", "app", nil, &toDate)
 		assert.Nil(t, resp)
@@ -58,7 +58,7 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 			}, nil)
 
 		resp, err := graph.
-			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).
+			NewResolver(nil, nil, nil, nil, resourceUsageClient, nil, nil, nil).
 			Query().
 			ResourceUtilizationForApp(ctx, "env", "team", "app", nil, nil)
 		assert.Equal(t, cpuData, resp.CPU)
@@ -89,7 +89,7 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 			}, nil)
 
 		resp, err := graph.
-			NewResolver(nil, nil, nil, resourceUsageClient, nil, nil, nil).
+			NewResolver(nil, nil, nil, nil, resourceUsageClient, nil, nil, nil).
 			Query().
 			ResourceUtilizationForApp(ctx, "env", "team", "app", &from, &to)
 		assert.NoError(t, err)

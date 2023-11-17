@@ -27,6 +27,13 @@ type K8S struct {
 	AllClusterNames []string
 }
 
+type DTrack struct {
+	Endpoint string `env:"DEPENDENCYTRACK_ENDPOINT,default=http://dependencytrack-backend:8080"`
+	Frontend string `env:"DEPENDENCYTRACK_FRONTEND"`
+	Username string `env:"DEPENDENCYTRACK_USERNAME,default=console"`
+	Password string `env:"DEPENDENCYTRACK_PASSWORD"`
+}
+
 // Logger is the configuration for the logger
 type Logger struct {
 	Format string `env:"LOG_FORMAT,default=json"`
@@ -50,6 +57,7 @@ type Config struct {
 	Hookd               Hookd
 	K8S                 K8S
 	Logger              Logger
+	DTrack              DTrack
 	ResourceUtilization ResourceUtilization
 	Teams               Teams
 

@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nais/console-backend/internal/dtrack"
+
 	"cloud.google.com/go/bigquery"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -103,9 +105,9 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 
 	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
+	drackClient := dtrack.New(cfg.DTrack, errorsCounter, log.WithField("client", "dtrack"))
 	resourceUsageClient := resourceusage.NewClient(cfg.K8S.AllClusterNames, querier, log)
-
-	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
+	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, drackClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
