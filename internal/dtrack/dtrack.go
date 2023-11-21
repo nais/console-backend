@@ -14,7 +14,6 @@ import (
 	dependencytrack "github.com/nais/dependencytrack/pkg/client"
 	"github.com/patrickmn/go-cache"
 	"github.com/sirupsen/logrus"
-	api "go.opentelemetry.io/otel/metric"
 )
 
 type AppInstance struct {
@@ -33,7 +32,6 @@ type Client struct {
 	client      dependencytrack.Client
 	frontendUrl string
 	log         logrus.FieldLogger
-	errors      api.Int64Counter
 	cache       *cache.Cache
 }
 
