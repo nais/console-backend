@@ -21,12 +21,12 @@ type AppInstance struct {
 	Env, Team, App, Image string
 }
 
-func (d *AppInstance) ID() string {
-	return fmt.Sprintf("%s:%s:%s:%s", d.Env, d.Team, d.App, d.Image)
+func (a *AppInstance) ID() string {
+	return fmt.Sprintf("%s:%s:%s:%s", a.Env, a.Team, a.App, a.Image)
 }
 
-func (d *AppInstance) ProjectName() string {
-	return fmt.Sprintf("%s:%s:%s", d.Env, d.Team, d.App)
+func (a *AppInstance) ProjectName() string {
+	return fmt.Sprintf("%s:%s:%s", a.Env, a.Team, a.App)
 }
 
 type Client struct {
@@ -37,7 +37,7 @@ type Client struct {
 	cache       *cache.Cache
 }
 
-func New(cfg config.DTrack, errors api.Int64Counter, log *logrus.Entry) *Client {
+func New(cfg config.DTrack, log *logrus.Entry) *Client {
 	c := dependencytrack.New(
 		cfg.Endpoint,
 		cfg.Username,
@@ -52,7 +52,6 @@ func New(cfg config.DTrack, errors api.Int64Counter, log *logrus.Entry) *Client 
 		client:      c,
 		frontendUrl: cfg.Frontend,
 		log:         log,
-		errors:      errors,
 		cache:       ch,
 	}
 }

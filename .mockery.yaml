@@ -16,3 +16,6 @@ packages:
   github.com/nais/console-backend/internal/resourceusage:
     interfaces:
       Client:
+  github.com/nais/console-backend/internal/dtrack:
+    interfaces:
+      DependencytrackClient:
