@@ -52,6 +52,47 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 			},
 		},
 		{
+			name: "list of appinstance should be equal lenght to list of vulnerabilities even though some apps have no project",
+			input: []*AppInstance{
+				{
+					Env:   "dev",
+					Team:  "team1",
+					App:   "app1",
+					Image: "image:latest",
+				},
+				{
+					Env:   "dev",
+					Team:  "team1",
+					App:   "app2",
+					Image: "image:notfound",
+				},
+			},
+			expect: func(input []*AppInstance, mock *MockDependencytrackClient) {
+				p1 := project(input[0].ToTags()...)
+				p1.LastBomImportFormat = "cyclonedx"
+
+				mock.EXPECT().
+					GetProjectsByTag(ctx, url.QueryEscape("image:latest")).Return([]*dependencytrack.Project{p1}, nil)
+				mock.EXPECT().
+					GetFindings(ctx, p1.Uuid).Return(findings(), nil)
+				mock.EXPECT().
+					GetProjectsByTag(ctx, url.QueryEscape("image:notfound")).Return([]*dependencytrack.Project{}, nil)
+
+			},
+			assert: func(t *testing.T, v []*model.VulnerabilitiesNode, err error) {
+				assert.NoError(t, err)
+				assert.Len(t, v, 2)
+				for _, vn := range v {
+					if vn.AppName == "app1" {
+						assert.NotNil(t, vn.Summary)
+					}
+					if vn.AppName == "app2" {
+						assert.Nil(t, vn.Summary)
+					}
+				}
+			},
+		},
+		{
 			name:  "should return list with summaries if apps have a project",
 			input: defaultInput,
 			expect: func(input []*AppInstance, mock *MockDependencytrackClient) {
