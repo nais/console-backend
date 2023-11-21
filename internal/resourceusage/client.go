@@ -194,6 +194,7 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 			Request:            row.Request,
 			RequestCost:        requestCost,
 			RequestCostOverage: requestCost - usageCost,
+			UsagePercentage:    row.Usage / row.Request * 100,
 		})
 	}
 

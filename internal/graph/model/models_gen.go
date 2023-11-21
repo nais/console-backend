@@ -811,6 +811,8 @@ type ResourceUtilization struct {
 	UsageCost float64 `json:"usageCost"`
 	// The overage of the requested resource amount.
 	RequestCostOverage float64 `json:"requestCostOverage"`
+	// The usage percentage of the requested resource amount.
+	UsagePercentage float64 `json:"usagePercentage"`
 }
 
 // Date range type.
