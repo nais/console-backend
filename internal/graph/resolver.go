@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/dependencytrack"
+	"github.com/nais/console-backend/internal/graph/apierror"
 	"github.com/nais/console-backend/internal/hookd"
 	"github.com/nais/console-backend/internal/k8s"
 	"github.com/nais/console-backend/internal/resourceusage"
@@ -50,7 +51,7 @@ func NewResolver(hookdClient hookd.Client, teamsClient teams.Client, k8sClient *
 }
 
 // NewHandler creates and returns a new GraphQL handler with the given configuration
-func NewHandler(config Config, meter metric.Meter) (*handler.Server, error) {
+func NewHandler(config Config, meter metric.Meter, log logrus.FieldLogger) (*handler.Server, error) {
 	metricsMiddleware, err := NewMetrics(meter)
 	if err != nil {
 		return nil, fmt.Errorf("create metrics middleware: %w", err)
@@ -67,5 +68,6 @@ func NewHandler(config Config, meter metric.Meter) (*handler.Server, error) {
 	graphHandler.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New(100),
 	})
+	graphHandler.SetErrorPresenter(apierror.GetErrorPresenter(log))
 	return graphHandler, nil
 }

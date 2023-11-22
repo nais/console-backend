@@ -35,6 +35,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	met "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
+	"golang.org/x/oauth2/google"
 )
 
 const (
@@ -99,7 +100,11 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 
 	k8sClient, err := k8s.New(cfg.Tenant, cfg.K8S, errorsCounter, log.WithField("client", "k8s"))
 	if err != nil {
-		return fmt.Errorf("create k8s client: %w", err)
+		var authErr *google.AuthenticationError
+		if errors.As(err, &authErr) {
+			return fmt.Errorf("unable to create k8s client. You should probably run `gcloud auth login --update-adc` and authenticate with your @nais.io-account before starting console-backend")
+		}
+		return fmt.Errorf("unable to create k8s client: %w", err)
 	}
 
 	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
@@ -107,7 +112,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	dependencyTrackClient := dependencytrack.New(cfg.DependencyTrack, log.WithField("client", "dependencytrack"))
 	resourceUsageClient := resourceusage.NewClient(cfg.K8S.AllClusterNames, querier, log)
 	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, dependencyTrackClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
-	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter)
+	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter, log)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
 	}
@@ -130,7 +135,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	// resource usage updater
 	go func() {
 		if !cfg.ResourceUtilization.ImportEnabled {
-			log.Warningf("resource utilization import is not enabled")
+			log.Warningf(`resource utilization import is not enabled. Enable by setting the "RESOURCE_UTILIZATION_IMPORT_ENABLED" environment variable to "true"`)
 			return
 		}
 
@@ -163,7 +168,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	// cost updater
 	go func() {
 		if !cfg.Cost.ImportEnabled {
-			log.Warningf("cost import is not enabled")
+			log.Warningf(`cost import is not enabled. Enable by setting the "COST_DATA_IMPORT_ENABLED" environment variable to "true".`)
 			return
 		}
 
@@ -177,8 +182,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	// HTTP server
 	go func() {
 		defer cancel()
-		srv := getHttpServer(cfg, graphHandler)
-		err = srv.ListenAndServe()
+		err = getHttpServer(cfg, graphHandler).ListenAndServe()
 		if !errors.Is(err, http.ErrServerClosed) {
 			log.WithError(err).Infof("unexpected error from HTTP server")
 		}
@@ -192,6 +196,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		log.Infof("received signal %s, terminating...", sig)
 	}()
 
+	log.Infof("HTTP server accepting requests on %q", cfg.ListenAddress)
 	<-ctx.Done()
 	return ctx.Err()
 }
