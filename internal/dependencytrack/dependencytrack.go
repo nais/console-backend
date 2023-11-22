@@ -1,4 +1,4 @@
-package dtrack
+package dependencytrack
 
 import (
 	"context"
@@ -35,7 +35,7 @@ type Client struct {
 	cache       *cache.Cache
 }
 
-func New(cfg config.DTrack, log *logrus.Entry) *Client {
+func New(cfg config.DependencyTrack, log *logrus.Entry) *Client {
 	c := dependencytrack.New(
 		cfg.Endpoint,
 		cfg.Username,

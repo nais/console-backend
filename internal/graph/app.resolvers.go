@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nais/console-backend/internal/dtrack"
+	"github.com/nais/console-backend/internal/dependencytrack"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
@@ -43,7 +43,7 @@ func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, er
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
 func (r *appResolver) Vulnerabilities(ctx context.Context, obj *model.App) (*model.VulnerabilitiesNode, error) {
-	return r.dtrackClient.VulnerabilitySummary(ctx, &dtrack.AppInstance{Env: obj.Env.Name, Team: obj.GQLVars.Team, App: obj.Name, Image: obj.Image})
+	return r.dependencyTrackClient.VulnerabilitySummary(ctx, &dependencytrack.AppInstance{Env: obj.Env.Name, Team: obj.GQLVars.Team, App: obj.Name, Image: obj.Image})
 }
 
 // App is the resolver for the app field.

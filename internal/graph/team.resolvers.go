@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/nais/console-backend/internal/auth"
-	"github.com/nais/console-backend/internal/dtrack"
+	"github.com/nais/console-backend/internal/dependencytrack"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -372,9 +372,9 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
-	instances := make([]*dtrack.AppInstance, 0)
+	instances := make([]*dependencytrack.AppInstance, 0)
 	for _, app := range apps {
-		instances = append(instances, &dtrack.AppInstance{
+		instances = append(instances, &dependencytrack.AppInstance{
 			Env:   app.Env.Name,
 			App:   app.Name,
 			Image: app.Image,
@@ -382,7 +382,7 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 		})
 	}
 
-	nodes, err := r.dtrackClient.GetVulnerabilities(ctx, instances)
+	nodes, err := r.dependencyTrackClient.GetVulnerabilities(ctx, instances)
 	if err != nil {
 		return nil, fmt.Errorf("getting vulnerabilities from DependencyTrack: %w", err)
 	}

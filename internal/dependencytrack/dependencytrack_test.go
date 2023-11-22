@@ -1,19 +1,20 @@
-package dtrack
+package dependencytrack
 
 import (
 	"context"
+	"net/url"
+	"testing"
+
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
 	dependencytrack "github.com/nais/dependencytrack/pkg/client"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"net/url"
-	"testing"
 )
 
 func TestClient_GetVulnerabilities(t *testing.T) {
-	cfg := config.DTrack{}
-	log := logrus.New().WithField("test", "dtrack")
+	cfg := config.DependencyTrack{}
+	log := logrus.New().WithField("test", "dependencytrack")
 	ctx := context.Background()
 
 	defaultInput := []*AppInstance{
@@ -34,13 +35,13 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 	tt := []struct {
 		name   string
 		input  []*AppInstance
-		expect func(input []*AppInstance, mock *MockDependencytrackClient)
+		expect func(input []*AppInstance, mock *MockInternalClient)
 		assert func(t *testing.T, v []*model.VulnerabilitiesNode, err error)
 	}{
 		{
 			name:  "should return list with summary null if no apps have a project",
 			input: defaultInput,
-			expect: func(input []*AppInstance, mock *MockDependencytrackClient) {
+			expect: func(input []*AppInstance, mock *MockInternalClient) {
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:latest")).Return([]*dependencytrack.Project{}, nil)
 			},
@@ -67,7 +68,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 					Image: "image:notfound",
 				},
 			},
-			expect: func(input []*AppInstance, mock *MockDependencytrackClient) {
+			expect: func(input []*AppInstance, mock *MockInternalClient) {
 				p1 := project(input[0].ToTags()...)
 				p1.LastBomImportFormat = "cyclonedx"
 
@@ -77,7 +78,6 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 					GetFindings(ctx, p1.Uuid).Return(findings(), nil)
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:notfound")).Return([]*dependencytrack.Project{}, nil)
-
 			},
 			assert: func(t *testing.T, v []*model.VulnerabilitiesNode, err error) {
 				assert.NoError(t, err)
@@ -95,7 +95,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 		{
 			name:  "should return list with summaries if apps have a project",
 			input: defaultInput,
-			expect: func(input []*AppInstance, mock *MockDependencytrackClient) {
+			expect: func(input []*AppInstance, mock *MockInternalClient) {
 				ps := make([]*dependencytrack.Project, 0)
 				for _, i := range input {
 					p := project(i.ToTags()...)
@@ -120,7 +120,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		mock := NewMockDependencytrackClient(t)
+		mock := NewMockInternalClient(t)
 		c := New(cfg, log).WithClient(mock)
 		tc.expect(tc.input, mock)
 		v, err := c.GetVulnerabilities(ctx, tc.input)
@@ -129,20 +129,20 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 }
 
 func TestClient_VulnerabilitySummary(t *testing.T) {
-	cfg := config.DTrack{}
-	log := logrus.New().WithField("test", "dtrack")
+	cfg := config.DependencyTrack{}
+	log := logrus.New().WithField("test", "dependencytrack")
 	ctx := context.Background()
 
 	tt := []struct {
 		name   string
 		input  *AppInstance
-		expect func(input *AppInstance, mock *MockDependencytrackClient)
+		expect func(input *AppInstance, mock *MockInternalClient)
 		assert func(t *testing.T, v *model.VulnerabilitiesNode, err error)
 	}{
 		{
 			name:  "should return empty summary if no bom is found",
 			input: app("dev", "team1", "app1", "image:latest"),
-			expect: func(input *AppInstance, mock *MockDependencytrackClient) {
+			expect: func(input *AppInstance, mock *MockInternalClient) {
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:latest")).Return([]*dependencytrack.Project{project(input.ToTags()...)}, nil)
 			},
@@ -158,7 +158,7 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 		{
 			name:  "should return nil summary if no project is found",
 			input: app("dev", "team1", "noProject", "image:latest"),
-			expect: func(input *AppInstance, mock *MockDependencytrackClient) {
+			expect: func(input *AppInstance, mock *MockInternalClient) {
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:latest")).Return([]*dependencytrack.Project{}, nil)
 			},
@@ -170,7 +170,7 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 		{
 			name:  "should return summary with n vulnerabilities",
 			input: app("dev", "team1", "app1", "image:latest"),
-			expect: func(input *AppInstance, mock *MockDependencytrackClient) {
+			expect: func(input *AppInstance, mock *MockInternalClient) {
 				p := []*dependencytrack.Project{project(input.ToTags()...)}
 				p[0].LastBomImportFormat = "cyclonedx"
 
@@ -179,7 +179,6 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 
 				mock.EXPECT().
 					GetFindings(ctx, p[0].Uuid).Return(findings(), nil)
-
 			},
 			assert: func(t *testing.T, v *model.VulnerabilitiesNode, err error) {
 				assert.NoError(t, err)
@@ -197,7 +196,7 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		mock := NewMockDependencytrackClient(t)
+		mock := NewMockInternalClient(t)
 		c := New(cfg, log).WithClient(mock)
 		tc.expect(tc.input, mock)
 		v, err := c.VulnerabilitySummary(ctx, tc.input)
