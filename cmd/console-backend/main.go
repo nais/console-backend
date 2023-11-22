@@ -98,7 +98,8 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	}
 	defer closer()
 
-	k8sClient, err := k8s.New(cfg.Tenant, cfg.K8S, errorsCounter, log.WithField("client", "k8s"))
+	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
+	k8sClient, err := k8s.New(cfg.Tenant, cfg.K8S, errorsCounter, teamsBackendClient, log.WithField("client", "k8s"))
 	if err != nil {
 		var authErr *google.AuthenticationError
 		if errors.As(err, &authErr) {
@@ -107,7 +108,6 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 		return fmt.Errorf("unable to create k8s client: %w", err)
 	}
 
-	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
 	dependencyTrackClient := dependencytrack.New(cfg.DependencyTrack, log.WithField("client", "dependencytrack"))
 	resourceUsageClient := resourceusage.NewClient(cfg.K8S.AllClusterNames, querier, log)

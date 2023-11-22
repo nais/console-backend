@@ -81,6 +81,7 @@ type Client interface {
 	GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error)
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 	GetUser(ctx context.Context, email string) (*User, error)
+	TeamExists(ctx context.Context, teamSlug string) bool
 }
 
 type client struct {
@@ -103,6 +104,20 @@ func New(cfg config.Teams, errors metric.Int64Counter, log logrus.FieldLogger) C
 		log:    log,
 		errors: errors,
 	}
+}
+
+// TeamExists checks if a team exists on the backend or not
+func (c *client) TeamExists(ctx context.Context, teamSlug string) bool {
+	c.updateTeams(ctx)
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	for _, team := range c.teams {
+		if team.Name == teamSlug {
+			return true
+		}
+	}
+	return false
 }
 
 // Search searches for teams matching the query

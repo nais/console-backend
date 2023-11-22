@@ -454,6 +454,49 @@ func (_c *MockClient_Search_Call) RunAndReturn(run func(context.Context, string,
 	return _c
 }
 
+// TeamExists provides a mock function with given fields: ctx, teamSlug
+func (_m *MockClient) TeamExists(ctx context.Context, teamSlug string) bool {
+	ret := _m.Called(ctx, teamSlug)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, teamSlug)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MockClient_TeamExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TeamExists'
+type MockClient_TeamExists_Call struct {
+	*mock.Call
+}
+
+// TeamExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - teamSlug string
+func (_e *MockClient_Expecter) TeamExists(ctx interface{}, teamSlug interface{}) *MockClient_TeamExists_Call {
+	return &MockClient_TeamExists_Call{Call: _e.mock.On("TeamExists", ctx, teamSlug)}
+}
+
+func (_c *MockClient_TeamExists_Call) Run(run func(ctx context.Context, teamSlug string)) *MockClient_TeamExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_TeamExists_Call) Return(_a0 bool) *MockClient_TeamExists_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockClient_TeamExists_Call) RunAndReturn(run func(context.Context, string) bool) *MockClient_TeamExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockClient creates a new instance of MockClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockClient(t interface {

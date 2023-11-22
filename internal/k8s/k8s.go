@@ -10,6 +10,7 @@ import (
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/search"
+	"github.com/nais/console-backend/internal/teams"
 	kafka_nais_io_v1 "github.com/nais/liberator/pkg/apis/kafka.nais.io/v1"
 	naisv1 "github.com/nais/liberator/pkg/apis/nais.io/v1"
 	naisv1alpha1 "github.com/nais/liberator/pkg/apis/nais.io/v1alpha1"
@@ -29,10 +30,11 @@ import (
 )
 
 type Client struct {
-	informers  map[string]*Informers
-	clientSets map[string]*kubernetes.Clientset
-	log        logrus.FieldLogger
-	errors     metric.Int64Counter
+	informers   map[string]*Informers
+	clientSets  map[string]*kubernetes.Clientset
+	log         logrus.FieldLogger
+	errors      metric.Int64Counter
+	teamsClient teams.Client
 }
 
 type Informers struct {
@@ -44,7 +46,7 @@ type Informers struct {
 	EventInformer   corev1inf.EventInformer
 }
 
-func New(tenant string, cfg config.K8S, errors metric.Int64Counter, log logrus.FieldLogger) (*Client, error) {
+func New(tenant string, cfg config.K8S, errors metric.Int64Counter, teamsClient teams.Client, log logrus.FieldLogger) (*Client, error) {
 	restConfigs, err := CreateClusterConfigMap(tenant, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("create kubeconfig: %w", err)
@@ -93,10 +95,11 @@ func New(tenant string, cfg config.K8S, errors metric.Int64Counter, log logrus.F
 	}
 
 	return &Client{
-		informers:  infs,
-		log:        log,
-		errors:     errors,
-		clientSets: clientSets,
+		informers:   infs,
+		log:         log,
+		errors:      errors,
+		clientSets:  clientSets,
+		teamsClient: teamsClient,
 	}, nil
 }
 
@@ -125,6 +128,8 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 				if err != nil {
 					c.error(ctx, err, "converting to job")
 					return nil
+				} else if !c.teamsClient.TeamExists(ctx, job.GQLVars.Team) {
+					continue
 				}
 
 				ret = append(ret, &search.Result{
@@ -151,6 +156,8 @@ func (c *Client) Search(ctx context.Context, q string, filter *model.SearchFilte
 				if err != nil {
 					c.error(ctx, err, "converting to app")
 					return nil
+				} else if !c.teamsClient.TeamExists(ctx, app.GQLVars.Team) {
+					continue
 				}
 
 				ret = append(ret, &search.Result{
