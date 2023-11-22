@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
+	"github.com/joho/godotenv"
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/config"
 	"github.com/nais/console-backend/internal/cost"
@@ -43,6 +44,7 @@ const (
 	exitCodeLoggerError
 	exitCodeRunError
 	exitCodeConfigError
+	exitCodeEnvFileError
 )
 
 const (
@@ -52,21 +54,30 @@ const (
 
 func main() {
 	ctx := context.Background()
+	log := logrus.StandardLogger()
+
+	if fileLoaded, err := loadEnvFile(); err != nil {
+		log.WithError(err).Errorf("error when loading .env file")
+		os.Exit(exitCodeEnvFileError)
+	} else if fileLoaded {
+		log.Infof("loaded .env file")
+	}
+
 	cfg, err := config.New(ctx, envconfig.OsLookuper())
 	if err != nil {
-		fmt.Printf("error when processing configuration: %s", err)
+		log.WithError(err).Errorf("error when processing configuration")
 		os.Exit(exitCodeConfigError)
 	}
 
-	log, err := logger.New(cfg.Logger)
+	appLogger, err := logger.New(cfg.Logger)
 	if err != nil {
-		fmt.Printf("error when creating logger: %s", err)
+		log.WithError(err).Errorf("error when creating application logger")
 		os.Exit(exitCodeLoggerError)
 	}
 
-	err = run(ctx, cfg, log)
+	err = run(ctx, cfg, appLogger)
 	if err != nil {
-		log.WithError(err).Errorf("error in run()")
+		appLogger.WithError(err).Errorf("error in run()")
 		os.Exit(exitCodeRunError)
 	}
 
@@ -372,4 +383,17 @@ func getPrometheusClients(clusters []string, tenant string) (map[string]promv1.A
 		promClients[cluster] = promv1.NewAPI(promClient)
 	}
 	return promClients, nil
+}
+
+// loadEnvFile will load a .env file if it exists. This is useful for local development.
+func loadEnvFile() (fileLoaded bool, err error) {
+	if _, err = os.Stat(".env"); errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+
+	if err = godotenv.Load(".env"); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
