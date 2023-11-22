@@ -104,9 +104,6 @@ type ResourceUtilizationOverageForTeam {
 
 "Resource utilization overage cost for an app."
 type AppWithResourceUtilizationOverage {
-    "The overage cost for the app."
-    overageCost: Float!
-
     "The overage for the app."
     overage: Float!
 

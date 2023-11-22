@@ -265,7 +265,7 @@ func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env strin
 	}, nil
 }
 
-func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource gensql.ResourceType, team string, startTs pgtype.Timestamptz, endTs pgtype.Timestamptz) (models []model.AppWithResourceUtilizationOverage, sumOverageCost float64, err error) {
+func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource gensql.ResourceType, team string, startTs, endTs pgtype.Timestamptz) (models []model.AppWithResourceUtilizationOverage, sumOverageCost float64, err error) {
 	rows, err := c.querier.ResourceUtilizationOverageForTeam(ctx, gensql.ResourceUtilizationOverageForTeamParams{
 		Team:         team,
 		Start:        startTs,
@@ -279,15 +279,14 @@ func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource
 		overageCost := costPerHour(resource, row.RequestSum-row.UsageSum)
 		sumOverageCost += overageCost
 		models = append(models, model.AppWithResourceUtilizationOverage{
-			OverageCost: overageCost,
-			Overage:     row.RequestAvg - row.UsageAvg,
-			Env:         row.Env,
-			Team:        team,
-			App:         row.App,
+			Overage: row.RequestAvg - row.UsageAvg,
+			Env:     row.Env,
+			Team:    team,
+			App:     row.App,
 		})
 	}
 	sort.Slice(models, func(i, j int) bool {
-		return models[i].OverageCost > models[j].OverageCost
+		return models[i].Overage > models[j].Overage
 	})
 
 	return

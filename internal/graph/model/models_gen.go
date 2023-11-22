@@ -151,8 +151,6 @@ type AppState struct {
 
 // Resource utilization overage cost for an app.
 type AppWithResourceUtilizationOverage struct {
-	// The overage cost for the app.
-	OverageCost float64 `json:"overageCost"`
 	// The overage for the app.
 	Overage float64 `json:"overage"`
 	// The environment where the app is running.
