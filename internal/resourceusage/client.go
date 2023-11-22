@@ -186,6 +186,10 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 	for _, row := range rows {
 		usageCost := costPerHour(resourceType.ToDatabaseEnum(), row.Usage)
 		requestCost := costPerHour(resourceType.ToDatabaseEnum(), row.Request)
+		usagePercentage := float64(0)
+		if row.Request > 0 {
+			usagePercentage = row.Usage / row.Request * 100
+		}
 		data = append(data, model.ResourceUtilization{
 			Resource:           resourceType,
 			Timestamp:          row.Timestamp.Time.UTC(),
@@ -194,7 +198,7 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 			Request:            row.Request,
 			RequestCost:        requestCost,
 			RequestCostOverage: requestCost - usageCost,
-			UsagePercentage:    row.Usage / row.Request * 100,
+			UsagePercentage:    usagePercentage,
 		})
 	}
 
