@@ -103,7 +103,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	if err != nil {
 		var authErr *google.AuthenticationError
 		if errors.As(err, &authErr) {
-			return fmt.Errorf("unable to create k8s client. You should probably run `gcloud auth login --update-adc` and authenticate with your @nais.io-account before starting console-backend")
+			return fmt.Errorf("unable to create k8s client. You should probably run `gcloud auth login --update-adc` and authenticate with your @nais.io-account before starting console-backend: %w", err)
 		}
 		return fmt.Errorf("unable to create k8s client: %w", err)
 	}
