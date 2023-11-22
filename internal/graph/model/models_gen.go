@@ -149,9 +149,11 @@ type AppState struct {
 	Errors []StateError `json:"errors"`
 }
 
-// Resouce utilization overage cost for an app.
-type AppWithResourceUtilizationOverageCost struct {
+// Resource utilization overage cost for an app.
+type AppWithResourceUtilizationOverage struct {
 	// The overage cost for the app.
+	OverageCost float64 `json:"overageCost"`
+	// The overage for the app.
 	Overage float64 `json:"overage"`
 	// The environment where the app is running.
 	Env string `json:"env"`
@@ -841,12 +843,14 @@ type ResourceUtilizationForEnv struct {
 	Memory []ResourceUtilization `json:"memory"`
 }
 
-// Resouce utilization overage cost for team type.
-type ResourceUtilizationOverageCostForTeam struct {
+// Resource utilization overage cost for team type.
+type ResourceUtilizationOverageForTeam struct {
 	// The sum of the overage cost for all apps.
-	Sum float64 `json:"sum"`
-	// A list of apps with overage cost for the team, sorted by overage cost in descending order.
-	Apps []AppWithResourceUtilizationOverageCost `json:"apps"`
+	OverageCost float64 `json:"overageCost"`
+	// List of CPU overage data for all apps.
+	CPU []AppWithResourceUtilizationOverage `json:"cpu"`
+	// List of memory overage data for all apps.
+	Memory []AppWithResourceUtilizationOverage `json:"memory"`
 }
 
 type Resources struct {

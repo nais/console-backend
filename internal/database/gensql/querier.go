@@ -34,8 +34,8 @@ type Querier interface {
 	ResourceUtilizationForApp(ctx context.Context, arg ResourceUtilizationForAppParams) ([]*ResourceUtilizationMetric, error)
 	// ResourceUtilizationForTeam will return resource utilization records for a given team.
 	ResourceUtilizationForTeam(ctx context.Context, arg ResourceUtilizationForTeamParams) ([]*ResourceUtilizationForTeamRow, error)
-	// ResourceUtilizationOverageCostForTeam will return overage records for a given team.
-	ResourceUtilizationOverageCostForTeam(ctx context.Context, arg ResourceUtilizationOverageCostForTeamParams) ([]*ResourceUtilizationOverageCostForTeamRow, error)
+	// ResourceUtilizationOverageForTeam will return overage records for a given team.
+	ResourceUtilizationOverageForTeam(ctx context.Context, arg ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error)
 	// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app.
 	ResourceUtilizationRangeForApp(ctx context.Context, arg ResourceUtilizationRangeForAppParams) (*ResourceUtilizationRangeForAppRow, error)
 	// ResourceUtilizationRangeForTeam will return the min and max timestamps for a specific team.

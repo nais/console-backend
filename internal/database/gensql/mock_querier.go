@@ -611,24 +611,24 @@ func (_c *MockQuerier_ResourceUtilizationForTeam_Call) RunAndReturn(run func(con
 	return _c
 }
 
-// ResourceUtilizationOverageCostForTeam provides a mock function with given fields: ctx, arg
-func (_m *MockQuerier) ResourceUtilizationOverageCostForTeam(ctx context.Context, arg ResourceUtilizationOverageCostForTeamParams) ([]*ResourceUtilizationOverageCostForTeamRow, error) {
+// ResourceUtilizationOverageForTeam provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) ResourceUtilizationOverageForTeam(ctx context.Context, arg ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error) {
 	ret := _m.Called(ctx, arg)
 
-	var r0 []*ResourceUtilizationOverageCostForTeamRow
+	var r0 []*ResourceUtilizationOverageForTeamRow
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationOverageCostForTeamParams) ([]*ResourceUtilizationOverageCostForTeamRow, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error)); ok {
 		return rf(ctx, arg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationOverageCostForTeamParams) []*ResourceUtilizationOverageCostForTeamRow); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, ResourceUtilizationOverageForTeamParams) []*ResourceUtilizationOverageForTeamRow); ok {
 		r0 = rf(ctx, arg)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ResourceUtilizationOverageCostForTeamRow)
+			r0 = ret.Get(0).([]*ResourceUtilizationOverageForTeamRow)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, ResourceUtilizationOverageCostForTeamParams) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, ResourceUtilizationOverageForTeamParams) error); ok {
 		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)
@@ -637,31 +637,31 @@ func (_m *MockQuerier) ResourceUtilizationOverageCostForTeam(ctx context.Context
 	return r0, r1
 }
 
-// MockQuerier_ResourceUtilizationOverageCostForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationOverageCostForTeam'
-type MockQuerier_ResourceUtilizationOverageCostForTeam_Call struct {
+// MockQuerier_ResourceUtilizationOverageForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationOverageForTeam'
+type MockQuerier_ResourceUtilizationOverageForTeam_Call struct {
 	*mock.Call
 }
 
-// ResourceUtilizationOverageCostForTeam is a helper method to define mock.On call
+// ResourceUtilizationOverageForTeam is a helper method to define mock.On call
 //   - ctx context.Context
-//   - arg ResourceUtilizationOverageCostForTeamParams
-func (_e *MockQuerier_Expecter) ResourceUtilizationOverageCostForTeam(ctx interface{}, arg interface{}) *MockQuerier_ResourceUtilizationOverageCostForTeam_Call {
-	return &MockQuerier_ResourceUtilizationOverageCostForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageCostForTeam", ctx, arg)}
+//   - arg ResourceUtilizationOverageForTeamParams
+func (_e *MockQuerier_Expecter) ResourceUtilizationOverageForTeam(ctx interface{}, arg interface{}) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
+	return &MockQuerier_ResourceUtilizationOverageForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageForTeam", ctx, arg)}
 }
 
-func (_c *MockQuerier_ResourceUtilizationOverageCostForTeam_Call) Run(run func(ctx context.Context, arg ResourceUtilizationOverageCostForTeamParams)) *MockQuerier_ResourceUtilizationOverageCostForTeam_Call {
+func (_c *MockQuerier_ResourceUtilizationOverageForTeam_Call) Run(run func(ctx context.Context, arg ResourceUtilizationOverageForTeamParams)) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(ResourceUtilizationOverageCostForTeamParams))
+		run(args[0].(context.Context), args[1].(ResourceUtilizationOverageForTeamParams))
 	})
 	return _c
 }
 
-func (_c *MockQuerier_ResourceUtilizationOverageCostForTeam_Call) Return(_a0 []*ResourceUtilizationOverageCostForTeamRow, _a1 error) *MockQuerier_ResourceUtilizationOverageCostForTeam_Call {
+func (_c *MockQuerier_ResourceUtilizationOverageForTeam_Call) Return(_a0 []*ResourceUtilizationOverageForTeamRow, _a1 error) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockQuerier_ResourceUtilizationOverageCostForTeam_Call) RunAndReturn(run func(context.Context, ResourceUtilizationOverageCostForTeamParams) ([]*ResourceUtilizationOverageCostForTeamRow, error)) *MockQuerier_ResourceUtilizationOverageCostForTeam_Call {
+func (_c *MockQuerier_ResourceUtilizationOverageForTeam_Call) RunAndReturn(run func(context.Context, ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error)) *MockQuerier_ResourceUtilizationOverageForTeam_Call {
 	_c.Call.Return(run)
 	return _c
 }

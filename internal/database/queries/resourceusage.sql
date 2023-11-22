@@ -20,22 +20,24 @@ WHERE
     AND team = $2
     AND app = $3;
 
--- ResourceUtilizationOverageCostForTeam will return overage records for a given team.
--- name: ResourceUtilizationOverageCostForTeam :many
+-- ResourceUtilizationOverageForTeam will return overage records for a given team.
+-- name: ResourceUtilizationOverageForTeam :many
 SELECT
-    SUM(usage)::double precision AS usage,
-    SUM(request)::double precision AS request,
+    SUM(usage)::double precision AS usage_sum,
+    SUM(request)::double precision AS request_sum,
+    AVG(usage)::double precision AS usage_avg,
+    AVG(request)::double precision AS request_avg,
     app,
-    env,
-    resource_type
+    env
 FROM
     resource_utilization_metrics
 WHERE
     team = $1
     AND timestamp >= sqlc.arg('start')::timestamptz
     AND timestamp < sqlc.arg('end')::timestamptz
+    AND resource_type = $2
 GROUP BY
-    app, env, resource_type
+    app, env
 HAVING
     SUM(request) > SUM(usage);
 
