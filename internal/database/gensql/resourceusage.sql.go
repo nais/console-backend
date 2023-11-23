@@ -14,7 +14,8 @@ import (
 const currentResourceUtilizationForApp = `-- name: CurrentResourceUtilizationForApp :one
 SELECT
     usage,
-    request
+    request,
+    timestamp
 FROM
     resource_utilization_metrics
 WHERE
@@ -36,8 +37,9 @@ type CurrentResourceUtilizationForAppParams struct {
 }
 
 type CurrentResourceUtilizationForAppRow struct {
-	Usage   float64
-	Request float64
+	Usage     float64
+	Request   float64
+	Timestamp pgtype.Timestamptz
 }
 
 // CurrentResourceUtilizationForApp will return the current (as in the latest values) resource utilization for a given
@@ -50,7 +52,44 @@ func (q *Queries) CurrentResourceUtilizationForApp(ctx context.Context, arg Curr
 		arg.ResourceType,
 	)
 	var i CurrentResourceUtilizationForAppRow
-	err := row.Scan(&i.Usage, &i.Request)
+	err := row.Scan(&i.Usage, &i.Request, &i.Timestamp)
+	return &i, err
+}
+
+const currentResourceUtilizationForTeam = `-- name: CurrentResourceUtilizationForTeam :one
+SELECT
+    SUM(usage)::double precision AS usage,
+    SUM(request)::double precision AS request,
+    timestamp
+FROM
+    resource_utilization_metrics
+WHERE
+    team = $1
+    AND resource_type = $2
+GROUP BY
+    timestamp
+ORDER BY
+    timestamp DESC
+LIMIT 1
+`
+
+type CurrentResourceUtilizationForTeamParams struct {
+	Team         string
+	ResourceType ResourceType
+}
+
+type CurrentResourceUtilizationForTeamRow struct {
+	Usage     float64
+	Request   float64
+	Timestamp pgtype.Timestamptz
+}
+
+// CurrentResourceUtilizationForTeam will return the current (as in the latest values) resource utilization for a given
+// team across all environments and applications.
+func (q *Queries) CurrentResourceUtilizationForTeam(ctx context.Context, arg CurrentResourceUtilizationForTeamParams) (*CurrentResourceUtilizationForTeamRow, error) {
+	row := q.db.QueryRow(ctx, currentResourceUtilizationForTeam, arg.Team, arg.ResourceType)
+	var i CurrentResourceUtilizationForTeamRow
+	err := row.Scan(&i.Usage, &i.Request, &i.Timestamp)
 	return &i, err
 }
 

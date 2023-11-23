@@ -30,7 +30,10 @@ type Client interface {
 	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
 
 	// CurrentResourceUtilizationForApp will return the current percentages of resource utilization for an app
-	CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error)
+	CurrentResourceUtilizationForApp(ctx context.Context, env, team, app string) (*model.CurrentResourceUtilizationForApp, error)
+
+	// CurrentResourceUtilizationForTeam will return the current percentages of resource utilization for a team across all apps and environments
+	CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error)
 }
 
 type (
@@ -167,25 +170,60 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 
 	data := make([]model.ResourceUtilization, 0)
 	for _, row := range rows {
-		usageCost := costPerHour(resourceType.ToDatabaseEnum(), row.Usage)
-		requestCost := costPerHour(resourceType.ToDatabaseEnum(), row.Request)
-		usagePercentage := float64(0)
-		if row.Request > 0 {
-			usagePercentage = row.Usage / row.Request * 100
-		}
-		data = append(data, model.ResourceUtilization{
-			Resource:           resourceType,
-			Timestamp:          row.Timestamp.Time.UTC(),
-			Usage:              row.Usage,
-			UsageCost:          usageCost,
-			Request:            row.Request,
-			RequestCost:        requestCost,
-			RequestCostOverage: requestCost - usageCost,
-			UsagePercentage:    usagePercentage,
-		})
+		data = append(data, resourceUtilization(resourceType, row.Timestamp.Time.UTC(), row.Request, row.Usage))
 	}
 
 	return data, nil
+}
+
+func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
+	cpu, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
+		Env:          env,
+		Team:         team,
+		App:          app,
+		ResourceType: gensql.ResourceTypeCpu,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	memory, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
+		Env:          env,
+		Team:         team,
+		App:          app,
+		ResourceType: gensql.ResourceTypeMemory,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CurrentResourceUtilizationForApp{
+		CPU:    resourceUtilization(model.ResourceTypeCPU, cpu.Timestamp.Time.UTC(), cpu.Request, cpu.Usage),
+		Memory: resourceUtilization(model.ResourceTypeMemory, memory.Timestamp.Time.UTC(), memory.Request, memory.Usage),
+	}, nil
+}
+
+func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error) {
+	currentCpu, err := c.querier.CurrentResourceUtilizationForTeam(ctx, gensql.CurrentResourceUtilizationForTeamParams{
+		Team:         team,
+		ResourceType: gensql.ResourceTypeCpu,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	currentMemory, err := c.querier.CurrentResourceUtilizationForTeam(ctx, gensql.CurrentResourceUtilizationForTeamParams{
+		Team:         team,
+		ResourceType: gensql.ResourceTypeMemory,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CurrentResourceUtilizationForTeam{
+		CPU:    resourceUtilization(model.ResourceTypeCPU, currentCpu.Timestamp.Time.UTC(), currentCpu.Request, currentCpu.Usage),
+		Memory: resourceUtilization(model.ResourceTypeMemory, currentMemory.Timestamp.Time.UTC(), currentMemory.Request, currentMemory.Usage),
+	}, nil
 }
 
 func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error) {
@@ -214,60 +252,10 @@ func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType mo
 
 	data := make([]model.ResourceUtilization, 0)
 	for _, row := range rows {
-		usageCost := costPerHour(resourceType.ToDatabaseEnum(), row.Usage)
-		requestCost := costPerHour(resourceType.ToDatabaseEnum(), row.Request)
-		usagePercentage := float64(0)
-		if row.Request > 0 {
-			usagePercentage = row.Usage / row.Request * 100
-		}
-		data = append(data, model.ResourceUtilization{
-			Resource:           resourceType,
-			Timestamp:          row.Timestamp.Time.UTC(),
-			Usage:              row.Usage,
-			UsageCost:          usageCost,
-			Request:            row.Request,
-			RequestCost:        requestCost,
-			RequestCostOverage: requestCost - usageCost,
-			UsagePercentage:    usagePercentage,
-		})
+		data = append(data, resourceUtilization(resourceType, row.Timestamp.Time.UTC(), row.Request, row.Usage))
 	}
 
 	return data, nil
-}
-
-func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
-	cpu, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
-		Env:          env,
-		Team:         team,
-		App:          app,
-		ResourceType: gensql.ResourceTypeCpu,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	memory, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
-		Env:          env,
-		Team:         team,
-		App:          app,
-		ResourceType: gensql.ResourceTypeMemory,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var cpuUtilization, memoryUtilization float64
-	if cpu.Request > 0 {
-		cpuUtilization = cpu.Usage / cpu.Request * 100
-	}
-	if memory.Request > 0 {
-		memoryUtilization = memory.Usage / memory.Request * 100
-	}
-
-	return &model.CurrentResourceUtilizationForApp{
-		CPU:    cpuUtilization,
-		Memory: memoryUtilization,
-	}, nil
 }
 
 func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource gensql.ResourceType, team string, startTs, endTs pgtype.Timestamptz) (models []model.AppWithResourceUtilizationOverage, sumOverageCost float64, err error) {
@@ -334,5 +322,28 @@ func getDateRange(from, to pgtype.Timestamptz) *model.ResourceUtilizationDateRan
 	return &model.ResourceUtilizationDateRange{
 		From: fromDate,
 		To:   toDate,
+	}
+}
+
+func resourceUtilization(resource model.ResourceType, ts time.Time, request, usage float64) model.ResourceUtilization {
+	var utilization float64
+	if request > 0 {
+		utilization = usage / request * 100
+	}
+
+	requestCost := costPerHour(resource.ToDatabaseEnum(), request)
+	usageCost := costPerHour(resource.ToDatabaseEnum(), usage)
+	overageCostPerHour := requestCost - usageCost
+
+	return model.ResourceUtilization{
+		Resource:                   resource,
+		Timestamp:                  ts,
+		Request:                    request,
+		RequestCost:                requestCost,
+		Usage:                      usage,
+		UsageCost:                  usageCost,
+		RequestCostOverage:         overageCostPerHour,
+		Utilization:                utilization,
+		EstimatedAnnualOverageCost: overageCostPerHour * 24 * 365,
 	}
 }

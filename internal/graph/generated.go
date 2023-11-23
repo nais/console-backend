@@ -182,6 +182,11 @@ type ComplexityRoot struct {
 		Memory func(childComplexity int) int
 	}
 
+	CurrentResourceUtilizationForTeam struct {
+		CPU    func(childComplexity int) int
+		Memory func(childComplexity int) int
+	}
+
 	DailyCost struct {
 		Series func(childComplexity int) int
 		Sum    func(childComplexity int) int
@@ -508,6 +513,7 @@ type ComplexityRoot struct {
 	Query struct {
 		App                                 func(childComplexity int, name string, team string, env string) int
 		CurrentResourceUtilizationForApp    func(childComplexity int, env string, team string, app string) int
+		CurrentResourceUtilizationForTeam   func(childComplexity int, team string) int
 		DailyCostForApp                     func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
 		DailyCostForTeam                    func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
 		Deployments                         func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
@@ -537,14 +543,15 @@ type ComplexityRoot struct {
 	}
 
 	ResourceUtilization struct {
-		Request            func(childComplexity int) int
-		RequestCost        func(childComplexity int) int
-		RequestCostOverage func(childComplexity int) int
-		Resource           func(childComplexity int) int
-		Timestamp          func(childComplexity int) int
-		Usage              func(childComplexity int) int
-		UsageCost          func(childComplexity int) int
-		UsagePercentage    func(childComplexity int) int
+		EstimatedAnnualOverageCost func(childComplexity int) int
+		Request                    func(childComplexity int) int
+		RequestCost                func(childComplexity int) int
+		RequestCostOverage         func(childComplexity int) int
+		Resource                   func(childComplexity int) int
+		Timestamp                  func(childComplexity int) int
+		Usage                      func(childComplexity int) int
+		UsageCost                  func(childComplexity int) int
+		Utilization                func(childComplexity int) int
 	}
 
 	ResourceUtilizationDateRange struct {
@@ -773,6 +780,7 @@ type QueryResolver interface {
 	Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
 	CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error)
+	CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error)
 	ResourceUtilizationOverageForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageForTeam, error)
 	ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationForEnv, error)
 	ResourceUtilizationDateRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
@@ -1296,6 +1304,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CurrentResourceUtilizationForApp.Memory(childComplexity), true
+
+	case "CurrentResourceUtilizationForTeam.cpu":
+		if e.complexity.CurrentResourceUtilizationForTeam.CPU == nil {
+			break
+		}
+
+		return e.complexity.CurrentResourceUtilizationForTeam.CPU(childComplexity), true
+
+	case "CurrentResourceUtilizationForTeam.memory":
+		if e.complexity.CurrentResourceUtilizationForTeam.Memory == nil {
+			break
+		}
+
+		return e.complexity.CurrentResourceUtilizationForTeam.Memory(childComplexity), true
 
 	case "DailyCost.series":
 		if e.complexity.DailyCost.Series == nil {
@@ -2521,6 +2543,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CurrentResourceUtilizationForApp(childComplexity, args["env"].(string), args["team"].(string), args["app"].(string)), true
 
+	case "Query.currentResourceUtilizationForTeam":
+		if e.complexity.Query.CurrentResourceUtilizationForTeam == nil {
+			break
+		}
+
+		args, err := ec.field_Query_currentResourceUtilizationForTeam_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CurrentResourceUtilizationForTeam(childComplexity, args["team"].(string)), true
+
 	case "Query.dailyCostForApp":
 		if e.complexity.Query.DailyCostForApp == nil {
 			break
@@ -2736,6 +2770,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Requests.Memory(childComplexity), true
 
+	case "ResourceUtilization.estimatedAnnualOverageCost":
+		if e.complexity.ResourceUtilization.EstimatedAnnualOverageCost == nil {
+			break
+		}
+
+		return e.complexity.ResourceUtilization.EstimatedAnnualOverageCost(childComplexity), true
+
 	case "ResourceUtilization.request":
 		if e.complexity.ResourceUtilization.Request == nil {
 			break
@@ -2785,12 +2826,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ResourceUtilization.UsageCost(childComplexity), true
 
-	case "ResourceUtilization.usagePercentage":
-		if e.complexity.ResourceUtilization.UsagePercentage == nil {
+	case "ResourceUtilization.utilization":
+		if e.complexity.ResourceUtilization.Utilization == nil {
 			break
 		}
 
-		return e.complexity.ResourceUtilization.UsagePercentage(childComplexity), true
+		return e.complexity.ResourceUtilization.Utilization(childComplexity), true
 
 	case "ResourceUtilizationDateRange.from":
 		if e.complexity.ResourceUtilizationDateRange.From == nil {
@@ -3900,6 +3941,21 @@ func (ec *executionContext) field_Query_currentResourceUtilizationForApp_args(ct
 		}
 	}
 	args["app"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_currentResourceUtilizationForTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["team"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("team"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["team"] = arg0
 	return args, nil
 }
 
@@ -7897,9 +7953,9 @@ func (ec *executionContext) _CurrentResourceUtilizationForApp_cpu(ctx context.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(model.ResourceUtilization)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNResourceUtilization2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CurrentResourceUtilizationForApp_cpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7909,7 +7965,27 @@ func (ec *executionContext) fieldContext_CurrentResourceUtilizationForApp_cpu(ct
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			switch field.Name {
+			case "resource":
+				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
+			case "request":
+				return ec.fieldContext_ResourceUtilization_request(ctx, field)
+			case "requestCost":
+				return ec.fieldContext_ResourceUtilization_requestCost(ctx, field)
+			case "usage":
+				return ec.fieldContext_ResourceUtilization_usage(ctx, field)
+			case "usageCost":
+				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
+			case "requestCostOverage":
+				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
 		},
 	}
 	return fc, nil
@@ -7941,9 +8017,9 @@ func (ec *executionContext) _CurrentResourceUtilizationForApp_memory(ctx context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(model.ResourceUtilization)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNResourceUtilization2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CurrentResourceUtilizationForApp_memory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7953,7 +8029,155 @@ func (ec *executionContext) fieldContext_CurrentResourceUtilizationForApp_memory
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			switch field.Name {
+			case "resource":
+				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
+			case "request":
+				return ec.fieldContext_ResourceUtilization_request(ctx, field)
+			case "requestCost":
+				return ec.fieldContext_ResourceUtilization_requestCost(ctx, field)
+			case "usage":
+				return ec.fieldContext_ResourceUtilization_usage(ctx, field)
+			case "usageCost":
+				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
+			case "requestCostOverage":
+				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CurrentResourceUtilizationForTeam_cpu(ctx context.Context, field graphql.CollectedField, obj *model.CurrentResourceUtilizationForTeam) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CurrentResourceUtilizationForTeam_cpu(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CPU, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.ResourceUtilization)
+	fc.Result = res
+	return ec.marshalNResourceUtilization2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CurrentResourceUtilizationForTeam_cpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CurrentResourceUtilizationForTeam",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "resource":
+				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
+			case "request":
+				return ec.fieldContext_ResourceUtilization_request(ctx, field)
+			case "requestCost":
+				return ec.fieldContext_ResourceUtilization_requestCost(ctx, field)
+			case "usage":
+				return ec.fieldContext_ResourceUtilization_usage(ctx, field)
+			case "usageCost":
+				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
+			case "requestCostOverage":
+				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CurrentResourceUtilizationForTeam_memory(ctx context.Context, field graphql.CollectedField, obj *model.CurrentResourceUtilizationForTeam) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CurrentResourceUtilizationForTeam_memory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Memory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.ResourceUtilization)
+	fc.Result = res
+	return ec.marshalNResourceUtilization2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CurrentResourceUtilizationForTeam_memory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CurrentResourceUtilizationForTeam",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "resource":
+				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
+			case "request":
+				return ec.fieldContext_ResourceUtilization_request(ctx, field)
+			case "requestCost":
+				return ec.fieldContext_ResourceUtilization_requestCost(ctx, field)
+			case "usage":
+				return ec.fieldContext_ResourceUtilization_usage(ctx, field)
+			case "usageCost":
+				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
+			case "requestCostOverage":
+				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
 		},
 	}
 	return fc, nil
@@ -16426,6 +16650,67 @@ func (ec *executionContext) fieldContext_Query_currentResourceUtilizationForApp(
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_currentResourceUtilizationForTeam(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_currentResourceUtilizationForTeam(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CurrentResourceUtilizationForTeam(rctx, fc.Args["team"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CurrentResourceUtilizationForTeam)
+	fc.Result = res
+	return ec.marshalNCurrentResourceUtilizationForTeam2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCurrentResourceUtilizationForTeam(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_currentResourceUtilizationForTeam(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cpu":
+				return ec.fieldContext_CurrentResourceUtilizationForTeam_cpu(ctx, field)
+			case "memory":
+				return ec.fieldContext_CurrentResourceUtilizationForTeam_memory(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CurrentResourceUtilizationForTeam", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_currentResourceUtilizationForTeam_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_resourceUtilizationOverageForTeam(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_resourceUtilizationOverageForTeam(ctx, field)
 	if err != nil {
@@ -17615,8 +17900,8 @@ func (ec *executionContext) fieldContext_ResourceUtilization_requestCostOverage(
 	return fc, nil
 }
 
-func (ec *executionContext) _ResourceUtilization_usagePercentage(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilization) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ResourceUtilization_usagePercentage(ctx, field)
+func (ec *executionContext) _ResourceUtilization_utilization(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ResourceUtilization_utilization(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17629,7 +17914,7 @@ func (ec *executionContext) _ResourceUtilization_usagePercentage(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UsagePercentage, nil
+		return obj.Utilization, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17646,7 +17931,51 @@ func (ec *executionContext) _ResourceUtilization_usagePercentage(ctx context.Con
 	return ec.marshalNFloat2float64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ResourceUtilization_usagePercentage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ResourceUtilization_utilization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUtilization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUtilization_estimatedAnnualOverageCost(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EstimatedAnnualOverageCost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ResourceUtilization",
 		Field:      field,
@@ -17794,8 +18123,10 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForApp_cpu(ctx conte
 				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
 			case "requestCostOverage":
 				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
-			case "usagePercentage":
-				return ec.fieldContext_ResourceUtilization_usagePercentage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
 		},
@@ -17856,8 +18187,10 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForApp_memory(ctx co
 				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
 			case "requestCostOverage":
 				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
-			case "usagePercentage":
-				return ec.fieldContext_ResourceUtilization_usagePercentage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
 		},
@@ -17962,8 +18295,10 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForEnv_cpu(ctx conte
 				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
 			case "requestCostOverage":
 				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
-			case "usagePercentage":
-				return ec.fieldContext_ResourceUtilization_usagePercentage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
 		},
@@ -18024,8 +18359,10 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForEnv_memory(ctx co
 				return ec.fieldContext_ResourceUtilization_usageCost(ctx, field)
 			case "requestCostOverage":
 				return ec.fieldContext_ResourceUtilization_requestCostOverage(ctx, field)
-			case "usagePercentage":
-				return ec.fieldContext_ResourceUtilization_usagePercentage(ctx, field)
+			case "utilization":
+				return ec.fieldContext_ResourceUtilization_utilization(ctx, field)
+			case "estimatedAnnualOverageCost":
+				return ec.fieldContext_ResourceUtilization_estimatedAnnualOverageCost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ResourceUtilization", field.Name)
 		},
@@ -26504,6 +26841,50 @@ func (ec *executionContext) _CurrentResourceUtilizationForApp(ctx context.Contex
 	return out
 }
 
+var currentResourceUtilizationForTeamImplementors = []string{"CurrentResourceUtilizationForTeam"}
+
+func (ec *executionContext) _CurrentResourceUtilizationForTeam(ctx context.Context, sel ast.SelectionSet, obj *model.CurrentResourceUtilizationForTeam) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, currentResourceUtilizationForTeamImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CurrentResourceUtilizationForTeam")
+		case "cpu":
+			out.Values[i] = ec._CurrentResourceUtilizationForTeam_cpu(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memory":
+			out.Values[i] = ec._CurrentResourceUtilizationForTeam_memory(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var dailyCostImplementors = []string{"DailyCost"}
 
 func (ec *executionContext) _DailyCost(ctx context.Context, sel ast.SelectionSet, obj *model.DailyCost) graphql.Marshaler {
@@ -29441,6 +29822,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "currentResourceUtilizationForTeam":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_currentResourceUtilizationForTeam(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "resourceUtilizationOverageForTeam":
 			field := field
 
@@ -29804,8 +30207,13 @@ func (ec *executionContext) _ResourceUtilization(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "usagePercentage":
-			out.Values[i] = ec._ResourceUtilization_usagePercentage(ctx, field, obj)
+		case "utilization":
+			out.Values[i] = ec._ResourceUtilization_utilization(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "estimatedAnnualOverageCost":
+			out.Values[i] = ec._ResourceUtilization_estimatedAnnualOverageCost(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -32411,6 +32819,20 @@ func (ec *executionContext) marshalNCurrentResourceUtilizationForApp2ᚖgithub�
 		return graphql.Null
 	}
 	return ec._CurrentResourceUtilizationForApp(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCurrentResourceUtilizationForTeam2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCurrentResourceUtilizationForTeam(ctx context.Context, sel ast.SelectionSet, v model.CurrentResourceUtilizationForTeam) graphql.Marshaler {
+	return ec._CurrentResourceUtilizationForTeam(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCurrentResourceUtilizationForTeam2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐCurrentResourceUtilizationForTeam(ctx context.Context, sel ast.SelectionSet, v *model.CurrentResourceUtilizationForTeam) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CurrentResourceUtilizationForTeam(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, v interface{}) (scalar.Cursor, error) {

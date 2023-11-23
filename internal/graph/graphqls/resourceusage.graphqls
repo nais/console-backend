@@ -1,5 +1,5 @@
 extend type Query {
-    "Get the current resource utilization for a specific app."
+    "Get the current resource utilization values for a specific app."
     currentResourceUtilizationForApp(
         "The environment where the app is running."
         env: String!
@@ -10,6 +10,12 @@ extend type Query {
         "The name of the app."
         app: String!
     ): CurrentResourceUtilizationForApp!
+
+    "Get the current resource utilization for a team across all apps and environments."
+    currentResourceUtilizationForTeam(
+        "The name of the team."
+        team: String!
+    ): CurrentResourceUtilizationForTeam!
 
     "Get resource utilization overage data for a team."
     resourceUtilizationOverageForTeam(
@@ -75,10 +81,19 @@ extend type Query {
 "Current resource utilization for app type."
 type CurrentResourceUtilizationForApp {
     "The percentage of CPU used."
-    cpu: Float!
+    cpu: ResourceUtilization!
 
     "The percentage of memory used."
-    memory: Float!
+    memory: ResourceUtilization!
+}
+
+"Current resource utilization for team type."
+type CurrentResourceUtilizationForTeam {
+    "The CPU utilization."
+    cpu: ResourceUtilization!
+
+    "The memory utilization."
+    memory: ResourceUtilization!
 }
 
 "Date range type."
@@ -161,8 +176,11 @@ type ResourceUtilization {
     "The overage of the requested resource amount."
     requestCostOverage: Float!
 
-    "The usage percentage of the requested resource amount."
-    usagePercentage: Float!
+    "The utilization in percent."
+    utilization: Float!
+
+    "Estimated annual cost of the request overage."
+    estimatedAnnualOverageCost: Float!
 }
 
 "Resource type."

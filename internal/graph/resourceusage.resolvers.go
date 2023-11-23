@@ -17,6 +17,11 @@ func (r *queryResolver) CurrentResourceUtilizationForApp(ctx context.Context, en
 	return r.resourceUsageClient.CurrentResourceUtilizationForApp(ctx, env, team, app)
 }
 
+// CurrentResourceUtilizationForTeam is the resolver for the currentResourceUtilizationForTeam field.
+func (r *queryResolver) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error) {
+	return r.resourceUsageClient.CurrentResourceUtilizationForTeam(ctx, team)
+}
+
 // ResourceUtilizationOverageForTeam is the resolver for the resourceUtilizationOverageForTeam field.
 func (r *queryResolver) ResourceUtilizationOverageForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageForTeam, error) {
 	end := time.Now()

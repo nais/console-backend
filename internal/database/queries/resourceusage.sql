@@ -92,7 +92,8 @@ ORDER BY
 -- name: CurrentResourceUtilizationForApp :one
 SELECT
     usage,
-    request
+    request,
+    timestamp
 FROM
     resource_utilization_metrics
 WHERE
@@ -104,3 +105,21 @@ ORDER BY
     timestamp DESC
 LIMIT
     1;
+
+-- CurrentResourceUtilizationForTeam will return the current (as in the latest values) resource utilization for a given
+-- team across all environments and applications.
+-- name: CurrentResourceUtilizationForTeam :one
+SELECT
+    SUM(usage)::double precision AS usage,
+    SUM(request)::double precision AS request,
+    timestamp
+FROM
+    resource_utilization_metrics
+WHERE
+    team = $1
+    AND resource_type = $2
+GROUP BY
+    timestamp
+ORDER BY
+    timestamp DESC
+LIMIT 1;

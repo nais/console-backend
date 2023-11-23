@@ -240,9 +240,17 @@ type CostSeries struct {
 // Current resource utilization for app type.
 type CurrentResourceUtilizationForApp struct {
 	// The percentage of CPU used.
-	CPU float64 `json:"cpu"`
+	CPU ResourceUtilization `json:"cpu"`
 	// The percentage of memory used.
-	Memory float64 `json:"memory"`
+	Memory ResourceUtilization `json:"memory"`
+}
+
+// Current resource utilization for team type.
+type CurrentResourceUtilizationForTeam struct {
+	// The CPU utilization.
+	CPU ResourceUtilization `json:"cpu"`
+	// The memory utilization.
+	Memory ResourceUtilization `json:"memory"`
 }
 
 // Daily cost type.
@@ -811,8 +819,10 @@ type ResourceUtilization struct {
 	UsageCost float64 `json:"usageCost"`
 	// The overage of the requested resource amount.
 	RequestCostOverage float64 `json:"requestCostOverage"`
-	// The usage percentage of the requested resource amount.
-	UsagePercentage float64 `json:"usagePercentage"`
+	// The utilization in percent.
+	Utilization float64 `json:"utilization"`
+	// Estimated annual cost of the request overage.
+	EstimatedAnnualOverageCost float64 `json:"estimatedAnnualOverageCost"`
 }
 
 // Date range type.

@@ -122,6 +122,61 @@ func (_c *MockQuerier_CurrentResourceUtilizationForApp_Call) RunAndReturn(run fu
 	return _c
 }
 
+// CurrentResourceUtilizationForTeam provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) CurrentResourceUtilizationForTeam(ctx context.Context, arg CurrentResourceUtilizationForTeamParams) (*CurrentResourceUtilizationForTeamRow, error) {
+	ret := _m.Called(ctx, arg)
+
+	var r0 *CurrentResourceUtilizationForTeamRow
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, CurrentResourceUtilizationForTeamParams) (*CurrentResourceUtilizationForTeamRow, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, CurrentResourceUtilizationForTeamParams) *CurrentResourceUtilizationForTeamRow); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*CurrentResourceUtilizationForTeamRow)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, CurrentResourceUtilizationForTeamParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_CurrentResourceUtilizationForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CurrentResourceUtilizationForTeam'
+type MockQuerier_CurrentResourceUtilizationForTeam_Call struct {
+	*mock.Call
+}
+
+// CurrentResourceUtilizationForTeam is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg CurrentResourceUtilizationForTeamParams
+func (_e *MockQuerier_Expecter) CurrentResourceUtilizationForTeam(ctx interface{}, arg interface{}) *MockQuerier_CurrentResourceUtilizationForTeam_Call {
+	return &MockQuerier_CurrentResourceUtilizationForTeam_Call{Call: _e.mock.On("CurrentResourceUtilizationForTeam", ctx, arg)}
+}
+
+func (_c *MockQuerier_CurrentResourceUtilizationForTeam_Call) Run(run func(ctx context.Context, arg CurrentResourceUtilizationForTeamParams)) *MockQuerier_CurrentResourceUtilizationForTeam_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(CurrentResourceUtilizationForTeamParams))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_CurrentResourceUtilizationForTeam_Call) Return(_a0 *CurrentResourceUtilizationForTeamRow, _a1 error) *MockQuerier_CurrentResourceUtilizationForTeam_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_CurrentResourceUtilizationForTeam_Call) RunAndReturn(run func(context.Context, CurrentResourceUtilizationForTeamParams) (*CurrentResourceUtilizationForTeamRow, error)) *MockQuerier_CurrentResourceUtilizationForTeam_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DailyCostForApp provides a mock function with given fields: ctx, arg
 func (_m *MockQuerier) DailyCostForApp(ctx context.Context, arg DailyCostForAppParams) ([]*Cost, error) {
 	ret := _m.Called(ctx, arg)
