@@ -237,16 +237,8 @@ type CostSeries struct {
 	Data []CostEntry `json:"data"`
 }
 
-// Current resource utilization for app type.
-type CurrentResourceUtilizationForApp struct {
-	// The percentage of CPU used.
-	CPU ResourceUtilization `json:"cpu"`
-	// The percentage of memory used.
-	Memory ResourceUtilization `json:"memory"`
-}
-
-// Current resource utilization for team type.
-type CurrentResourceUtilizationForTeam struct {
+// Current resource utilization type.
+type CurrentResourceUtilization struct {
 	// The CPU utilization.
 	CPU ResourceUtilization `json:"cpu"`
 	// The memory utilization.

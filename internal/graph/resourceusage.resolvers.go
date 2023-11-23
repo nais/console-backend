@@ -13,12 +13,12 @@ import (
 )
 
 // CurrentResourceUtilizationForApp is the resolver for the currentResourceUtilizationForApp field.
-func (r *queryResolver) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
+func (r *queryResolver) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
 	return r.resourceUsageClient.CurrentResourceUtilizationForApp(ctx, env, team, app)
 }
 
 // CurrentResourceUtilizationForTeam is the resolver for the currentResourceUtilizationForTeam field.
-func (r *queryResolver) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error) {
+func (r *queryResolver) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error) {
 	return r.resourceUsageClient.CurrentResourceUtilizationForTeam(ctx, team)
 }
 

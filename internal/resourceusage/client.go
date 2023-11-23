@@ -30,10 +30,10 @@ type Client interface {
 	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
 
 	// CurrentResourceUtilizationForApp will return the current percentages of resource utilization for an app
-	CurrentResourceUtilizationForApp(ctx context.Context, env, team, app string) (*model.CurrentResourceUtilizationForApp, error)
+	CurrentResourceUtilizationForApp(ctx context.Context, env, team, app string) (*model.CurrentResourceUtilization, error)
 
 	// CurrentResourceUtilizationForTeam will return the current percentages of resource utilization for a team across all apps and environments
-	CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error)
+	CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error)
 }
 
 type (
@@ -176,7 +176,7 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 	return data, nil
 }
 
-func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
+func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
 	cpu, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
 		Env:          env,
 		Team:         team,
@@ -197,13 +197,13 @@ func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env strin
 		return nil, err
 	}
 
-	return &model.CurrentResourceUtilizationForApp{
+	return &model.CurrentResourceUtilization{
 		CPU:    resourceUtilization(model.ResourceTypeCPU, cpu.Timestamp.Time.UTC(), cpu.Request, cpu.Usage),
 		Memory: resourceUtilization(model.ResourceTypeMemory, memory.Timestamp.Time.UTC(), memory.Request, memory.Usage),
 	}, nil
 }
 
-func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error) {
+func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error) {
 	currentCpu, err := c.querier.CurrentResourceUtilizationForTeam(ctx, gensql.CurrentResourceUtilizationForTeamParams{
 		Team:         team,
 		ResourceType: gensql.ResourceTypeCpu,
@@ -220,7 +220,7 @@ func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team str
 		return nil, err
 	}
 
-	return &model.CurrentResourceUtilizationForTeam{
+	return &model.CurrentResourceUtilization{
 		CPU:    resourceUtilization(model.ResourceTypeCPU, currentCpu.Timestamp.Time.UTC(), currentCpu.Request, currentCpu.Usage),
 		Memory: resourceUtilization(model.ResourceTypeMemory, currentMemory.Timestamp.Time.UTC(), currentMemory.Request, currentMemory.Usage),
 	}, nil

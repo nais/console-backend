@@ -25,19 +25,19 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 }
 
 // CurrentResourceUtilizationForApp provides a mock function with given fields: ctx, env, team, app
-func (_m *MockClient) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilizationForApp, error) {
+func (_m *MockClient) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
 	ret := _m.Called(ctx, env, team, app)
 
-	var r0 *model.CurrentResourceUtilizationForApp
+	var r0 *model.CurrentResourceUtilization
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*model.CurrentResourceUtilizationForApp, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*model.CurrentResourceUtilization, error)); ok {
 		return rf(ctx, env, team, app)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *model.CurrentResourceUtilizationForApp); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *model.CurrentResourceUtilization); ok {
 		r0 = rf(ctx, env, team, app)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.CurrentResourceUtilizationForApp)
+			r0 = ret.Get(0).(*model.CurrentResourceUtilization)
 		}
 	}
 
@@ -71,30 +71,30 @@ func (_c *MockClient_CurrentResourceUtilizationForApp_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockClient_CurrentResourceUtilizationForApp_Call) Return(_a0 *model.CurrentResourceUtilizationForApp, _a1 error) *MockClient_CurrentResourceUtilizationForApp_Call {
+func (_c *MockClient_CurrentResourceUtilizationForApp_Call) Return(_a0 *model.CurrentResourceUtilization, _a1 error) *MockClient_CurrentResourceUtilizationForApp_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockClient_CurrentResourceUtilizationForApp_Call) RunAndReturn(run func(context.Context, string, string, string) (*model.CurrentResourceUtilizationForApp, error)) *MockClient_CurrentResourceUtilizationForApp_Call {
+func (_c *MockClient_CurrentResourceUtilizationForApp_Call) RunAndReturn(run func(context.Context, string, string, string) (*model.CurrentResourceUtilization, error)) *MockClient_CurrentResourceUtilizationForApp_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CurrentResourceUtilizationForTeam provides a mock function with given fields: ctx, team
-func (_m *MockClient) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilizationForTeam, error) {
+func (_m *MockClient) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error) {
 	ret := _m.Called(ctx, team)
 
-	var r0 *model.CurrentResourceUtilizationForTeam
+	var r0 *model.CurrentResourceUtilization
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.CurrentResourceUtilizationForTeam, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.CurrentResourceUtilization, error)); ok {
 		return rf(ctx, team)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *model.CurrentResourceUtilizationForTeam); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *model.CurrentResourceUtilization); ok {
 		r0 = rf(ctx, team)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.CurrentResourceUtilizationForTeam)
+			r0 = ret.Get(0).(*model.CurrentResourceUtilization)
 		}
 	}
 
@@ -126,12 +126,12 @@ func (_c *MockClient_CurrentResourceUtilizationForTeam_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockClient_CurrentResourceUtilizationForTeam_Call) Return(_a0 *model.CurrentResourceUtilizationForTeam, _a1 error) *MockClient_CurrentResourceUtilizationForTeam_Call {
+func (_c *MockClient_CurrentResourceUtilizationForTeam_Call) Return(_a0 *model.CurrentResourceUtilization, _a1 error) *MockClient_CurrentResourceUtilizationForTeam_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockClient_CurrentResourceUtilizationForTeam_Call) RunAndReturn(run func(context.Context, string) (*model.CurrentResourceUtilizationForTeam, error)) *MockClient_CurrentResourceUtilizationForTeam_Call {
+func (_c *MockClient_CurrentResourceUtilizationForTeam_Call) RunAndReturn(run func(context.Context, string) (*model.CurrentResourceUtilization, error)) *MockClient_CurrentResourceUtilizationForTeam_Call {
 	_c.Call.Return(run)
 	return _c
 }
