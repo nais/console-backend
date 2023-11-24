@@ -5,23 +5,22 @@ import (
 	"sort"
 	"time"
 
-	"github.com/nais/console-backend/internal/graph/scalar"
-
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/nais/console-backend/internal/database/gensql"
 	"github.com/nais/console-backend/internal/graph/model"
+	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/sirupsen/logrus"
 )
 
 type Client interface {
 	// ResourceUtilizationForApp returns resource utilization (usage and request) for the given app, in the given time range
-	ResourceUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time) (*model.ResourceUtilizationForApp, error)
+	ResourceUtilizationForApp(ctx context.Context, env, team, app string, start, end scalar.Date) (*model.ResourceUtilizationForApp, error)
 
 	// ResourceUtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
-	ResourceUtilizationForTeam(ctx context.Context, team string, start, end time.Time) ([]model.ResourceUtilizationForEnv, error)
+	ResourceUtilizationForTeam(ctx context.Context, team string, start, end scalar.Date) ([]model.ResourceUtilizationForEnv, error)
 
 	// ResourceUtilizationOverageForTeam will return app overage data for a given team in the given time range
-	ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageForTeam, error)
+	ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end scalar.Date) (*model.ResourceUtilizationOverageForTeam, error)
 
 	// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app
 	ResourceUtilizationRangeForApp(ctx context.Context, env, team, app string) (*model.ResourceUtilizationDateRange, error)
@@ -35,10 +34,6 @@ type Client interface {
 	// CurrentResourceUtilizationForTeam will return the current percentages of resource utilization for a team across all apps and environments
 	CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error)
 }
-
-type (
-	utilizationMap map[time.Time]*model.ResourceUtilization
-)
 
 type client struct {
 	clusters []string
@@ -55,7 +50,7 @@ func NewClient(clusters []string, querier gensql.Querier, log logrus.FieldLogger
 	}
 }
 
-func (c *client) ResourceUtilizationForApp(ctx context.Context, env, team, app string, start, end time.Time) (*model.ResourceUtilizationForApp, error) {
+func (c *client) ResourceUtilizationForApp(ctx context.Context, env, team, app string, start, end scalar.Date) (*model.ResourceUtilizationForApp, error) {
 	cpu, err := c.resourceUtilizationForApp(ctx, model.ResourceTypeCPU, env, team, app, start, end)
 	if err != nil {
 		return nil, err
@@ -72,7 +67,7 @@ func (c *client) ResourceUtilizationForApp(ctx context.Context, env, team, app s
 	}, nil
 }
 
-func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, start, end time.Time) ([]model.ResourceUtilizationForEnv, error) {
+func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, start, end scalar.Date) ([]model.ResourceUtilizationForEnv, error) {
 	ret := make([]model.ResourceUtilizationForEnv, 0)
 	for _, env := range c.clusters {
 		cpu, err := c.resourceUtilizationForTeam(ctx, model.ResourceTypeCPU, env, team, start, end)
@@ -94,15 +89,25 @@ func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, st
 	return ret, nil
 }
 
-func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end time.Time) (*model.ResourceUtilizationOverageForTeam, error) {
+func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end scalar.Date) (*model.ResourceUtilizationOverageForTeam, error) {
+	s, err := start.Time()
+	if err != nil {
+		return nil, err
+	}
+
+	e, err := end.Time()
+	if err != nil {
+		return nil, err
+	}
+
 	startTs := pgtype.Timestamptz{}
-	err := startTs.Scan(normalizeTime(start))
+	err = startTs.Scan(s)
 	if err != nil {
 		return nil, err
 	}
 
 	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(normalizeTime(end.Add(time.Hour * 24)))
+	err = endTs.Scan(e.Add(time.Hour * 24))
 	if err != nil {
 		return nil, err
 	}
@@ -141,39 +146,6 @@ func (c *client) ResourceUtilizationRangeForTeam(ctx context.Context, team strin
 		return nil, err
 	}
 	return getDateRange(dates.From, dates.To), nil
-}
-
-func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end time.Time) ([]model.ResourceUtilization, error) {
-	startTs := pgtype.Timestamptz{}
-	err := startTs.Scan(normalizeTime(start))
-	if err != nil {
-		return nil, err
-	}
-
-	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(normalizeTime(end.Add(time.Hour * 24)))
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := c.querier.ResourceUtilizationForApp(ctx, gensql.ResourceUtilizationForAppParams{
-		Env:          env,
-		Team:         team,
-		App:          app,
-		ResourceType: resourceType.ToDatabaseEnum(),
-		Start:        startTs,
-		End:          endTs,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	data := make([]model.ResourceUtilization, 0)
-	for _, row := range rows {
-		data = append(data, resourceUtilization(resourceType, row.Timestamp.Time.UTC(), row.Request, row.Usage))
-	}
-
-	return data, nil
 }
 
 func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
@@ -226,15 +198,80 @@ func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team str
 	}, nil
 }
 
-func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end time.Time) ([]model.ResourceUtilization, error) {
+func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end scalar.Date) ([]model.ResourceUtilization, error) {
+	s, err := start.Time()
+	if err != nil {
+		return nil, err
+	}
+
+	e, err := end.Time()
+	if err != nil {
+		return nil, err
+	}
+	e = e.AddDate(0, 0, 1)
+
 	startTs := pgtype.Timestamptz{}
-	err := startTs.Scan(normalizeTime(start))
+	err = startTs.Scan(s)
 	if err != nil {
 		return nil, err
 	}
 
 	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(normalizeTime(end.Add(time.Hour * 24)))
+	err = endTs.Scan(e)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := c.querier.ResourceUtilizationForApp(ctx, gensql.ResourceUtilizationForAppParams{
+		Env:          env,
+		Team:         team,
+		App:          app,
+		ResourceType: resourceType.ToDatabaseEnum(),
+		Start:        startTs,
+		End:          endTs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	utilizationMap := initUtilizationMap(s, e)
+	for _, row := range rows {
+		ts := row.Timestamp.Time.UTC()
+		utilizationMap[ts] = resourceUtilization(resourceType, ts, row.Request, row.Usage)
+	}
+
+	data := make([]model.ResourceUtilization, 0)
+	for _, entry := range utilizationMap {
+		data = append(data, entry)
+	}
+
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].Timestamp.Before(data[j].Timestamp)
+	})
+
+	return data, nil
+}
+
+func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end scalar.Date) ([]model.ResourceUtilization, error) {
+	s, err := start.Time()
+	if err != nil {
+		return nil, err
+	}
+
+	e, err := end.Time()
+	if err != nil {
+		return nil, err
+	}
+	e = e.AddDate(0, 0, 1)
+
+	startTs := pgtype.Timestamptz{}
+	err = startTs.Scan(s)
+	if err != nil {
+		return nil, err
+	}
+
+	endTs := pgtype.Timestamptz{}
+	err = endTs.Scan(e)
 	if err != nil {
 		return nil, err
 	}
@@ -250,10 +287,20 @@ func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType mo
 		return nil, err
 	}
 
-	data := make([]model.ResourceUtilization, 0)
+	utilizationMap := initUtilizationMap(s, e)
 	for _, row := range rows {
-		data = append(data, resourceUtilization(resourceType, row.Timestamp.Time.UTC(), row.Request, row.Usage))
+		ts := row.Timestamp.Time.UTC()
+		utilizationMap[ts] = resourceUtilization(resourceType, ts, row.Request, row.Usage)
 	}
+
+	data := make([]model.ResourceUtilization, 0)
+	for _, entry := range utilizationMap {
+		data = append(data, entry)
+	}
+
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].Timestamp.Before(data[j].Timestamp)
+	})
 
 	return data, nil
 }
@@ -283,11 +330,6 @@ func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource
 	})
 
 	return
-}
-
-// normalizeTime will truncate a time.Time down to the hour, and return it as UTC
-func normalizeTime(ts time.Time) time.Time {
-	return ts.Truncate(time.Hour).UTC()
 }
 
 // costPerHour calculates the cost for the given resource type
@@ -325,6 +367,7 @@ func getDateRange(from, to pgtype.Timestamptz) *model.ResourceUtilizationDateRan
 	}
 }
 
+// resourceUtilization will return a resource utilization model
 func resourceUtilization(resource model.ResourceType, ts time.Time, request, usage float64) model.ResourceUtilization {
 	var utilization float64
 	if request > 0 {
@@ -345,4 +388,23 @@ func resourceUtilization(resource model.ResourceType, ts time.Time, request, usa
 		Utilization:                utilization,
 		EstimatedAnnualOverageCost: overageCostPerHour * 24 * 365,
 	}
+}
+
+// initUtilizationMap will create a map of timestamps with empty resource utilization data. This is used to not have
+// gaps in the graph. The last entry in the map will not be in the future.
+func initUtilizationMap(start, end time.Time) map[time.Time]model.ResourceUtilization {
+	now := time.Now().UTC()
+	timestamps := make([]time.Time, 0)
+	ts := start
+	for ; ts.Before(end) && ts.Before(now); ts = ts.Add(rangedQueryStep) {
+		timestamps = append(timestamps, ts)
+	}
+
+	utilization := make(map[time.Time]model.ResourceUtilization)
+	for _, ts := range timestamps {
+		utilization[ts] = model.ResourceUtilization{
+			Timestamp: ts,
+		}
+	}
+	return utilization
 }

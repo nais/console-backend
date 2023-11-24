@@ -24,48 +24,34 @@ func (r *queryResolver) CurrentResourceUtilizationForTeam(ctx context.Context, t
 
 // ResourceUtilizationOverageForTeam is the resolver for the resourceUtilizationOverageForTeam field.
 func (r *queryResolver) ResourceUtilizationOverageForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageForTeam, error) {
-	end := time.Now()
-	start := end.Add(-24 * time.Hour * 6)
-
-	var err error
-	if to != nil {
-		end, err = to.Time()
-		if err != nil {
-			return nil, err
-		}
+	now := time.Now().Truncate(24 * time.Hour).UTC()
+	if to == nil {
+		d := scalar.NewDate(now)
+		to = &d
 	}
 
-	if from != nil {
-		start, err = from.Time()
-		if err != nil {
-			return nil, err
-		}
+	if from == nil {
+		d := scalar.NewDate(now.AddDate(0, 0, -7))
+		from = &d
 	}
 
-	return r.resourceUsageClient.ResourceUtilizationOverageForTeam(ctx, team, start, end)
+	return r.resourceUsageClient.ResourceUtilizationOverageForTeam(ctx, team, *from, *to)
 }
 
 // ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
 func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationForEnv, error) {
-	end := time.Now()
-	start := end.Add(-24 * time.Hour * 6)
-
-	var err error
-	if to != nil {
-		end, err = to.Time()
-		if err != nil {
-			return nil, err
-		}
+	now := time.Now().Truncate(24 * time.Hour).UTC()
+	if to == nil {
+		d := scalar.NewDate(now)
+		to = &d
 	}
 
-	if from != nil {
-		start, err = from.Time()
-		if err != nil {
-			return nil, err
-		}
+	if from == nil {
+		d := scalar.NewDate(now.AddDate(0, 0, -7))
+		from = &d
 	}
 
-	return r.resourceUsageClient.ResourceUtilizationForTeam(ctx, team, start, end)
+	return r.resourceUsageClient.ResourceUtilizationForTeam(ctx, team, *from, *to)
 }
 
 // ResourceUtilizationDateRangeForTeam is the resolver for the resourceUtilizationDateRangeForTeam field.
@@ -80,23 +66,16 @@ func (r *queryResolver) ResourceUtilizationDateRangeForApp(ctx context.Context, 
 
 // ResourceUtilizationForApp is the resolver for the resourceUtilizationForApp field.
 func (r *queryResolver) ResourceUtilizationForApp(ctx context.Context, env string, team string, app string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationForApp, error) {
-	end := time.Now()
-	start := end.Add(-24 * time.Hour * 6)
-
-	var err error
-	if to != nil {
-		end, err = to.Time()
-		if err != nil {
-			return nil, err
-		}
+	now := time.Now().Truncate(24 * time.Hour).UTC()
+	if to == nil {
+		d := scalar.NewDate(now)
+		to = &d
 	}
 
-	if from != nil {
-		start, err = from.Time()
-		if err != nil {
-			return nil, err
-		}
+	if from == nil {
+		d := scalar.NewDate(now.AddDate(0, 0, -7))
+		from = &d
 	}
 
-	return r.resourceUsageClient.ResourceUtilizationForApp(ctx, env, team, app, start, end)
+	return r.resourceUsageClient.ResourceUtilizationForApp(ctx, env, team, app, *from, *to)
 }

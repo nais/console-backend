@@ -6,17 +6,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nais/console-backend/internal/graph/model"
+
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/nais/console-backend/internal/database/gensql"
-	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/k8s"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prom "github.com/prometheus/common/model"
 	"github.com/sirupsen/logrus"
 )
 
-// utilizationMapForEnv is a map of team -> app -> utilizationMap
-type utilizationMapForEnv map[string]map[string]utilizationMap
+type (
+	// utilizationMapForEnv is a map of team -> app -> time.Time -> *model.ResourceUtilization
+	utilizationMapForEnv map[string]map[string]map[time.Time]*model.ResourceUtilization
+)
 
 type Updater struct {
 	k8sClient   *k8s.Client
@@ -93,6 +96,7 @@ func (u *Updater) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, er
 			batch := getBatchParams(resourceType, env, values)
 			u.querier.ResourceUtilizationUpsert(ctx, batch).Exec(func(i int, err error) {
 				if err != nil {
+					log.WithError(err).Errorf("unable to upsert resource utilization")
 					batchErrors++
 				}
 			})
@@ -131,16 +135,22 @@ func utilizationInEnv(ctx context.Context, env string, k8sClient *k8s.Client, pr
 
 			for _, val := range sample.Values {
 				ts := val.Timestamp.Time().UTC()
+				usageValue := float64(val.Value)
+				if usageValue == 0 {
+					continue
+				}
 
 				if _, exists := utilization[team]; !exists {
-					utilization[team] = make(map[string]utilizationMap)
+					utilization[team] = make(map[string]map[time.Time]*model.ResourceUtilization)
 				}
 
 				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = initUtilizationMap(start, end)
+					utilization[team][app] = make(map[time.Time]*model.ResourceUtilization)
 				}
 
-				utilization[team][app][ts].Usage = float64(val.Value)
+				utilization[team][app][ts] = &model.ResourceUtilization{
+					Usage: usageValue,
+				}
 			}
 		}
 	}
@@ -164,16 +174,12 @@ func utilizationInEnv(ctx context.Context, env string, k8sClient *k8s.Client, pr
 
 			for _, val := range sample.Values {
 				ts := val.Timestamp.Time().UTC()
-
-				if _, exists := utilization[team]; !exists {
-					utilization[team] = make(map[string]utilizationMap)
+				requestValue := float64(val.Value)
+				if _, exists := utilization[team][app][ts]; !exists || requestValue == 0 {
+					continue
 				}
 
-				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = initUtilizationMap(start, end)
-				}
-
-				utilization[team][app][ts].Request = float64(val.Value)
+				utilization[team][app][ts].Request = requestValue
 			}
 		}
 	}
@@ -185,12 +191,16 @@ func getBatchParams(resourceType gensql.ResourceType, env string, utilization ut
 	params := make([]gensql.ResourceUtilizationUpsertParams, 0)
 	for team, apps := range utilization {
 		for app, timestamps := range apps {
-			for _, value := range timestamps {
-				ts := &pgtype.Timestamptz{}
-				_ = ts.Scan(value.Timestamp.UTC())
+			for ts, value := range timestamps {
+				if value.Usage == 0 || value.Request == 0 {
+					continue
+				}
+
+				pgTs := &pgtype.Timestamptz{}
+				_ = pgTs.Scan(ts)
 
 				params = append(params, gensql.ResourceUtilizationUpsertParams{
-					Timestamp:    *ts,
+					Timestamp:    *pgTs,
 					Env:          env,
 					Team:         team,
 					App:          app,
@@ -233,23 +243,6 @@ func getQueryRange(start time.Time) (time.Time, time.Time) {
 	return normalizeTime(start), normalizeTime(end)
 }
 
-// initUtilizationMap initializes a utilizationMap with the given time range without gaps
-func initUtilizationMap(start, end time.Time) utilizationMap {
-	timestamps := make([]time.Time, 0)
-	ts := start
-	for ; ts.Before(end); ts = ts.Add(rangedQueryStep) {
-		timestamps = append(timestamps, ts)
-	}
-	timestamps = append(timestamps, ts)
-	utilization := make(utilizationMap)
-	for _, ts := range timestamps {
-		utilization[ts] = &model.ResourceUtilization{
-			Timestamp: ts,
-		}
-	}
-	return utilization
-}
-
 // rangedQuery queries prometheus for the given query in the given time range
 func rangedQuery(ctx context.Context, client promv1.API, query string, start, end time.Time) (prom.Matrix, error) {
 	value, warnings, err := client.QueryRange(ctx, query, promv1.Range{
@@ -270,4 +263,9 @@ func rangedQuery(ctx context.Context, client promv1.API, query string, start, en
 	}
 
 	return matrix, nil
+}
+
+// normalizeTime will truncate a time.Time down to the hour, and return it as UTC
+func normalizeTime(ts time.Time) time.Time {
+	return ts.Truncate(time.Hour).UTC()
 }
