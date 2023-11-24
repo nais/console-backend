@@ -32,6 +32,10 @@ func (d *Date) UnmarshalGQLContext(_ context.Context, v interface{}) error {
 		return fmt.Errorf("date must not be empty")
 	}
 
+	if _, err := time.Parse(DateFormatYYYYMMDD, date); err != nil {
+		return fmt.Errorf("invalid date format: %q", date)
+	}
+
 	*d = Date(date)
 	return nil
 }

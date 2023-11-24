@@ -62,6 +62,12 @@ func TestDate_UnmarshalGQLContext(t *testing.T) {
 		assert.EqualError(t, err, "date must be a string")
 	})
 
+	t.Run("invalid value", func(t *testing.T) {
+		date := scalar.NewDate(tm)
+		err := date.UnmarshalGQLContext(ctx, "foobar")
+		assert.ErrorContains(t, err, `invalid date format: "foobar"`)
+	})
+
 	t.Run("empty string", func(t *testing.T) {
 		date := scalar.NewDate(tm)
 		err := date.UnmarshalGQLContext(ctx, "")
