@@ -137,7 +137,7 @@ func utilizationInEnv(ctx context.Context, env string, k8sClient *k8s.Client, pr
 				}
 
 				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = initUtilizationMap(resourceType, start, end)
+					utilization[team][app] = initUtilizationMap(start, end)
 				}
 
 				utilization[team][app][ts].Usage = float64(val.Value)
@@ -170,7 +170,7 @@ func utilizationInEnv(ctx context.Context, env string, k8sClient *k8s.Client, pr
 				}
 
 				if _, exists := utilization[team][app]; !exists {
-					utilization[team][app] = initUtilizationMap(resourceType, start, end)
+					utilization[team][app] = initUtilizationMap(start, end)
 				}
 
 				utilization[team][app][ts].Request = float64(val.Value)
@@ -234,7 +234,7 @@ func getQueryRange(start time.Time) (time.Time, time.Time) {
 }
 
 // initUtilizationMap initializes a utilizationMap with the given time range without gaps
-func initUtilizationMap(resourceType gensql.ResourceType, start, end time.Time) utilizationMap {
+func initUtilizationMap(start, end time.Time) utilizationMap {
 	timestamps := make([]time.Time, 0)
 	ts := start
 	for ; ts.Before(end); ts = ts.Add(rangedQueryStep) {
