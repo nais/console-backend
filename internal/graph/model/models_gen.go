@@ -797,8 +797,6 @@ type Requests struct {
 
 // Resource utilization type.
 type ResourceUtilization struct {
-	// Resource type.
-	Resource ResourceType `json:"resource"`
 	// Timestamp of the value.
 	Timestamp time.Time `json:"timestamp"`
 	// The requested resource amount per pod.

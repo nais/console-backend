@@ -146,9 +146,6 @@ type ResourceUtilizationForApp {
 
 "Resource utilization type."
 type ResourceUtilization {
-    "Resource type."
-    resource: ResourceType!
-
     "Timestamp of the value."
     timestamp: Time!
 

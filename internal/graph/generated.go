@@ -542,7 +542,6 @@ type ComplexityRoot struct {
 		Request                    func(childComplexity int) int
 		RequestCost                func(childComplexity int) int
 		RequestCostOverage         func(childComplexity int) int
-		Resource                   func(childComplexity int) int
 		Timestamp                  func(childComplexity int) int
 		Usage                      func(childComplexity int) int
 		UsageCost                  func(childComplexity int) int
@@ -2778,13 +2777,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ResourceUtilization.RequestCostOverage(childComplexity), true
-
-	case "ResourceUtilization.resource":
-		if e.complexity.ResourceUtilization.Resource == nil {
-			break
-		}
-
-		return e.complexity.ResourceUtilization.Resource(childComplexity), true
 
 	case "ResourceUtilization.timestamp":
 		if e.complexity.ResourceUtilization.Timestamp == nil {
@@ -7947,8 +7939,6 @@ func (ec *executionContext) fieldContext_CurrentResourceUtilization_cpu(ctx cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "resource":
-				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
 			case "request":
@@ -8011,8 +8001,6 @@ func (ec *executionContext) fieldContext_CurrentResourceUtilization_memory(ctx c
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "resource":
-				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
 			case "request":
@@ -17445,50 +17433,6 @@ func (ec *executionContext) fieldContext_Requests_memory(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _ResourceUtilization_resource(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilization) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ResourceUtilization_resource(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Resource, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.ResourceType)
-	fc.Result = res
-	return ec.marshalNResourceType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceType(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ResourceUtilization_resource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ResourceUtilization",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ResourceType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ResourceUtilization_timestamp(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
 	if err != nil {
@@ -17962,8 +17906,6 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForApp_cpu(ctx conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "resource":
-				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
 			case "request":
@@ -18026,8 +17968,6 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForApp_memory(ctx co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "resource":
-				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
 			case "request":
@@ -18134,8 +18074,6 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForEnv_cpu(ctx conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "resource":
-				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
 			case "request":
@@ -18198,8 +18136,6 @@ func (ec *executionContext) fieldContext_ResourceUtilizationForEnv_memory(ctx co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "resource":
-				return ec.fieldContext_ResourceUtilization_resource(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_ResourceUtilization_timestamp(ctx, field)
 			case "request":
@@ -29981,11 +29917,6 @@ func (ec *executionContext) _ResourceUtilization(ctx context.Context, sel ast.Se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ResourceUtilization")
-		case "resource":
-			out.Values[i] = ec._ResourceUtilization_resource(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "timestamp":
 			out.Values[i] = ec._ResourceUtilization_timestamp(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -33622,16 +33553,6 @@ func (ec *executionContext) marshalNPort2ᚕgithubᚗcomᚋnaisᚋconsoleᚑback
 
 func (ec *executionContext) marshalNRequests2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐRequests(ctx context.Context, sel ast.SelectionSet, v model.Requests) graphql.Marshaler {
 	return ec._Requests(ctx, sel, &v)
-}
-
-func (ec *executionContext) unmarshalNResourceType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceType(ctx context.Context, v interface{}) (model.ResourceType, error) {
-	var res model.ResourceType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNResourceType2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceType(ctx context.Context, sel ast.SelectionSet, v model.ResourceType) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) marshalNResourceUtilization2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐResourceUtilization(ctx context.Context, sel ast.SelectionSet, v model.ResourceUtilization) graphql.Marshaler {

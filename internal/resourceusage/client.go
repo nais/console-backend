@@ -336,7 +336,6 @@ func resourceUtilization(resource model.ResourceType, ts time.Time, request, usa
 	overageCostPerHour := requestCost - usageCost
 
 	return model.ResourceUtilization{
-		Resource:                   resource,
 		Timestamp:                  ts,
 		Request:                    request,
 		RequestCost:                requestCost,

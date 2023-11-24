@@ -90,7 +90,7 @@ func (u *Updater) UpdateResourceUsage(ctx context.Context) (rowsUpserted int, er
 			}
 
 			batchErrors := 0
-			batch := getBatchParams(env, values)
+			batch := getBatchParams(resourceType, env, values)
 			u.querier.ResourceUtilizationUpsert(ctx, batch).Exec(func(i int, err error) {
 				if err != nil {
 					batchErrors++
@@ -181,7 +181,7 @@ func utilizationInEnv(ctx context.Context, env string, k8sClient *k8s.Client, pr
 }
 
 // getBatchParams converts ResourceUtilization to ResourceUtilizationUpsertParams
-func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.ResourceUtilizationUpsertParams {
+func getBatchParams(resourceType gensql.ResourceType, env string, utilization utilizationMapForEnv) []gensql.ResourceUtilizationUpsertParams {
 	params := make([]gensql.ResourceUtilizationUpsertParams, 0)
 	for team, apps := range utilization {
 		for app, timestamps := range apps {
@@ -194,7 +194,7 @@ func getBatchParams(env string, utilization utilizationMapForEnv) []gensql.Resou
 					Env:          env,
 					Team:         team,
 					App:          app,
-					ResourceType: value.Resource.ToDatabaseEnum(),
+					ResourceType: resourceType,
 					Usage:        value.Usage,
 					Request:      value.Request,
 				})
@@ -245,7 +245,6 @@ func initUtilizationMap(resourceType gensql.ResourceType, start, end time.Time) 
 	for _, ts := range timestamps {
 		utilization[ts] = &model.ResourceUtilization{
 			Timestamp: ts,
-			Resource:  model.ResourceType(strings.ToUpper(string(resourceType))),
 		}
 	}
 	return utilization
