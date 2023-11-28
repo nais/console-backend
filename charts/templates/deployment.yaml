@@ -53,7 +53,7 @@ spec:
             - name: TENANT
               value: "{{ .Values.fasit.tenant.name }}"
             - name: KUBERNETES_FIELD_SELECTOR
-              value: "{{ .Values.fieldSelector }}"
+              value: ""
             - name: CONSOLE_DATABASE_URL
               value: "postgres://{{ .Values.database.user }}@127.0.0.1:5432/{{ .Values.database.name }}?sslmode=disable"
             - name: COST_DATA_IMPORT_ENABLED
