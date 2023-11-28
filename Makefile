@@ -40,7 +40,6 @@ local-nav:
 	HOOKD_PSK="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \
 	KUBERNETES_CLUSTERS="dev-gcp,prod-gcp" \
 	KUBERNETES_CLUSTERS_STATIC="dev-fss|apiserver.dev-fss.nais.io|$(shell kubectl get secret --context dev-fss --namespace nais-system console-backend -ojsonpath='{ .data.token }' | base64 --decode)" \
-	KUBERNETES_FIELD_SELECTOR="metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny,metadata.namespace!=nais" \
 	LISTEN_ADDRESS="127.0.0.1:4242" \
 	LOG_FORMAT="text" \
 	LOG_LEVEL="debug" \
@@ -53,7 +52,6 @@ local-nav:
 local:
 	HOOKD_ENDPOINT="http://hookd.local.nais.io" \
 	KUBERNETES_CLUSTERS="ci,dev" \
-	KUBERNETES_FIELD_SELECTOR="metadata.namespace!=kube-system,metadata.namespace!=kyverno,metadata.namespace!=nais-system,metadata.namespace!=kimfoo,metadata.namespace!=johnny" \
 	LISTEN_ADDRESS=":4242" \
 	LOG_FORMAT="text" \
 	LOG_LEVEL="debug" \

@@ -22,11 +22,11 @@ type Hookd struct {
 // K8S is the configuration related to Kubernetes
 type K8S struct {
 	Clusters        []string        `env:"KUBERNETES_CLUSTERS"`
-	FieldSelector   string          `env:"KUBERNETES_FIELD_SELECTOR"`
 	StaticClusters  []StaticCluster `env:"KUBERNETES_CLUSTERS_STATIC"`
 	AllClusterNames []string
 }
 
+// DependencyTrack is the configuration for the dependency track service
 type DependencyTrack struct {
 	Endpoint string `env:"DEPENDENCYTRACK_ENDPOINT,default=http://dependencytrack-backend:8080"`
 	Frontend string `env:"DEPENDENCYTRACK_FRONTEND"`

@@ -37,7 +37,6 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, "secret-frontend-psk", cfg.Hookd.PSK)
 
 		assert.Empty(t, cfg.K8S.Clusters)
-		assert.Equal(t, "", cfg.K8S.FieldSelector)
 		assert.Empty(t, cfg.K8S.StaticClusters)
 
 		assert.Equal(t, "json", cfg.Logger.Format)

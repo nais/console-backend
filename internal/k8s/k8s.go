@@ -17,7 +17,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/discovery"
@@ -68,12 +67,8 @@ func New(tenant string, cfg config.K8S, errors metric.Int64Counter, teamsClient 
 		}
 
 		log.WithField("cluster", cluster).Debug("creating informers")
-		dinf := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, 4*time.Hour, "", func(options *metav1.ListOptions) {
-			options.FieldSelector = cfg.FieldSelector
-		})
-		inf := informers.NewSharedInformerFactoryWithOptions(clientSet, 4*time.Hour, informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-			options.FieldSelector = cfg.FieldSelector
-		}))
+		dinf := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 4*time.Hour)
+		inf := informers.NewSharedInformerFactoryWithOptions(clientSet, 4*time.Hour)
 
 		infs[cluster].PodInformer = inf.Core().V1().Pods()
 		infs[cluster].AppInformer = dinf.ForResource(naisv1alpha1.GroupVersion.WithResource("applications"))
