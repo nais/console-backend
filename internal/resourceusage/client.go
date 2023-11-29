@@ -90,11 +90,11 @@ func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, st
 }
 
 func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team string) (*model.ResourceUtilizationOverageForTeam, error) {
-
 	cpu, cpuCost, timestamp, err := c.resourceUtilizationOverageForTeam(ctx, gensql.ResourceTypeCpu, team)
 	if err != nil {
 		return nil, err
 	}
+
 	memory, memoryCost, timestamp, err := c.resourceUtilizationOverageForTeam(ctx, gensql.ResourceTypeMemory, team)
 	if err != nil {
 		return nil, err
