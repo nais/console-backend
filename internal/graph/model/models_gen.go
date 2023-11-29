@@ -153,6 +153,8 @@ type AppState struct {
 type AppWithResourceUtilizationOverage struct {
 	// The overage for the app.
 	Overage float64 `json:"overage"`
+	// The overage cost for the app.
+	OverageCost float64 `json:"overageCost"`
 	// The environment where the app is running.
 	Env string `json:"env"`
 	// The name of the team who owns the app.

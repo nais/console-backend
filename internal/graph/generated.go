@@ -111,10 +111,11 @@ type ComplexityRoot struct {
 	}
 
 	AppWithResourceUtilizationOverage struct {
-		App     func(childComplexity int) int
-		Env     func(childComplexity int) int
-		Overage func(childComplexity int) int
-		Team    func(childComplexity int) int
+		App         func(childComplexity int) int
+		Env         func(childComplexity int) int
+		Overage     func(childComplexity int) int
+		OverageCost func(childComplexity int) int
+		Team        func(childComplexity int) int
 	}
 
 	AutoScaling struct {
@@ -1068,6 +1069,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppWithResourceUtilizationOverage.Overage(childComplexity), true
+
+	case "AppWithResourceUtilizationOverage.overageCost":
+		if e.complexity.AppWithResourceUtilizationOverage.OverageCost == nil {
+			break
+		}
+
+		return e.complexity.AppWithResourceUtilizationOverage.OverageCost(childComplexity), true
 
 	case "AppWithResourceUtilizationOverage.team":
 		if e.complexity.AppWithResourceUtilizationOverage.Team == nil {
@@ -6396,6 +6404,50 @@ func (ec *executionContext) _AppWithResourceUtilizationOverage_overage(ctx conte
 }
 
 func (ec *executionContext) fieldContext_AppWithResourceUtilizationOverage_overage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppWithResourceUtilizationOverage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppWithResourceUtilizationOverage_overageCost(ctx context.Context, field graphql.CollectedField, obj *model.AppWithResourceUtilizationOverage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppWithResourceUtilizationOverage_overageCost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OverageCost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppWithResourceUtilizationOverage_overageCost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AppWithResourceUtilizationOverage",
 		Field:      field,
@@ -18280,6 +18332,8 @@ func (ec *executionContext) fieldContext_ResourceUtilizationOverageForTeam_cpu(c
 			switch field.Name {
 			case "overage":
 				return ec.fieldContext_AppWithResourceUtilizationOverage_overage(ctx, field)
+			case "overageCost":
+				return ec.fieldContext_AppWithResourceUtilizationOverage_overageCost(ctx, field)
 			case "env":
 				return ec.fieldContext_AppWithResourceUtilizationOverage_env(ctx, field)
 			case "team":
@@ -18334,6 +18388,8 @@ func (ec *executionContext) fieldContext_ResourceUtilizationOverageForTeam_memor
 			switch field.Name {
 			case "overage":
 				return ec.fieldContext_AppWithResourceUtilizationOverage_overage(ctx, field)
+			case "overageCost":
+				return ec.fieldContext_AppWithResourceUtilizationOverage_overageCost(ctx, field)
 			case "env":
 				return ec.fieldContext_AppWithResourceUtilizationOverage_env(ctx, field)
 			case "team":
@@ -26097,6 +26153,11 @@ func (ec *executionContext) _AppWithResourceUtilizationOverage(ctx context.Conte
 			out.Values[i] = graphql.MarshalString("AppWithResourceUtilizationOverage")
 		case "overage":
 			out.Values[i] = ec._AppWithResourceUtilizationOverage_overage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "overageCost":
+			out.Values[i] = ec._AppWithResourceUtilizationOverage_overageCost(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

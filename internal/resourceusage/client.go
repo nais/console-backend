@@ -303,10 +303,11 @@ func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource
 	for _, row := range rows {
 		sumOverageCost += costPerHour(resource, row.Overage)
 		models = append(models, model.AppWithResourceUtilizationOverage{
-			Overage: row.Overage,
-			Env:     row.Env,
-			Team:    team,
-			App:     row.App,
+			Overage:     row.Overage,
+			OverageCost: costPerHour(resource, row.Overage),
+			Env:         row.Env,
+			Team:        team,
+			App:         row.App,
 		})
 	}
 
