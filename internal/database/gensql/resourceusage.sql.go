@@ -229,49 +229,50 @@ func (q *Queries) ResourceUtilizationForTeam(ctx context.Context, arg ResourceUt
 
 const resourceUtilizationOverageForTeam = `-- name: ResourceUtilizationOverageForTeam :many
 SELECT
-    SUM(usage)::double precision AS usage_sum,
-    SUM(request)::double precision AS request_sum,
-    AVG(usage)::double precision AS usage_avg,
-    AVG(request)::double precision AS request_avg,
+    usage,
+    request,
     app,
-    env
+    env,
+    (request-usage)::double precision AS overage,
+    timestamp
 FROM
-    resource_utilization_metrics
+    resource_utilization_metrics as r
 WHERE
-    team = $1
-    AND timestamp >= $3::timestamptz
-    AND timestamp < $4::timestamptz
-    AND resource_type = $2
+    r.team = $1
+    AND timestamp IN (
+        SELECT
+            MAX(timestamp)
+        FROM
+            resource_utilization_metrics as sub
+        WHERE
+            sub.team = $1
+        )
+    AND r.resource_type = $2
 GROUP BY
-    app, env
+    app, env, usage, request, timestamp
 HAVING
-    SUM(request) > SUM(usage)
+    (request-usage) > 0.0
+ORDER BY
+    overage DESC
 `
 
 type ResourceUtilizationOverageForTeamParams struct {
 	Team         string
 	ResourceType ResourceType
-	Start        pgtype.Timestamptz
-	End          pgtype.Timestamptz
 }
 
 type ResourceUtilizationOverageForTeamRow struct {
-	UsageSum   float64
-	RequestSum float64
-	UsageAvg   float64
-	RequestAvg float64
-	App        string
-	Env        string
+	Usage     float64
+	Request   float64
+	App       string
+	Env       string
+	Overage   float64
+	Timestamp pgtype.Timestamptz
 }
 
 // ResourceUtilizationOverageForTeam will return overage records for a given team.
 func (q *Queries) ResourceUtilizationOverageForTeam(ctx context.Context, arg ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error) {
-	rows, err := q.db.Query(ctx, resourceUtilizationOverageForTeam,
-		arg.Team,
-		arg.ResourceType,
-		arg.Start,
-		arg.End,
-	)
+	rows, err := q.db.Query(ctx, resourceUtilizationOverageForTeam, arg.Team, arg.ResourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -280,12 +281,12 @@ func (q *Queries) ResourceUtilizationOverageForTeam(ctx context.Context, arg Res
 	for rows.Next() {
 		var i ResourceUtilizationOverageForTeamRow
 		if err := rows.Scan(
-			&i.UsageSum,
-			&i.RequestSum,
-			&i.UsageAvg,
-			&i.RequestAvg,
+			&i.Usage,
+			&i.Request,
 			&i.App,
 			&i.Env,
+			&i.Overage,
+			&i.Timestamp,
 		); err != nil {
 			return nil, err
 		}

@@ -844,7 +844,8 @@ type ResourceUtilizationForEnv struct {
 // Resource utilization overage cost for team type.
 type ResourceUtilizationOverageForTeam struct {
 	// The sum of the overage cost for all apps.
-	OverageCost float64 `json:"overageCost"`
+	OverageCost float64    `json:"overageCost"`
+	Timestamp   *time.Time `json:"timestamp,omitempty"`
 	// List of CPU overage data for all apps.
 	CPU []AppWithResourceUtilizationOverage `json:"cpu"`
 	// List of memory overage data for all apps.

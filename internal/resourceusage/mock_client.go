@@ -252,25 +252,25 @@ func (_c *MockClient_ResourceUtilizationForTeam_Call) RunAndReturn(run func(cont
 	return _c
 }
 
-// ResourceUtilizationOverageForTeam provides a mock function with given fields: ctx, team, start, end
-func (_m *MockClient) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start scalar.Date, end scalar.Date) (*model.ResourceUtilizationOverageForTeam, error) {
-	ret := _m.Called(ctx, team, start, end)
+// ResourceUtilizationOverageForTeam provides a mock function with given fields: ctx, team
+func (_m *MockClient) ResourceUtilizationOverageForTeam(ctx context.Context, team string) (*model.ResourceUtilizationOverageForTeam, error) {
+	ret := _m.Called(ctx, team)
 
 	var r0 *model.ResourceUtilizationOverageForTeam
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, scalar.Date, scalar.Date) (*model.ResourceUtilizationOverageForTeam, error)); ok {
-		return rf(ctx, team, start, end)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.ResourceUtilizationOverageForTeam, error)); ok {
+		return rf(ctx, team)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, scalar.Date, scalar.Date) *model.ResourceUtilizationOverageForTeam); ok {
-		r0 = rf(ctx, team, start, end)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *model.ResourceUtilizationOverageForTeam); ok {
+		r0 = rf(ctx, team)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.ResourceUtilizationOverageForTeam)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, scalar.Date, scalar.Date) error); ok {
-		r1 = rf(ctx, team, start, end)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, team)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -286,15 +286,13 @@ type MockClient_ResourceUtilizationOverageForTeam_Call struct {
 // ResourceUtilizationOverageForTeam is a helper method to define mock.On call
 //   - ctx context.Context
 //   - team string
-//   - start scalar.Date
-//   - end scalar.Date
-func (_e *MockClient_Expecter) ResourceUtilizationOverageForTeam(ctx interface{}, team interface{}, start interface{}, end interface{}) *MockClient_ResourceUtilizationOverageForTeam_Call {
-	return &MockClient_ResourceUtilizationOverageForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageForTeam", ctx, team, start, end)}
+func (_e *MockClient_Expecter) ResourceUtilizationOverageForTeam(ctx interface{}, team interface{}) *MockClient_ResourceUtilizationOverageForTeam_Call {
+	return &MockClient_ResourceUtilizationOverageForTeam_Call{Call: _e.mock.On("ResourceUtilizationOverageForTeam", ctx, team)}
 }
 
-func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) Run(run func(ctx context.Context, team string, start scalar.Date, end scalar.Date)) *MockClient_ResourceUtilizationOverageForTeam_Call {
+func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) Run(run func(ctx context.Context, team string)) *MockClient_ResourceUtilizationOverageForTeam_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(scalar.Date), args[3].(scalar.Date))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -304,7 +302,7 @@ func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) Return(_a0 *model.R
 	return _c
 }
 
-func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) RunAndReturn(run func(context.Context, string, scalar.Date, scalar.Date) (*model.ResourceUtilizationOverageForTeam, error)) *MockClient_ResourceUtilizationOverageForTeam_Call {
+func (_c *MockClient_ResourceUtilizationOverageForTeam_Call) RunAndReturn(run func(context.Context, string) (*model.ResourceUtilizationOverageForTeam, error)) *MockClient_ResourceUtilizationOverageForTeam_Call {
 	_c.Call.Return(run)
 	return _c
 }

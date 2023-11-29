@@ -520,7 +520,7 @@ type ComplexityRoot struct {
 		ResourceUtilizationDateRangeForTeam func(childComplexity int, team string) int
 		ResourceUtilizationForApp           func(childComplexity int, env string, team string, app string, from *scalar.Date, to *scalar.Date) int
 		ResourceUtilizationForTeam          func(childComplexity int, team string, from *scalar.Date, to *scalar.Date) int
-		ResourceUtilizationOverageForTeam   func(childComplexity int, team string, from *scalar.Date, to *scalar.Date) int
+		ResourceUtilizationOverageForTeam   func(childComplexity int, team string) int
 		Search                              func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		Team                                func(childComplexity int, name string) int
 		Teams                               func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
@@ -568,6 +568,7 @@ type ComplexityRoot struct {
 		CPU         func(childComplexity int) int
 		Memory      func(childComplexity int) int
 		OverageCost func(childComplexity int) int
+		Timestamp   func(childComplexity int) int
 	}
 
 	Resources struct {
@@ -775,7 +776,7 @@ type QueryResolver interface {
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
 	CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error)
 	CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error)
-	ResourceUtilizationOverageForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationOverageForTeam, error)
+	ResourceUtilizationOverageForTeam(ctx context.Context, team string) (*model.ResourceUtilizationOverageForTeam, error)
 	ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationForEnv, error)
 	ResourceUtilizationDateRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
 	ResourceUtilizationDateRangeForApp(ctx context.Context, env string, team string, app string) (*model.ResourceUtilizationDateRange, error)
@@ -2677,7 +2678,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ResourceUtilizationOverageForTeam(childComplexity, args["team"].(string), args["from"].(*scalar.Date), args["to"].(*scalar.Date)), true
+		return e.complexity.Query.ResourceUtilizationOverageForTeam(childComplexity, args["team"].(string)), true
 
 	case "Query.search":
 		if e.complexity.Query.Search == nil {
@@ -2875,6 +2876,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ResourceUtilizationOverageForTeam.OverageCost(childComplexity), true
+
+	case "ResourceUtilizationOverageForTeam.timestamp":
+		if e.complexity.ResourceUtilizationOverageForTeam.Timestamp == nil {
+			break
+		}
+
+		return e.complexity.ResourceUtilizationOverageForTeam.Timestamp(childComplexity), true
 
 	case "Resources.limits":
 		if e.complexity.Resources.Limits == nil {
@@ -4289,24 +4297,6 @@ func (ec *executionContext) field_Query_resourceUtilizationOverageForTeam_args(c
 		}
 	}
 	args["team"] = arg0
-	var arg1 *scalar.Date
-	if tmp, ok := rawArgs["from"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
-		arg1, err = ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["from"] = arg1
-	var arg2 *scalar.Date
-	if tmp, ok := rawArgs["to"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
-		arg2, err = ec.unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["to"] = arg2
 	return args, nil
 }
 
@@ -16566,7 +16556,7 @@ func (ec *executionContext) _Query_resourceUtilizationOverageForTeam(ctx context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ResourceUtilizationOverageForTeam(rctx, fc.Args["team"].(string), fc.Args["from"].(*scalar.Date), fc.Args["to"].(*scalar.Date))
+		return ec.resolvers.Query().ResourceUtilizationOverageForTeam(rctx, fc.Args["team"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16593,6 +16583,8 @@ func (ec *executionContext) fieldContext_Query_resourceUtilizationOverageForTeam
 			switch field.Name {
 			case "overageCost":
 				return ec.fieldContext_ResourceUtilizationOverageForTeam_overageCost(ctx, field)
+			case "timestamp":
+				return ec.fieldContext_ResourceUtilizationOverageForTeam_timestamp(ctx, field)
 			case "cpu":
 				return ec.fieldContext_ResourceUtilizationOverageForTeam_cpu(ctx, field)
 			case "memory":
@@ -18198,6 +18190,47 @@ func (ec *executionContext) fieldContext_ResourceUtilizationOverageForTeam_overa
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ResourceUtilizationOverageForTeam_timestamp(ctx context.Context, field graphql.CollectedField, obj *model.ResourceUtilizationOverageForTeam) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ResourceUtilizationOverageForTeam_timestamp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Timestamp, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ResourceUtilizationOverageForTeam_timestamp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ResourceUtilizationOverageForTeam",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -30127,6 +30160,8 @@ func (ec *executionContext) _ResourceUtilizationOverageForTeam(ctx context.Conte
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "timestamp":
+			out.Values[i] = ec._ResourceUtilizationOverageForTeam_timestamp(ctx, field, obj)
 		case "cpu":
 			out.Values[i] = ec._ResourceUtilizationOverageForTeam_cpu(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

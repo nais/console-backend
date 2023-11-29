@@ -19,8 +19,8 @@ type Client interface {
 	// ResourceUtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
 	ResourceUtilizationForTeam(ctx context.Context, team string, start, end scalar.Date) ([]model.ResourceUtilizationForEnv, error)
 
-	// ResourceUtilizationOverageForTeam will return app overage data for a given team in the given time range
-	ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end scalar.Date) (*model.ResourceUtilizationOverageForTeam, error)
+	// ResourceUtilizationOverageForTeam will return latest overage data for a given team
+	ResourceUtilizationOverageForTeam(ctx context.Context, team string) (*model.ResourceUtilizationOverageForTeam, error)
 
 	// ResourceUtilizationRangeForApp will return the min and max timestamps for a specific app
 	ResourceUtilizationRangeForApp(ctx context.Context, env, team, app string) (*model.ResourceUtilizationDateRange, error)
@@ -89,34 +89,13 @@ func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, st
 	return ret, nil
 }
 
-func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team string, start, end scalar.Date) (*model.ResourceUtilizationOverageForTeam, error) {
-	s, err := start.Time()
-	if err != nil {
-		return nil, err
-	}
+func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team string) (*model.ResourceUtilizationOverageForTeam, error) {
 
-	e, err := end.Time()
+	cpu, cpuCost, timestamp, err := c.resourceUtilizationOverageForTeam(ctx, gensql.ResourceTypeCpu, team)
 	if err != nil {
 		return nil, err
 	}
-
-	startTs := pgtype.Timestamptz{}
-	err = startTs.Scan(s)
-	if err != nil {
-		return nil, err
-	}
-
-	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(e.Add(time.Hour * 24))
-	if err != nil {
-		return nil, err
-	}
-
-	cpu, cpuCost, err := c.resourceUtilizationOverageForTeam(ctx, gensql.ResourceTypeCpu, team, startTs, endTs)
-	if err != nil {
-		return nil, err
-	}
-	memory, memoryCost, err := c.resourceUtilizationOverageForTeam(ctx, gensql.ResourceTypeMemory, team, startTs, endTs)
+	memory, memoryCost, timestamp, err := c.resourceUtilizationOverageForTeam(ctx, gensql.ResourceTypeMemory, team)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +104,7 @@ func (c *client) ResourceUtilizationOverageForTeam(ctx context.Context, team str
 		OverageCost: cpuCost + memoryCost,
 		CPU:         cpu,
 		Memory:      memory,
+		Timestamp:   &timestamp.Time,
 	}, nil
 }
 
@@ -305,21 +285,22 @@ func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType mo
 	return data, nil
 }
 
-func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource gensql.ResourceType, team string, startTs, endTs pgtype.Timestamptz) (models []model.AppWithResourceUtilizationOverage, sumOverageCost float64, err error) {
+func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource gensql.ResourceType, team string) (models []model.AppWithResourceUtilizationOverage, sumOverageCost float64, timestamp pgtype.Timestamptz, err error) {
 	rows, err := c.querier.ResourceUtilizationOverageForTeam(ctx, gensql.ResourceUtilizationOverageForTeamParams{
 		Team:         team,
-		Start:        startTs,
-		End:          endTs,
 		ResourceType: resource,
 	})
 	if err != nil {
 		return
 	}
+	if len(rows) > 0 {
+		timestamp = rows[0].Timestamp
+	}
 	for _, row := range rows {
-		overageCost := costPerHour(resource, row.RequestSum-row.UsageSum)
+		overageCost := costPerHour(resource, row.Overage)
 		sumOverageCost += overageCost
 		models = append(models, model.AppWithResourceUtilizationOverage{
-			Overage: row.RequestAvg - row.UsageAvg,
+			Overage: row.Overage,
 			Env:     row.Env,
 			Team:    team,
 			App:     row.App,
