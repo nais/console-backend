@@ -58,7 +58,7 @@ func GetErrorPresenter(log logrus.FieldLogger) graphql.ErrorPresenterFunc {
 		case errors.Is(unwrappedError, sql.ErrNoRows):
 			gqlError.Message = "Object was not found in the database."
 		case errors.Is(unwrappedError, context.Canceled):
-			gqlError.Message = "Request cancelled."
+			gqlError.Message = "Request canceled."
 		}
 
 		return gqlError
