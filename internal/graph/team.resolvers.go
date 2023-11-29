@@ -11,6 +11,7 @@ import (
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/dependencytrack"
+	"github.com/nais/console-backend/internal/graph/apierror"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
@@ -79,7 +80,7 @@ func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after 
 func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
 	team, err := r.teamsClient.GetTeam(ctx, name)
 	if err != nil {
-		return nil, fmt.Errorf("getting team from Teams: %w", err)
+		return nil, apierror.ErrTeamNotFound
 	}
 
 	return team, nil

@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/dependencytrack"
+	"github.com/nais/console-backend/internal/graph/apierror"
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
@@ -38,7 +39,11 @@ func (r *appResolver) Manifest(ctx context.Context, obj *model.App) (string, err
 
 // Team is the resolver for the team field.
 func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, error) {
-	return r.teamsClient.GetTeam(ctx, obj.GQLVars.Team)
+	team, err := r.teamsClient.GetTeam(ctx, obj.GQLVars.Team)
+	if err != nil {
+		return nil, apierror.ErrAppTeamNotFound
+	}
+	return team, nil
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
@@ -50,7 +55,7 @@ func (r *appResolver) Vulnerabilities(ctx context.Context, obj *model.App) (*mod
 func (r *queryResolver) App(ctx context.Context, name string, team string, env string) (*model.App, error) {
 	app, err := r.k8sClient.App(ctx, name, team, env)
 	if err != nil {
-		return nil, fmt.Errorf("getting app from Kubernetes: %w", err)
+		return nil, apierror.ErrAppNotFound
 	}
 	return app, nil
 }
