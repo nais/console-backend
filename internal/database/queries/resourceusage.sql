@@ -20,35 +20,24 @@ WHERE
     AND team = $2
     AND app = $3;
 
--- ResourceUtilizationOverageForTeam will return overage records for a given team.
+-- ResourceUtilizationOverageForTeam will return overage records for a given team, ordered by overage descending.
 -- name: ResourceUtilizationOverageForTeam :many
 SELECT
     usage,
     request,
     app,
     env,
-    (request-usage)::double precision AS overage,
-    timestamp
+    (request-usage)::double precision AS overage
 FROM
-    resource_utilization_metrics as r
+    resource_utilization_metrics
 WHERE
-    r.team = $1
-    AND timestamp IN (
-        SELECT
-            MAX(timestamp)
-        FROM
-            resource_utilization_metrics as sub
-        WHERE
-            sub.team = $1
-        )
-    AND r.resource_type = $2
+    team = $1
+    AND timestamp = $2
+    AND resource_type = $3
 GROUP BY
     app, env, usage, request, timestamp
-HAVING
-    (request-usage) > 0.0
 ORDER BY
     overage DESC;
-
 
 -- ResourceUtilizationUpsert will insert or update resource utilization records.
 -- name: ResourceUtilizationUpsert :batchexec

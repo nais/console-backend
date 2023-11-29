@@ -233,46 +233,36 @@ SELECT
     request,
     app,
     env,
-    (request-usage)::double precision AS overage,
-    timestamp
+    (request-usage)::double precision AS overage
 FROM
-    resource_utilization_metrics as r
+    resource_utilization_metrics
 WHERE
-    r.team = $1
-    AND timestamp IN (
-        SELECT
-            MAX(timestamp)
-        FROM
-            resource_utilization_metrics as sub
-        WHERE
-            sub.team = $1
-        )
-    AND r.resource_type = $2
+    team = $1
+    AND timestamp = $2
+    AND resource_type = $3
 GROUP BY
     app, env, usage, request, timestamp
-HAVING
-    (request-usage) > 0.0
 ORDER BY
     overage DESC
 `
 
 type ResourceUtilizationOverageForTeamParams struct {
 	Team         string
+	Timestamp    pgtype.Timestamptz
 	ResourceType ResourceType
 }
 
 type ResourceUtilizationOverageForTeamRow struct {
-	Usage     float64
-	Request   float64
-	App       string
-	Env       string
-	Overage   float64
-	Timestamp pgtype.Timestamptz
+	Usage   float64
+	Request float64
+	App     string
+	Env     string
+	Overage float64
 }
 
-// ResourceUtilizationOverageForTeam will return overage records for a given team.
+// ResourceUtilizationOverageForTeam will return overage records for a given team, ordered by overage descending.
 func (q *Queries) ResourceUtilizationOverageForTeam(ctx context.Context, arg ResourceUtilizationOverageForTeamParams) ([]*ResourceUtilizationOverageForTeamRow, error) {
-	rows, err := q.db.Query(ctx, resourceUtilizationOverageForTeam, arg.Team, arg.ResourceType)
+	rows, err := q.db.Query(ctx, resourceUtilizationOverageForTeam, arg.Team, arg.Timestamp, arg.ResourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +276,6 @@ func (q *Queries) ResourceUtilizationOverageForTeam(ctx context.Context, arg Res
 			&i.App,
 			&i.Env,
 			&i.Overage,
-			&i.Timestamp,
 		); err != nil {
 			return nil, err
 		}

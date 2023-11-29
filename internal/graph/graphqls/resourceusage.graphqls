@@ -96,7 +96,7 @@ type ResourceUtilizationOverageForTeam {
     overageCost: Float!
 
     "Timestamp used for the calculated values."
-    timestamp: Time
+    timestamp: Time!
 
     "List of CPU overage data for all apps."
     cpu: [AppWithResourceUtilizationOverage!]!

@@ -18216,11 +18216,14 @@ func (ec *executionContext) _ResourceUtilizationOverageForTeam_timestamp(ctx con
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ResourceUtilizationOverageForTeam_timestamp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -30162,6 +30165,9 @@ func (ec *executionContext) _ResourceUtilizationOverageForTeam(ctx context.Conte
 			}
 		case "timestamp":
 			out.Values[i] = ec._ResourceUtilizationOverageForTeam_timestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "cpu":
 			out.Values[i] = ec._ResourceUtilizationOverageForTeam_cpu(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
