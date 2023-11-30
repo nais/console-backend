@@ -18,7 +18,7 @@ type Querier interface {
 	// app.
 	CurrentResourceUtilizationForApp(ctx context.Context, arg CurrentResourceUtilizationForAppParams) (*CurrentResourceUtilizationForAppRow, error)
 	// CurrentResourceUtilizationForTeam will return the current (as in the latest values) resource utilization for a given
-	// team across all environments and applications.
+	// team across all environments and applications. Applications with a usage greater than request will be ignored.
 	CurrentResourceUtilizationForTeam(ctx context.Context, arg CurrentResourceUtilizationForTeamParams) (*CurrentResourceUtilizationForTeamRow, error)
 	// DailyCostForApp will fetch the daily cost for a specific team app in a specific environment, across all cost types
 	// in a date range.

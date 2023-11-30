@@ -66,6 +66,7 @@ FROM
 WHERE
     team = $1
     AND resource_type = $2
+    AND request > usage
 GROUP BY
     timestamp
 ORDER BY
@@ -85,7 +86,7 @@ type CurrentResourceUtilizationForTeamRow struct {
 }
 
 // CurrentResourceUtilizationForTeam will return the current (as in the latest values) resource utilization for a given
-// team across all environments and applications.
+// team across all environments and applications. Applications with a usage greater than request will be ignored.
 func (q *Queries) CurrentResourceUtilizationForTeam(ctx context.Context, arg CurrentResourceUtilizationForTeamParams) (*CurrentResourceUtilizationForTeamRow, error) {
 	row := q.db.QueryRow(ctx, currentResourceUtilizationForTeam, arg.Team, arg.ResourceType)
 	var i CurrentResourceUtilizationForTeamRow

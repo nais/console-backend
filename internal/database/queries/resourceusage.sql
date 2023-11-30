@@ -104,7 +104,7 @@ LIMIT
     1;
 
 -- CurrentResourceUtilizationForTeam will return the current (as in the latest values) resource utilization for a given
--- team across all environments and applications.
+-- team across all environments and applications. Applications with a usage greater than request will be ignored.
 -- name: CurrentResourceUtilizationForTeam :one
 SELECT
     SUM(usage)::double precision AS usage,
@@ -115,6 +115,7 @@ FROM
 WHERE
     team = $1
     AND resource_type = $2
+    AND request > usage
 GROUP BY
     timestamp
 ORDER BY
