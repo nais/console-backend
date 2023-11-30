@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/auth"
+	"github.com/nais/console-backend/internal/graph/apierror"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
@@ -17,12 +18,14 @@ import (
 func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 	email, err := auth.GetEmail(ctx)
 	if err != nil {
-		return nil, err
+		return nil, apierror.ErrNoEmailInSession
 	}
+
 	user, err := r.teamsClient.GetUser(ctx, email)
 	if err != nil {
-		return nil, fmt.Errorf("getting user from Teams: %w", err)
+		return nil, apierror.ErrUserNotFound(email)
 	}
+
 	return &model.User{
 		ID:    scalar.UserIdent(user.ID.String()),
 		Name:  user.Name,

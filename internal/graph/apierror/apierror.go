@@ -13,11 +13,15 @@ import (
 )
 
 var (
-	ErrInternal        = Errorf("The server errored out while processing your request, and we didn't write a suitable error message. You might consider that a bug on our side. Please try again, and if the error persists, contact the NAIS team.")
-	ErrDatabase        = Errorf("The database encountered an error while processing your request. This is probably a transient error, please try again. If the error persists, contact the NAIS team.")
-	ErrAppNotFound     = Errorf("We were unable to find the app you were looking for.")
-	ErrAppTeamNotFound = Errorf("NAIS Teams could not find the team which owns the application.")
-	ErrTeamNotFound    = Errorf("We were unable to find the team you were looking for.")
+	ErrInternal         = Errorf("The server errored out while processing your request, and we didn't write a suitable error message. You might consider that a bug on our side. Please try again, and if the error persists, contact the NAIS team.")
+	ErrDatabase         = Errorf("The database encountered an error while processing your request. This is probably a transient error, please try again. If the error persists, contact the NAIS team.")
+	ErrAppNotFound      = Errorf("We were unable to find the app you were looking for.")
+	ErrAppTeamNotFound  = Errorf("NAIS Teams could not find the team which owns the application.")
+	ErrTeamNotFound     = Errorf("We were unable to find the team you were looking for.")
+	ErrNoEmailInSession = Errorf("No email address found in the session. This is most likely a bug in the backend. Please try again, and if the error persists, contact the NAIS team.")
+	ErrUserNotFound     = func(email string) Error {
+		return Errorf("We were unable to find a user with the email address you are currently signed in with: %q", email)
+	}
 )
 
 // Error is an error that can be presented to end-users
