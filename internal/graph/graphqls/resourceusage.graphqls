@@ -113,6 +113,9 @@ type AppWithResourceUtilizationOverage {
     "The overage cost for the app."
     overageCost: Float!
 
+    "The utilization in percent."
+    utilization: Float!
+
     "The environment where the app is running."
     env: String!
 

@@ -305,6 +305,7 @@ func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource
 		models = append(models, model.AppWithResourceUtilizationOverage{
 			Overage:     row.Overage,
 			OverageCost: costPerHour(resource, row.Overage),
+			Utilization: row.Usage / row.Request * 100,
 			Env:         row.Env,
 			Team:        team,
 			App:         row.App,
