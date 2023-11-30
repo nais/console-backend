@@ -113,6 +113,9 @@ type AppWithResourceUtilizationOverage {
     "The overage cost for the app."
     overageCost: Float!
 
+    "Estimated annual cost of the request overage."
+    estimatedAnnualOverageCost: Float!
+
     "The utilization in percent."
     utilization: Float!
 
