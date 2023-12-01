@@ -1,10 +1,7 @@
 "The query root for the console-backend GraphQL API."
 type Query {
-    "Fetches an object given its ID."
-    node(
-        "The ID of an object."
-        id: ID!
-    ): Node
+  "Fetches an object given its ID."
+  node("The ID of an object." id: ID!): Node
 }
 
 "The root query for implementing GraphQL mutations."
@@ -15,68 +12,70 @@ type Subscription
 
 "Node interface."
 interface Node {
-    "The unique ID of an object."
-    id: ID!
+  "The unique ID of an object."
+  id: ID!
 }
 
 "Connection interface."
 interface Connection {
-    "The total count of items in the connection."
-    totalCount: Int!
+  "The total count of items in the connection."
+  totalCount: Int!
 
-    "Pagination information."
-    pageInfo: PageInfo!
+  "Pagination information."
+  pageInfo: PageInfo!
 
-    "A list of edges."
-    edges: [Edge]!
+  "A list of edges."
+  edges: [Edge]!
 }
 
 "Edge interface."
 interface Edge {
-    "A cursor for use in pagination."
-    cursor: Cursor!
+  "A cursor for use in pagination."
+  cursor: Cursor!
 }
 
 "PageInfo is a type that contains pagination information in a Relay style."
 type PageInfo {
-    "When paginating forwards, are there more items?"
-    hasNextPage: Boolean!
+  "When paginating forwards, are there more items?"
+  hasNextPage: Boolean!
 
-    "When paginating backwards, are there more items?"
-    hasPreviousPage: Boolean!
+  "When paginating backwards, are there more items?"
+  hasPreviousPage: Boolean!
 
-    "A cursor corresponding to the first node in the connection."
-    startCursor: Cursor
+  "A cursor corresponding to the first node in the connection."
+  startCursor: Cursor
 
-    "A cursor corresponding to the last node in the connection."
-    endCursor: Cursor
+  "A cursor corresponding to the last node in the connection."
+  endCursor: Cursor
 
-    from: Int! @goField(forceResolver: true)
-    to: Int! @goField(forceResolver: true)
+  from: Int! @goField(forceResolver: true)
+  to: Int! @goField(forceResolver: true)
 }
 
 type Env implements Node {
-    id: ID!
-    name: String!
+  id: ID!
+  name: String!
 }
 
 input OrderBy {
-    "Order direction"
-    direction: SortOrder!
-    field: OrderByField!
+  "Order direction"
+  direction: SortOrder!
+  field: OrderByField!
 }
 
 enum OrderByField {
-    "Order by name"
-    NAME
-    "Order by env"
-    ENV
+  "Order by name"
+  NAME
+  "Order by env"
+  ENV
+  "Order by deployed time"
+  DEPLOYED
 }
 
 enum SortOrder {
-    "Ascending sort order."
-    ASC
+  "Ascending sort order."
+  ASC
 
-    "Descending sort order."
-    DESC
+  "Descending sort order."
+  DESC
 }

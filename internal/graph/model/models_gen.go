@@ -1296,6 +1296,8 @@ const (
 	OrderByFieldName OrderByField = "NAME"
 	// Order by env
 	OrderByFieldEnv OrderByField = "ENV"
+	// Order by deployed time
+	OrderByFieldDeployed OrderByField = "DEPLOYED"
 	// Order by appName.
 	OrderByFieldAppName OrderByField = "APP_NAME"
 	// Order by env.
@@ -1315,6 +1317,7 @@ const (
 var AllOrderByField = []OrderByField{
 	OrderByFieldName,
 	OrderByFieldEnv,
+	OrderByFieldDeployed,
 	OrderByFieldAppName,
 	OrderByFieldEnvName,
 	OrderByFieldRiskScore,
@@ -1326,7 +1329,7 @@ var AllOrderByField = []OrderByField{
 
 func (e OrderByField) IsValid() bool {
 	switch e {
-	case OrderByFieldName, OrderByFieldEnv, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow:
+	case OrderByFieldName, OrderByFieldEnv, OrderByFieldDeployed, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow:
 		return true
 	}
 	return false

@@ -142,6 +142,10 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 			model.SortWith(apps, func(a, b *model.App) bool {
 				return model.Compare(a.Env.Name, b.Env.Name, orderBy.Direction)
 			})
+		case "DEPLOYED":
+			model.SortWith(apps, func(a, b *model.App) bool {
+				return model.Compare(a.DeployInfo.Timestamp.UnixMilli(), b.DeployInfo.Timestamp.UnixMilli(), orderBy.Direction)
+			})
 		}
 	}
 	pagination, err := model.NewPagination(first, last, after, before)
