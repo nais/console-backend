@@ -144,7 +144,7 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 			})
 		case "DEPLOYED":
 			model.SortWith(apps, func(a, b *model.App) bool {
-				return model.Compare(a.DeployInfo.Timestamp.UnixMilli(), b.DeployInfo.Timestamp.UnixMilli(), orderBy.Direction)
+				return model.Compare(b.DeployInfo.Timestamp.UnixMilli(), a.DeployInfo.Timestamp.UnixMilli(), orderBy.Direction)
 			})
 		}
 	}
