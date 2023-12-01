@@ -1312,6 +1312,8 @@ const (
 	OrderByFieldSeverityMedium OrderByField = "SEVERITY_MEDIUM"
 	// Order apps by vulnerability severity low
 	OrderByFieldSeverityLow OrderByField = "SEVERITY_LOW"
+	// Order apps by vulnerability severity unassigned
+	OrderByFieldSeverityUnassigned OrderByField = "SEVERITY_UNASSIGNED"
 )
 
 var AllOrderByField = []OrderByField{
@@ -1325,11 +1327,12 @@ var AllOrderByField = []OrderByField{
 	OrderByFieldSeverityHigh,
 	OrderByFieldSeverityMedium,
 	OrderByFieldSeverityLow,
+	OrderByFieldSeverityUnassigned,
 }
 
 func (e OrderByField) IsValid() bool {
 	switch e {
-	case OrderByFieldName, OrderByFieldEnv, OrderByFieldDeployed, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow:
+	case OrderByFieldName, OrderByFieldEnv, OrderByFieldDeployed, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow, OrderByFieldSeverityUnassigned:
 		return true
 	}
 	return false

@@ -52,6 +52,14 @@ func Sort(v []*model.VulnerabilitiesNode, field model.OrderByField, direction mo
 			}
 			return model.Compare(a.Summary.Low, b.Summary.Low, direction)
 		})
+	case model.OrderByFieldSeverityUnassigned:
+		model.SortWith(v, func(a, b *model.VulnerabilitiesNode) bool {
+			isNil, returnValue := summaryIsNil(a, b, direction)
+			if isNil {
+				return returnValue
+			}
+			return model.Compare(a.Summary.Unassigned, b.Summary.Unassigned, direction)
+		})
 	}
 }
 
