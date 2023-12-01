@@ -754,7 +754,7 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 
 	}
 
-	if len(instances) == 0 || failing == len(instances) {
+	if (len(instances) == 0 || failing == len(instances)) && app.AutoScaling.Min > 0 && app.AutoScaling.Max > 0 {
 		appState.Errors = append(appState.Errors, &model.NoRunningInstancesError{
 			Revision: app.DeployInfo.CommitSha,
 			Level:    model.ErrorLevelError,
