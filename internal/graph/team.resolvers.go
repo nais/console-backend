@@ -443,6 +443,59 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 	}, nil
 }
 
+// VulnerabilitiesSummary is the resolver for the vulnerabilitiesSummary field.
+func (r *teamResolver) VulnerabilitiesSummary(ctx context.Context, obj *model.Team) (*model.VulnerabilitySummary, error) {
+	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
+	}
+
+	instances := make([]*dependencytrack.AppInstance, 0)
+	for _, app := range apps {
+		instances = append(instances, &dependencytrack.AppInstance{
+			Env:   app.Env.Name,
+			App:   app.Name,
+			Image: app.Image,
+			Team:  obj.Name,
+		})
+	}
+
+	nodes, err := r.dependencyTrackClient.GetVulnerabilities(ctx, instances)
+	if err != nil {
+		return nil, fmt.Errorf("getting vulnerabilities from DependencyTrack: %w", err)
+	}
+
+	retVal := &model.VulnerabilitySummary{}
+	for _, n := range nodes {
+		if n.Summary == nil {
+			continue
+		}
+		if n.Summary.Critical > 0 {
+			retVal.Critical += n.Summary.Critical
+		}
+		if n.Summary.High > 0 {
+			retVal.High += n.Summary.High
+		}
+		if n.Summary.Medium > 0 {
+			retVal.Medium += n.Summary.Medium
+		}
+		if n.Summary.Low > 0 {
+			retVal.Low += n.Summary.Low
+		}
+		if n.Summary.Unassigned > 0 {
+			retVal.Unassigned += n.Summary.Unassigned
+		}
+		if n.Summary.RiskScore > 0 {
+			retVal.RiskScore += n.Summary.RiskScore
+		}
+		if n.Summary.Total > 0 {
+			retVal.Total += n.Summary.Total
+		}
+	}
+	return retVal, nil
+
+}
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 

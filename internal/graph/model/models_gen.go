@@ -998,7 +998,8 @@ type Team struct {
 	// Whether or not the viewer is an administrator of the team.
 	ViewerIsAdmin bool `json:"viewerIsAdmin"`
 	// The vulnerabilities for the team's applications.
-	Vulnerabilities VulnerabilitiesConnection `json:"vulnerabilities"`
+	Vulnerabilities        VulnerabilitiesConnection `json:"vulnerabilities"`
+	VulnerabilitiesSummary VulnerabilitySummary      `json:"vulnerabilitiesSummary"`
 }
 
 func (Team) IsSearchNode() {}
