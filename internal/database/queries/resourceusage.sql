@@ -84,9 +84,8 @@ GROUP BY
 ORDER BY
     timestamp ASC;
 
--- CurrentResourceUtilizationForApp will return the current (as in the latest values) resource utilization for a given
--- app.
--- name: CurrentResourceUtilizationForApp :one
+-- SpecificResourceUtilizationForApp will return resource utilization for an app at a specific timestamp.
+-- name: SpecificResourceUtilizationForApp :one
 SELECT
     usage,
     request,
@@ -98,14 +97,16 @@ WHERE
     AND team = $2
     AND app = $3
     AND resource_type = $4
+    AND timestamp >= sqlc.arg('start')::timestamptz
+    AND timestamp < sqlc.arg('end')::timestamptz
 ORDER BY
     timestamp DESC
 LIMIT
     1;
 
--- CurrentResourceUtilizationForTeam will return the current (as in the latest values) resource utilization for a given
--- team across all environments and applications. Applications with a usage greater than request will be ignored.
--- name: CurrentResourceUtilizationForTeam :one
+-- SpecificResourceUtilizationForTeam will return resource utilization for a team at a specific timestamp. Applications
+-- with a usage greater than request will be ignored.
+-- name: SpecificResourceUtilizationForTeam :one
 SELECT
     SUM(usage)::double precision AS usage,
     SUM(request)::double precision AS request,
@@ -115,9 +116,12 @@ FROM
 WHERE
     team = $1
     AND resource_type = $2
+    AND timestamp >= sqlc.arg('start')::timestamptz
+    AND timestamp < sqlc.arg('end')::timestamptz
     AND request > usage
 GROUP BY
     timestamp
 ORDER BY
     timestamp DESC
-LIMIT 1;
+LIMIT
+    1;

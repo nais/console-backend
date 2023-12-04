@@ -134,21 +134,40 @@ func (c *client) ResourceUtilizationRangeForTeam(ctx context.Context, team strin
 }
 
 func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
-	cpu, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
+	end := time.Now().UTC()
+	start := end.Add(-3 * time.Hour)
+
+	startTs := pgtype.Timestamptz{}
+	err := startTs.Scan(start)
+	if err != nil {
+		return nil, err
+	}
+
+	endTs := pgtype.Timestamptz{}
+	err = endTs.Scan(end)
+	if err != nil {
+		return nil, err
+	}
+
+	cpu, err := c.querier.SpecificResourceUtilizationForApp(ctx, gensql.SpecificResourceUtilizationForAppParams{
 		Env:          env,
 		Team:         team,
 		App:          app,
 		ResourceType: gensql.ResourceTypeCpu,
+		Start:        startTs,
+		End:          endTs,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	memory, err := c.querier.CurrentResourceUtilizationForApp(ctx, gensql.CurrentResourceUtilizationForAppParams{
+	memory, err := c.querier.SpecificResourceUtilizationForApp(ctx, gensql.SpecificResourceUtilizationForAppParams{
 		Env:          env,
 		Team:         team,
 		App:          app,
 		ResourceType: gensql.ResourceTypeMemory,
+		Start:        startTs,
+		End:          endTs,
 	})
 	if err != nil {
 		return nil, err
@@ -161,17 +180,36 @@ func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env strin
 }
 
 func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error) {
-	currentCpu, err := c.querier.CurrentResourceUtilizationForTeam(ctx, gensql.CurrentResourceUtilizationForTeamParams{
+	end := time.Now().UTC()
+	start := end.Add(-3 * time.Hour)
+
+	startTs := pgtype.Timestamptz{}
+	err := startTs.Scan(start)
+	if err != nil {
+		return nil, err
+	}
+
+	endTs := pgtype.Timestamptz{}
+	err = endTs.Scan(end)
+	if err != nil {
+		return nil, err
+	}
+
+	currentCpu, err := c.querier.SpecificResourceUtilizationForTeam(ctx, gensql.SpecificResourceUtilizationForTeamParams{
 		Team:         team,
 		ResourceType: gensql.ResourceTypeCpu,
+		Start:        startTs,
+		End:          endTs,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	currentMemory, err := c.querier.CurrentResourceUtilizationForTeam(ctx, gensql.CurrentResourceUtilizationForTeamParams{
+	currentMemory, err := c.querier.SpecificResourceUtilizationForTeam(ctx, gensql.SpecificResourceUtilizationForTeamParams{
 		Team:         team,
 		ResourceType: gensql.ResourceTypeMemory,
+		Start:        startTs,
+		End:          endTs,
 	})
 	if err != nil {
 		return nil, err

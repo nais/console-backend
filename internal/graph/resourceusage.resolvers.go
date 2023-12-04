@@ -6,20 +6,46 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	pgx "github.com/jackc/pgx/v5"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 // CurrentResourceUtilizationForApp is the resolver for the currentResourceUtilizationForApp field.
 func (r *queryResolver) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
-	return r.resourceUsageClient.CurrentResourceUtilizationForApp(ctx, env, team, app)
+	resp, err := r.resourceUsageClient.CurrentResourceUtilizationForApp(ctx, env, team, app)
+	if errors.Is(err, pgx.ErrNoRows) {
+		m := model.ResourceUtilization{
+			Timestamp: time.Now(),
+		}
+		return &model.CurrentResourceUtilization{
+			CPU:    m,
+			Memory: m,
+		}, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 // CurrentResourceUtilizationForTeam is the resolver for the currentResourceUtilizationForTeam field.
 func (r *queryResolver) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error) {
-	return r.resourceUsageClient.CurrentResourceUtilizationForTeam(ctx, team)
+	resp, err := r.resourceUsageClient.CurrentResourceUtilizationForTeam(ctx, team)
+	if errors.Is(err, pgx.ErrNoRows) {
+		m := model.ResourceUtilization{
+			Timestamp: time.Now(),
+		}
+		return &model.CurrentResourceUtilization{
+			CPU:    m,
+			Memory: m,
+		}, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 // ResourceUtilizationOverageForTeam is the resolver for the resourceUtilizationOverageForTeam field.
