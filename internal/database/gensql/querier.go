@@ -14,12 +14,6 @@ type Querier interface {
 	// CostUpsert will insert or update a cost record. If there is a conflict on the daily_cost_key constrant, the
 	// daily_cost column will be updated.
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults
-	// CurrentResourceUtilizationForApp will return the current (as in the latest values) resource utilization for a given
-	// app.
-	CurrentResourceUtilizationForApp(ctx context.Context, arg CurrentResourceUtilizationForAppParams) (*CurrentResourceUtilizationForAppRow, error)
-	// CurrentResourceUtilizationForTeam will return the current (as in the latest values) resource utilization for a given
-	// team across all environments and applications. Applications with a usage greater than request will be ignored.
-	CurrentResourceUtilizationForTeam(ctx context.Context, arg CurrentResourceUtilizationForTeamParams) (*CurrentResourceUtilizationForTeamRow, error)
 	// DailyCostForApp will fetch the daily cost for a specific team app in a specific environment, across all cost types
 	// in a date range.
 	DailyCostForApp(ctx context.Context, arg DailyCostForAppParams) ([]*Cost, error)
@@ -45,6 +39,11 @@ type Querier interface {
 	ResourceUtilizationRangeForTeam(ctx context.Context, team string) (*ResourceUtilizationRangeForTeamRow, error)
 	// ResourceUtilizationUpsert will insert or update resource utilization records.
 	ResourceUtilizationUpsert(ctx context.Context, arg []ResourceUtilizationUpsertParams) *ResourceUtilizationUpsertBatchResults
+	// SpecificResourceUtilizationForApp will return resource utilization for an app at a specific timestamp.
+	SpecificResourceUtilizationForApp(ctx context.Context, arg SpecificResourceUtilizationForAppParams) (*SpecificResourceUtilizationForAppRow, error)
+	// SpecificResourceUtilizationForTeam will return resource utilization for a team at a specific timestamp. Applications
+	// with a usage greater than request will be ignored.
+	SpecificResourceUtilizationForTeam(ctx context.Context, arg SpecificResourceUtilizationForTeamParams) (*SpecificResourceUtilizationForTeamRow, error)
 }
 
 var _ Querier = (*Queries)(nil)
