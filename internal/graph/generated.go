@@ -120,6 +120,11 @@ type ComplexityRoot struct {
 		Utilization                func(childComplexity int) int
 	}
 
+	AppsStatus struct {
+		Failing func(childComplexity int) int
+		Total   func(childComplexity int) int
+	}
+
 	AutoScaling struct {
 		CPUThreshold func(childComplexity int) int
 		Disabled     func(childComplexity int) int
@@ -396,6 +401,11 @@ type ComplexityRoot struct {
 		State  func(childComplexity int) int
 	}
 
+	JobsStatus struct {
+		Failing func(childComplexity int) int
+		Total   func(childComplexity int) int
+	}
+
 	Kafka struct {
 		Name    func(childComplexity int) int
 		Streams func(childComplexity int) int
@@ -646,21 +656,23 @@ type ComplexityRoot struct {
 	}
 
 	Team struct {
-		Apps                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
-		DeployKey           func(childComplexity int) int
-		Deployments         func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
-		Description         func(childComplexity int) int
-		GcpProjects         func(childComplexity int) int
-		GithubRepositories  func(childComplexity int, first *int, after *scalar.Cursor) int
-		ID                  func(childComplexity int) int
-		Members             func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
-		Naisjobs            func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
-		Name                func(childComplexity int) int
-		SlackAlertsChannels func(childComplexity int) int
-		SlackChannel        func(childComplexity int) int
-		ViewerIsAdmin       func(childComplexity int) int
-		ViewerIsMember      func(childComplexity int) int
-		Vulnerabilities     func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
+		Apps                   func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
+		DeployKey              func(childComplexity int) int
+		Deployments            func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
+		Description            func(childComplexity int) int
+		GcpProjects            func(childComplexity int) int
+		GithubRepositories     func(childComplexity int, first *int, after *scalar.Cursor) int
+		ID                     func(childComplexity int) int
+		Members                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		Naisjobs               func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
+		Name                   func(childComplexity int) int
+		SlackAlertsChannels    func(childComplexity int) int
+		SlackChannel           func(childComplexity int) int
+		Status                 func(childComplexity int) int
+		ViewerIsAdmin          func(childComplexity int) int
+		ViewerIsMember         func(childComplexity int) int
+		Vulnerabilities        func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
+		VulnerabilitiesSummary func(childComplexity int) int
 	}
 
 	TeamConnection struct {
@@ -690,6 +702,11 @@ type ComplexityRoot struct {
 	TeamMemberEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	TeamStatus struct {
+		Apps func(childComplexity int) int
+		Jobs func(childComplexity int) int
 	}
 
 	TokenX struct {
@@ -793,9 +810,10 @@ type SubscriptionResolver interface {
 	Log(ctx context.Context, input *model.LogSubscriptionInput) (<-chan *model.LogLine, error)
 }
 type TeamResolver interface {
+	Status(ctx context.Context, obj *model.Team) (*model.TeamStatus, error)
 	Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error)
 	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.AppConnection, error)
-	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.NaisJobConnection, error)
+	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.NaisJobConnection, error)
 	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *scalar.Cursor) (*model.GithubRepositoryConnection, error)
 
 	Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
@@ -803,6 +821,7 @@ type TeamResolver interface {
 	ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error)
 	ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error)
 	Vulnerabilities(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.VulnerabilitiesConnection, error)
+	VulnerabilitiesSummary(ctx context.Context, obj *model.Team) (*model.VulnerabilitySummary, error)
 }
 type UserResolver interface {
 	Teams(ctx context.Context, obj *model.User, first *int, after *scalar.Cursor, last *int, before *scalar.Cursor) (*model.TeamConnection, error)
@@ -1099,6 +1118,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppWithResourceUtilizationOverage.Utilization(childComplexity), true
+
+	case "AppsStatus.failing":
+		if e.complexity.AppsStatus.Failing == nil {
+			break
+		}
+
+		return e.complexity.AppsStatus.Failing(childComplexity), true
+
+	case "AppsStatus.total":
+		if e.complexity.AppsStatus.Total == nil {
+			break
+		}
+
+		return e.complexity.AppsStatus.Total(childComplexity), true
 
 	case "AutoScaling.cpuThreshold":
 		if e.complexity.AutoScaling.CPUThreshold == nil {
@@ -2112,6 +2145,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.JobState.State(childComplexity), true
+
+	case "JobsStatus.failing":
+		if e.complexity.JobsStatus.Failing == nil {
+			break
+		}
+
+		return e.complexity.JobsStatus.Failing(childComplexity), true
+
+	case "JobsStatus.total":
+		if e.complexity.JobsStatus.Total == nil {
+			break
+		}
+
+		return e.complexity.JobsStatus.Total(childComplexity), true
 
 	case "Kafka.name":
 		if e.complexity.Kafka.Name == nil {
@@ -3307,7 +3354,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Naisjobs(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
+		return e.complexity.Team.Naisjobs(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.OrderBy)), true
 
 	case "Team.name":
 		if e.complexity.Team.Name == nil {
@@ -3329,6 +3376,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Team.SlackChannel(childComplexity), true
+
+	case "Team.status":
+		if e.complexity.Team.Status == nil {
+			break
+		}
+
+		return e.complexity.Team.Status(childComplexity), true
 
 	case "Team.viewerIsAdmin":
 		if e.complexity.Team.ViewerIsAdmin == nil {
@@ -3355,6 +3409,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Team.Vulnerabilities(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.OrderBy)), true
+
+	case "Team.vulnerabilitiesSummary":
+		if e.complexity.Team.VulnerabilitiesSummary == nil {
+			break
+		}
+
+		return e.complexity.Team.VulnerabilitiesSummary(childComplexity), true
 
 	case "TeamConnection.edges":
 		if e.complexity.TeamConnection.Edges == nil {
@@ -3453,6 +3514,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TeamMemberEdge.Node(childComplexity), true
+
+	case "TeamStatus.apps":
+		if e.complexity.TeamStatus.Apps == nil {
+			break
+		}
+
+		return e.complexity.TeamStatus.Apps(childComplexity), true
+
+	case "TeamStatus.jobs":
+		if e.complexity.TeamStatus.Jobs == nil {
+			break
+		}
+
+		return e.complexity.TeamStatus.Jobs(childComplexity), true
 
 	case "TokenX.mountSecretsAsFilesOnly":
 		if e.complexity.TokenX.MountSecretsAsFilesOnly == nil {
@@ -4663,6 +4738,15 @@ func (ec *executionContext) field_Team_naisjobs_args(ctx context.Context, rawArg
 		}
 	}
 	args["before"] = arg3
+	var arg4 *model.OrderBy
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -5750,6 +5834,8 @@ func (ec *executionContext) fieldContext_App_team(ctx context.Context, field gra
 				return ec.fieldContext_Team_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Team_description(ctx, field)
+			case "status":
+				return ec.fieldContext_Team_status(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
 			case "apps":
@@ -5774,6 +5860,8 @@ func (ec *executionContext) fieldContext_App_team(ctx context.Context, field gra
 				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
+			case "vulnerabilitiesSummary":
+				return ec.fieldContext_Team_vulnerabilitiesSummary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -6691,6 +6779,94 @@ func (ec *executionContext) fieldContext_AppWithResourceUtilizationOverage_app(c
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppsStatus_total(ctx context.Context, field graphql.CollectedField, obj *model.AppsStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppsStatus_total(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Total, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppsStatus_total(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppsStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppsStatus_failing(ctx context.Context, field graphql.CollectedField, obj *model.AppsStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppsStatus_failing(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Failing, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppsStatus_failing(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppsStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8763,6 +8939,8 @@ func (ec *executionContext) fieldContext_Deployment_team(ctx context.Context, fi
 				return ec.fieldContext_Team_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Team_description(ctx, field)
+			case "status":
+				return ec.fieldContext_Team_status(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
 			case "apps":
@@ -8787,6 +8965,8 @@ func (ec *executionContext) fieldContext_Deployment_team(ctx context.Context, fi
 				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
+			case "vulnerabilitiesSummary":
+				return ec.fieldContext_Team_vulnerabilitiesSummary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -13252,6 +13432,94 @@ func (ec *executionContext) fieldContext_JobState_errors(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _JobsStatus_total(ctx context.Context, field graphql.CollectedField, obj *model.JobsStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobsStatus_total(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Total, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobsStatus_total(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobsStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobsStatus_failing(ctx context.Context, field graphql.CollectedField, obj *model.JobsStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobsStatus_failing(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Failing, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobsStatus_failing(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobsStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Kafka_name(ctx context.Context, field graphql.CollectedField, obj *model.Kafka) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Kafka_name(ctx, field)
 	if err != nil {
@@ -14592,6 +14860,8 @@ func (ec *executionContext) fieldContext_NaisJob_team(ctx context.Context, field
 				return ec.fieldContext_Team_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Team_description(ctx, field)
+			case "status":
+				return ec.fieldContext_Team_status(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
 			case "apps":
@@ -14616,6 +14886,8 @@ func (ec *executionContext) fieldContext_NaisJob_team(ctx context.Context, field
 				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
+			case "vulnerabilitiesSummary":
+				return ec.fieldContext_Team_vulnerabilitiesSummary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -17180,6 +17452,8 @@ func (ec *executionContext) fieldContext_Query_team(ctx context.Context, field g
 				return ec.fieldContext_Team_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Team_description(ctx, field)
+			case "status":
+				return ec.fieldContext_Team_status(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
 			case "apps":
@@ -17204,6 +17478,8 @@ func (ec *executionContext) fieldContext_Query_team(ctx context.Context, field g
 				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
+			case "vulnerabilitiesSummary":
+				return ec.fieldContext_Team_vulnerabilitiesSummary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -20678,6 +20954,56 @@ func (ec *executionContext) fieldContext_Team_description(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Team_status(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Team_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Team().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.TeamStatus)
+	fc.Result = res
+	return ec.marshalNTeamStatus2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Team_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Team",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "apps":
+				return ec.fieldContext_TeamStatus_apps(ctx, field)
+			case "jobs":
+				return ec.fieldContext_TeamStatus_jobs(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TeamStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Team_members(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Team_members(ctx, field)
 	if err != nil {
@@ -20818,7 +21144,7 @@ func (ec *executionContext) _Team_naisjobs(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Naisjobs(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
+		return ec.resolvers.Team().Naisjobs(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["orderBy"].(*model.OrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21344,6 +21670,66 @@ func (ec *executionContext) fieldContext_Team_vulnerabilities(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Team_vulnerabilitiesSummary(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Team_vulnerabilitiesSummary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Team().VulnerabilitiesSummary(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.VulnerabilitySummary)
+	fc.Result = res
+	return ec.marshalNVulnerabilitySummary2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitySummary(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Team_vulnerabilitiesSummary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Team",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_VulnerabilitySummary_total(ctx, field)
+			case "riskScore":
+				return ec.fieldContext_VulnerabilitySummary_riskScore(ctx, field)
+			case "critical":
+				return ec.fieldContext_VulnerabilitySummary_critical(ctx, field)
+			case "high":
+				return ec.fieldContext_VulnerabilitySummary_high(ctx, field)
+			case "medium":
+				return ec.fieldContext_VulnerabilitySummary_medium(ctx, field)
+			case "low":
+				return ec.fieldContext_VulnerabilitySummary_low(ctx, field)
+			case "unassigned":
+				return ec.fieldContext_VulnerabilitySummary_unassigned(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VulnerabilitySummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TeamConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.TeamConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TeamConnection_totalCount(ctx, field)
 	if err != nil {
@@ -21585,6 +21971,8 @@ func (ec *executionContext) fieldContext_TeamEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_Team_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Team_description(ctx, field)
+			case "status":
+				return ec.fieldContext_Team_status(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
 			case "apps":
@@ -21609,6 +21997,8 @@ func (ec *executionContext) fieldContext_TeamEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
+			case "vulnerabilitiesSummary":
+				return ec.fieldContext_Team_vulnerabilitiesSummary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -22037,6 +22427,106 @@ func (ec *executionContext) fieldContext_TeamMemberEdge_node(ctx context.Context
 				return ec.fieldContext_TeamMember_role(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TeamMember", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TeamStatus_apps(ctx context.Context, field graphql.CollectedField, obj *model.TeamStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TeamStatus_apps(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Apps, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.AppsStatus)
+	fc.Result = res
+	return ec.marshalNAppsStatus2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppsStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TeamStatus_apps(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TeamStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_AppsStatus_total(ctx, field)
+			case "failing":
+				return ec.fieldContext_AppsStatus_failing(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AppsStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TeamStatus_jobs(ctx context.Context, field graphql.CollectedField, obj *model.TeamStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TeamStatus_jobs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Jobs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.JobsStatus)
+	fc.Result = res
+	return ec.marshalNJobsStatus2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐJobsStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TeamStatus_jobs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TeamStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_JobsStatus_total(ctx, field)
+			case "failing":
+				return ec.fieldContext_JobsStatus_failing(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JobsStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -26321,6 +26811,50 @@ func (ec *executionContext) _AppWithResourceUtilizationOverage(ctx context.Conte
 	return out
 }
 
+var appsStatusImplementors = []string{"AppsStatus"}
+
+func (ec *executionContext) _AppsStatus(ctx context.Context, sel ast.SelectionSet, obj *model.AppsStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, appsStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AppsStatus")
+		case "total":
+			out.Values[i] = ec._AppsStatus_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "failing":
+			out.Values[i] = ec._AppsStatus_failing(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var autoScalingImplementors = []string{"AutoScaling"}
 
 func (ec *executionContext) _AutoScaling(ctx context.Context, sel ast.SelectionSet, obj *model.AutoScaling) graphql.Marshaler {
@@ -28485,6 +29019,50 @@ func (ec *executionContext) _JobState(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "errors":
 			out.Values[i] = ec._JobState_errors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var jobsStatusImplementors = []string{"JobsStatus"}
+
+func (ec *executionContext) _JobsStatus(ctx context.Context, sel ast.SelectionSet, obj *model.JobsStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jobsStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobsStatus")
+		case "total":
+			out.Values[i] = ec._JobsStatus_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "failing":
+			out.Values[i] = ec._JobsStatus_failing(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -30911,6 +31489,42 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Team_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "members":
 			field := field
 
@@ -31250,6 +31864,42 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "vulnerabilitiesSummary":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Team_vulnerabilitiesSummary(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -31487,6 +32137,50 @@ func (ec *executionContext) _TeamMemberEdge(ctx context.Context, sel ast.Selecti
 			}
 		case "node":
 			out.Values[i] = ec._TeamMemberEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var teamStatusImplementors = []string{"TeamStatus"}
+
+func (ec *executionContext) _TeamStatus(ctx context.Context, sel ast.SelectionSet, obj *model.TeamStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, teamStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TeamStatus")
+		case "apps":
+			out.Values[i] = ec._TeamStatus_apps(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "jobs":
+			out.Values[i] = ec._TeamStatus_jobs(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -32500,6 +33194,10 @@ func (ec *executionContext) marshalNAppWithResourceUtilizationOverage2ᚕgithub�
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNAppsStatus2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAppsStatus(ctx context.Context, sel ast.SelectionSet, v model.AppsStatus) graphql.Marshaler {
+	return ec._AppsStatus(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNAuthz2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐAuthz(ctx context.Context, sel ast.SelectionSet, v model.Authz) graphql.Marshaler {
@@ -33588,6 +34286,10 @@ func (ec *executionContext) marshalNJobState2githubᚗcomᚋnaisᚋconsoleᚑbac
 	return ec._JobState(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNJobsStatus2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐJobsStatus(ctx context.Context, sel ast.SelectionSet, v model.JobsStatus) graphql.Marshaler {
+	return ec._JobsStatus(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNLimits2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐLimits(ctx context.Context, sel ast.SelectionSet, v model.Limits) graphql.Marshaler {
 	return ec._Limits(ctx, sel, &v)
 }
@@ -34464,6 +35166,20 @@ func (ec *executionContext) marshalNTeamRole2githubᚗcomᚋnaisᚋconsoleᚑbac
 	return v
 }
 
+func (ec *executionContext) marshalNTeamStatus2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamStatus(ctx context.Context, sel ast.SelectionSet, v model.TeamStatus) graphql.Marshaler {
+	return ec._TeamStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTeamStatus2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐTeamStatus(ctx context.Context, sel ast.SelectionSet, v *model.TeamStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TeamStatus(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
 	res, err := graphql.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -34653,6 +35369,20 @@ func (ec *executionContext) marshalNVulnerabilitiesEdge2ᚕgithubᚗcomᚋnais�
 
 func (ec *executionContext) marshalNVulnerabilitiesNode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitiesNode(ctx context.Context, sel ast.SelectionSet, v model.VulnerabilitiesNode) graphql.Marshaler {
 	return ec._VulnerabilitiesNode(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNVulnerabilitySummary2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitySummary(ctx context.Context, sel ast.SelectionSet, v model.VulnerabilitySummary) graphql.Marshaler {
+	return ec._VulnerabilitySummary(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNVulnerabilitySummary2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitySummary(ctx context.Context, sel ast.SelectionSet, v *model.VulnerabilitySummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._VulnerabilitySummary(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

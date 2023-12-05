@@ -1,280 +1,302 @@
 extend type Query {
-    "Get a list of NAIS-teams, in alphabetical order."
-    teams(
-        "Returns the first n entries from the list."
-        first: Int
+  "Get a list of NAIS-teams, in alphabetical order."
+  teams(
+    "Returns the first n entries from the list."
+    first: Int
 
-        "Returns the last n entries from the list."
-        last: Int
+    "Returns the last n entries from the list."
+    last: Int
 
-        "Get entries after the cursor."
-        after: Cursor
+    "Get entries after the cursor."
+    after: Cursor
 
-        "Get entries before the cursor."
-        before: Cursor
-    ): TeamConnection!
+    "Get entries before the cursor."
+    before: Cursor
+  ): TeamConnection!
 
-    "Get a specific NAIS-team by the team name."
-    team(
-        "The name of the NAIS-team to get."
-        name: String!
-    ): Team!
+  "Get a specific NAIS-team by the team name."
+  team("The name of the NAIS-team to get." name: String!): Team!
 }
 
 extend type Mutation {
-    "Update the deploy key of a team. Returns the updated deploy key."
-    changeDeployKey(
-        "The name of the team to update the deploy key for."
-        team: String!
-    ): DeploymentKey!
+  "Update the deploy key of a team. Returns the updated deploy key."
+  changeDeployKey(
+    "The name of the team to update the deploy key for."
+    team: String!
+  ): DeploymentKey!
 }
 
 "Team connection type."
 type TeamConnection implements Connection {
-    "The total count of available teams."
-    totalCount: Int!
+  "The total count of available teams."
+  totalCount: Int!
 
-    "Pagination information."
-    pageInfo: PageInfo!
+  "Pagination information."
+  pageInfo: PageInfo!
 
-    "A list of team edges."
-    edges: [TeamEdge!]!
+  "A list of team edges."
+  edges: [TeamEdge!]!
 }
 
 "Team edge type."
 type TeamEdge implements Edge {
-    "A cursor for use in pagination."
-    cursor: Cursor!
+  "A cursor for use in pagination."
+  cursor: Cursor!
 
-    "The team at the end of the edge."
-    node: Team!
+  "The team at the end of the edge."
+  node: Team!
 }
 
 "Team member connection type."
 type TeamMemberConnection implements Connection {
-    "The total count of available team members."
-    totalCount: Int!
+  "The total count of available team members."
+  totalCount: Int!
 
-    "Pagination information."
-    pageInfo: PageInfo!
+  "Pagination information."
+  pageInfo: PageInfo!
 
-    "A list of team member edges."
-    edges: [TeamMemberEdge!]!
+  "A list of team member edges."
+  edges: [TeamMemberEdge!]!
 }
 
 "Team member edge type."
 type TeamMemberEdge implements Edge {
-    "A cursor for use in pagination."
-    cursor: Cursor!
+  "A cursor for use in pagination."
+  cursor: Cursor!
 
-    "The team member at the end of the edge."
-    node: TeamMember!
+  "The team member at the end of the edge."
+  node: TeamMember!
 }
 
 "Team type."
 type Team implements Node {
-    "The unique identifier of the team."
-    id: ID!
+  "The unique identifier of the team."
+  id: ID!
 
-    "The name of the team."
-    name: String!
+  "The name of the team."
+  name: String!
 
-    "The description of the team."
-    description: String!
+  "The description of the team."
+  description: String!
 
-    "Team members."
-    members(
-        "Returns the first n entries from the list."
-        first: Int
+  "The status of the team."
+  status: TeamStatus! @goField(forceResolver: true)
 
-        "Returns the last n entries from the list."
-        last: Int
+  "Team members."
+  members(
+    "Returns the first n entries from the list."
+    first: Int
 
-        "Get entries after the cursor."
-        after: Cursor
+    "Returns the last n entries from the list."
+    last: Int
 
-        "Get entries before the cursor."
-        before: Cursor
-    ): TeamMemberConnection! @goField(forceResolver: true)
+    "Get entries after the cursor."
+    after: Cursor
 
-    "The NAIS applications owned by the team."
-    apps(
-        "Returns the first n entries from the list."
-        first: Int
+    "Get entries before the cursor."
+    before: Cursor
+  ): TeamMemberConnection! @goField(forceResolver: true)
 
-        "Returns the last n entries from the list."
-        last: Int
+  "The NAIS applications owned by the team."
+  apps(
+    "Returns the first n entries from the list."
+    first: Int
 
-        "Get entries after the cursor."
-        after: Cursor
+    "Returns the last n entries from the list."
+    last: Int
 
-        "Get entries before the cursor."
-        before: Cursor
+    "Get entries after the cursor."
+    after: Cursor
 
-        "Order apps by"
-        orderBy: OrderBy
-    ): AppConnection! @goField(forceResolver: true)
+    "Get entries before the cursor."
+    before: Cursor
 
-    "The NAIS jobs owned by the team."
-    naisjobs(
-        "Returns the first n entries from the list."
-        first: Int
+    "Order apps by"
+    orderBy: OrderBy
+  ): AppConnection! @goField(forceResolver: true)
 
-        "Returns the last n entries from the list."
-        last: Int
+  "The NAIS jobs owned by the team."
+  naisjobs(
+    "Returns the first n entries from the list."
+    first: Int
 
-        "Get entries after the cursor."
-        after: Cursor
+    "Returns the last n entries from the list."
+    last: Int
 
-        "Get entries before the cursor."
-        before: Cursor
-    ): NaisJobConnection! @goField(forceResolver: true)
+    "Get entries after the cursor."
+    after: Cursor
 
-    "The GitHub repositories that the team has access to."
-    githubRepositories(
-        "Returns the first n entries from the list."
-        first: Int
+    "Get entries before the cursor."
+    before: Cursor
 
-        "Get entries after the cursor."
-        after: Cursor
-    ): GithubRepositoryConnection! @goField(forceResolver: true)
+    "Order naisjobs by"
+    orderBy: OrderBy
+  ): NaisJobConnection! @goField(forceResolver: true)
 
-    "The main Slack channel for the team."
-    slackChannel: String!
+  "The GitHub repositories that the team has access to."
+  githubRepositories(
+    "Returns the first n entries from the list."
+    first: Int
 
-    "Slack alerts channels for the team."
-    slackAlertsChannels: [SlackAlertsChannel!]!
+    "Get entries after the cursor."
+    after: Cursor
+  ): GithubRepositoryConnection! @goField(forceResolver: true)
 
-    gcpProjects: [GcpProject!]!
+  "The main Slack channel for the team."
+  slackChannel: String!
 
-    "The deployments of the team's applications."
-    deployments(
-        "Returns the first n entries from the list."
-        first: Int
+  "Slack alerts channels for the team."
+  slackAlertsChannels: [SlackAlertsChannel!]!
 
-        "Returns the last n entries from the list."
-        last: Int
+  gcpProjects: [GcpProject!]!
 
-        "Get entries after the cursor."
-        after: Cursor
+  "The deployments of the team's applications."
+  deployments(
+    "Returns the first n entries from the list."
+    first: Int
 
-        "Get entries before the cursor."
-        before: Cursor
+    "Returns the last n entries from the list."
+    last: Int
 
-        "Limit the number of entries returned."
-        limit: Int
-    ): DeploymentConnection! @goField(forceResolver: true)
+    "Get entries after the cursor."
+    after: Cursor
 
-    "The deploy key of the team."
-    deployKey: DeploymentKey! @goField(forceResolver: true)
+    "Get entries before the cursor."
+    before: Cursor
 
-    "Whether or not the viewer is a member of the team."
-    viewerIsMember: Boolean! @goField(forceResolver: true)
+    "Limit the number of entries returned."
+    limit: Int
+  ): DeploymentConnection! @goField(forceResolver: true)
 
-    "Whether or not the viewer is an administrator of the team."
-    viewerIsAdmin: Boolean! @goField(forceResolver: true)
+  "The deploy key of the team."
+  deployKey: DeploymentKey! @goField(forceResolver: true)
 
-    "The vulnerabilities for the team's applications."
-    vulnerabilities(
-        "Returns the first n entries from the list."
-        first: Int
+  "Whether or not the viewer is a member of the team."
+  viewerIsMember: Boolean! @goField(forceResolver: true)
 
-        "Returns the last n entries from the list."
-        last: Int
+  "Whether or not the viewer is an administrator of the team."
+  viewerIsAdmin: Boolean! @goField(forceResolver: true)
 
-        "Get entries after the cursor."
-        after: Cursor
+  "The vulnerabilities for the team's applications."
+  vulnerabilities(
+    "Returns the first n entries from the list."
+    first: Int
 
-        "Get entries before the cursor."
-        before: Cursor
+    "Returns the last n entries from the list."
+    last: Int
 
-        "Order apps by"
-        orderBy: OrderBy
+    "Get entries after the cursor."
+    after: Cursor
 
-    ): VulnerabilitiesConnection! @goField(forceResolver: true)
+    "Get entries before the cursor."
+    before: Cursor
+
+    "Order apps by"
+    orderBy: OrderBy
+  ): VulnerabilitiesConnection! @goField(forceResolver: true)
+
+  vulnerabilitiesSummary: VulnerabilitySummary! @goField(forceResolver: true)
+}
+
+"Team status."
+type TeamStatus {
+  apps: AppsStatus!
+  jobs: JobsStatus!
+}
+
+"Team status for apps."
+type AppsStatus {
+  total: Int!
+  failing: Int!
+}
+
+"Team status for jobs."
+type JobsStatus {
+  total: Int!
+  failing: Int!
 }
 
 "Deployment key type."
 type DeploymentKey implements Node {
-    "The unique identifier of the deployment key."
-    id: ID!
+  "The unique identifier of the deployment key."
+  id: ID!
 
-    "The actual key."
-    key: String!
+  "The actual key."
+  key: String!
 
-    "The date the deployment key was created."
-    created: Time!
+  "The date the deployment key was created."
+  created: Time!
 
-    "The date the deployment key expires."
-    expires: Time!
+  "The date the deployment key expires."
+  expires: Time!
 }
 
 "GitHub repository connection type."
 type GithubRepositoryConnection implements Connection {
-    "The total count of available GitHub repositories."
-    totalCount: Int!
+  "The total count of available GitHub repositories."
+  totalCount: Int!
 
-    "Pagination information."
-    pageInfo: PageInfo!
+  "Pagination information."
+  pageInfo: PageInfo!
 
-    "A list of GitHub repository edges."
-    edges: [GithubRepositoryEdge!]!
+  "A list of GitHub repository edges."
+  edges: [GithubRepositoryEdge!]!
 }
 
 "GitHub repository edge type."
 type GithubRepositoryEdge implements Edge {
-    "A cursor for use in pagination."
-    cursor: Cursor!
+  "A cursor for use in pagination."
+  cursor: Cursor!
 
-    "The GitHub repository at the end of the edge."
-    node: GithubRepository!
+  "The GitHub repository at the end of the edge."
+  node: GithubRepository!
 }
 
 "GitHub repository type."
 type GithubRepository {
-    "The name of the GitHub repository."
-    name: String!
+  "The name of the GitHub repository."
+  name: String!
 }
 
 "Slack alerts channel type."
 type SlackAlertsChannel {
-    "The name of the Slack alerts channel."
-    name: String!
+  "The name of the Slack alerts channel."
+  name: String!
 
-    "The environment for the Slack alerts channel."
-    env: String!
+  "The environment for the Slack alerts channel."
+  env: String!
 }
 
 "GCP project type."
 type GcpProject {
-    "The unique identifier of the GCP project."
-    id: String!
-    "The name of the GCP project."
-    name: String!
-    "The environment for the GCP project."
-    environment: String!
+  "The unique identifier of the GCP project."
+  id: String!
+  "The name of the GCP project."
+  name: String!
+  "The environment for the GCP project."
+  environment: String!
 }
 
 "Team member type."
 type TeamMember implements Node {
-    "The unique identifier of the team member."
-    id: ID!
+  "The unique identifier of the team member."
+  id: ID!
 
-    "The name of the team member."
-    name: String!
+  "The name of the team member."
+  name: String!
 
-    "The email of the team member."
-    email: String!
+  "The email of the team member."
+  email: String!
 
-    "The role of the team member."
-    role: TeamRole!
+  "The role of the team member."
+  role: TeamRole!
 }
 
 "Team member roles."
 enum TeamRole {
-    "A regular team member."
-    MEMBER
+  "A regular team member."
+  MEMBER
 
-    "A team owner/administrator."
-    OWNER
+  "A team owner/administrator."
+  OWNER
 }

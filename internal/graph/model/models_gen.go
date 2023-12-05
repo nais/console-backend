@@ -167,6 +167,12 @@ type AppWithResourceUtilizationOverage struct {
 	App string `json:"app"`
 }
 
+// Team status for apps.
+type AppsStatus struct {
+	Total   int `json:"total"`
+	Failing int `json:"failing"`
+}
+
 type AutoScaling struct {
 	Disabled bool `json:"disabled"`
 	// CPU threshold in percent
@@ -593,6 +599,12 @@ type JobState struct {
 	Errors []StateError `json:"errors"`
 }
 
+// Team status for jobs.
+type JobsStatus struct {
+	Total   int `json:"total"`
+	Failing int `json:"failing"`
+}
+
 type Kafka struct {
 	// The kafka pool name
 	Name    string  `json:"name"`
@@ -976,6 +988,8 @@ type Team struct {
 	Name string `json:"name"`
 	// The description of the team.
 	Description string `json:"description"`
+	// The status of the team.
+	Status TeamStatus `json:"status"`
 	// Team members.
 	Members TeamMemberConnection `json:"members"`
 	// The NAIS applications owned by the team.
@@ -998,7 +1012,8 @@ type Team struct {
 	// Whether or not the viewer is an administrator of the team.
 	ViewerIsAdmin bool `json:"viewerIsAdmin"`
 	// The vulnerabilities for the team's applications.
-	Vulnerabilities VulnerabilitiesConnection `json:"vulnerabilities"`
+	Vulnerabilities        VulnerabilitiesConnection `json:"vulnerabilities"`
+	VulnerabilitiesSummary VulnerabilitySummary      `json:"vulnerabilitiesSummary"`
 }
 
 func (Team) IsSearchNode() {}
@@ -1110,6 +1125,12 @@ func (TeamMemberEdge) IsEdge() {}
 
 // A cursor for use in pagination.
 func (this TeamMemberEdge) GetCursor() scalar.Cursor { return this.Cursor }
+
+// Team status.
+type TeamStatus struct {
+	Apps AppsStatus `json:"apps"`
+	Jobs JobsStatus `json:"jobs"`
+}
 
 type TokenX struct {
 	MountSecretsAsFilesOnly bool `json:"mountSecretsAsFilesOnly"`
@@ -1298,6 +1319,8 @@ const (
 	OrderByFieldEnv OrderByField = "ENV"
 	// Order by deployed time
 	OrderByFieldDeployed OrderByField = "DEPLOYED"
+	// Order by status
+	OrderByFieldStatus OrderByField = "STATUS"
 	// Order by appName.
 	OrderByFieldAppName OrderByField = "APP_NAME"
 	// Order by env.
@@ -1320,6 +1343,7 @@ var AllOrderByField = []OrderByField{
 	OrderByFieldName,
 	OrderByFieldEnv,
 	OrderByFieldDeployed,
+	OrderByFieldStatus,
 	OrderByFieldAppName,
 	OrderByFieldEnvName,
 	OrderByFieldRiskScore,
@@ -1332,7 +1356,7 @@ var AllOrderByField = []OrderByField{
 
 func (e OrderByField) IsValid() bool {
 	switch e {
-	case OrderByFieldName, OrderByFieldEnv, OrderByFieldDeployed, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow, OrderByFieldSeverityUnassigned:
+	case OrderByFieldName, OrderByFieldEnv, OrderByFieldDeployed, OrderByFieldStatus, OrderByFieldAppName, OrderByFieldEnvName, OrderByFieldRiskScore, OrderByFieldSeverityCritical, OrderByFieldSeverityHigh, OrderByFieldSeverityMedium, OrderByFieldSeverityLow, OrderByFieldSeverityUnassigned:
 		return true
 	}
 	return false

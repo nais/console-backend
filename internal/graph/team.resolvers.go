@@ -86,6 +86,43 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 	return team, nil
 }
 
+// Status is the resolver for the status field.
+func (r *teamResolver) Status(ctx context.Context, obj *model.Team) (*model.TeamStatus, error) {
+	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
+	}
+
+	jobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
+	}
+
+	failingApps := 0
+	for _, app := range apps {
+		if app.AppState.State == model.StateFailing {
+			failingApps++
+		}
+	}
+	failingJobs := 0
+	for _, job := range jobs {
+		if job.JobState.State == model.StateFailing {
+			failingJobs++
+		}
+	}
+
+	return &model.TeamStatus{
+		Apps: model.AppsStatus{
+			Total:   len(apps),
+			Failing: failingApps,
+		},
+		Jobs: model.JobsStatus{
+			Total:   len(jobs),
+			Failing: failingJobs,
+		},
+	}, nil
+}
+
 // Members is the resolver for the members field.
 func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error) {
 	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
@@ -152,6 +189,10 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 				}
 				return model.Compare(b.DeployInfo.Timestamp.UnixMilli(), a.DeployInfo.Timestamp.UnixMilli(), orderBy.Direction)
 			})
+		case "STATUS":
+			model.SortWith(apps, func(a, b *model.App) bool {
+				return model.Compare(a.AppState.State, b.AppState.State, orderBy.Direction)
+			})
 		}
 	}
 	pagination, err := model.NewPagination(first, last, after, before)
@@ -188,10 +229,37 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 }
 
 // Naisjobs is the resolver for the naisjobs field.
-func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.NaisJobConnection, error) {
+func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.NaisJobConnection, error) {
 	naisjobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
+	}
+
+	if orderBy != nil {
+		switch orderBy.Field {
+		case "NAME":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				return model.Compare(a.Name, b.Name, orderBy.Direction)
+			})
+		case "ENV":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				return model.Compare(a.Env.Name, b.Env.Name, orderBy.Direction)
+			})
+		case "DEPLOYED":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				if a.DeployInfo.Timestamp == nil {
+					return false
+				}
+				if b.DeployInfo.Timestamp == nil {
+					return true
+				}
+				return model.Compare(b.DeployInfo.Timestamp.UnixMilli(), a.DeployInfo.Timestamp.UnixMilli(), orderBy.Direction)
+			})
+		case "STATUS":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				return model.Compare(a.JobState.State, b.JobState.State, orderBy.Direction)
+			})
+		}
 	}
 
 	pagination, err := model.NewPagination(first, last, after, before)
@@ -441,6 +509,58 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 			EndCursor:       endCursor,
 		},
 	}, nil
+}
+
+// VulnerabilitiesSummary is the resolver for the vulnerabilitiesSummary field.
+func (r *teamResolver) VulnerabilitiesSummary(ctx context.Context, obj *model.Team) (*model.VulnerabilitySummary, error) {
+	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
+	}
+
+	instances := make([]*dependencytrack.AppInstance, 0)
+	for _, app := range apps {
+		instances = append(instances, &dependencytrack.AppInstance{
+			Env:   app.Env.Name,
+			App:   app.Name,
+			Image: app.Image,
+			Team:  obj.Name,
+		})
+	}
+
+	nodes, err := r.dependencyTrackClient.GetVulnerabilities(ctx, instances)
+	if err != nil {
+		return nil, fmt.Errorf("getting vulnerabilities from DependencyTrack: %w", err)
+	}
+
+	retVal := &model.VulnerabilitySummary{}
+	for _, n := range nodes {
+		if n.Summary == nil {
+			continue
+		}
+		if n.Summary.Critical > 0 {
+			retVal.Critical += n.Summary.Critical
+		}
+		if n.Summary.High > 0 {
+			retVal.High += n.Summary.High
+		}
+		if n.Summary.Medium > 0 {
+			retVal.Medium += n.Summary.Medium
+		}
+		if n.Summary.Low > 0 {
+			retVal.Low += n.Summary.Low
+		}
+		if n.Summary.Unassigned > 0 {
+			retVal.Unassigned += n.Summary.Unassigned
+		}
+		if n.Summary.RiskScore > 0 {
+			retVal.RiskScore += n.Summary.RiskScore
+		}
+		if n.Summary.Total > 0 {
+			retVal.Total += n.Summary.Total
+		}
+	}
+	return retVal, nil
 }
 
 // Team returns TeamResolver implementation.
