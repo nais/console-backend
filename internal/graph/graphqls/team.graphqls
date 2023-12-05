@@ -79,6 +79,9 @@ type Team implements Node {
   "The description of the team."
   description: String!
 
+  "The status of the team."
+  status: TeamStatus! @goField(forceResolver: true)
+
   "Team members."
   members(
     "Returns the first n entries from the list."
@@ -190,6 +193,24 @@ type Team implements Node {
   ): VulnerabilitiesConnection! @goField(forceResolver: true)
 
   vulnerabilitiesSummary: VulnerabilitySummary! @goField(forceResolver: true)
+}
+
+"Team status."
+type TeamStatus {
+	apps: AppsStatus!
+	jobs: JobsStatus!
+}
+
+"Team status for apps."
+type AppsStatus {
+	total: Int!
+	failing: Int!
+}
+
+"Team status for jobs."
+type JobsStatus {
+	total: Int!
+	failing: Int!
 }
 
 "Deployment key type."

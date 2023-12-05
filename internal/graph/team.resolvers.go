@@ -86,6 +86,43 @@ func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, err
 	return team, nil
 }
 
+// Status is the resolver for the status field.
+func (r *teamResolver) Status(ctx context.Context, obj *model.Team) (*model.TeamStatus, error) {
+	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
+	}
+
+	jobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
+	if err != nil {
+		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
+	}
+
+	failingApps := 0
+	for _, app := range apps {
+		if app.AppState.State == model.StateFailing {
+			failingApps++
+		}
+	}
+	failingJobs := 0
+	for _, job := range jobs {
+		if job.JobState.State == model.StateFailing {
+			failingJobs++
+		}
+	}
+
+	return &model.TeamStatus{
+		Apps: model.AppsStatus{
+			Total:   len(apps),
+			Failing: failingApps,
+		},
+		Jobs: model.JobsStatus{
+			Total:   len(jobs),
+			Failing: failingJobs,
+		},
+	}, nil
+}
+
 // Members is the resolver for the members field.
 func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error) {
 	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
@@ -493,7 +530,6 @@ func (r *teamResolver) VulnerabilitiesSummary(ctx context.Context, obj *model.Te
 		}
 	}
 	return retVal, nil
-
 }
 
 // Team returns TeamResolver implementation.
