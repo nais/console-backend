@@ -189,6 +189,10 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 				}
 				return model.Compare(b.DeployInfo.Timestamp.UnixMilli(), a.DeployInfo.Timestamp.UnixMilli(), orderBy.Direction)
 			})
+		case "STATUS":
+			model.SortWith(apps, func(a, b *model.App) bool {
+				return model.Compare(a.AppState.State, b.AppState.State, orderBy.Direction)
+			})
 		}
 	}
 	pagination, err := model.NewPagination(first, last, after, before)
