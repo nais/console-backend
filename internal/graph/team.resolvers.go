@@ -229,10 +229,37 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 }
 
 // Naisjobs is the resolver for the naisjobs field.
-func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.NaisJobConnection, error) {
+func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.NaisJobConnection, error) {
 	naisjobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
+	}
+
+	if orderBy != nil {
+		switch orderBy.Field {
+		case "NAME":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				return model.Compare(a.Name, b.Name, orderBy.Direction)
+			})
+		case "ENV":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				return model.Compare(a.Env.Name, b.Env.Name, orderBy.Direction)
+			})
+		case "DEPLOYED":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				if a.DeployInfo.Timestamp == nil {
+					return false
+				}
+				if b.DeployInfo.Timestamp == nil {
+					return true
+				}
+				return model.Compare(b.DeployInfo.Timestamp.UnixMilli(), a.DeployInfo.Timestamp.UnixMilli(), orderBy.Direction)
+			})
+		case "STATUS":
+			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
+				return model.Compare(a.JobState.State, b.JobState.State, orderBy.Direction)
+			})
+		}
 	}
 
 	pagination, err := model.NewPagination(first, last, after, before)

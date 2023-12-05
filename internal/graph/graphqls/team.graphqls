@@ -128,6 +128,9 @@ type Team implements Node {
 
     "Get entries before the cursor."
     before: Cursor
+
+    "Order naisjobs by"
+    orderBy: OrderBy
   ): NaisJobConnection! @goField(forceResolver: true)
 
   "The GitHub repositories that the team has access to."
@@ -197,20 +200,20 @@ type Team implements Node {
 
 "Team status."
 type TeamStatus {
-	apps: AppsStatus!
-	jobs: JobsStatus!
+  apps: AppsStatus!
+  jobs: JobsStatus!
 }
 
 "Team status for apps."
 type AppsStatus {
-	total: Int!
-	failing: Int!
+  total: Int!
+  failing: Int!
 }
 
 "Team status for jobs."
 type JobsStatus {
-	total: Int!
-	failing: Int!
+  total: Int!
+  failing: Int!
 }
 
 "Deployment key type."

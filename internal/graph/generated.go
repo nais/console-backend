@@ -664,7 +664,7 @@ type ComplexityRoot struct {
 		GithubRepositories     func(childComplexity int, first *int, after *scalar.Cursor) int
 		ID                     func(childComplexity int) int
 		Members                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
-		Naisjobs               func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		Naisjobs               func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
 		Name                   func(childComplexity int) int
 		SlackAlertsChannels    func(childComplexity int) int
 		SlackChannel           func(childComplexity int) int
@@ -813,7 +813,7 @@ type TeamResolver interface {
 	Status(ctx context.Context, obj *model.Team) (*model.TeamStatus, error)
 	Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error)
 	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.AppConnection, error)
-	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.NaisJobConnection, error)
+	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.NaisJobConnection, error)
 	GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *scalar.Cursor) (*model.GithubRepositoryConnection, error)
 
 	Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
@@ -3354,7 +3354,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.Naisjobs(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
+		return e.complexity.Team.Naisjobs(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.OrderBy)), true
 
 	case "Team.name":
 		if e.complexity.Team.Name == nil {
@@ -4738,6 +4738,15 @@ func (ec *executionContext) field_Team_naisjobs_args(ctx context.Context, rawArg
 		}
 	}
 	args["before"] = arg3
+	var arg4 *model.OrderBy
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -21135,7 +21144,7 @@ func (ec *executionContext) _Team_naisjobs(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().Naisjobs(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
+		return ec.resolvers.Team().Naisjobs(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["orderBy"].(*model.OrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
