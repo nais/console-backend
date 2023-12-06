@@ -97,12 +97,7 @@ WHERE
     AND team = $2
     AND app = $3
     AND resource_type = $4
-    AND timestamp >= sqlc.arg('start')::timestamptz
-    AND timestamp < sqlc.arg('end')::timestamptz
-ORDER BY
-    timestamp DESC
-LIMIT
-    1;
+    AND timestamp = $5;
 
 -- SpecificResourceUtilizationForTeam will return resource utilization for a team at a specific timestamp. Applications
 -- with a usage greater than request will be ignored.
@@ -116,12 +111,21 @@ FROM
 WHERE
     team = $1
     AND resource_type = $2
-    AND timestamp >= sqlc.arg('start')::timestamptz
-    AND timestamp < sqlc.arg('end')::timestamptz
+    AND timestamp = $3
     AND request > usage
 GROUP BY
-    timestamp
-ORDER BY
-    timestamp DESC
-LIMIT
-    1;
+    timestamp;
+
+-- AverageResourceUtilizationForTeam will return the average resource utilization for a team for a week.
+-- name: AverageResourceUtilizationForTeam :one
+SELECT
+    (SUM(usage) / 24 / 7)::double precision AS usage,
+    (SUM(request) / 24 / 7)::double precision AS request
+FROM
+    resource_utilization_metrics
+WHERE
+    team = $1
+    AND resource_type = $2
+    AND timestamp >= sqlc.arg('timestamp')::timestamptz - INTERVAL '1 week'
+    AND timestamp < sqlc.arg('timestamp')::timestamptz
+    AND request > usage;

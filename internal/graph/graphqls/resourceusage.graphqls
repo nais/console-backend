@@ -1,4 +1,10 @@
 extend type Query {
+    "Get the resource utilization trend for a team."
+    resourceUtilizationTrendForTeam(
+        "The name of the team."
+        team: String!
+    ): ResourceUtilizationTrend!
+
     "Get the current resource utilization values for a specific app."
     currentResourceUtilizationForApp(
         "The environment where the app is running."
@@ -72,8 +78,32 @@ extend type Query {
     ): ResourceUtilizationForApp!
 }
 
+"Resource utilization trend type."
+type ResourceUtilizationTrend {
+    "The current CPU utilization."
+    currentCpuUtilization: Float!
+
+    "The average CPU utilization from the previous week."
+    averageCpuUtilization: Float!
+
+    "The CPU utilization trend in percentage."
+    cpuUtilizationTrend: Float!
+
+    "The current memory utilization."
+    currentMemoryUtilization: Float!
+
+    "The average memory utilization from the previous week."
+    averageMemoryUtilization: Float!
+
+    "The memory utilization trend in percentage."
+    memoryUtilizationTrend: Float!
+}
+
 "Current resource utilization type."
 type CurrentResourceUtilization {
+    "The timestamp used for the calculated values."
+    timestamp: Time!
+
     "The CPU utilization."
     cpu: ResourceUtilization!
 

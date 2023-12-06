@@ -251,6 +251,8 @@ type CostSeries struct {
 
 // Current resource utilization type.
 type CurrentResourceUtilization struct {
+	// The timestamp used for the calculated values.
+	Timestamp time.Time `json:"timestamp"`
 	// The CPU utilization.
 	CPU ResourceUtilization `json:"cpu"`
 	// The memory utilization.
@@ -869,6 +871,22 @@ type ResourceUtilizationOverageForTeam struct {
 	CPU []AppWithResourceUtilizationOverage `json:"cpu"`
 	// List of memory overage data for all apps.
 	Memory []AppWithResourceUtilizationOverage `json:"memory"`
+}
+
+// Resource utilization trend type.
+type ResourceUtilizationTrend struct {
+	// The current CPU utilization.
+	CurrentCPUUtilization float64 `json:"currentCpuUtilization"`
+	// The average CPU utilization from the previous week.
+	AverageCPUUtilization float64 `json:"averageCpuUtilization"`
+	// The CPU utilization trend in percentage.
+	CPUUtilizationTrend float64 `json:"cpuUtilizationTrend"`
+	// The current memory utilization.
+	CurrentMemoryUtilization float64 `json:"currentMemoryUtilization"`
+	// The average memory utilization from the previous week.
+	AverageMemoryUtilization float64 `json:"averageMemoryUtilization"`
+	// The memory utilization trend in percentage.
+	MemoryUtilizationTrend float64 `json:"memoryUtilizationTrend"`
 }
 
 type Resources struct {

@@ -22,6 +22,61 @@ func (_m *MockQuerier) EXPECT() *MockQuerier_Expecter {
 	return &MockQuerier_Expecter{mock: &_m.Mock}
 }
 
+// AverageResourceUtilizationForTeam provides a mock function with given fields: ctx, arg
+func (_m *MockQuerier) AverageResourceUtilizationForTeam(ctx context.Context, arg AverageResourceUtilizationForTeamParams) (*AverageResourceUtilizationForTeamRow, error) {
+	ret := _m.Called(ctx, arg)
+
+	var r0 *AverageResourceUtilizationForTeamRow
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, AverageResourceUtilizationForTeamParams) (*AverageResourceUtilizationForTeamRow, error)); ok {
+		return rf(ctx, arg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, AverageResourceUtilizationForTeamParams) *AverageResourceUtilizationForTeamRow); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*AverageResourceUtilizationForTeamRow)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, AverageResourceUtilizationForTeamParams) error); ok {
+		r1 = rf(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQuerier_AverageResourceUtilizationForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AverageResourceUtilizationForTeam'
+type MockQuerier_AverageResourceUtilizationForTeam_Call struct {
+	*mock.Call
+}
+
+// AverageResourceUtilizationForTeam is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg AverageResourceUtilizationForTeamParams
+func (_e *MockQuerier_Expecter) AverageResourceUtilizationForTeam(ctx interface{}, arg interface{}) *MockQuerier_AverageResourceUtilizationForTeam_Call {
+	return &MockQuerier_AverageResourceUtilizationForTeam_Call{Call: _e.mock.On("AverageResourceUtilizationForTeam", ctx, arg)}
+}
+
+func (_c *MockQuerier_AverageResourceUtilizationForTeam_Call) Run(run func(ctx context.Context, arg AverageResourceUtilizationForTeamParams)) *MockQuerier_AverageResourceUtilizationForTeam_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(AverageResourceUtilizationForTeamParams))
+	})
+	return _c
+}
+
+func (_c *MockQuerier_AverageResourceUtilizationForTeam_Call) Return(_a0 *AverageResourceUtilizationForTeamRow, _a1 error) *MockQuerier_AverageResourceUtilizationForTeam_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQuerier_AverageResourceUtilizationForTeam_Call) RunAndReturn(run func(context.Context, AverageResourceUtilizationForTeamParams) (*AverageResourceUtilizationForTeamRow, error)) *MockQuerier_AverageResourceUtilizationForTeam_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CostUpsert provides a mock function with given fields: ctx, arg
 func (_m *MockQuerier) CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults {
 	ret := _m.Called(ctx, arg)

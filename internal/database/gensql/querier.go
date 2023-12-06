@@ -11,6 +11,8 @@ import (
 )
 
 type Querier interface {
+	// AverageResourceUtilizationForTeam will return the average resource utilization for a team for a week.
+	AverageResourceUtilizationForTeam(ctx context.Context, arg AverageResourceUtilizationForTeamParams) (*AverageResourceUtilizationForTeamRow, error)
 	// CostUpsert will insert or update a cost record. If there is a conflict on the daily_cost_key constrant, the
 	// daily_cost column will be updated.
 	CostUpsert(ctx context.Context, arg []CostUpsertParams) *CostUpsertBatchResults

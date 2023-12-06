@@ -14,6 +14,15 @@ import (
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
+// ResourceUtilizationTrendForTeam is the resolver for the resourceUtilizationTrendForTeam field.
+func (r *queryResolver) ResourceUtilizationTrendForTeam(ctx context.Context, team string) (*model.ResourceUtilizationTrend, error) {
+	trend, err := r.resourceUsageClient.ResourceUtilizationTrendForTeam(ctx, team)
+	if err != nil {
+		return nil, err
+	}
+	return trend, nil
+}
+
 // CurrentResourceUtilizationForApp is the resolver for the currentResourceUtilizationForApp field.
 func (r *queryResolver) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
 	resp, err := r.resourceUsageClient.CurrentResourceUtilizationForApp(ctx, env, team, app)

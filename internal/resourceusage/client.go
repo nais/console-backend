@@ -2,6 +2,7 @@ package resourceusage
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"time"
 
@@ -33,6 +34,9 @@ type Client interface {
 
 	// CurrentResourceUtilizationForTeam will return the current percentages of resource utilization for a team across all apps and environments
 	CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error)
+
+	// ResourceUtilizationTrendForTeam will return the resource utilization trend for a team across all apps and environments
+	ResourceUtilizationTrendForTeam(ctx context.Context, team string) (*model.ResourceUtilizationTrend, error)
 }
 
 type client struct {
@@ -133,18 +137,18 @@ func (c *client) ResourceUtilizationRangeForTeam(ctx context.Context, team strin
 	return getDateRange(dates.From, dates.To), nil
 }
 
-func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error) {
-	end := time.Now().UTC()
-	start := end.Add(-3 * time.Hour)
-
-	startTs := pgtype.Timestamptz{}
-	err := startTs.Scan(start)
+func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env, team, app string) (*model.CurrentResourceUtilization, error) {
+	timeRange, err := c.querier.ResourceUtilizationRangeForTeam(ctx, team)
 	if err != nil {
 		return nil, err
 	}
 
-	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(end)
+	if timeRange.To.Time.Before(time.Now().UTC().Add(-3 * time.Hour)) {
+		return nil, fmt.Errorf("no current data available for app %q in env %q owned by team %q", app, env, team)
+	}
+
+	ts := pgtype.Timestamptz{}
+	err = ts.Scan(timeRange.To.Time)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +158,7 @@ func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env strin
 		Team:         team,
 		App:          app,
 		ResourceType: gensql.ResourceTypeCpu,
-		Start:        startTs,
-		End:          endTs,
+		Timestamp:    ts,
 	})
 	if err != nil {
 		return nil, err
@@ -166,31 +169,31 @@ func (c *client) CurrentResourceUtilizationForApp(ctx context.Context, env strin
 		Team:         team,
 		App:          app,
 		ResourceType: gensql.ResourceTypeMemory,
-		Start:        startTs,
-		End:          endTs,
+		Timestamp:    ts,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.CurrentResourceUtilization{
-		CPU:    resourceUtilization(model.ResourceTypeCPU, cpu.Timestamp.Time.UTC(), cpu.Request, cpu.Usage),
-		Memory: resourceUtilization(model.ResourceTypeMemory, memory.Timestamp.Time.UTC(), memory.Request, memory.Usage),
+		Timestamp: timeRange.To.Time,
+		CPU:       resourceUtilization(model.ResourceTypeCPU, cpu.Timestamp.Time.UTC(), cpu.Request, cpu.Usage),
+		Memory:    resourceUtilization(model.ResourceTypeMemory, memory.Timestamp.Time.UTC(), memory.Request, memory.Usage),
 	}, nil
 }
 
 func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team string) (*model.CurrentResourceUtilization, error) {
-	end := time.Now().UTC()
-	start := end.Add(-3 * time.Hour)
-
-	startTs := pgtype.Timestamptz{}
-	err := startTs.Scan(start)
+	timeRange, err := c.querier.ResourceUtilizationRangeForTeam(ctx, team)
 	if err != nil {
 		return nil, err
 	}
 
-	endTs := pgtype.Timestamptz{}
-	err = endTs.Scan(end)
+	if timeRange.To.Time.Before(time.Now().UTC().Add(-3 * time.Hour)) {
+		return nil, fmt.Errorf("no current data available for team %q", team)
+	}
+
+	ts := pgtype.Timestamptz{}
+	err = ts.Scan(timeRange.To.Time)
 	if err != nil {
 		return nil, err
 	}
@@ -198,8 +201,7 @@ func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team str
 	currentCpu, err := c.querier.SpecificResourceUtilizationForTeam(ctx, gensql.SpecificResourceUtilizationForTeamParams{
 		Team:         team,
 		ResourceType: gensql.ResourceTypeCpu,
-		Start:        startTs,
-		End:          endTs,
+		Timestamp:    ts,
 	})
 	if err != nil {
 		return nil, err
@@ -208,16 +210,61 @@ func (c *client) CurrentResourceUtilizationForTeam(ctx context.Context, team str
 	currentMemory, err := c.querier.SpecificResourceUtilizationForTeam(ctx, gensql.SpecificResourceUtilizationForTeamParams{
 		Team:         team,
 		ResourceType: gensql.ResourceTypeMemory,
-		Start:        startTs,
-		End:          endTs,
+		Timestamp:    ts,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.CurrentResourceUtilization{
-		CPU:    resourceUtilization(model.ResourceTypeCPU, currentCpu.Timestamp.Time.UTC(), currentCpu.Request, currentCpu.Usage),
-		Memory: resourceUtilization(model.ResourceTypeMemory, currentMemory.Timestamp.Time.UTC(), currentMemory.Request, currentMemory.Usage),
+		Timestamp: timeRange.To.Time,
+		CPU:       resourceUtilization(model.ResourceTypeCPU, currentCpu.Timestamp.Time.UTC(), currentCpu.Request, currentCpu.Usage),
+		Memory:    resourceUtilization(model.ResourceTypeMemory, currentMemory.Timestamp.Time.UTC(), currentMemory.Request, currentMemory.Usage),
+	}, nil
+}
+
+func (c *client) ResourceUtilizationTrendForTeam(ctx context.Context, team string) (*model.ResourceUtilizationTrend, error) {
+	current, err := c.CurrentResourceUtilizationForTeam(ctx, team)
+	if err != nil {
+		return nil, err
+	}
+
+	ts := pgtype.Timestamptz{}
+	err = ts.Scan(current.Timestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	cpuAverage, err := c.querier.AverageResourceUtilizationForTeam(ctx, gensql.AverageResourceUtilizationForTeamParams{
+		Team:         team,
+		ResourceType: gensql.ResourceTypeCpu,
+		Timestamp:    ts,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	memoryAverage, err := c.querier.AverageResourceUtilizationForTeam(ctx, gensql.AverageResourceUtilizationForTeamParams{
+		Team:         team,
+		ResourceType: gensql.ResourceTypeMemory,
+		Timestamp:    ts,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	averageCpuUtilization := cpuAverage.Usage / cpuAverage.Request * 100
+	averageMemoryUtilization := memoryAverage.Usage / memoryAverage.Request * 100
+	cpuTrend := (current.CPU.Utilization - averageCpuUtilization) / averageCpuUtilization * 100
+	memoryTrend := (current.Memory.Utilization - averageMemoryUtilization) / averageMemoryUtilization * 100
+
+	return &model.ResourceUtilizationTrend{
+		CurrentCPUUtilization:    current.CPU.Utilization,
+		AverageCPUUtilization:    averageCpuUtilization,
+		CPUUtilizationTrend:      cpuTrend,
+		CurrentMemoryUtilization: current.Memory.Utilization,
+		AverageMemoryUtilization: averageMemoryUtilization,
+		MemoryUtilizationTrend:   memoryTrend,
 	}, nil
 }
 

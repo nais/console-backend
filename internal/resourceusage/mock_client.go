@@ -419,6 +419,61 @@ func (_c *MockClient_ResourceUtilizationRangeForTeam_Call) RunAndReturn(run func
 	return _c
 }
 
+// ResourceUtilizationTrendForTeam provides a mock function with given fields: ctx, team
+func (_m *MockClient) ResourceUtilizationTrendForTeam(ctx context.Context, team string) (*model.ResourceUtilizationTrend, error) {
+	ret := _m.Called(ctx, team)
+
+	var r0 *model.ResourceUtilizationTrend
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.ResourceUtilizationTrend, error)); ok {
+		return rf(ctx, team)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *model.ResourceUtilizationTrend); ok {
+		r0 = rf(ctx, team)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.ResourceUtilizationTrend)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, team)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_ResourceUtilizationTrendForTeam_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceUtilizationTrendForTeam'
+type MockClient_ResourceUtilizationTrendForTeam_Call struct {
+	*mock.Call
+}
+
+// ResourceUtilizationTrendForTeam is a helper method to define mock.On call
+//   - ctx context.Context
+//   - team string
+func (_e *MockClient_Expecter) ResourceUtilizationTrendForTeam(ctx interface{}, team interface{}) *MockClient_ResourceUtilizationTrendForTeam_Call {
+	return &MockClient_ResourceUtilizationTrendForTeam_Call{Call: _e.mock.On("ResourceUtilizationTrendForTeam", ctx, team)}
+}
+
+func (_c *MockClient_ResourceUtilizationTrendForTeam_Call) Run(run func(ctx context.Context, team string)) *MockClient_ResourceUtilizationTrendForTeam_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationTrendForTeam_Call) Return(_a0 *model.ResourceUtilizationTrend, _a1 error) *MockClient_ResourceUtilizationTrendForTeam_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_ResourceUtilizationTrendForTeam_Call) RunAndReturn(run func(context.Context, string) (*model.ResourceUtilizationTrend, error)) *MockClient_ResourceUtilizationTrendForTeam_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockClient creates a new instance of MockClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockClient(t interface {

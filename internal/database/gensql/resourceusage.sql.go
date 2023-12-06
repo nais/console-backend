@@ -11,6 +11,39 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const averageResourceUtilizationForTeam = `-- name: AverageResourceUtilizationForTeam :one
+SELECT
+    (SUM(usage) / 24 / 7)::double precision AS usage,
+    (SUM(request) / 24 / 7)::double precision AS request
+FROM
+    resource_utilization_metrics
+WHERE
+    team = $1
+    AND resource_type = $2
+    AND timestamp >= $3::timestamptz - INTERVAL '1 week'
+    AND timestamp < $3::timestamptz
+    AND request > usage
+`
+
+type AverageResourceUtilizationForTeamParams struct {
+	Team         string
+	ResourceType ResourceType
+	Timestamp    pgtype.Timestamptz
+}
+
+type AverageResourceUtilizationForTeamRow struct {
+	Usage   float64
+	Request float64
+}
+
+// AverageResourceUtilizationForTeam will return the average resource utilization for a team for a week.
+func (q *Queries) AverageResourceUtilizationForTeam(ctx context.Context, arg AverageResourceUtilizationForTeamParams) (*AverageResourceUtilizationForTeamRow, error) {
+	row := q.db.QueryRow(ctx, averageResourceUtilizationForTeam, arg.Team, arg.ResourceType, arg.Timestamp)
+	var i AverageResourceUtilizationForTeamRow
+	err := row.Scan(&i.Usage, &i.Request)
+	return &i, err
+}
+
 const maxResourceUtilizationDate = `-- name: MaxResourceUtilizationDate :one
 SELECT MAX(timestamp)::timestamptz FROM resource_utilization_metrics
 `
@@ -271,12 +304,7 @@ WHERE
     AND team = $2
     AND app = $3
     AND resource_type = $4
-    AND timestamp >= $5::timestamptz
-    AND timestamp < $6::timestamptz
-ORDER BY
-    timestamp DESC
-LIMIT
-    1
+    AND timestamp = $5
 `
 
 type SpecificResourceUtilizationForAppParams struct {
@@ -284,8 +312,7 @@ type SpecificResourceUtilizationForAppParams struct {
 	Team         string
 	App          string
 	ResourceType ResourceType
-	Start        pgtype.Timestamptz
-	End          pgtype.Timestamptz
+	Timestamp    pgtype.Timestamptz
 }
 
 type SpecificResourceUtilizationForAppRow struct {
@@ -301,8 +328,7 @@ func (q *Queries) SpecificResourceUtilizationForApp(ctx context.Context, arg Spe
 		arg.Team,
 		arg.App,
 		arg.ResourceType,
-		arg.Start,
-		arg.End,
+		arg.Timestamp,
 	)
 	var i SpecificResourceUtilizationForAppRow
 	err := row.Scan(&i.Usage, &i.Request, &i.Timestamp)
@@ -319,22 +345,16 @@ FROM
 WHERE
     team = $1
     AND resource_type = $2
-    AND timestamp >= $3::timestamptz
-    AND timestamp < $4::timestamptz
+    AND timestamp = $3
     AND request > usage
 GROUP BY
     timestamp
-ORDER BY
-    timestamp DESC
-LIMIT
-    1
 `
 
 type SpecificResourceUtilizationForTeamParams struct {
 	Team         string
 	ResourceType ResourceType
-	Start        pgtype.Timestamptz
-	End          pgtype.Timestamptz
+	Timestamp    pgtype.Timestamptz
 }
 
 type SpecificResourceUtilizationForTeamRow struct {
@@ -346,12 +366,7 @@ type SpecificResourceUtilizationForTeamRow struct {
 // SpecificResourceUtilizationForTeam will return resource utilization for a team at a specific timestamp. Applications
 // with a usage greater than request will be ignored.
 func (q *Queries) SpecificResourceUtilizationForTeam(ctx context.Context, arg SpecificResourceUtilizationForTeamParams) (*SpecificResourceUtilizationForTeamRow, error) {
-	row := q.db.QueryRow(ctx, specificResourceUtilizationForTeam,
-		arg.Team,
-		arg.ResourceType,
-		arg.Start,
-		arg.End,
-	)
+	row := q.db.QueryRow(ctx, specificResourceUtilizationForTeam, arg.Team, arg.ResourceType, arg.Timestamp)
 	var i SpecificResourceUtilizationForTeamRow
 	err := row.Scan(&i.Usage, &i.Request, &i.Timestamp)
 	return &i, err
