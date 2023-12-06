@@ -233,7 +233,7 @@ func TestClient_Auth(t *testing.T) {
 	testLogger, _ := test.NewNullLogger()
 	log := testLogger.WithContext(ctx)
 
-	t.Run("team not found", func(t *testing.T) {
+	t.Run("IAP headers included", func(t *testing.T) {
 		expectedAssertion := "assertion"
 		expectedEmail := "email"
 		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
@@ -253,19 +253,19 @@ func TestClient_Auth(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("team found", func(t *testing.T) {
+	t.Run("Bearertoken included", func(t *testing.T) {
 		teamsBackend := httpServerWithHandlers(t, []http.HandlerFunc{
 			func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`{"data": {"teams": [{"slug": "team-1"}, {"slug": "team-2"}]}}`))
+				authHeader := r.Header.Get("Authorization")
+				assert.Equal(t, "Bearer "+apiToken, authHeader)
+				w.Write([]byte(`{}`))
 			},
 		})
-		team, err := teams.
+		_, err := teams.
 			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, false, errorsMeter(t), log).
-			GetTeam(ctx, "team-2")
+			GetTeams(ctx)
 
-		assert.Equal(t, "team-2", team.Name)
-		assert.NoError(t, err, err)
+		assert.Nil(t, err)
 	})
 }
 
