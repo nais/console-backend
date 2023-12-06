@@ -336,24 +336,28 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 }
 
 // GithubRepositories is the resolver for the githubRepositories field.
-func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *scalar.Cursor) (*model.GithubRepositoryConnection, error) {
-	if first == nil {
+func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.GithubRepositoryConnection, error) {
+	/*if first == nil {
 		first = new(int)
 		*first = 10
 	}
 	if after == nil {
 		after = &scalar.Cursor{Offset: 0}
-	}
+	}*/
 
 	repos, err := r.teamsClient.GetGithubRepositories(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
-	if *first > len(repos) {
+	/*if *first > len(repos) {
 		*first = len(repos)
-	}
+	}*/
 
-	edges := githubRepositoryEdges(repos, *first, after.Offset)
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
+	edges := githubRepositoryEdges(repos, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
@@ -363,12 +367,20 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 		endCursor = &edges[len(edges)-1].Cursor
 	}
 
+	hasNext := len(repos) > pagination.First()+pagination.After().Offset+1
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
+
 	return &model.GithubRepositoryConnection{
 		TotalCount: len(repos),
 		Edges:      edges,
 		PageInfo: model.PageInfo{
-			HasNextPage:     len(repos) > *first+after.Offset,
-			HasPreviousPage: after.Offset > 0,
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
 			StartCursor:     startCursor,
 			EndCursor:       endCursor,
 		},

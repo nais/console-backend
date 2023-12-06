@@ -92,16 +92,14 @@ func memberEdges(members []t.Member, p *model.Pagination) []model.TeamMemberEdge
 	return edges
 }
 
-func githubRepositoryEdges(repos []t.GitHubRepository, first int, after int) []model.GithubRepositoryEdge {
+func githubRepositoryEdges(repos []t.GitHubRepository, p *model.Pagination) []model.GithubRepositoryEdge {
 	edges := make([]model.GithubRepositoryEdge, 0)
-	limit := first + after
-	if limit > len(repos) {
-		limit = len(repos)
-	}
-	for i := after; i < limit; i++ {
-		repo := repos[i]
+	start, end := p.ForSlice(len(repos))
+
+	for i, repo := range repos[start:end] {
+		repo := repo
 		edges = append(edges, model.GithubRepositoryEdge{
-			Cursor: scalar.Cursor{Offset: i + 1},
+			Cursor: scalar.Cursor{Offset: start + i},
 			Node: model.GithubRepository{
 				Name: repo.Name,
 			},
