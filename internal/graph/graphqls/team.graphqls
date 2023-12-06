@@ -262,6 +262,21 @@ type GithubRepositoryEdge implements Edge {
 type GithubRepository {
   "The name of the GitHub repository."
   name: String!
+
+  "The authorizations for the GitHub repository."
+  authorizations: [RepositoryAuthorization!]
+
+  "The permissions the team has for the GitHub repository."
+  permissions: [String!]
+
+  "Whether or not the repository is archived."
+  archived: Boolean!
+}
+
+"Repo authorizations."
+enum RepositoryAuthorization {
+    "Authorized for NAIS deployment."
+    DEPLOY
 }
 
 "Slack alerts channel type."

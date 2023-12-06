@@ -337,21 +337,10 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 
 // GithubRepositories is the resolver for the githubRepositories field.
 func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.GithubRepositoryConnection, error) {
-	/*if first == nil {
-		first = new(int)
-		*first = 10
-	}
-	if after == nil {
-		after = &scalar.Cursor{Offset: 0}
-	}*/
-
 	repos, err := r.teamsClient.GetGithubRepositories(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
 	}
-	/*if *first > len(repos) {
-		*first = len(repos)
-	}*/
 
 	pagination, err := model.NewPagination(first, last, after, before)
 	if err != nil {

@@ -101,11 +101,32 @@ func githubRepositoryEdges(repos []t.GitHubRepository, p *model.Pagination) []mo
 		edges = append(edges, model.GithubRepositoryEdge{
 			Cursor: scalar.Cursor{Offset: start + i},
 			Node: model.GithubRepository{
-				Name: repo.Name,
+				Name:           repo.Name,
+				Archived:       repo.Archived,
+				Permissions:    mapPermissions(repo.Permissions),
+				Authorizations: mapAuthorizations(repo.Authorizations),
 			},
 		})
 	}
 	return edges
+}
+
+func mapPermissions(permissions []t.GitHubRepositoryPermission) []string {
+	ret := []string{}
+	for _, p := range permissions {
+		if p.Granted {
+			ret = append(ret, p.Name)
+		}
+	}
+	return ret
+}
+
+func mapAuthorizations(authorizations []t.RepositoryAuthorization) []model.RepositoryAuthorization {
+	ret := []model.RepositoryAuthorization{}
+	for _, a := range authorizations {
+		ret = append(ret, model.RepositoryAuthorization(a))
+	}
+	return ret
 }
 
 func (r *Resolver) hasAccess(ctx context.Context, teamName string) bool {

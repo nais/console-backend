@@ -470,6 +470,12 @@ type GcpProject struct {
 type GithubRepository struct {
 	// The name of the GitHub repository.
 	Name string `json:"name"`
+	// The authorizations for the GitHub repository.
+	Authorizations []RepositoryAuthorization `json:"authorizations,omitempty"`
+	// The permissions the team has for the GitHub repository.
+	Permissions []string `json:"permissions,omitempty"`
+	// Whether or not the repository is archived.
+	Archived bool `json:"archived"`
 }
 
 // GitHub repository connection type.
@@ -1398,6 +1404,47 @@ func (e *OrderByField) UnmarshalGQL(v interface{}) error {
 }
 
 func (e OrderByField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+// Repo authorizations.
+type RepositoryAuthorization string
+
+const (
+	// Authorized for NAIS deployment.
+	RepositoryAuthorizationDeploy RepositoryAuthorization = "DEPLOY"
+)
+
+var AllRepositoryAuthorization = []RepositoryAuthorization{
+	RepositoryAuthorizationDeploy,
+}
+
+func (e RepositoryAuthorization) IsValid() bool {
+	switch e {
+	case RepositoryAuthorizationDeploy:
+		return true
+	}
+	return false
+}
+
+func (e RepositoryAuthorization) String() string {
+	return string(e)
+}
+
+func (e *RepositoryAuthorization) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RepositoryAuthorization(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RepositoryAuthorization", str)
+	}
+	return nil
+}
+
+func (e RepositoryAuthorization) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

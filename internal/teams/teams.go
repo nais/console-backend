@@ -54,8 +54,24 @@ type Team struct {
 }
 
 type GitHubRepository struct {
-	Name string `json:"name"`
+	Name           string                       `json:"name"`
+	Permissions    []GitHubRepositoryPermission `json:"permissions"`
+	Authorizations []RepositoryAuthorization    `json:"authorizations"`
+	Archived       bool                         `json:"archived"`
 }
+
+type GitHubRepositoryPermission struct {
+	Name    string `json:"name"`
+	Granted bool   `json:"granted"`
+}
+
+// Repository authorizations.
+type RepositoryAuthorization string
+
+const (
+	// Authorize for NAIS deployment.
+	RepositoryAuthorizationDeploy RepositoryAuthorization = "DEPLOY"
+)
 
 type SlackAlertsChannel struct {
 	Environment string `json:"environment"`
@@ -164,6 +180,12 @@ func (c *client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]
 		team(slug: $slug) {
 			gitHubRepositories {
 				name
+				permissions {
+					name
+					granted
+				}
+				archived
+				authorizations
 			}
 		}
 	}`
