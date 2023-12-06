@@ -10,7 +10,11 @@ import (
 	"google.golang.org/api/idtoken"
 )
 
-const contextEmail contextKey = 1
+const (
+	contextEmail        contextKey = 1
+	contextIAPAssertion contextKey = 2
+	contextIAPEmail     contextKey = 3
+)
 
 type (
 	contextKey int
@@ -49,10 +53,12 @@ func ValidateIAPJWT(aud string) Middleware {
 				return
 			}
 
-			email := r.Header.Get("X-Goog-Authenticated-User-Email")
-			_, email, _ = strings.Cut(email, ":")
-
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextEmail, email)))
+			emailh := r.Header.Get("X-Goog-Authenticated-User-Email")
+			_, email, _ := strings.Cut(emailh, ":")
+			ctx := context.WithValue(r.Context(), contextEmail, email)
+			ctx = context.WithValue(ctx, contextIAPAssertion, iapJWT)
+			ctx = context.WithValue(ctx, contextIAPEmail, emailh)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
@@ -64,6 +70,31 @@ func GetEmail(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no email in context")
 	}
 	return email, nil
+}
+
+// GetIAPAssertion returns the IAP JWT assertion that is stored in the context
+func GetIAPAssertion(ctx context.Context) (string, error) {
+	iapAssertion, ok := ctx.Value(contextIAPAssertion).(string)
+	if !ok || iapAssertion == "" {
+		return "", fmt.Errorf("no IAP assertion in context")
+	}
+	return iapAssertion, nil
+}
+
+// GetIAPEmail returns the IAP email that is stored in the context
+func GetIAPEmail(ctx context.Context) (string, error) {
+	email, ok := ctx.Value(contextIAPEmail).(string)
+	if !ok || email == "" {
+		return "", fmt.Errorf("no IAP email in context")
+	}
+	return email, nil
+}
+
+// setIAP sets the IAP headers
+func SetIAP(ctx context.Context, assertion, email string) context.Context {
+	ctx = context.WithValue(ctx, contextIAPAssertion, assertion)
+	ctx = context.WithValue(ctx, contextIAPEmail, email)
+	return ctx
 }
 
 // jsonError returns a JSON error message

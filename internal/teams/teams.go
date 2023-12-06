@@ -94,12 +94,13 @@ type client struct {
 	errors     metric.Int64Counter
 }
 
-func New(cfg config.Teams, errors metric.Int64Counter, log logrus.FieldLogger) Client {
+func New(cfg config.Teams, onBehalfOf bool, errors metric.Int64Counter, log logrus.FieldLogger) Client {
 	return &client{
 		endpoint: cfg.Endpoint,
 		httpClient: &httpClient{
-			client:   &http.Client{},
-			apiToken: cfg.Token,
+			client:     &http.Client{},
+			apiToken:   cfg.Token,
+			onBehalfOf: onBehalfOf,
 		},
 		log:    log,
 		errors: errors,

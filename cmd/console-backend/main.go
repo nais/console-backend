@@ -109,7 +109,7 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	}
 	defer closer()
 
-	teamsBackendClient := teams.New(cfg.Teams, errorsCounter, log.WithField("client", "teams"))
+	teamsBackendClient := teams.New(cfg.Teams, false, errorsCounter, log.WithField("client", "teams"))
 	k8sClient, err := k8s.New(cfg.Tenant, cfg.K8S, errorsCounter, teamsBackendClient, log.WithField("client", "k8s"))
 	if err != nil {
 		var authErr *google.AuthenticationError
@@ -122,7 +122,8 @@ func run(ctx context.Context, cfg *config.Config, log logrus.FieldLogger) error 
 	hookdClient := hookd.New(cfg.Hookd, errorsCounter, log.WithField("client", "hookd"))
 	dependencyTrackClient := dependencytrack.New(cfg.DependencyTrack, log.WithField("client", "dependencytrack"))
 	resourceUsageClient := resourceusage.NewClient(cfg.K8S.AllClusterNames, querier, log)
-	resolver := graph.NewResolver(hookdClient, teamsBackendClient, k8sClient, dependencyTrackClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
+	teamsOnBehalfOfBackendClient := teams.New(cfg.Teams, true, errorsCounter, log.WithField("client", "teams_obo"))
+	resolver := graph.NewResolver(hookdClient, teamsOnBehalfOfBackendClient, k8sClient, dependencyTrackClient, resourceUsageClient, querier, cfg.K8S.Clusters, log)
 	graphHandler, err := graph.NewHandler(graph.Config{Resolvers: resolver}, meter, log)
 	if err != nil {
 		return fmt.Errorf("create graph handler: %w", err)
