@@ -191,7 +191,27 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 			})
 		case "STATUS":
 			model.SortWith(apps, func(a, b *model.App) bool {
-				return model.Compare(a.AppState.State, b.AppState.State, orderBy.Direction)
+				sortOrder := []model.State{model.StateFailing, model.StateNotnais, model.StateUnknown, model.StateNais}
+				aIndex := -1
+				bIndex := -1
+				for i, s := range sortOrder {
+					if a.AppState.State == s {
+						aIndex = i
+					}
+					if b.AppState.State == s {
+						bIndex = i
+					}
+				}
+				if aIndex == -1 {
+					return false
+				}
+				if bIndex == -1 {
+					return true
+				}
+				if orderBy.Direction == model.SortOrderAsc {
+					return aIndex < bIndex
+				}
+				return aIndex > bIndex
 			})
 		}
 	}
@@ -257,7 +277,27 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 			})
 		case "STATUS":
 			model.SortWith(naisjobs, func(a, b *model.NaisJob) bool {
-				return model.Compare(a.JobState.State, b.JobState.State, orderBy.Direction)
+				sortOrder := []model.State{model.StateFailing, model.StateNotnais, model.StateUnknown, model.StateNais}
+				aIndex := -1
+				bIndex := -1
+				for i, s := range sortOrder {
+					if a.JobState.State == s {
+						aIndex = i
+					}
+					if b.JobState.State == s {
+						bIndex = i
+					}
+				}
+				if aIndex == -1 {
+					return false
+				}
+				if bIndex == -1 {
+					return true
+				}
+				if orderBy.Direction == model.SortOrderAsc {
+					return aIndex < bIndex
+				}
+				return aIndex > bIndex
 			})
 		}
 	}
