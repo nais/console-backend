@@ -25,21 +25,19 @@ console-backend:
 	go build -o bin/console-backend ./cmd/console-backend/main.go
 
 portforward-hookd:
-	kubectl port-forward -n nais-system --context nais-management-v2 svc/hookd 8282:80
+	kubectl port-forward -n nais-system --context nav-management-v2 svc/hookd 8282:80
 
 portforward-teams:
-	kubectl port-forward -n nais-system --context nais-management-v2 svc/teams-backend 8181:80
+	kubectl port-forward -n nais-system --context nav-management-v2 svc/teams-backend 8181:80
 
 local-nav:
-	RESOURCE_UTILIZATION_IMPORT_ENABLED="true" \
-	COST_DATA_IMPORT_ENABLED="true" \
 	DEPENDENCYTRACK_ENDPOINT="https://dependencytrack-backend.nav.cloud.nais.io" \
 	DEPENDENCYTRACK_FRONTEND="https://salsa.nav.cloud.nais.io" \
 	DEPENDENCYTRACK_USERNAME="todo" \
 	DEPENDENCYTRACK_PASSWORD="todo" \
 	BIGQUERY_PROJECTID="nais-io" \
 	HOOKD_ENDPOINT="http://localhost:8282" \
-	HOOKD_PSK="$(shell kubectl get secret console-backend --context nais-management-v2 -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \
+	HOOKD_PSK="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \
 	KUBERNETES_CLUSTERS="dev-gcp,prod-gcp" \
 	KUBERNETES_CLUSTERS_STATIC="dev-fss|apiserver.dev-fss.nais.io|$(shell kubectl get secret --context nav-dev-fss --namespace nais-system console-backend -ojsonpath='{ .data.token }' | base64 --decode)" \
 	LISTEN_ADDRESS="127.0.0.1:4242" \
@@ -47,7 +45,7 @@ local-nav:
 	LOG_LEVEL="debug" \
 	RUN_AS_USER="johnny.horvi@nav.no" \
 	TEAMS_ENDPOINT="http://localhost:8181/query" \
-	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nais-management-v2 -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 --decode)" \
+	TEAMS_TOKEN="$(shell kubectl get secret console-backend --context nav-management-v2 -n nais-system -ojsonpath='{.data.TEAMS_TOKEN}' | base64 --decode)" \
 	TENANT="nav" \
 	go run ./cmd/console-backend/main.go
 
