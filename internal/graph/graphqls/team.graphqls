@@ -50,6 +50,10 @@ extend type Mutation {
   ): Team!
 }
 
+extend enum OrderByField {
+  "Order by authorizations"
+  ROLE
+}
 "Team connection type."
 type TeamConnection implements Connection {
   "The total count of available teams."

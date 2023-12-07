@@ -359,6 +359,10 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 			model.SortWith(repos, func(a, b teams.GitHubRepository) bool {
 				return model.Compare(a.Name, b.Name, orderBy.Direction)
 			})
+		case "ROLE":
+			model.SortWith(repos, func(a, b teams.GitHubRepository) bool {
+				return model.Compare(a.RoleName, b.RoleName, orderBy.Direction)
+			})
 		}
 	}
 
