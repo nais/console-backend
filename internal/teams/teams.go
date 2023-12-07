@@ -75,12 +75,14 @@ type TeamUser struct {
 type Client interface {
 	Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result
 	GetTeam(ctx context.Context, teamSlug string) (*model.Team, error)
+	CreateTeam(ctx context.Context, team model.CreateTeamInput) (*model.Team, error)
 	GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error)
 	GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error)
 	GetTeams(ctx context.Context) ([]Team, error)
 	GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error)
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 	GetUser(ctx context.Context, email string) (*User, error)
+	GetSelf(ctx context.Context) (*User, error)
 	TeamExists(ctx context.Context, teamSlug string) bool
 }
 
@@ -145,6 +147,46 @@ func (c *client) Search(ctx context.Context, query string, filter *model.SearchF
 	return edges
 }
 
+// CreateTeam creates a new team
+func (c *client) CreateTeam(ctx context.Context, team model.CreateTeamInput) (*model.Team, error) {
+	query := `mutation ($team: CreateTeamInput!) {
+		createTeam(input: $team) {
+			slug
+			purpose
+			slackChannel
+		}
+	}`
+	vars := map[string]any{
+		"team": map[string]any{
+			"slug":         team.Name,
+			"purpose":      team.Description,
+			"slackChannel": team.SlackChannel,
+		},
+	}
+
+	respBody := struct {
+		Data struct {
+			Team *Team `json:"createTeam"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
+		return nil, c.error(ctx, err, "querying teams to create team")
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("team not created: %s", team.Name)
+	}
+
+	return &model.Team{
+		ID:           scalar.TeamIdent(respBody.Data.Team.Slug),
+		Name:         respBody.Data.Team.Slug,
+		Description:  respBody.Data.Team.Purpose,
+		SlackChannel: respBody.Data.Team.SlackChannel,
+	}, nil
+}
+
 // GetTeam get a team by the team slug
 func (c *client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
 	c.updateTeams(ctx)
@@ -169,7 +211,7 @@ func (c *client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]
 		}
 	}`
 
-	vars := map[string]string{
+	vars := map[string]any{
 		"slug": teamSlug,
 	}
 
@@ -205,7 +247,7 @@ func (c *client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member,
 		}
 	}`
 
-	vars := map[string]string{
+	vars := map[string]any{
 		"slug": teamSlug,
 	}
 
@@ -273,7 +315,7 @@ func (c *client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 		}
 	}`
 
-	vars := map[string]string{
+	vars := map[string]any{
 		"email": email,
 	}
 
@@ -299,7 +341,7 @@ func (c *client) GetUserByID(ctx context.Context, id string) (*model.User, error
 		}
 	}`
 
-	vars := map[string]string{
+	vars := map[string]any{
 		"id": id,
 	}
 
@@ -325,6 +367,37 @@ func (c *client) GetUserByID(ctx context.Context, id string) (*model.User, error
 	}, nil
 }
 
+// GetSelf gets a user by token
+func (c *client) GetSelf(ctx context.Context) (*User, error) {
+	query := `query {
+	
+		me {
+			... on User {
+			name
+			id
+			}
+		}
+	}`
+
+	respBody := struct {
+		Data struct {
+			Self *User `json:"me"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+	vars := map[string]any{}
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
+		return nil, c.error(ctx, err, "querying teams for self")
+	}
+
+	if respBody.Data.Self == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return respBody.Data.Self, nil
+}
+
 // GetUser get a user by email
 func (c *client) GetUser(ctx context.Context, email string) (*User, error) {
 	query := `query ($email: String!) {
@@ -334,7 +407,7 @@ func (c *client) GetUser(ctx context.Context, email string) (*User, error) {
 		}
 	}`
 
-	vars := map[string]string{
+	vars := map[string]any{
 		"email": email,
 	}
 
@@ -356,10 +429,10 @@ func (c *client) GetUser(ctx context.Context, email string) (*User, error) {
 	return respBody.Data.UserByEmail, nil
 }
 
-func (c *client) teamsQuery(ctx context.Context, query string, vars map[string]string, respBody interface{}) error {
+func (c *client) teamsQuery(ctx context.Context, query string, vars map[string]any, respBody interface{}) error {
 	q := struct {
-		Query     string            `json:"query"`
-		Variables map[string]string `json:"variables"`
+		Query     string         `json:"query"`
+		Variables map[string]any `json:"variables"`
 	}{
 		Query:     query,
 		Variables: vars,
@@ -385,8 +458,9 @@ func (c *client) teamsQuery(ctx context.Context, query string, vars map[string]s
 		io.Copy(os.Stdout, resp.Body)
 		return fmt.Errorf("teams: %v", resp.Status)
 	}
+	r := io.TeeReader(resp.Body, os.Stdout)
 
-	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+	if err := json.NewDecoder(r).Decode(&respBody); err != nil {
 		return err
 	}
 

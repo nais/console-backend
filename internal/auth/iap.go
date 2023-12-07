@@ -25,7 +25,9 @@ type (
 func StaticUser(email string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextEmail, email)))
+			ctx := SetIAP(r.Context(), "dummy", ":"+email)
+			ctx = context.WithValue(ctx, contextEmail, email)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
@@ -56,8 +58,7 @@ func ValidateIAPJWT(aud string) Middleware {
 			emailh := r.Header.Get("X-Goog-Authenticated-User-Email")
 			_, email, _ := strings.Cut(emailh, ":")
 			ctx := context.WithValue(r.Context(), contextEmail, email)
-			ctx = context.WithValue(ctx, contextIAPAssertion, iapJWT)
-			ctx = context.WithValue(ctx, contextIAPEmail, emailh)
+			ctx = SetIAP(ctx, iapJWT, emailh)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

@@ -249,6 +249,16 @@ type CostSeries struct {
 	Data []CostEntry `json:"data"`
 }
 
+// Input for creating a new team.
+type CreateTeamInput struct {
+	// Team slug. After creation, this value can not be changed.
+	Name string `json:"name"`
+	// Team purpose.
+	Description string `json:"description"`
+	// Specify the Slack channel for the team.
+	SlackChannel string `json:"slackChannel"`
+}
+
 // Current resource utilization type.
 type CurrentResourceUtilization struct {
 	// The timestamp used for the calculated values.

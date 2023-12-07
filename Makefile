@@ -52,11 +52,11 @@ local-nav:
 local:
 	HOOKD_ENDPOINT="http://hookd.local.nais.io" \
 	KUBERNETES_CLUSTERS="ci,dev" \
-	LISTEN_ADDRESS=":4242" \
+	LISTEN_ADDRESS="127.0.0.1:4242" \
 	LOG_FORMAT="text" \
 	LOG_LEVEL="debug" \
-	RUN_AS_USER="devuser@console.no" \
-	TEAMS_ENDPOINT="http://teams.local.nais.io/query" \
+	RUN_AS_USER="dev.usersen@nais.io" \
+	TEAMS_ENDPOINT="http://teams.local.nais.io:3000/query" \
 	go run ./cmd/console-backend/main.go
 
 test:

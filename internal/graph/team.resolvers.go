@@ -18,6 +18,11 @@ import (
 	"github.com/nais/console-backend/internal/hookd"
 )
 
+// CreateTeam is the resolver for the createTeam field.
+func (r *mutationResolver) CreateTeam(ctx context.Context, input model.CreateTeamInput) (*model.Team, error) {
+	return r.teamsClient.CreateTeam(ctx, input)
+}
+
 // ChangeDeployKey is the resolver for the changeDeployKey field.
 func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
 	if !r.hasAccess(ctx, team) {

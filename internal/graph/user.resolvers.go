@@ -21,7 +21,7 @@ func (r *queryResolver) User(ctx context.Context) (*model.User, error) {
 		return nil, apierror.ErrNoEmailInSession
 	}
 
-	user, err := r.teamsClient.GetUser(ctx, email)
+	user, err := r.teamsClient.GetSelf(ctx)
 	if err != nil {
 		return nil, apierror.ErrUserNotFound(email)
 	}
