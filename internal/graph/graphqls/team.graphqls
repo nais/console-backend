@@ -146,6 +146,9 @@ type Team implements Node {
 
     "Get entries before the cursor."
     before: Cursor
+
+    "Order apps by"
+    orderBy: OrderBy
   ): GithubRepositoryConnection! @goField(forceResolver: true)
 
   "The main Slack channel for the team."
@@ -275,8 +278,8 @@ type GithubRepository {
 
 "Repo authorizations."
 enum RepositoryAuthorization {
-    "Authorized for NAIS deployment."
-    DEPLOY
+  "Authorized for NAIS deployment."
+  DEPLOY
 }
 
 "Slack alerts channel type."

@@ -675,7 +675,7 @@ type ComplexityRoot struct {
 		Deployments            func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
 		Description            func(childComplexity int) int
 		GcpProjects            func(childComplexity int) int
-		GithubRepositories     func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		GithubRepositories     func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
 		ID                     func(childComplexity int) int
 		Members                func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
 		Naisjobs               func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) int
@@ -829,7 +829,7 @@ type TeamResolver interface {
 	Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error)
 	Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.AppConnection, error)
 	Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.NaisJobConnection, error)
-	GithubRepositories(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.GithubRepositoryConnection, error)
+	GithubRepositories(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.GithubRepositoryConnection, error)
 
 	Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
@@ -3420,7 +3420,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Team.GithubRepositories(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
+		return e.complexity.Team.GithubRepositories(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["orderBy"].(*model.OrderBy)), true
 
 	case "Team.id":
 		if e.complexity.Team.ID == nil {
@@ -4784,6 +4784,15 @@ func (ec *executionContext) field_Team_githubRepositories_args(ctx context.Conte
 		}
 	}
 	args["before"] = arg3
+	var arg4 *model.OrderBy
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg4, err = ec.unmarshalOOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -21850,7 +21859,7 @@ func (ec *executionContext) _Team_githubRepositories(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().GithubRepositories(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
+		return ec.resolvers.Team().GithubRepositories(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["orderBy"].(*model.OrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

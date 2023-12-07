@@ -16,6 +16,7 @@ import (
 	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
+	"github.com/nais/console-backend/internal/teams"
 )
 
 // ChangeDeployKey is the resolver for the changeDeployKey field.
@@ -336,10 +337,19 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 }
 
 // GithubRepositories is the resolver for the githubRepositories field.
-func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.GithubRepositoryConnection, error) {
+func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.GithubRepositoryConnection, error) {
 	repos, err := r.teamsClient.GetGithubRepositories(ctx, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting teams from Teams: %w", err)
+	}
+
+	if orderBy != nil {
+		switch orderBy.Field {
+		case "NAME":
+			model.SortWith(repos, func(a, b teams.GitHubRepository) bool {
+				return model.Compare(a.Name, b.Name, orderBy.Direction)
+			})
+		}
 	}
 
 	pagination, err := model.NewPagination(first, last, after, before)
