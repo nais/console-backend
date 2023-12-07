@@ -472,6 +472,8 @@ type GithubRepository struct {
 	Name string `json:"name"`
 	// The authorizations for the GitHub repository.
 	Authorizations []RepositoryAuthorization `json:"authorizations,omitempty"`
+	// The name of the role the team has been granted in the repository.
+	RoleName string `json:"roleName"`
 	// The permissions the team has for the GitHub repository.
 	Permissions []string `json:"permissions,omitempty"`
 	// Whether or not the repository is archived.

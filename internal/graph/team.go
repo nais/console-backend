@@ -105,6 +105,7 @@ func githubRepositoryEdges(repos []t.GitHubRepository, p *model.Pagination) []mo
 				Archived:       repo.Archived,
 				Permissions:    mapPermissions(repo.Permissions),
 				Authorizations: mapAuthorizations(repo.Authorizations),
+				RoleName:       repo.RoleName,
 			},
 		})
 	}

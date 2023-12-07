@@ -58,6 +58,7 @@ type GitHubRepository struct {
 	Permissions    []GitHubRepositoryPermission `json:"permissions"`
 	Authorizations []RepositoryAuthorization    `json:"authorizations"`
 	Archived       bool                         `json:"archived"`
+	RoleName       string                       `json:"roleName"`
 }
 
 type GitHubRepositoryPermission struct {
@@ -184,6 +185,7 @@ func (c *client) GetGithubRepositories(ctx context.Context, teamSlug string) ([]
 					name
 					granted
 				}
+				roleName
 				archived
 				authorizations
 			}

@@ -269,6 +269,9 @@ type GithubRepository {
   "The authorizations for the GitHub repository."
   authorizations: [RepositoryAuthorization!]
 
+  "The name of the role the team has been granted in the repository."
+  roleName: String!
+
   "The permissions the team has for the GitHub repository."
   permissions: [String!]
 
