@@ -986,6 +986,14 @@ type SlackAlertsChannel struct {
 	Env string `json:"env"`
 }
 
+// Slack alerts channel input.
+type SlackAlertsChannelInput struct {
+	// The environment for the alerts sent to the channel.
+	Environment string `json:"environment"`
+	// The name of the Slack channel.
+	ChannelName *string `json:"channelName,omitempty"`
+}
+
 type SQLInstance struct {
 	AutoBackupHour      int         `json:"autoBackupHour"`
 	CascadingDelete     bool        `json:"cascadingDelete"`
@@ -1169,6 +1177,16 @@ func (TokenX) IsAuthz() {}
 type Topic struct {
 	Name string `json:"name"`
 	ACL  []ACL  `json:"acl"`
+}
+
+// Input for updating an existing team.
+type UpdateTeamInput struct {
+	// Specify team description to update the existing value.
+	Description *string `json:"description,omitempty"`
+	// Specify the Slack channel to update the existing value.
+	SlackChannel *string `json:"slackChannel,omitempty"`
+	// A list of Slack channels for NAIS alerts.
+	SlackAlertsChannels []SlackAlertsChannelInput `json:"slackAlertsChannels,omitempty"`
 }
 
 type User struct {

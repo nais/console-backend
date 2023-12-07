@@ -18,14 +18,14 @@ generate-mocks:
 	go run github.com/vektra/mockery/v2
 	find internal -type f -name "mock_*.go" -exec go run mvdan.cc/gofumpt -w {} \;
 
-setup: 
+setup:
 	gcloud secrets versions access latest --secret=console-backend-kubeconfig --project aura-dev-d9f5 > kubeconfig
 
 console-backend:
 	go build -o bin/console-backend ./cmd/console-backend/main.go
 
 portforward-hookd:
-	kubectl port-forward -n nais-system --context nav-management-v2 svc/hookd 8282:80
+	kubectl port-forward -n nais-system --context dev-nais-management-v2 svc/hookd 8282:80
 
 portforward-teams:
 	kubectl port-forward -n nais-system --context nav-management-v2 svc/teams-backend 8181:80
@@ -50,13 +50,14 @@ local-nav:
 	go run ./cmd/console-backend/main.go
 
 local:
-	HOOKD_ENDPOINT="http://hookd.local.nais.io" \
+	HOOKD_ENDPOINT="http://hookd.local.nais.io:8282" \
 	KUBERNETES_CLUSTERS="ci,dev" \
 	LISTEN_ADDRESS="127.0.0.1:4242" \
 	LOG_FORMAT="text" \
 	LOG_LEVEL="debug" \
 	RUN_AS_USER="dev.usersen@nais.io" \
 	TEAMS_ENDPOINT="http://teams.local.nais.io:3000/query" \
+	HOOKD_PSK="$(shell kubectl get secret console-backend --context dev-nais-management-v2 -n nais-system -ojsonpath='{.data.HOOKD_PSK}' | base64 --decode)" \
 	go run ./cmd/console-backend/main.go
 
 test:

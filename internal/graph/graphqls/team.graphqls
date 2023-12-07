@@ -32,6 +32,21 @@ extend type Mutation {
     input: CreateTeamInput!
   ): Team!
 
+  """
+  Update an existing team
+
+  This mutation can be used to update the team purpose. It is not possible to update the team name.
+
+  The updated team will be returned on success.
+  """
+  updateTeam(
+    "Name of the team to update."
+    name: String!
+
+    "Input for updating the team."
+    input: UpdateTeamInput!
+  ): Team!
+
   "Update the deploy key of a team. Returns the updated deploy key."
   changeDeployKey(
     "The name of the team to update the deploy key for."
@@ -324,4 +339,25 @@ input CreateTeamInput {
 
   "Specify the Slack channel for the team."
   slackChannel: String!
+}
+
+"Input for updating an existing team."
+input UpdateTeamInput {
+  "Specify team description to update the existing value."
+  description: String
+
+  "Specify the Slack channel to update the existing value."
+  slackChannel: String
+
+  "A list of Slack channels for NAIS alerts."
+  slackAlertsChannels: [SlackAlertsChannelInput!]
+}
+
+"Slack alerts channel input."
+input SlackAlertsChannelInput {
+  "The environment for the alerts sent to the channel."
+  environment: String!
+
+  "The name of the Slack channel."
+  channelName: String
 }

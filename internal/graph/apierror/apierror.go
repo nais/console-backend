@@ -46,6 +46,7 @@ func Errorf(format string, args ...any) Error {
 func GetErrorPresenter(log logrus.FieldLogger) graphql.ErrorPresenterFunc {
 	return func(ctx context.Context, err error) *gqlerror.Error {
 		gqlError := graphql.DefaultErrorPresenter(ctx, err)
+		fmt.Println("#############", err)
 		unwrappedError := errors.Unwrap(err)
 
 		switch originalError := unwrappedError.(type) {

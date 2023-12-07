@@ -23,6 +23,11 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, input model.CreateTea
 	return r.teamsClient.CreateTeam(ctx, input)
 }
 
+// UpdateTeam is the resolver for the updateTeam field.
+func (r *mutationResolver) UpdateTeam(ctx context.Context, name string, input model.UpdateTeamInput) (*model.Team, error) {
+	return r.teamsClient.UpdateTeam(ctx, name, input)
+}
+
 // ChangeDeployKey is the resolver for the changeDeployKey field.
 func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
 	if !r.hasAccess(ctx, team) {
