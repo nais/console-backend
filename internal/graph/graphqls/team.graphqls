@@ -1,52 +1,4 @@
-extend type Query {
-  "Get a list of NAIS-teams, in alphabetical order."
-  teams(
-    "Returns the first n entries from the list."
-    first: Int
-
-    "Returns the last n entries from the list."
-    last: Int
-
-    "Get entries after the cursor."
-    after: Cursor
-
-    "Get entries before the cursor."
-    before: Cursor
-  ): TeamConnection!
-
-  "Get a specific NAIS-team by the team name."
-  team("The name of the NAIS-team to get." name: String!): Team!
-}
-
 extend type Mutation {
-  """
-  Create a new team
-
-  The user creating the team will be granted team ownership, unless the user is a service account, in which case the
-  team will not get an initial owner. To add one or more owners to the team, refer to the `addTeamOwners` mutation.
-
-  The new team will be returned on success.
-  """
-  createTeam(
-    "Input for creation of the new team."
-    input: CreateTeamInput!
-  ): Team!
-
-  """
-  Update an existing team
-
-  This mutation can be used to update the team purpose. It is not possible to update the team name.
-
-  The updated team will be returned on success.
-  """
-  updateTeam(
-    "Name of the team to update."
-    name: String!
-
-    "Input for updating the team."
-    input: UpdateTeamInput!
-  ): Team!
-
   "Update the deploy key of a team. Returns the updated deploy key."
   changeDeployKey(
     "The name of the team to update the deploy key for."
@@ -75,31 +27,11 @@ type TeamEdge implements Edge {
   node: Team!
 }
 
-"Team member connection type."
-type TeamMemberConnection implements Connection {
-  "The total count of available team members."
-  totalCount: Int!
-
-  "Pagination information."
-  pageInfo: PageInfo!
-
-  "A list of team member edges."
-  edges: [TeamMemberEdge!]!
-}
-
-"Team member edge type."
-type TeamMemberEdge implements Edge {
-  "A cursor for use in pagination."
-  cursor: Cursor!
-
-  "The team member at the end of the edge."
-  node: TeamMember!
-}
-
-"Team type."
-type Team implements Node {
+extend type Team @key(fields: "slug") {
   "The unique identifier of the team."
-  id: ID!
+  id: ID! @external
+
+  slug: String! @external
 
   "The name of the team."
   name: String!
@@ -110,20 +42,20 @@ type Team implements Node {
   "The status of the team."
   status: TeamStatus! @goField(forceResolver: true)
 
-  "Team members."
-  members(
-    "Returns the first n entries from the list."
-    first: Int
+  # "Team members."
+  # members(
+  #   "Returns the first n entries from the list."
+  #   first: Int
 
-    "Returns the last n entries from the list."
-    last: Int
+  #   "Returns the last n entries from the list."
+  #   last: Int
 
-    "Get entries after the cursor."
-    after: Cursor
+  #   "Get entries after the cursor."
+  #   after: Cursor
 
-    "Get entries before the cursor."
-    before: Cursor
-  ): TeamMemberConnection! @goField(forceResolver: true)
+  #   "Get entries before the cursor."
+  #   before: Cursor
+  # ): TeamMemberConnection! @goField(forceResolver: true)
 
   "The NAIS applications owned by the team."
   apps(
@@ -172,9 +104,6 @@ type Team implements Node {
 
   "The main Slack channel for the team."
   slackChannel: String!
-
-  "Slack alerts channels for the team."
-  slackAlertsChannels: [SlackAlertsChannel!]!
 
   gcpProjects: [GcpProject!]!
 
@@ -286,38 +215,13 @@ type GithubRepository {
   name: String!
 }
 
-"Slack alerts channel type."
-type SlackAlertsChannel {
-  "The name of the Slack alerts channel."
-  name: String!
-
-  "The environment for the Slack alerts channel."
-  env: String!
-}
-
-"GCP project type."
-type GcpProject {
+extend type GcpProject @key(fields: "projectID") {
   "The unique identifier of the GCP project."
-  id: String!
+  projectID: String! @external
   "The name of the GCP project."
-  name: String!
+  name: String! @external
   "The environment for the GCP project."
-  environment: String!
-}
-
-"Team member type."
-type TeamMember implements Node {
-  "The unique identifier of the team member."
-  id: ID!
-
-  "The name of the team member."
-  name: String!
-
-  "The email of the team member."
-  email: String!
-
-  "The role of the team member."
-  role: TeamRole!
+  environment: String! @external
 }
 
 "Team member roles."
@@ -327,37 +231,4 @@ enum TeamRole {
 
   "A team owner/administrator."
   OWNER
-}
-
-"Input for creating a new team."
-input CreateTeamInput {
-  "Team slug. After creation, this value can not be changed."
-  name: String!
-
-  "Team purpose."
-  description: String!
-
-  "Specify the Slack channel for the team."
-  slackChannel: String!
-}
-
-"Input for updating an existing team."
-input UpdateTeamInput {
-  "Specify team description to update the existing value."
-  description: String
-
-  "Specify the Slack channel to update the existing value."
-  slackChannel: String
-
-  "A list of Slack channels for NAIS alerts."
-  slackAlertsChannels: [SlackAlertsChannelInput!]
-}
-
-"Slack alerts channel input."
-input SlackAlertsChannelInput {
-  "The environment for the alerts sent to the channel."
-  environment: String!
-
-  "The name of the Slack channel."
-  channelName: String
 }

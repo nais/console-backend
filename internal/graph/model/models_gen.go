@@ -98,6 +98,8 @@ func (this App) GetID() scalar.Ident { return this.ID }
 
 func (App) IsSearchNode() {}
 
+func (App) IsEntity() {}
+
 type AppConnection struct {
 	TotalCount int       `json:"totalCount"`
 	PageInfo   PageInfo  `json:"pageInfo"`
@@ -249,16 +251,6 @@ type CostSeries struct {
 	Data []CostEntry `json:"data"`
 }
 
-// Input for creating a new team.
-type CreateTeamInput struct {
-	// Team slug. After creation, this value can not be changed.
-	Name string `json:"name"`
-	// Team purpose.
-	Description string `json:"description"`
-	// Specify the Slack channel for the team.
-	SlackChannel string `json:"slackChannel"`
-}
-
 // Current resource utilization type.
 type CurrentResourceUtilization struct {
 	// The timestamp used for the calculated values.
@@ -271,11 +263,14 @@ type CurrentResourceUtilization struct {
 
 // Daily cost type.
 type DailyCost struct {
+	ID scalar.Ident `json:"id"`
 	// The sum of all costs in the cost series in euros.
 	Sum float64 `json:"sum"`
 	// The cost series.
 	Series []CostSeries `json:"series"`
 }
+
+func (DailyCost) IsEntity() {}
 
 type Database struct {
 	EnvVarPrefix string         `json:"envVarPrefix"`
@@ -466,15 +461,16 @@ type Flag struct {
 	Value string `json:"value"`
 }
 
-// GCP project type.
 type GcpProject struct {
 	// The unique identifier of the GCP project.
-	ID string `json:"id"`
+	ProjectID string `json:"projectID"`
 	// The name of the GCP project.
 	Name string `json:"name"`
 	// The environment for the GCP project.
 	Environment string `json:"environment"`
 }
+
+func (GcpProject) IsEntity() {}
 
 // GitHub repository type.
 type GithubRepository struct {
@@ -978,22 +974,6 @@ type Sidecar struct {
 	Resources            Resources `json:"resources"`
 }
 
-// Slack alerts channel type.
-type SlackAlertsChannel struct {
-	// The name of the Slack alerts channel.
-	Name string `json:"name"`
-	// The environment for the Slack alerts channel.
-	Env string `json:"env"`
-}
-
-// Slack alerts channel input.
-type SlackAlertsChannelInput struct {
-	// The environment for the alerts sent to the channel.
-	Environment string `json:"environment"`
-	// The name of the Slack channel.
-	ChannelName *string `json:"channelName,omitempty"`
-}
-
 type SQLInstance struct {
 	AutoBackupHour      int         `json:"autoBackupHour"`
 	CascadingDelete     bool        `json:"cascadingDelete"`
@@ -1016,18 +996,16 @@ type SQLInstance struct {
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
 
-// Team type.
 type Team struct {
 	// The unique identifier of the team.
-	ID scalar.Ident `json:"id"`
+	ID   scalar.Ident `json:"id"`
+	Slug string       `json:"slug"`
 	// The name of the team.
 	Name string `json:"name"`
 	// The description of the team.
 	Description string `json:"description"`
 	// The status of the team.
 	Status TeamStatus `json:"status"`
-	// Team members.
-	Members TeamMemberConnection `json:"members"`
 	// The NAIS applications owned by the team.
 	Apps AppConnection `json:"apps"`
 	// The NAIS jobs owned by the team.
@@ -1035,10 +1013,8 @@ type Team struct {
 	// The GitHub repositories that the team has access to.
 	GithubRepositories GithubRepositoryConnection `json:"githubRepositories"`
 	// The main Slack channel for the team.
-	SlackChannel string `json:"slackChannel"`
-	// Slack alerts channels for the team.
-	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
-	GcpProjects         []GcpProject         `json:"gcpProjects"`
+	SlackChannel string       `json:"slackChannel"`
+	GcpProjects  []GcpProject `json:"gcpProjects"`
 	// The deployments of the team's applications.
 	Deployments DeploymentConnection `json:"deployments"`
 	// The deploy key of the team.
@@ -1054,10 +1030,7 @@ type Team struct {
 
 func (Team) IsSearchNode() {}
 
-func (Team) IsNode() {}
-
-// The unique ID of an object.
-func (this Team) GetID() scalar.Ident { return this.ID }
+func (Team) IsEntity() {}
 
 // Team connection type.
 type TeamConnection struct {
@@ -1102,66 +1075,6 @@ func (TeamEdge) IsEdge() {}
 // A cursor for use in pagination.
 func (this TeamEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
-// Team member type.
-type TeamMember struct {
-	// The unique identifier of the team member.
-	ID scalar.Ident `json:"id"`
-	// The name of the team member.
-	Name string `json:"name"`
-	// The email of the team member.
-	Email string `json:"email"`
-	// The role of the team member.
-	Role TeamRole `json:"role"`
-}
-
-func (TeamMember) IsNode() {}
-
-// The unique ID of an object.
-func (this TeamMember) GetID() scalar.Ident { return this.ID }
-
-// Team member connection type.
-type TeamMemberConnection struct {
-	// The total count of available team members.
-	TotalCount int `json:"totalCount"`
-	// Pagination information.
-	PageInfo PageInfo `json:"pageInfo"`
-	// A list of team member edges.
-	Edges []TeamMemberEdge `json:"edges"`
-}
-
-func (TeamMemberConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this TeamMemberConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this TeamMemberConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this TeamMemberConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
-// Team member edge type.
-type TeamMemberEdge struct {
-	// A cursor for use in pagination.
-	Cursor scalar.Cursor `json:"cursor"`
-	// The team member at the end of the edge.
-	Node TeamMember `json:"node"`
-}
-
-func (TeamMemberEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this TeamMemberEdge) GetCursor() scalar.Cursor { return this.Cursor }
-
 // Team status.
 type TeamStatus struct {
 	Apps AppsStatus `json:"apps"`
@@ -1179,16 +1092,6 @@ type Topic struct {
 	ACL  []ACL  `json:"acl"`
 }
 
-// Input for updating an existing team.
-type UpdateTeamInput struct {
-	// Specify team description to update the existing value.
-	Description *string `json:"description,omitempty"`
-	// Specify the Slack channel to update the existing value.
-	SlackChannel *string `json:"slackChannel,omitempty"`
-	// A list of Slack channels for NAIS alerts.
-	SlackAlertsChannels []SlackAlertsChannelInput `json:"slackAlertsChannels,omitempty"`
-}
-
 type User struct {
 	// The unique identifier for the user.
 	ID scalar.Ident `json:"id"`
@@ -1196,14 +1099,9 @@ type User struct {
 	Name string `json:"name"`
 	// The user's email address.
 	Email string `json:"email"`
-	// Teams that the user is a member and/or owner of.
-	Teams TeamConnection `json:"teams"`
 }
 
-func (User) IsNode() {}
-
-// The unique ID of an object.
-func (this User) GetID() scalar.Ident { return this.ID }
+func (User) IsEntity() {}
 
 type Variable struct {
 	Name  string `json:"name"`

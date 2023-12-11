@@ -94,7 +94,8 @@ type MonthlyCost {
 }
 
 "Daily cost type."
-type DailyCost {
+type DailyCost @key(fields: "id") {
+    id: ID!
     "The sum of all costs in the cost series in euros."
     sum: Float!
 

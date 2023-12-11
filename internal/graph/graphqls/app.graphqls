@@ -12,7 +12,7 @@ extend type Query {
     ): App!
 }
 
-type App implements Node {
+type App implements Node @key(fields: "id") {
     id: ID!
     name: String!
     image: String!

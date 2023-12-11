@@ -19,16 +19,6 @@ func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []model.TeamEd
 				Name:         team.Team.Slug,
 				Description:  team.Team.Purpose,
 				SlackChannel: team.Team.SlackChannel,
-				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {
-					ret := make([]model.SlackAlertsChannel, 0)
-					for _, v := range t {
-						ret = append(ret, model.SlackAlertsChannel{
-							Env:  v.Environment,
-							Name: v.ChannelName,
-						})
-					}
-					return ret
-				}(team.Team.SlackAlertsChannels),
 			},
 		})
 	}

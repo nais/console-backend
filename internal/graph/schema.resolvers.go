@@ -31,24 +31,21 @@ func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, er
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id scalar.Ident) (model.Node, error) {
 	switch id.Type {
-	case scalar.IdentTypeTeam:
-		t, err := r.teamsClient.GetTeam(ctx, id.ID)
-		if err != nil {
-			return nil, fmt.Errorf("getting team from Teams: %w", err)
-		}
-		return t, nil
-	case scalar.IdentTypeUser:
-		u, err := r.teamsClient.GetUserByID(ctx, id.ID)
-		if err != nil {
-			return nil, fmt.Errorf("getting user from Teams: %w", err)
-		}
-		return u, nil
+	// case scalar.IdentTypeTeam:
+	// 	t, err := r.teamsClient.GetTeam(ctx, id.ID)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("getting team from Teams: %w", err)
+	// 	}
+	// 	return t, nil
+	// case scalar.IdentTypeUser:
+	// 	u, err := r.teamsClient.GetUserByID(ctx, id.ID)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("getting user from Teams: %w", err)
+	// 	}
+	// 	return u, nil
 	}
 	return nil, fmt.Errorf("unsupported type %q in node query", id.Type)
 }
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // PageInfo returns PageInfoResolver implementation.
 func (r *Resolver) PageInfo() PageInfoResolver { return &pageInfoResolver{r} }
@@ -56,12 +53,7 @@ func (r *Resolver) PageInfo() PageInfoResolver { return &pageInfoResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// Subscription returns SubscriptionResolver implementation.
-func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-
 type (
-	mutationResolver     struct{ *Resolver }
-	pageInfoResolver     struct{ *Resolver }
-	queryResolver        struct{ *Resolver }
-	subscriptionResolver struct{ *Resolver }
+	pageInfoResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
 )

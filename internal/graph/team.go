@@ -22,16 +22,6 @@ func teamEdges(teams []t.Team, p *model.Pagination) []model.TeamEdge {
 				Name:         team.Slug,
 				Description:  team.Purpose,
 				SlackChannel: team.SlackChannel,
-				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {
-					ret := make([]model.SlackAlertsChannel, 0)
-					for _, v := range t {
-						ret = append(ret, model.SlackAlertsChannel{
-							Env:  v.Environment,
-							Name: v.ChannelName,
-						})
-					}
-					return ret
-				}(team.SlackAlertsChannels),
 			},
 		})
 	}
@@ -65,27 +55,6 @@ func appEdges(apps []*model.App, team string, p *model.Pagination) []model.AppEd
 		edges = append(edges, model.AppEdge{
 			Cursor: scalar.Cursor{Offset: start + i},
 			Node:   *app,
-		})
-	}
-
-	return edges
-}
-
-func memberEdges(members []t.Member, p *model.Pagination) []model.TeamMemberEdge {
-	edges := make([]model.TeamMemberEdge, 0)
-
-	start, end := p.ForSlice(len(members))
-
-	for i, member := range members[start:end] {
-		member := member
-		edges = append(edges, model.TeamMemberEdge{
-			Cursor: scalar.Cursor{Offset: start + i},
-			Node: model.TeamMember{
-				ID:    scalar.UserIdent(member.User.Email),
-				Name:  member.User.Name,
-				Email: member.User.Email,
-				Role:  model.TeamRole(member.Role),
-			},
 		})
 	}
 

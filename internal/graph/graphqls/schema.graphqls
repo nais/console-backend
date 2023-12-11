@@ -1,14 +1,7 @@
-"The query root for the console-backend GraphQL API."
-type Query {
+extend type Query {
   "Fetches an object given its ID."
   node("The ID of an object." id: ID!): Node
 }
-
-"The root query for implementing GraphQL mutations."
-type Mutation
-
-"The root subscription type for implementing GraphQL subscriptions."
-type Subscription
 
 "Node interface."
 interface Node {

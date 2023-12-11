@@ -75,8 +75,6 @@ type TeamUser struct {
 type Client interface {
 	Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result
 	GetTeam(ctx context.Context, teamSlug string) (*model.Team, error)
-	CreateTeam(ctx context.Context, team model.CreateTeamInput) (*model.Team, error)
-	UpdateTeam(ctx context.Context, name string, team model.UpdateTeamInput) (*model.Team, error)
 	GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error)
 	GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error)
 	GetTeams(ctx context.Context) ([]Team, error)
@@ -146,92 +144,6 @@ func (c *client) Search(ctx context.Context, query string, filter *model.SearchF
 		})
 	}
 	return edges
-}
-
-// CreateTeam creates a new team
-func (c *client) CreateTeam(ctx context.Context, team model.CreateTeamInput) (*model.Team, error) {
-	query := `mutation ($team: CreateTeamInput!) {
-		createTeam(input: $team) {
-			slug
-			purpose
-			slackChannel
-		}
-	}`
-	vars := map[string]any{
-		"team": map[string]any{
-			"slug":         team.Name,
-			"purpose":      team.Description,
-			"slackChannel": team.SlackChannel,
-		},
-	}
-
-	respBody := struct {
-		Data struct {
-			Team *Team `json:"createTeam"`
-		} `json:"data"`
-		Errors []map[string]any `json:"errors"`
-	}{}
-
-	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
-		return nil, c.error(ctx, err, "querying teams to create team")
-	}
-
-	if len(respBody.Errors) > 0 {
-		return nil, fmt.Errorf("team not created: %s", team.Name)
-	}
-
-	return &model.Team{
-		ID:           scalar.TeamIdent(respBody.Data.Team.Slug),
-		Name:         respBody.Data.Team.Slug,
-		Description:  respBody.Data.Team.Purpose,
-		SlackChannel: respBody.Data.Team.SlackChannel,
-	}, nil
-}
-
-// UpdateTeam updates a team
-func (c *client) UpdateTeam(ctx context.Context, name string, team model.UpdateTeamInput) (*model.Team, error) {
-	query := `mutation ($slug: Slug!, $team: UpdateTeamInput!) {
-		updateTeam(slug: $slug, input: $team) {
-			slug
-			purpose
-			slackChannel
-			slackAlertsChannels {
-				channelName
-				environment
-			}
-		}
-	}`
-	vars := map[string]any{
-		"slug": name,
-		"team": map[string]any{
-			"purpose":             team.Description,
-			"slackChannel":        team.SlackChannel,
-			"slackAlertsChannels": team.SlackAlertsChannels,
-		},
-	}
-
-	respBody := struct {
-		Data struct {
-			Team *Team `json:"updateTeam"`
-		} `json:"data"`
-		Errors []map[string]any `json:"errors"`
-	}{}
-
-	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
-		return nil, c.error(ctx, err, "querying teams to update team")
-	}
-
-	if len(respBody.Errors) > 0 {
-		return nil, fmt.Errorf("team not updated: %s", name)
-	}
-
-	return &model.Team{
-		ID:                  scalar.TeamIdent(respBody.Data.Team.Slug),
-		Name:                respBody.Data.Team.Slug,
-		Description:         respBody.Data.Team.Purpose,
-		SlackChannel:        respBody.Data.Team.SlackChannel,
-		SlackAlertsChannels: convertSlackChannels(respBody.Data.Team.SlackAlertsChannels),
-	}, nil
 }
 
 // GetTeam get a team by the team slug
@@ -546,16 +458,15 @@ func toModelTeams(teams []Team) []*model.Team {
 	models := make([]*model.Team, 0)
 	for _, team := range teams {
 		models = append(models, &model.Team{
-			ID:                  scalar.TeamIdent(team.Slug),
-			Name:                team.Slug,
-			Description:         team.Purpose,
-			SlackChannel:        team.SlackChannel,
-			SlackAlertsChannels: convertSlackChannels(team.SlackAlertsChannels),
+			ID:           scalar.TeamIdent(team.Slug),
+			Name:         team.Slug,
+			Description:  team.Purpose,
+			SlackChannel: team.SlackChannel,
 			GcpProjects: func(projects []GcpProject) []model.GcpProject {
 				models := make([]model.GcpProject, 0)
 				for _, project := range projects {
 					models = append(models, model.GcpProject{
-						ID:          project.ProjectID,
+						ProjectID:   project.ProjectID,
 						Name:        project.ProjectName,
 						Environment: project.Environment,
 					})
@@ -578,16 +489,4 @@ func isTeamFilterOrNoFilter(filter *model.SearchFilter) bool {
 	}
 
 	return *filter.Type == model.SearchTypeTeam
-}
-
-// convertSlackChannels from a teams object to model.SlackAlertsChannel
-func convertSlackChannels(channels []SlackAlertsChannel) []model.SlackAlertsChannel {
-	models := make([]model.SlackAlertsChannel, 0)
-	for _, ch := range channels {
-		models = append(models, model.SlackAlertsChannel{
-			Env:  ch.Environment,
-			Name: ch.ChannelName,
-		})
-	}
-	return models
 }

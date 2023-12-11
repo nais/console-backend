@@ -18,16 +18,6 @@ import (
 	"github.com/nais/console-backend/internal/hookd"
 )
 
-// CreateTeam is the resolver for the createTeam field.
-func (r *mutationResolver) CreateTeam(ctx context.Context, input model.CreateTeamInput) (*model.Team, error) {
-	return r.teamsClient.CreateTeam(ctx, input)
-}
-
-// UpdateTeam is the resolver for the updateTeam field.
-func (r *mutationResolver) UpdateTeam(ctx context.Context, name string, input model.UpdateTeamInput) (*model.Team, error) {
-	return r.teamsClient.UpdateTeam(ctx, name, input)
-}
-
 // ChangeDeployKey is the resolver for the changeDeployKey field.
 func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
 	if !r.hasAccess(ctx, team) {
@@ -44,56 +34,6 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 		Created: deployKey.Created,
 		Expires: deployKey.Expires,
 	}, nil
-}
-
-// Teams is the resolver for the teams field.
-func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error) {
-	teams, err := r.teamsClient.GetTeams(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("getting teams from Teams: %w", err)
-	}
-
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	e := teamEdges(teams, pagination)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
-	}
-
-	hasNext := len(teams) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.TeamConnection{
-		TotalCount: len(teams),
-		Edges:      e,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
-	}, nil
-}
-
-// Team is the resolver for the team field.
-func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
-	team, err := r.teamsClient.GetTeam(ctx, name)
-	if err != nil {
-		return nil, apierror.ErrTeamNotFound
-	}
-
-	return team, nil
 }
 
 // Status is the resolver for the status field.
@@ -133,49 +73,13 @@ func (r *teamResolver) Status(ctx context.Context, obj *model.Team) (*model.Team
 	}, nil
 }
 
-// Members is the resolver for the members field.
-func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error) {
-	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
-	if err != nil {
-		return nil, fmt.Errorf("getting members from Teams: %w", err)
-	}
-
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	edges := memberEdges(members, pagination)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
-	}
-
-	hasNext := len(members) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.TeamMemberConnection{
-		TotalCount: len(members),
-		Edges:      edges,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
-	}, nil
-}
-
 // Apps is the resolver for the apps field.
 func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.AppConnection, error) {
-	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	name := obj.Name
+	if name == "" {
+		name = obj.Slug
+	}
+	apps, err := r.k8sClient.Apps(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
@@ -229,7 +133,7 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 	if err != nil {
 		return nil, err
 	}
-	edges := appEdges(apps, obj.Name, pagination)
+	edges := appEdges(apps, name, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor
@@ -613,7 +517,67 @@ func (r *teamResolver) VulnerabilitiesSummary(ctx context.Context, obj *model.Te
 	return retVal, nil
 }
 
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) ConsoleTeams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error) {
+	teams, err := r.teamsClient.GetTeams(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting teams from Teams: %w", err)
+	}
+
+	pagination, err := model.NewPagination(first, last, after, before)
+	if err != nil {
+		return nil, err
+	}
+	e := teamEdges(teams, pagination)
+
+	var startCursor *scalar.Cursor
+	var endCursor *scalar.Cursor
+	if len(e) > 0 {
+		startCursor = &e[0].Cursor
+		endCursor = &e[len(e)-1].Cursor
+	}
+
+	hasNext := len(teams) > pagination.First()+pagination.After().Offset+1
+	hasPrevious := pagination.After().Offset > 0
+
+	if pagination.Before() != nil && startCursor != nil {
+		hasNext = true
+		hasPrevious = startCursor.Offset > 0
+	}
+
+	return &model.TeamConnection{
+		TotalCount: len(teams),
+		Edges:      e,
+		PageInfo: model.PageInfo{
+			HasNextPage:     hasNext,
+			HasPreviousPage: hasPrevious,
+			StartCursor:     startCursor,
+			EndCursor:       endCursor,
+		},
+	}, nil
+}
+
+func (r *queryResolver) ConsoleTeam(ctx context.Context, name string) (*model.Team, error) {
+	team, err := r.teamsClient.GetTeam(ctx, name)
+	if err != nil {
+		return nil, apierror.ErrTeamNotFound
+	}
+
+	return team, nil
+}

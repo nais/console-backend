@@ -1,23 +1,15 @@
 extend type Query {
-    "Get the currently logged in user."
-    user: User!
+  "Get the currently logged in user."
+  user: User!
 }
 
-type User implements Node {
-    "The unique identifier for the user."
-    id: ID!
+extend type User @key(fields: "id") {
+  "The unique identifier for the user."
+  id: ID!
 
-    "The user's full name."
-    name: String!
+  "The user's full name."
+  name: String! @external
 
-    "The user's email address."
-    email: String!
-
-    "Teams that the user is a member and/or owner of."
-    teams(
-        first: Int,
-        after: Cursor,
-        last: Int,
-        before: Cursor
-    ): TeamConnection! @goField(forceResolver: true)
+  "The user's email address."
+  email: String! @external
 }
