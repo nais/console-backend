@@ -24,6 +24,30 @@ extend type Mutation {
     "The name of the team to update the deploy key for."
     team: String!
   ): DeploymentKey!
+
+  "Authorize a team to perform an action from a GitHub repository."
+  authorizeRepository(
+      "The action to authorize."
+      authorization: RepositoryAuthorization!
+
+      "The team to authorize the action for."
+      team: String!
+
+      "Name of the repository, with the org prefix, for instance 'org/repo'."
+      repository: String!
+  ): Team!
+
+  "Deauthorize an action from a team."
+  deauthorizeRepository(
+      "The action to deauthorize."
+      authorization: RepositoryAuthorization!
+
+      "The team to deauthorize the action for."
+      team: String!
+
+      "Name of the repository, with the org prefix, for instance 'org/repo'."
+      repository: String!
+  ): Team!
 }
 
 "Team connection type."

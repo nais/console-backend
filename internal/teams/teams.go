@@ -90,6 +90,8 @@ type TeamUser struct {
 }
 
 type Client interface {
+	AuthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team, repository string) (*model.Team, error)
+	DeauthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team, repository string) (*model.Team, error)
 	Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result
 	GetTeam(ctx context.Context, teamSlug string) (*model.Team, error)
 	GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error)
@@ -173,6 +175,76 @@ func (c *client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, err
 		}
 	}
 	return nil, fmt.Errorf("team not found: %s", teamSlug)
+}
+
+func (c *client) DeauthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team, repository string) (*model.Team, error) {
+	query := `mutation ($teamSlug: Slug!, $repoName: String!, $authorization: RepositoryAuthorization!) {
+		deauthorizeRepository(teamSlug: $teamSlug, repoName: $repoName, authorization: $authorization) {
+			team {
+				slug
+			}
+		}
+	}`
+
+	vars := map[string]string{
+		"teamSlug":      team,
+		"repository":    repository,
+		"authorization": authorization.String(),
+	}
+
+	respBody := struct {
+		Data struct {
+			AuthorizeRepository struct {
+				Team Team `json:"team"`
+			} `json:"authorizeRepository"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
+		return nil, c.error(ctx, err, "deauthorizing repository")
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("team not found: %s", team)
+	}
+
+	return &model.Team{Name: respBody.Data.AuthorizeRepository.Team.Slug}, nil
+}
+
+func (c *client) AuthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team, repository string) (*model.Team, error) {
+	query := `mutation ($teamSlug: Slug!, $repoName: String!, $authorization: RepositoryAuthorization!) {
+		authorizeRepository(teamSlug: $teamSlug, repoName: $repoName, authorization: $authorization) {
+			team {
+				slug
+			}
+		}
+	}`
+
+	vars := map[string]string{
+		"teamSlug":      team,
+		"repository":    repository,
+		"authorization": authorization.String(),
+	}
+
+	respBody := struct {
+		Data struct {
+			AuthorizeRepository struct {
+				Team Team `json:"team"`
+			} `json:"authorizeRepository"`
+		} `json:"data"`
+		Errors []map[string]any `json:"errors"`
+	}{}
+
+	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
+		return nil, c.error(ctx, err, "authorizing repository")
+	}
+
+	if len(respBody.Errors) > 0 {
+		return nil, fmt.Errorf("team not found: %s", team)
+	}
+
+	return &model.Team{Name: respBody.Data.AuthorizeRepository.Team.Slug}, nil
 }
 
 // GetGithubRepositories get a list of GitHub repositories for a specific team

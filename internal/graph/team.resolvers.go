@@ -37,6 +37,16 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 	}, nil
 }
 
+// AuthorizeRepository is the resolver for the authorizeRepository field.
+func (r *mutationResolver) AuthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.Team, error) {
+	return r.teamsClient.AuthorizeRepository(ctx, authorization, team, repository)
+}
+
+// DeauthorizeRepository is the resolver for the deauthorizeRepository field.
+func (r *mutationResolver) DeauthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.Team, error) {
+	return r.teamsClient.DeauthorizeRepository(ctx, authorization, team, repository)
+}
+
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error) {
 	teams, err := r.teamsClient.GetTeams(ctx)
