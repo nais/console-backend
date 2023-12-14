@@ -15,33 +15,8 @@ type Authz interface {
 	IsAuthz()
 }
 
-// Connection interface.
-type Connection interface {
-	IsConnection()
-	// The total count of items in the connection.
-	GetTotalCount() int
-	// Pagination information.
-	GetPageInfo() PageInfo
-	// A list of edges.
-	GetEdges() []Edge
-}
-
 type DeploymentResponse interface {
 	IsDeploymentResponse()
-}
-
-// Edge interface.
-type Edge interface {
-	IsEdge()
-	// A cursor for use in pagination.
-	GetCursor() scalar.Cursor
-}
-
-// Node interface.
-type Node interface {
-	IsNode()
-	// The unique ID of an object.
-	GetID() scalar.Ident
 }
 
 type SearchNode interface {
@@ -71,30 +46,25 @@ type ACL struct {
 }
 
 type App struct {
-	ID              scalar.Ident       `json:"id"`
-	Name            string             `json:"name"`
-	Image           string             `json:"image"`
-	DeployInfo      DeployInfo         `json:"deployInfo"`
-	Env             Env                `json:"env"`
-	Ingresses       []string           `json:"ingresses"`
-	Instances       []*Instance        `json:"instances"`
-	AccessPolicy    AccessPolicy       `json:"accessPolicy"`
-	Resources       Resources          `json:"resources"`
-	AutoScaling     AutoScaling        `json:"autoScaling"`
-	Storage         []Storage          `json:"storage"`
-	Variables       []*Variable        `json:"variables"`
-	Authz           []Authz            `json:"authz"`
-	Manifest        string             `json:"manifest"`
-	Team            Team               `json:"team"`
-	AppState        AppState           `json:"appState"`
-	Vulnerabilities *VulnerabilityList `json:"vulnerabilities,omitempty"`
-	GQLVars         AppGQLVars         `json:"-"`
+	ID              scalar.Ident   `json:"id"`
+	Name            string         `json:"name"`
+	Image           string         `json:"image"`
+	DeployInfo      DeployInfo     `json:"deployInfo"`
+	Env             Env            `json:"env"`
+	Ingresses       []string       `json:"ingresses"`
+	Instances       []*Instance    `json:"instances"`
+	AccessPolicy    AccessPolicy   `json:"accessPolicy"`
+	Resources       Resources      `json:"resources"`
+	AutoScaling     AutoScaling    `json:"autoScaling"`
+	Storage         []Storage      `json:"storage"`
+	Variables       []*Variable    `json:"variables"`
+	Authz           []Authz        `json:"authz"`
+	Manifest        string         `json:"manifest"`
+	Team            Team           `json:"team"`
+	AppState        AppState       `json:"appState"`
+	Vulnerabilities *Vulnerability `json:"vulnerabilities,omitempty"`
+	GQLVars         AppGQLVars     `json:"-"`
 }
-
-func (App) IsNode() {}
-
-// The unique ID of an object.
-func (this App) GetID() scalar.Ident { return this.ID }
 
 func (App) IsSearchNode() {}
 
@@ -265,44 +235,6 @@ type Deployment struct {
 	Repository string                `json:"repository"`
 }
 
-type DeploymentConnection struct {
-	TotalCount int               `json:"totalCount"`
-	PageInfo   PageInfo          `json:"pageInfo"`
-	Edges      []*DeploymentEdge `json:"edges"`
-}
-
-func (DeploymentConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this DeploymentConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this DeploymentConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this DeploymentConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
-func (DeploymentConnection) IsDeploymentResponse() {}
-
-type DeploymentEdge struct {
-	Cursor scalar.Cursor `json:"cursor"`
-	Node   Deployment    `json:"node"`
-}
-
-func (DeploymentEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this DeploymentEdge) GetCursor() scalar.Cursor { return this.Cursor }
-
 // Deployment key type.
 type DeploymentKey struct {
 	// The unique identifier of the deployment key.
@@ -315,15 +247,12 @@ type DeploymentKey struct {
 	Expires time.Time `json:"expires"`
 }
 
-func (DeploymentKey) IsNode() {}
-
-// The unique ID of an object.
-func (this DeploymentKey) GetID() scalar.Ident { return this.ID }
-
 type DeploymentList struct {
 	Nodes    []*Deployment `json:"nodes"`
 	PageInfo PageInfo      `json:"pageInfo"`
 }
+
+func (DeploymentList) IsDeploymentResponse() {}
 
 type DeploymentResource struct {
 	ID        scalar.Ident `json:"id"`
@@ -368,11 +297,6 @@ type Env struct {
 	ID   scalar.Ident `json:"id"`
 	Name string       `json:"name"`
 }
-
-func (Env) IsNode() {}
-
-// The unique ID of an object.
-func (this Env) GetID() scalar.Ident { return this.ID }
 
 // Env cost type.
 type EnvCost struct {
@@ -496,11 +420,6 @@ type Instance struct {
 	GQLVars  InstanceGQLVars `json:"-"`
 }
 
-func (Instance) IsNode() {}
-
-// The unique ID of an object.
-func (this Instance) GetID() scalar.Ident { return this.ID }
-
 type InvalidNaisYamlError struct {
 	Revision string     `json:"revision"`
 	Level    ErrorLevel `json:"level"`
@@ -607,11 +526,6 @@ type NaisJob struct {
 	GQLVars      NaisJobGQLVars `json:"-"`
 }
 
-func (NaisJob) IsNode() {}
-
-// The unique ID of an object.
-func (this NaisJob) GetID() scalar.Ident { return this.ID }
-
 func (NaisJob) IsSearchNode() {}
 
 type NaisJobConnection struct {
@@ -620,35 +534,10 @@ type NaisJobConnection struct {
 	Edges      []*NaisJobEdge `json:"edges"`
 }
 
-func (NaisJobConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this NaisJobConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this NaisJobConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this NaisJobConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
 type NaisJobEdge struct {
 	Cursor scalar.Cursor `json:"cursor"`
 	Node   NaisJob       `json:"node"`
 }
-
-func (NaisJobEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this NaisJobEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type NaisJobList struct {
 	Nodes    []*NaisJob `json:"nodes"`
@@ -828,50 +717,13 @@ type Run struct {
 	GQLVars        RunGQLVars   `json:"-"`
 }
 
-func (Run) IsNode() {}
-
-// The unique ID of an object.
-func (this Run) GetID() scalar.Ident { return this.ID }
-
-type SearchConnection struct {
-	TotalCount int           `json:"totalCount"`
-	PageInfo   PageInfo      `json:"pageInfo"`
-	Edges      []*SearchEdge `json:"edges"`
-}
-
-func (SearchConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this SearchConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this SearchConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this SearchConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
-type SearchEdge struct {
-	Node   SearchNode    `json:"node"`
-	Cursor scalar.Cursor `json:"cursor"`
-	Rank   int           `json:"-"`
-}
-
-func (SearchEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this SearchEdge) GetCursor() scalar.Cursor { return this.Cursor }
-
 type SearchFilter struct {
 	Type *SearchType `json:"type,omitempty"`
+}
+
+type SearchList struct {
+	PageInfo PageInfo     `json:"pageInfo"`
+	Nodes    []SearchNode `json:"nodes"`
 }
 
 type Sidecar struct {

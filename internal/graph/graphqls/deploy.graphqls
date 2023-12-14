@@ -1,47 +1,35 @@
 extend type Query {
-    "Get a list of deployments."
-    deployments(
-        first: Int
-        last: Int
-        after: Cursor
-        before: Cursor
-        limit: Int
-    ): DeploymentConnection!
+  "Get a list of deployments."
+  deployments(offset: Int, limit: Int): DeploymentList!
 }
 
-type DeploymentConnection implements Connection {
-    totalCount: Int!
-    pageInfo: PageInfo!
-    edges: [DeploymentEdge!]!
-}
-
-type DeploymentEdge implements Edge {
-    cursor: Cursor!
-    node: Deployment!
+type DeploymentList {
+  nodes: [Deployment!]!
+  pageInfo: PageInfo!
 }
 
 type Deployment {
-    id: ID!
-    team: Team!
-    resources: [DeploymentResource!]!
-    env: String!
-    statuses: [DeploymentStatus!]!
-    created: Time!
-    repository: String!
+  id: ID!
+  team: Team!
+  resources: [DeploymentResource!]!
+  env: String!
+  statuses: [DeploymentStatus!]!
+  created: Time!
+  repository: String!
 }
 
 type DeploymentResource {
-    id: ID!
-    group: String!
-    kind: String!
-    name: String!
-    version: String!
-    namespace: String!
+  id: ID!
+  group: String!
+  kind: String!
+  name: String!
+  version: String!
+  namespace: String!
 }
 
 type DeploymentStatus {
-    id: ID!
-    status: String!
-    message: String
-    created: Time!
+  id: ID!
+  status: String!
+  message: String
+  created: Time!
 }

@@ -1,39 +1,10 @@
-extend type Query {
-  "Fetches an object given its ID."
-  node("The ID of an object." id: ID!): Node
-}
-
-"Node interface."
-interface Node {
-  "The unique ID of an object."
-  id: ID!
-}
-
-"Connection interface."
-interface Connection {
-  "The total count of items in the connection."
-  totalCount: Int!
-
-  "Pagination information."
-  pageInfo: PageInfo!
-
-  "A list of edges."
-  edges: [Edge]!
-}
-
-"Edge interface."
-interface Edge {
-  "A cursor for use in pagination."
-  cursor: Cursor!
-}
-
 type PageInfo {
   totalCount: Int!
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
 }
 
-type Env implements Node {
+type Env {
   id: ID!
   name: String!
 }

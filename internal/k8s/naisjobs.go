@@ -36,7 +36,7 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 	}
 
 	for i, rule := range job.AccessPolicy.Outbound.Rules {
-		err = c.setJobHasMutualOnOutbound(ctx, name, team, env, &rule)
+		err = c.setJobHasMutualOnOutbound(ctx, name, team, env, rule)
 		if err != nil {
 			return nil, c.error(ctx, err, "setting hasMutual on outbound")
 		}
@@ -44,7 +44,7 @@ func (c *Client) NaisJob(ctx context.Context, name, team, env string) (*model.Na
 	}
 
 	for i, rule := range job.AccessPolicy.Inbound.Rules {
-		err = c.setJobHasMutualOnInbound(ctx, name, team, env, &rule)
+		err = c.setJobHasMutualOnInbound(ctx, name, team, env, rule)
 		if err != nil {
 			return nil, c.error(ctx, err, "setting hasMutual on inbound")
 		}
@@ -267,7 +267,7 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 			jobState.Errors = append(jobState.Errors, &model.InboundAccessError{
 				Revision: job.DeployInfo.CommitSha,
 				Level:    model.ErrorLevelWarning,
-				Rule:     rule,
+				Rule:     *rule,
 			})
 			if jobState.State != model.StateFailing {
 				jobState.State = model.StateNotnais
@@ -280,7 +280,7 @@ func setJobStatus(job *model.NaisJob, conditions []metav1.Condition, runs []*mod
 			jobState.Errors = append(jobState.Errors, &model.OutboundAccessError{
 				Revision: job.DeployInfo.CommitSha,
 				Level:    model.ErrorLevelWarning,
-				Rule:     rule,
+				Rule:     *rule,
 			})
 			if jobState.State != model.StateFailing {
 				jobState.State = model.StateNotnais
@@ -306,7 +306,7 @@ func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, e
 			}
 
 			for i, rule := range job.AccessPolicy.Outbound.Rules {
-				err = c.setJobHasMutualOnOutbound(ctx, job.Name, team, env, &rule)
+				err = c.setJobHasMutualOnOutbound(ctx, job.Name, team, env, rule)
 				if err != nil {
 					return nil, c.error(ctx, err, "setting hasMutual on outbound")
 				}
@@ -314,7 +314,7 @@ func (c *Client) NaisJobs(ctx context.Context, team string) ([]*model.NaisJob, e
 			}
 
 			for i, rule := range job.AccessPolicy.Inbound.Rules {
-				err = c.setJobHasMutualOnInbound(ctx, job.Name, team, env, &rule)
+				err = c.setJobHasMutualOnInbound(ctx, job.Name, team, env, rule)
 				if err != nil {
 					return nil, c.error(ctx, err, "setting hasMutual on inbound")
 				}
@@ -572,7 +572,7 @@ func (c *Client) ToNaisJob(u *unstructured.Unstructured, env string) (*model.Nai
 	return ret, nil
 }
 
-func naisjobStorage(u *unstructured.Unstructured, topics []model.Topic) ([]model.Storage, error) {
+func naisjobStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.Storage, error) {
 	naisjob := &naisv1.Naisjob{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, naisjob); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)

@@ -8,41 +8,22 @@ import (
 	"context"
 
 	"github.com/nais/console-backend/internal/graph/model"
-	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error) {
+func (r *queryResolver) Search(ctx context.Context, query string, filter *model.SearchFilter, offset *int, limit *int) (*model.SearchList, error) {
 	results := r.searcher.Search(ctx, query, filter)
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	edges := searchEdges(results, pagination)
+	pagination := model.NewPagination(offset, limit)
 
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
+	nodes, pi := model.PaginatedSlice(results, pagination)
 
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
+	ret := &model.SearchList{
+		PageInfo: pi,
 	}
 
-	hasNext := len(results) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
+	for _, node := range nodes {
+		ret.Nodes = append(ret.Nodes, node.Node)
 	}
-	return &model.SearchConnection{
-		TotalCount: len(results),
-		Edges:      edges,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
-	}, nil
+
+	return ret, nil
 }

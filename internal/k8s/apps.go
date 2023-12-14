@@ -95,7 +95,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	}
 
 	for i, rule := range app.AccessPolicy.Outbound.Rules {
-		err = c.setHasMutualOnOutbound(ctx, name, team, env, &rule)
+		err = c.setHasMutualOnOutbound(ctx, name, team, env, rule)
 		if err != nil {
 			return nil, c.error(ctx, err, "setting hasMutual on outbound")
 		}
@@ -103,7 +103,7 @@ func (c *Client) App(ctx context.Context, name, team, env string) (*model.App, e
 	}
 
 	for i, rule := range app.AccessPolicy.Inbound.Rules {
-		err = c.setHasMutualOnInbound(ctx, name, team, env, &rule)
+		err = c.setHasMutualOnInbound(ctx, name, team, env, rule)
 		if err != nil {
 			return nil, c.error(ctx, err, "setting hasMutual on inbound")
 		}
@@ -398,7 +398,7 @@ func (c *Client) getNaisJob(ctx context.Context, inf *Informers, env, team, job 
 	return naisjob, nil
 }
 
-func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]model.Topic, error) {
+func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]*model.Topic, error) {
 	// HACK: dev-fss and prod-fss have topic resources in dev-gcp and prod-gcp respectively.
 	topicEnv := env
 	if env == "dev-fss" {
@@ -413,7 +413,7 @@ func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]model
 		return nil, c.error(ctx, err, "listing topics")
 	}
 
-	ret := make([]model.Topic, 0)
+	ret := make([]*model.Topic, 0)
 	for _, topic := range topics {
 		u := topic.(*unstructured.Unstructured)
 		t, err := toTopic(u, name, team)
@@ -423,7 +423,7 @@ func (c *Client) getTopics(ctx context.Context, name, team, env string) ([]model
 
 		for _, acl := range t.ACL {
 			if acl.Team == team && acl.Application == name {
-				ret = append(ret, *t)
+				ret = append(ret, t)
 			}
 		}
 	}
@@ -476,7 +476,7 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 			}
 
 			for i, rule := range app.AccessPolicy.Outbound.Rules {
-				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, &rule)
+				err = c.setHasMutualOnOutbound(ctx, app.Name, team, env, rule)
 				if err != nil {
 					return nil, c.error(ctx, err, "setting hasMutual on outbound")
 				}
@@ -484,7 +484,7 @@ func (c *Client) Apps(ctx context.Context, team string) ([]*model.App, error) {
 			}
 
 			for i, rule := range app.AccessPolicy.Inbound.Rules {
-				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, &rule)
+				err = c.setHasMutualOnInbound(ctx, app.Name, team, env, rule)
 				if err != nil {
 					return nil, c.error(ctx, err, "setting hasMutual on inbound")
 				}
@@ -683,7 +683,7 @@ func (c *Client) toApp(_ context.Context, u *unstructured.Unstructured, env stri
 	ret.Authz = authz
 
 	for _, v := range app.Spec.Env {
-		m := model.Variable{
+		m := &model.Variable{
 			Name:  v.Name,
 			Value: v.Value,
 		}
@@ -706,7 +706,6 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 	} else {
 		ret.Name = topic.GetName()
 	}
-	ret.ACL = make([]model.ACL, 0)
 
 	for _, v := range topic.Spec.ACL {
 		acl := &model.ACL{}
@@ -714,7 +713,7 @@ func toTopic(u *unstructured.Unstructured, name, team string) (*model.Topic, err
 			return nil, fmt.Errorf("converting acl: %w", err)
 		}
 		if acl.Team == team && acl.Application == name {
-			ret.ACL = append(ret.ACL, *acl)
+			ret.ACL = append(ret.ACL, acl)
 		}
 	}
 
@@ -819,7 +818,7 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 			appState.Errors = append(appState.Errors, &model.InboundAccessError{
 				Revision: app.DeployInfo.CommitSha,
 				Level:    model.ErrorLevelWarning,
-				Rule:     rule,
+				Rule:     *rule,
 			})
 			if appState.State != model.StateFailing {
 				appState.State = model.StateNotnais
@@ -832,7 +831,7 @@ func setStatus(app *model.App, conditions []metav1.Condition, instances []*model
 			appState.Errors = append(appState.Errors, &model.OutboundAccessError{
 				Revision: app.DeployInfo.CommitSha,
 				Level:    model.ErrorLevelWarning,
-				Rule:     rule,
+				Rule:     *rule,
 			})
 			if appState.State != model.StateFailing {
 				appState.State = model.StateNotnais
@@ -869,7 +868,7 @@ func getCurrentCondition(conditions []metav1.Condition) AppCondition {
 	return AppConditionUnknown
 }
 
-func appStorage(u *unstructured.Unstructured, topics []model.Topic) ([]model.Storage, error) {
+func appStorage(u *unstructured.Unstructured, topics []*model.Topic) ([]model.Storage, error) {
 	app := &naisv1alpha1.Application{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, app); err != nil {
 		return nil, fmt.Errorf("converting to application: %w", err)

@@ -43,13 +43,13 @@ func (r *queryResolver) DailyCostForApp(ctx context.Context, team string, app st
 	}
 
 	costs, sum := DailyCostsFromDatabaseRows(from, to, rows)
-	series := make([]model.CostSeries, 0)
+	series := make([]*model.CostSeries, 0)
 	for costType, data := range costs {
 		costTypeSum := 0.0
 		for _, cost := range data {
 			costTypeSum += cost.Cost
 		}
-		series = append(series, model.CostSeries{
+		series = append(series, &model.CostSeries{
 			CostType: costType,
 			Sum:      costTypeSum,
 			Data:     data,
@@ -89,14 +89,14 @@ func (r *queryResolver) DailyCostForTeam(ctx context.Context, team string, from 
 	}
 
 	costs, sum := DailyCostsForTeamFromDatabaseRows(from, to, rows)
-	series := make([]model.CostSeries, 0)
+	series := make([]*model.CostSeries, 0)
 
 	for costType, data := range costs {
 		costTypeSum := 0.0
 		for _, cost := range data {
 			costTypeSum += cost.Cost
 		}
-		series = append(series, model.CostSeries{
+		series = append(series, &model.CostSeries{
 			CostType: costType,
 			Sum:      costTypeSum,
 			Data:     data,
@@ -121,12 +121,12 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 			return nil, err
 		}
 		sum := 0.0
-		cost := make([]model.CostEntry, len(rows))
+		cost := make([]*model.CostEntry, len(rows))
 		for idx, row := range rows {
 			sum += float64(row.DailyCost)
 			// make date variable equal last day in month of row.LastRecordedDate
 
-			cost[idx] = model.CostEntry{
+			cost[idx] = &model.CostEntry{
 				Date: scalar.NewDate(row.LastRecordedDate.Time),
 				Cost: float64(row.DailyCost),
 			}
@@ -141,12 +141,12 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 			return nil, err
 		}
 		sum := 0.0
-		cost := make([]model.CostEntry, len(rows))
+		cost := make([]*model.CostEntry, len(rows))
 		for idx, row := range rows {
 			sum += float64(row.DailyCost)
 			// make date variable equal last day in month of row.LastRecordedDate
 
-			cost[idx] = model.CostEntry{
+			cost[idx] = &model.CostEntry{
 				Date: scalar.NewDate(row.LastRecordedDate.Time),
 				Cost: float64(row.DailyCost),
 			}
@@ -176,9 +176,9 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 		return nil, err
 	}
 
-	ret := make([]model.EnvCost, len(r.clusters))
+	ret := make([]*model.EnvCost, len(r.clusters))
 	for idx, cluster := range r.clusters {
-		appsCost := make([]model.AppCost, 0)
+		appsCost := make([]*model.AppCost, 0)
 		rows, err := r.querier.DailyEnvCostForTeam(ctx, gensql.DailyEnvCostForTeamParams{
 			Team:     &filter.Team,
 			Env:      &cluster,
@@ -196,7 +196,7 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 			for _, c := range appCosts {
 				appSum += c.Cost
 			}
-			appsCost = append(appsCost, model.AppCost{
+			appsCost = append(appsCost, &model.AppCost{
 				App:  app,
 				Sum:  appSum,
 				Cost: appCosts,
@@ -207,7 +207,7 @@ func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter)
 			return appsCost[i].Sum < appsCost[j].Sum
 		})
 
-		ret[idx] = model.EnvCost{
+		ret[idx] = &model.EnvCost{
 			Env:  cluster,
 			Apps: appsCost,
 			Sum:  sum,

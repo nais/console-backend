@@ -12,7 +12,7 @@ extend type Query {
   ): App!
 }
 
-type App implements Node {
+type App {
   id: ID!
   name: String!
   image: String!
@@ -29,7 +29,7 @@ type App implements Node {
   manifest: String! @goField(forceResolver: true)
   team: Team! @goField(forceResolver: true)
   appState: AppState!
-  vulnerabilities: VulnerabilityList @goField(forceResolver: true)
+  vulnerabilities: Vulnerability @goField(forceResolver: true)
 }
 
 type AppState {
@@ -96,7 +96,7 @@ type OutboundAccessError implements StateError {
   rule: Rule!
 }
 
-type Instance implements Node {
+type Instance {
   id: ID!
   name: String!
   state: InstanceState!
@@ -132,9 +132,5 @@ enum State {
 
 type AppList {
   nodes: [App!]!
-  pageInfo: PageInfo!
-}
-type DeploymentList {
-  nodes: [Deployment!]!
   pageInfo: PageInfo!
 }

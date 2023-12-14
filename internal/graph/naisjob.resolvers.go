@@ -16,11 +16,7 @@ func (r *naisJobResolver) Runs(ctx context.Context, obj *model.NaisJob) ([]*mode
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]model.Run, 0)
-	for _, run := range runs {
-		ret = append(ret, *run)
-	}
-	return ret, nil
+	return runs, nil
 }
 
 // Manifest is the resolver for the manifest field.

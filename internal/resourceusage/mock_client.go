@@ -196,19 +196,19 @@ func (_c *MockClient_ResourceUtilizationForApp_Call) RunAndReturn(run func(conte
 }
 
 // ResourceUtilizationForTeam provides a mock function with given fields: ctx, team, start, end
-func (_m *MockClient) ResourceUtilizationForTeam(ctx context.Context, team string, start scalar.Date, end scalar.Date) ([]model.ResourceUtilizationForEnv, error) {
+func (_m *MockClient) ResourceUtilizationForTeam(ctx context.Context, team string, start scalar.Date, end scalar.Date) ([]*model.ResourceUtilizationForEnv, error) {
 	ret := _m.Called(ctx, team, start, end)
 
-	var r0 []model.ResourceUtilizationForEnv
+	var r0 []*model.ResourceUtilizationForEnv
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, scalar.Date, scalar.Date) ([]model.ResourceUtilizationForEnv, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, scalar.Date, scalar.Date) ([]*model.ResourceUtilizationForEnv, error)); ok {
 		return rf(ctx, team, start, end)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, scalar.Date, scalar.Date) []model.ResourceUtilizationForEnv); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, scalar.Date, scalar.Date) []*model.ResourceUtilizationForEnv); ok {
 		r0 = rf(ctx, team, start, end)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.ResourceUtilizationForEnv)
+			r0 = ret.Get(0).([]*model.ResourceUtilizationForEnv)
 		}
 	}
 
@@ -242,12 +242,12 @@ func (_c *MockClient_ResourceUtilizationForTeam_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockClient_ResourceUtilizationForTeam_Call) Return(_a0 []model.ResourceUtilizationForEnv, _a1 error) *MockClient_ResourceUtilizationForTeam_Call {
+func (_c *MockClient_ResourceUtilizationForTeam_Call) Return(_a0 []*model.ResourceUtilizationForEnv, _a1 error) *MockClient_ResourceUtilizationForTeam_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockClient_ResourceUtilizationForTeam_Call) RunAndReturn(run func(context.Context, string, scalar.Date, scalar.Date) ([]model.ResourceUtilizationForEnv, error)) *MockClient_ResourceUtilizationForTeam_Call {
+func (_c *MockClient_ResourceUtilizationForTeam_Call) RunAndReturn(run func(context.Context, string, scalar.Date, scalar.Date) ([]*model.ResourceUtilizationForEnv, error)) *MockClient_ResourceUtilizationForTeam_Call {
 	_c.Call.Return(run)
 	return _c
 }

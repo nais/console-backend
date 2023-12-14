@@ -20,12 +20,7 @@ func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.I
 		return nil, fmt.Errorf("getting instances from Kubernetes: %w", err)
 	}
 
-	ret := make([]model.Instance, 0)
-	for _, instance := range instances {
-		ret = append(ret, *instance)
-	}
-
-	return ret, nil
+	return instances, nil
 }
 
 // Manifest is the resolver for the manifest field.
@@ -47,7 +42,7 @@ func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, er
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
-func (r *appResolver) Vulnerabilities(ctx context.Context, obj *model.App) (*model.VulnerabilityList, error) {
+func (r *appResolver) Vulnerabilities(ctx context.Context, obj *model.App) (*model.Vulnerability, error) {
 	return r.dependencyTrackClient.VulnerabilitySummary(ctx, &dependencytrack.AppInstance{Env: obj.Env.Name, Team: obj.GQLVars.Team, App: obj.Name, Image: obj.Image})
 }
 

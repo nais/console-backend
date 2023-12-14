@@ -18,7 +18,7 @@ type Client interface {
 	ResourceUtilizationForApp(ctx context.Context, env, team, app string, start, end scalar.Date) (*model.ResourceUtilizationForApp, error)
 
 	// ResourceUtilizationForTeam returns resource utilization (usage and request) for a given team in the given time range
-	ResourceUtilizationForTeam(ctx context.Context, team string, start, end scalar.Date) ([]model.ResourceUtilizationForEnv, error)
+	ResourceUtilizationForTeam(ctx context.Context, team string, start, end scalar.Date) ([]*model.ResourceUtilizationForEnv, error)
 
 	// ResourceUtilizationOverageForTeam will return latest overage data for a given team
 	ResourceUtilizationOverageForTeam(ctx context.Context, team string) (*model.ResourceUtilizationOverageForTeam, error)
@@ -71,8 +71,8 @@ func (c *client) ResourceUtilizationForApp(ctx context.Context, env, team, app s
 	}, nil
 }
 
-func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, start, end scalar.Date) ([]model.ResourceUtilizationForEnv, error) {
-	ret := make([]model.ResourceUtilizationForEnv, 0)
+func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, start, end scalar.Date) ([]*model.ResourceUtilizationForEnv, error) {
+	ret := make([]*model.ResourceUtilizationForEnv, 0)
 	for _, env := range c.clusters {
 		cpu, err := c.resourceUtilizationForTeam(ctx, model.ResourceTypeCPU, env, team, start, end)
 		if err != nil {
@@ -84,7 +84,7 @@ func (c *client) ResourceUtilizationForTeam(ctx context.Context, team string, st
 			return nil, err
 		}
 
-		ret = append(ret, model.ResourceUtilizationForEnv{
+		ret = append(ret, &model.ResourceUtilizationForEnv{
 			Env:    env,
 			CPU:    cpu,
 			Memory: memory,
@@ -268,7 +268,7 @@ func (c *client) ResourceUtilizationTrendForTeam(ctx context.Context, team strin
 	}, nil
 }
 
-func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end scalar.Date) ([]model.ResourceUtilization, error) {
+func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType model.ResourceType, env, team, app string, start, end scalar.Date) ([]*model.ResourceUtilization, error) {
 	s, err := start.Time()
 	if err != nil {
 		return nil, err
@@ -310,9 +310,9 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 		utilizationMap[ts] = resourceUtilization(resourceType, ts, row.Request, row.Usage)
 	}
 
-	data := make([]model.ResourceUtilization, 0)
+	data := make([]*model.ResourceUtilization, 0)
 	for _, entry := range utilizationMap {
-		data = append(data, entry)
+		data = append(data, &entry)
 	}
 
 	sort.Slice(data, func(i, j int) bool {
@@ -322,7 +322,7 @@ func (c *client) resourceUtilizationForApp(ctx context.Context, resourceType mod
 	return data, nil
 }
 
-func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end scalar.Date) ([]model.ResourceUtilization, error) {
+func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType model.ResourceType, env, team string, start, end scalar.Date) ([]*model.ResourceUtilization, error) {
 	s, err := start.Time()
 	if err != nil {
 		return nil, err
@@ -363,9 +363,9 @@ func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType mo
 		utilizationMap[ts] = resourceUtilization(resourceType, ts, row.Request, row.Usage)
 	}
 
-	data := make([]model.ResourceUtilization, 0)
+	data := make([]*model.ResourceUtilization, 0)
 	for _, entry := range utilizationMap {
-		data = append(data, entry)
+		data = append(data, &entry)
 	}
 
 	sort.Slice(data, func(i, j int) bool {
@@ -375,7 +375,7 @@ func (c *client) resourceUtilizationForTeam(ctx context.Context, resourceType mo
 	return data, nil
 }
 
-func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource gensql.ResourceType, team string, timestamp pgtype.Timestamptz) (models []model.AppWithResourceUtilizationOverage, sumOverageCost float64, err error) {
+func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource gensql.ResourceType, team string, timestamp pgtype.Timestamptz) (models []*model.AppWithResourceUtilizationOverage, sumOverageCost float64, err error) {
 	rows, err := c.querier.ResourceUtilizationOverageForTeam(ctx, gensql.ResourceUtilizationOverageForTeamParams{
 		Team:         team,
 		ResourceType: resource,
@@ -388,7 +388,7 @@ func (c *client) resourceUtilizationOverageForTeam(ctx context.Context, resource
 	for _, row := range rows {
 		overageCostPerHour := costPerHour(resource, row.Overage)
 		sumOverageCost += overageCostPerHour
-		models = append(models, model.AppWithResourceUtilizationOverage{
+		models = append(models, &model.AppWithResourceUtilizationOverage{
 			Overage:                    row.Overage,
 			OverageCost:                overageCostPerHour,
 			Utilization:                row.Usage / row.Request * 100,

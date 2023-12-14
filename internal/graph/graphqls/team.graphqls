@@ -91,7 +91,7 @@ type JobsStatus {
 }
 
 "Deployment key type."
-type DeploymentKey implements Node {
+type DeploymentKey {
   "The unique identifier of the deployment key."
   id: ID!
 

@@ -9,12 +9,11 @@ import (
 	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
-	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 )
 
 // History is the resolver for the history field.
-func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (model.DeploymentResponse, error) {
+func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo, offset *int, limit *int) (model.DeploymentResponse, error) {
 	name := obj.GQLVars.App
 	kind := "Application"
 	if obj.GQLVars.Job != "" {
@@ -29,35 +28,12 @@ func (r *deployInfoResolver) History(ctx context.Context, obj *model.DeployInfo,
 
 	deploys = filterDeploysByNameAndKind(deploys, name, kind)
 
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	e := deployEdges(deploys, pagination)
+	pagination := model.NewPagination(offset, limit)
+	n, pi := model.PaginatedSlice(deploys, pagination)
 
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
-	}
-
-	hasNext := len(deploys) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.DeploymentConnection{
-		Edges: e,
-		PageInfo: model.PageInfo{
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-		},
+	return &model.DeploymentList{
+		Nodes:    deployToModel(n),
+		PageInfo: pi,
 	}, nil
 }
 

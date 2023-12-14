@@ -1,33 +1,25 @@
 extend type Query {
-    search(
-        query: String!
-        filter: SearchFilter
-        first: Int
-        last: Int
-        after: Cursor
-        before: Cursor
-    ): SearchConnection!
+  search(
+    query: String!
+    filter: SearchFilter
+    offset: Int
+    limit: Int
+  ): SearchList!
 }
 
 union SearchNode = App | Team | NaisJob
 
 input SearchFilter {
-    type: SearchType
+  type: SearchType
 }
 
-type SearchConnection implements Connection {
-    totalCount: Int!
-    pageInfo: PageInfo!
-    edges: [SearchEdge!]!
-}
-
-type SearchEdge implements Edge {
-    node: SearchNode!
-    cursor: Cursor!
+type SearchList {
+  pageInfo: PageInfo!
+  nodes: [SearchNode!]!
 }
 
 enum SearchType {
-    APP
-    TEAM
-    NAISJOB
+  APP
+  TEAM
+  NAISJOB
 }

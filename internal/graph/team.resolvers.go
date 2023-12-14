@@ -237,7 +237,7 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, offset 
 			HasPreviousPage: pagination.Offset > 0,
 			TotalCount:      0,
 		},
-	}
+	}, nil
 }
 
 // ViewerIsMember is the resolver for the viewerIsMember field.
@@ -314,9 +314,6 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, off
 	pagination := model.NewPagination(offset, limit)
 	v, pi := model.PaginatedSlice(nodes, pagination)
 
-	
-	
-	
 	return &model.VulnerabilityList{
 		Nodes:    v,
 		PageInfo: pi,
@@ -381,7 +378,5 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	teamResolver     struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type teamResolver struct{ *Resolver }

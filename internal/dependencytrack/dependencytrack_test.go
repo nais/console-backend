@@ -36,7 +36,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 		name   string
 		input  []*AppInstance
 		expect func(input []*AppInstance, mock *MockInternalClient)
-		assert func(t *testing.T, v []*model.VulnerabilitiesNode, err error)
+		assert func(t *testing.T, v []*model.Vulnerability, err error)
 	}{
 		{
 			name:  "should return list with summary null if no apps have a project",
@@ -45,7 +45,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:latest")).Return([]*dependencytrack.Project{}, nil)
 			},
-			assert: func(t *testing.T, v []*model.VulnerabilitiesNode, err error) {
+			assert: func(t *testing.T, v []*model.Vulnerability, err error) {
 				assert.NoError(t, err)
 				assert.Len(t, v, 2)
 				assert.Nil(t, v[0].Summary)
@@ -79,7 +79,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:notfound")).Return([]*dependencytrack.Project{}, nil)
 			},
-			assert: func(t *testing.T, v []*model.VulnerabilitiesNode, err error) {
+			assert: func(t *testing.T, v []*model.Vulnerability, err error) {
 				assert.NoError(t, err)
 				assert.Len(t, v, 2)
 				for _, vn := range v {
@@ -108,7 +108,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 				mock.EXPECT().
 					GetFindings(ctx, ps[0].Uuid).Return(findings(), nil).Times(2)
 			},
-			assert: func(t *testing.T, v []*model.VulnerabilitiesNode, err error) {
+			assert: func(t *testing.T, v []*model.Vulnerability, err error) {
 				assert.NoError(t, err)
 				assert.Equal(t, 2, len(v))
 				assert.NotNil(t, v[0].Summary)
@@ -137,7 +137,7 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 		name   string
 		input  *AppInstance
 		expect func(input *AppInstance, mock *MockInternalClient)
-		assert func(t *testing.T, v *model.VulnerabilitiesNode, err error)
+		assert func(t *testing.T, v *model.Vulnerability, err error)
 	}{
 		{
 			name:  "should return empty summary if no bom is found",
@@ -146,7 +146,7 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:latest")).Return([]*dependencytrack.Project{project(input.ToTags()...)}, nil)
 			},
-			assert: func(t *testing.T, v *model.VulnerabilitiesNode, err error) {
+			assert: func(t *testing.T, v *model.Vulnerability, err error) {
 				assert.NoError(t, err)
 				assert.Equal(t, -1, v.Summary.Critical)
 				assert.Equal(t, -1, v.Summary.High)
@@ -162,7 +162,7 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 				mock.EXPECT().
 					GetProjectsByTag(ctx, url.QueryEscape("image:latest")).Return([]*dependencytrack.Project{}, nil)
 			},
-			assert: func(t *testing.T, v *model.VulnerabilitiesNode, err error) {
+			assert: func(t *testing.T, v *model.Vulnerability, err error) {
 				assert.NoError(t, err)
 				assert.Nil(t, v.Summary)
 			},
@@ -180,7 +180,7 @@ func TestClient_VulnerabilitySummary(t *testing.T) {
 				mock.EXPECT().
 					GetFindings(ctx, p[0].Uuid).Return(findings(), nil)
 			},
-			assert: func(t *testing.T, v *model.VulnerabilitiesNode, err error) {
+			assert: func(t *testing.T, v *model.Vulnerability, err error) {
 				assert.NoError(t, err)
 				assert.NotNilf(t, v.Summary, "summary is nil")
 				assert.Equal(t, 4, v.Summary.Total)

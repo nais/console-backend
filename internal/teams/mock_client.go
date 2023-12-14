@@ -79,6 +79,60 @@ func (_c *MockClient_GetGithubRepositories_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
+// GetSelf provides a mock function with given fields: ctx
+func (_m *MockClient) GetSelf(ctx context.Context) (*User, error) {
+	ret := _m.Called(ctx)
+
+	var r0 *User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*User, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *User); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_GetSelf_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSelf'
+type MockClient_GetSelf_Call struct {
+	*mock.Call
+}
+
+// GetSelf is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockClient_Expecter) GetSelf(ctx interface{}) *MockClient_GetSelf_Call {
+	return &MockClient_GetSelf_Call{Call: _e.mock.On("GetSelf", ctx)}
+}
+
+func (_c *MockClient_GetSelf_Call) Run(run func(ctx context.Context)) *MockClient_GetSelf_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockClient_GetSelf_Call) Return(_a0 *User, _a1 error) *MockClient_GetSelf_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_GetSelf_Call) RunAndReturn(run func(context.Context) (*User, error)) *MockClient_GetSelf_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetTeam provides a mock function with given fields: ctx, teamSlug
 func (_m *MockClient) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
 	ret := _m.Called(ctx, teamSlug)
@@ -349,61 +403,6 @@ func (_c *MockClient_GetUser_Call) Return(_a0 *User, _a1 error) *MockClient_GetU
 }
 
 func (_c *MockClient_GetUser_Call) RunAndReturn(run func(context.Context, string) (*User, error)) *MockClient_GetUser_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetUserByID provides a mock function with given fields: ctx, id
-func (_m *MockClient) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	ret := _m.Called(ctx, id)
-
-	var r0 *model.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*model.User, error)); ok {
-		return rf(ctx, id)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *model.User); ok {
-		r0 = rf(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockClient_GetUserByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByID'
-type MockClient_GetUserByID_Call struct {
-	*mock.Call
-}
-
-// GetUserByID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *MockClient_Expecter) GetUserByID(ctx interface{}, id interface{}) *MockClient_GetUserByID_Call {
-	return &MockClient_GetUserByID_Call{Call: _e.mock.On("GetUserByID", ctx, id)}
-}
-
-func (_c *MockClient_GetUserByID_Call) Run(run func(ctx context.Context, id string)) *MockClient_GetUserByID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *MockClient_GetUserByID_Call) Return(_a0 *model.User, _a1 error) *MockClient_GetUserByID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockClient_GetUserByID_Call) RunAndReturn(run func(context.Context, string) (*model.User, error)) *MockClient_GetUserByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

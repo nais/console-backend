@@ -17,8 +17,8 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("no dates specified", func(t *testing.T) {
-		cpuData := make([]model.ResourceUtilization, 0)
-		memoryData := make([]model.ResourceUtilization, 0)
+		cpuData := make([]*model.ResourceUtilization, 0)
+		memoryData := make([]*model.ResourceUtilization, 0)
 
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.
@@ -51,8 +51,8 @@ func Test_queryResolver_ResourceUtilizationForApp(t *testing.T) {
 		toTime := time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC)
 		to := scalar.NewDate(toTime)
 
-		cpuData := make([]model.ResourceUtilization, 0)
-		memoryData := make([]model.ResourceUtilization, 0)
+		cpuData := make([]*model.ResourceUtilization, 0)
+		memoryData := make([]*model.ResourceUtilization, 0)
 
 		resourceUsageClient := resourceusage.NewMockClient(t)
 		resourceUsageClient.

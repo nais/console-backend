@@ -203,7 +203,7 @@ type ComplexityRoot struct {
 	DeployInfo struct {
 		CommitSha func(childComplexity int) int
 		Deployer  func(childComplexity int) int
-		History   func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		History   func(childComplexity int, offset *int, limit *int) int
 		Timestamp func(childComplexity int) int
 		URL       func(childComplexity int) int
 	}
@@ -216,17 +216,6 @@ type ComplexityRoot struct {
 		Resources  func(childComplexity int) int
 		Statuses   func(childComplexity int) int
 		Team       func(childComplexity int) int
-	}
-
-	DeploymentConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	DeploymentEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
 	}
 
 	DeploymentKey struct {
@@ -509,18 +498,17 @@ type ComplexityRoot struct {
 		CurrentResourceUtilizationForTeam   func(childComplexity int, team string) int
 		DailyCostForApp                     func(childComplexity int, team string, app string, env string, from scalar.Date, to scalar.Date) int
 		DailyCostForTeam                    func(childComplexity int, team string, from scalar.Date, to scalar.Date) int
-		Deployments                         func(childComplexity int, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) int
+		Deployments                         func(childComplexity int, offset *int, limit *int) int
 		EnvCost                             func(childComplexity int, filter model.EnvCostFilter) int
 		MonthlyCost                         func(childComplexity int, filter model.MonthlyCostFilter) int
 		Naisjob                             func(childComplexity int, name string, team string, env string) int
-		Node                                func(childComplexity int, id scalar.Ident) int
 		ResourceUtilizationDateRangeForApp  func(childComplexity int, env string, team string, app string) int
 		ResourceUtilizationDateRangeForTeam func(childComplexity int, team string) int
 		ResourceUtilizationForApp           func(childComplexity int, env string, team string, app string, from *scalar.Date, to *scalar.Date) int
 		ResourceUtilizationForTeam          func(childComplexity int, team string, from *scalar.Date, to *scalar.Date) int
 		ResourceUtilizationOverageForTeam   func(childComplexity int, team string) int
 		ResourceUtilizationTrendForTeam     func(childComplexity int, team string) int
-		Search                              func(childComplexity int, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) int
+		Search                              func(childComplexity int, query string, filter *model.SearchFilter, offset *int, limit *int) int
 		__resolve__service                  func(childComplexity int) int
 		__resolve_entities                  func(childComplexity int, representations []map[string]interface{}) int
 	}
@@ -604,15 +592,9 @@ type ComplexityRoot struct {
 		StartTime      func(childComplexity int) int
 	}
 
-	SearchConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	SearchEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
+	SearchList struct {
+		Nodes    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
 	}
 
 	Sidecar struct {
@@ -712,10 +694,10 @@ type AppResolver interface {
 	Manifest(ctx context.Context, obj *model.App) (string, error)
 	Team(ctx context.Context, obj *model.App) (*model.Team, error)
 
-	Vulnerabilities(ctx context.Context, obj *model.App) (*model.VulnerabilityList, error)
+	Vulnerabilities(ctx context.Context, obj *model.App) (*model.Vulnerability, error)
 }
 type DeployInfoResolver interface {
-	History(ctx context.Context, obj *model.DeployInfo, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (model.DeploymentResponse, error)
+	History(ctx context.Context, obj *model.DeployInfo, offset *int, limit *int) (model.DeploymentResponse, error)
 }
 type EntityResolver interface {
 	FindTeamBySlug(ctx context.Context, slug string) (*model.Team, error)
@@ -735,7 +717,7 @@ type QueryResolver interface {
 	DailyCostForTeam(ctx context.Context, team string, from scalar.Date, to scalar.Date) (*model.DailyCost, error)
 	MonthlyCost(ctx context.Context, filter model.MonthlyCostFilter) (*model.MonthlyCost, error)
 	EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]*model.EnvCost, error)
-	Deployments(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error)
+	Deployments(ctx context.Context, offset *int, limit *int) (*model.DeploymentList, error)
 	Naisjob(ctx context.Context, name string, team string, env string) (*model.NaisJob, error)
 	ResourceUtilizationTrendForTeam(ctx context.Context, team string) (*model.ResourceUtilizationTrend, error)
 	CurrentResourceUtilizationForApp(ctx context.Context, env string, team string, app string) (*model.CurrentResourceUtilization, error)
@@ -745,8 +727,7 @@ type QueryResolver interface {
 	ResourceUtilizationDateRangeForTeam(ctx context.Context, team string) (*model.ResourceUtilizationDateRange, error)
 	ResourceUtilizationDateRangeForApp(ctx context.Context, env string, team string, app string) (*model.ResourceUtilizationDateRange, error)
 	ResourceUtilizationForApp(ctx context.Context, env string, team string, app string, from *scalar.Date, to *scalar.Date) (*model.ResourceUtilizationForApp, error)
-	Node(ctx context.Context, id scalar.Ident) (model.Node, error)
-	Search(ctx context.Context, query string, filter *model.SearchFilter, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.SearchConnection, error)
+	Search(ctx context.Context, query string, filter *model.SearchFilter, offset *int, limit *int) (*model.SearchList, error)
 }
 type SubscriptionResolver interface {
 	Log(ctx context.Context, input *model.LogSubscriptionInput) (<-chan *model.LogLine, error)
@@ -1345,7 +1326,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.DeployInfo.History(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
+		return e.complexity.DeployInfo.History(childComplexity, args["offset"].(*int), args["limit"].(*int)), true
 
 	case "DeployInfo.timestamp":
 		if e.complexity.DeployInfo.Timestamp == nil {
@@ -1409,41 +1390,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Deployment.Team(childComplexity), true
-
-	case "DeploymentConnection.edges":
-		if e.complexity.DeploymentConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.DeploymentConnection.Edges(childComplexity), true
-
-	case "DeploymentConnection.pageInfo":
-		if e.complexity.DeploymentConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.DeploymentConnection.PageInfo(childComplexity), true
-
-	case "DeploymentConnection.totalCount":
-		if e.complexity.DeploymentConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.DeploymentConnection.TotalCount(childComplexity), true
-
-	case "DeploymentEdge.cursor":
-		if e.complexity.DeploymentEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.DeploymentEdge.Cursor(childComplexity), true
-
-	case "DeploymentEdge.node":
-		if e.complexity.DeploymentEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.DeploymentEdge.Node(childComplexity), true
 
 	case "DeploymentKey.created":
 		if e.complexity.DeploymentKey.Created == nil {
@@ -2519,7 +2465,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Deployments(childComplexity, args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor), args["limit"].(*int)), true
+		return e.complexity.Query.Deployments(childComplexity, args["offset"].(*int), args["limit"].(*int)), true
 
 	case "Query.envCost":
 		if e.complexity.Query.EnvCost == nil {
@@ -2556,18 +2502,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Naisjob(childComplexity, args["name"].(string), args["team"].(string), args["env"].(string)), true
-
-	case "Query.node":
-		if e.complexity.Query.Node == nil {
-			break
-		}
-
-		args, err := ec.field_Query_node_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Node(childComplexity, args["id"].(scalar.Ident)), true
 
 	case "Query.resourceUtilizationDateRangeForApp":
 		if e.complexity.Query.ResourceUtilizationDateRangeForApp == nil {
@@ -2651,7 +2585,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["filter"].(*model.SearchFilter), args["first"].(*int), args["last"].(*int), args["after"].(*scalar.Cursor), args["before"].(*scalar.Cursor)), true
+		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["filter"].(*model.SearchFilter), args["offset"].(*int), args["limit"].(*int)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -2994,40 +2928,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Run.StartTime(childComplexity), true
 
-	case "SearchConnection.edges":
-		if e.complexity.SearchConnection.Edges == nil {
+	case "SearchList.nodes":
+		if e.complexity.SearchList.Nodes == nil {
 			break
 		}
 
-		return e.complexity.SearchConnection.Edges(childComplexity), true
+		return e.complexity.SearchList.Nodes(childComplexity), true
 
-	case "SearchConnection.pageInfo":
-		if e.complexity.SearchConnection.PageInfo == nil {
+	case "SearchList.pageInfo":
+		if e.complexity.SearchList.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.SearchConnection.PageInfo(childComplexity), true
-
-	case "SearchConnection.totalCount":
-		if e.complexity.SearchConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.SearchConnection.TotalCount(childComplexity), true
-
-	case "SearchEdge.cursor":
-		if e.complexity.SearchEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.SearchEdge.Cursor(childComplexity), true
-
-	case "SearchEdge.node":
-		if e.complexity.SearchEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.SearchEdge.Node(childComplexity), true
+		return e.complexity.SearchList.PageInfo(childComplexity), true
 
 	case "Sidecar.autoLogin":
 		if e.complexity.Sidecar.AutoLogin == nil {
@@ -3661,41 +3574,23 @@ func (ec *executionContext) field_DeployInfo_history_args(ctx context.Context, r
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
 		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg0
+	args["offset"] = arg0
 	var arg1 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg1
-	var arg2 *scalar.Cursor
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["after"] = arg2
-	var arg3 *scalar.Cursor
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["before"] = arg3
+	args["limit"] = arg1
 	return args, nil
 }
 
@@ -3928,50 +3823,23 @@ func (ec *executionContext) field_Query_deployments_args(ctx context.Context, ra
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
 		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg0
+	args["offset"] = arg0
 	var arg1 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg1
-	var arg2 *scalar.Cursor
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg2, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["after"] = arg2
-	var arg3 *scalar.Cursor
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg3, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["before"] = arg3
-	var arg4 *int
-	if tmp, ok := rawArgs["limit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-		arg4, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["limit"] = arg4
+	args["limit"] = arg1
 	return args, nil
 }
 
@@ -4035,21 +3903,6 @@ func (ec *executionContext) field_Query_naisjob_args(ctx context.Context, rawArg
 		}
 	}
 	args["env"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 scalar.Ident
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐIdent(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
 	return args, nil
 }
 
@@ -4237,41 +4090,23 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 	}
 	args["filter"] = arg1
 	var arg2 *int
-	if tmp, ok := rawArgs["first"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
 		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg2
+	args["offset"] = arg2
 	var arg3 *int
-	if tmp, ok := rawArgs["last"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 		arg3, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["last"] = arg3
-	var arg4 *scalar.Cursor
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg4, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["after"] = arg4
-	var arg5 *scalar.Cursor
-	if tmp, ok := rawArgs["before"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-		arg5, err = ec.unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["before"] = arg5
+	args["limit"] = arg3
 	return args, nil
 }
 
@@ -5500,9 +5335,9 @@ func (ec *executionContext) _App_vulnerabilities(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.VulnerabilityList)
+	res := resTmp.(*model.Vulnerability)
 	fc.Result = res
-	return ec.marshalOVulnerabilityList2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilityList(ctx, field.Selections, res)
+	return ec.marshalOVulnerability2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerability(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_App_vulnerabilities(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5513,12 +5348,20 @@ func (ec *executionContext) fieldContext_App_vulnerabilities(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "nodes":
-				return ec.fieldContext_VulnerabilityList_nodes(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_VulnerabilityList_pageInfo(ctx, field)
+			case "id":
+				return ec.fieldContext_Vulnerability_id(ctx, field)
+			case "appName":
+				return ec.fieldContext_Vulnerability_appName(ctx, field)
+			case "env":
+				return ec.fieldContext_Vulnerability_env(ctx, field)
+			case "findingsLink":
+				return ec.fieldContext_Vulnerability_findingsLink(ctx, field)
+			case "summary":
+				return ec.fieldContext_Vulnerability_summary(ctx, field)
+			case "hasBom":
+				return ec.fieldContext_Vulnerability_hasBom(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type VulnerabilityList", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Vulnerability", field.Name)
 		},
 	}
 	return fc, nil
@@ -8259,7 +8102,7 @@ func (ec *executionContext) _DeployInfo_history(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DeployInfo().History(rctx, obj, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
+		return ec.resolvers.DeployInfo().History(rctx, obj, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8651,256 +8494,6 @@ func (ec *executionContext) fieldContext_Deployment_repository(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeploymentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeploymentConnection_totalCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeploymentConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeploymentConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeploymentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeploymentConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeploymentConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeploymentConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_PageInfo_totalCount(ctx, field)
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeploymentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeploymentConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.DeploymentEdge)
-	fc.Result = res
-	return ec.marshalNDeploymentEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeploymentConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeploymentConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_DeploymentEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_DeploymentEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DeploymentEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeploymentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeploymentEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(scalar.Cursor)
-	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeploymentEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeploymentEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Cursor does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeploymentEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.DeploymentEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeploymentEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.Deployment)
-	fc.Result = res
-	return ec.marshalNDeployment2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployment(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeploymentEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeploymentEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Deployment_id(ctx, field)
-			case "team":
-				return ec.fieldContext_Deployment_team(ctx, field)
-			case "resources":
-				return ec.fieldContext_Deployment_resources(ctx, field)
-			case "env":
-				return ec.fieldContext_Deployment_env(ctx, field)
-			case "statuses":
-				return ec.fieldContext_Deployment_statuses(ctx, field)
-			case "created":
-				return ec.fieldContext_Deployment_created(ctx, field)
-			case "repository":
-				return ec.fieldContext_Deployment_repository(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Deployment", field.Name)
 		},
 	}
 	return fc, nil
@@ -15847,7 +15440,7 @@ func (ec *executionContext) _Query_deployments(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Deployments(rctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor), fc.Args["limit"].(*int))
+		return ec.resolvers.Query().Deployments(rctx, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15859,9 +15452,9 @@ func (ec *executionContext) _Query_deployments(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.DeploymentConnection)
+	res := resTmp.(*model.DeploymentList)
 	fc.Result = res
-	return ec.marshalNDeploymentConnection2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentConnection(ctx, field.Selections, res)
+	return ec.marshalNDeploymentList2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentList(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_deployments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15872,14 +15465,12 @@ func (ec *executionContext) fieldContext_Query_deployments(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_DeploymentConnection_totalCount(ctx, field)
+			case "nodes":
+				return ec.fieldContext_DeploymentList_nodes(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_DeploymentConnection_pageInfo(ctx, field)
-			case "edges":
-				return ec.fieldContext_DeploymentConnection_edges(ctx, field)
+				return ec.fieldContext_DeploymentList_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeploymentConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeploymentList", field.Name)
 		},
 	}
 	defer func() {
@@ -16493,58 +16084,6 @@ func (ec *executionContext) fieldContext_Query_resourceUtilizationForApp(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_node(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Node(rctx, fc.Args["id"].(scalar.Ident))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(model.Node)
-	fc.Result = res
-	return ec.marshalONode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNode(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_node_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_search(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_search(ctx, field)
 	if err != nil {
@@ -16559,7 +16098,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["filter"].(*model.SearchFilter), fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["after"].(*scalar.Cursor), fc.Args["before"].(*scalar.Cursor))
+		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["filter"].(*model.SearchFilter), fc.Args["offset"].(*int), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16571,9 +16110,9 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.SearchConnection)
+	res := resTmp.(*model.SearchList)
 	fc.Result = res
-	return ec.marshalNSearchConnection2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchConnection(ctx, field.Selections, res)
+	return ec.marshalNSearchList2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchList(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_search(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16584,14 +16123,12 @@ func (ec *executionContext) fieldContext_Query_search(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_SearchConnection_totalCount(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_SearchConnection_pageInfo(ctx, field)
-			case "edges":
-				return ec.fieldContext_SearchConnection_edges(ctx, field)
+				return ec.fieldContext_SearchList_pageInfo(ctx, field)
+			case "nodes":
+				return ec.fieldContext_SearchList_nodes(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SearchConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SearchList", field.Name)
 		},
 	}
 	defer func() {
@@ -18968,52 +18505,8 @@ func (ec *executionContext) fieldContext_Run_failed(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchConnection_totalCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SearchConnection_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SearchConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SearchConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchConnection_pageInfo(ctx, field)
+func (ec *executionContext) _SearchList_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.SearchList) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchList_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -19043,9 +18536,9 @@ func (ec *executionContext) _SearchConnection_pageInfo(ctx context.Context, fiel
 	return ec.marshalNPageInfo2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchList_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SearchConnection",
+		Object:     "SearchList",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -19064,8 +18557,8 @@ func (ec *executionContext) fieldContext_SearchConnection_pageInfo(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SearchConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchConnection_edges(ctx, field)
+func (ec *executionContext) _SearchList_nodes(ctx context.Context, field graphql.CollectedField, obj *model.SearchList) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SearchList_nodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -19078,7 +18571,7 @@ func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
+		return obj.Nodes, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -19090,113 +18583,19 @@ func (ec *executionContext) _SearchConnection_edges(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SearchEdge)
+	res := resTmp.([]model.SearchNode)
 	fc.Result = res
-	return ec.marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNSearchNode2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchNodeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SearchConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SearchList_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "SearchConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_SearchEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_SearchEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SearchEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SearchEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.SearchEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.SearchNode)
-	fc.Result = res
-	return ec.marshalNSearchNode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchNode(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SearchEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SearchEdge",
+		Object:     "SearchList",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type SearchNode does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SearchEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.SearchEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SearchEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(scalar.Cursor)
-	fc.Result = res
-	return ec.marshalNCursor2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SearchEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SearchEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Cursor does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23839,47 +23238,17 @@ func (ec *executionContext) _Authz(ctx context.Context, sel ast.SelectionSet, ob
 	}
 }
 
-func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSet, obj model.Connection) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.DeploymentConnection:
-		return ec._DeploymentConnection(ctx, sel, &obj)
-	case *model.DeploymentConnection:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DeploymentConnection(ctx, sel, obj)
-	case model.NaisJobConnection:
-		return ec._NaisJobConnection(ctx, sel, &obj)
-	case *model.NaisJobConnection:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._NaisJobConnection(ctx, sel, obj)
-	case model.SearchConnection:
-		return ec._SearchConnection(ctx, sel, &obj)
-	case *model.SearchConnection:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SearchConnection(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 func (ec *executionContext) _DeploymentResponse(ctx context.Context, sel ast.SelectionSet, obj model.DeploymentResponse) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.DeploymentConnection:
-		return ec._DeploymentConnection(ctx, sel, &obj)
-	case *model.DeploymentConnection:
+	case model.DeploymentList:
+		return ec._DeploymentList(ctx, sel, &obj)
+	case *model.DeploymentList:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._DeploymentConnection(ctx, sel, obj)
+		return ec._DeploymentList(ctx, sel, obj)
 	case model.Error:
 		return ec._Error(ctx, sel, &obj)
 	case *model.Error:
@@ -23887,87 +23256,6 @@ func (ec *executionContext) _DeploymentResponse(ctx context.Context, sel ast.Sel
 			return graphql.Null
 		}
 		return ec._Error(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _Edge(ctx context.Context, sel ast.SelectionSet, obj model.Edge) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.DeploymentEdge:
-		return ec._DeploymentEdge(ctx, sel, &obj)
-	case *model.DeploymentEdge:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DeploymentEdge(ctx, sel, obj)
-	case model.NaisJobEdge:
-		return ec._NaisJobEdge(ctx, sel, &obj)
-	case *model.NaisJobEdge:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._NaisJobEdge(ctx, sel, obj)
-	case model.SearchEdge:
-		return ec._SearchEdge(ctx, sel, &obj)
-	case *model.SearchEdge:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SearchEdge(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
-func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj model.Node) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.App:
-		return ec._App(ctx, sel, &obj)
-	case *model.App:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._App(ctx, sel, obj)
-	case model.Instance:
-		return ec._Instance(ctx, sel, &obj)
-	case *model.Instance:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Instance(ctx, sel, obj)
-	case model.Run:
-		return ec._Run(ctx, sel, &obj)
-	case *model.Run:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Run(ctx, sel, obj)
-	case model.NaisJob:
-		return ec._NaisJob(ctx, sel, &obj)
-	case *model.NaisJob:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._NaisJob(ctx, sel, obj)
-	case model.Env:
-		return ec._Env(ctx, sel, &obj)
-	case *model.Env:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Env(ctx, sel, obj)
-	case model.DeploymentKey:
-		return ec._DeploymentKey(ctx, sel, &obj)
-	case *model.DeploymentKey:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DeploymentKey(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -24239,7 +23527,7 @@ func (ec *executionContext) _Acl(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
-var appImplementors = []string{"App", "Node", "SearchNode"}
+var appImplementors = []string{"App", "SearchNode"}
 
 func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj *model.App) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, appImplementors)
@@ -25550,100 +24838,7 @@ func (ec *executionContext) _Deployment(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var deploymentConnectionImplementors = []string{"DeploymentConnection", "Connection", "DeploymentResponse"}
-
-func (ec *executionContext) _DeploymentConnection(ctx context.Context, sel ast.SelectionSet, obj *model.DeploymentConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deploymentConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeploymentConnection")
-		case "totalCount":
-			out.Values[i] = ec._DeploymentConnection_totalCount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._DeploymentConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "edges":
-			out.Values[i] = ec._DeploymentConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deploymentEdgeImplementors = []string{"DeploymentEdge", "Edge"}
-
-func (ec *executionContext) _DeploymentEdge(ctx context.Context, sel ast.SelectionSet, obj *model.DeploymentEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deploymentEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeploymentEdge")
-		case "cursor":
-			out.Values[i] = ec._DeploymentEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._DeploymentEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deploymentKeyImplementors = []string{"DeploymentKey", "Node"}
+var deploymentKeyImplementors = []string{"DeploymentKey"}
 
 func (ec *executionContext) _DeploymentKey(ctx context.Context, sel ast.SelectionSet, obj *model.DeploymentKey) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deploymentKeyImplementors)
@@ -25697,7 +24892,7 @@ func (ec *executionContext) _DeploymentKey(ctx context.Context, sel ast.Selectio
 	return out
 }
 
-var deploymentListImplementors = []string{"DeploymentList"}
+var deploymentListImplementors = []string{"DeploymentList", "DeploymentResponse"}
 
 func (ec *executionContext) _DeploymentList(ctx context.Context, sel ast.SelectionSet, obj *model.DeploymentList) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, deploymentListImplementors)
@@ -26033,7 +25228,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 	return out
 }
 
-var envImplementors = []string{"Env", "Node"}
+var envImplementors = []string{"Env"}
 
 func (ec *executionContext) _Env(ctx context.Context, sel ast.SelectionSet, obj *model.Env) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, envImplementors)
@@ -26689,7 +25884,7 @@ func (ec *executionContext) _Insights(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var instanceImplementors = []string{"Instance", "Node"}
+var instanceImplementors = []string{"Instance"}
 
 func (ec *executionContext) _Instance(ctx context.Context, sel ast.SelectionSet, obj *model.Instance) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, instanceImplementors)
@@ -27262,7 +26457,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
-var naisJobImplementors = []string{"NaisJob", "Node", "SearchNode"}
+var naisJobImplementors = []string{"NaisJob", "SearchNode"}
 
 func (ec *executionContext) _NaisJob(ctx context.Context, sel ast.SelectionSet, obj *model.NaisJob) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, naisJobImplementors)
@@ -27474,7 +26669,7 @@ func (ec *executionContext) _NaisJob(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var naisJobConnectionImplementors = []string{"NaisJobConnection", "Connection"}
+var naisJobConnectionImplementors = []string{"NaisJobConnection"}
 
 func (ec *executionContext) _NaisJobConnection(ctx context.Context, sel ast.SelectionSet, obj *model.NaisJobConnection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, naisJobConnectionImplementors)
@@ -27523,7 +26718,7 @@ func (ec *executionContext) _NaisJobConnection(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var naisJobEdgeImplementors = []string{"NaisJobEdge", "Edge"}
+var naisJobEdgeImplementors = []string{"NaisJobEdge"}
 
 func (ec *executionContext) _NaisJobEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NaisJobEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, naisJobEdgeImplementors)
@@ -28278,25 +27473,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "node":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_node(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "search":
 			field := field
 
@@ -28913,7 +28089,7 @@ func (ec *executionContext) _Rule(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var runImplementors = []string{"Run", "Node"}
+var runImplementors = []string{"Run"}
 
 func (ec *executionContext) _Run(ctx context.Context, sel ast.SelectionSet, obj *model.Run) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, runImplementors)
@@ -28986,73 +28162,24 @@ func (ec *executionContext) _Run(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
-var searchConnectionImplementors = []string{"SearchConnection", "Connection"}
+var searchListImplementors = []string{"SearchList"}
 
-func (ec *executionContext) _SearchConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SearchConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, searchConnectionImplementors)
+func (ec *executionContext) _SearchList(ctx context.Context, sel ast.SelectionSet, obj *model.SearchList) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, searchListImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("SearchConnection")
-		case "totalCount":
-			out.Values[i] = ec._SearchConnection_totalCount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+			out.Values[i] = graphql.MarshalString("SearchList")
 		case "pageInfo":
-			out.Values[i] = ec._SearchConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._SearchList_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "edges":
-			out.Values[i] = ec._SearchConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var searchEdgeImplementors = []string{"SearchEdge", "Edge"}
-
-func (ec *executionContext) _SearchEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SearchEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, searchEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SearchEdge")
-		case "node":
-			out.Values[i] = ec._SearchEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "cursor":
-			out.Values[i] = ec._SearchEdge_cursor(ctx, field, obj)
+		case "nodes":
+			out.Values[i] = ec._SearchList_nodes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -31036,10 +30163,6 @@ func (ec *executionContext) marshalNDeployInfo2githubᚗcomᚋnaisᚋconsoleᚑb
 	return ec._DeployInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeployment2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeployment(ctx context.Context, sel ast.SelectionSet, v model.Deployment) graphql.Marshaler {
-	return ec._Deployment(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNDeployment2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Deployment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -31092,74 +30215,6 @@ func (ec *executionContext) marshalNDeployment2ᚖgithubᚗcomᚋnaisᚋconsole�
 		return graphql.Null
 	}
 	return ec._Deployment(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDeploymentConnection2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentConnection(ctx context.Context, sel ast.SelectionSet, v model.DeploymentConnection) graphql.Marshaler {
-	return ec._DeploymentConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeploymentConnection2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentConnection(ctx context.Context, sel ast.SelectionSet, v *model.DeploymentConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeploymentConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDeploymentEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DeploymentEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDeploymentEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNDeploymentEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentEdge(ctx context.Context, sel ast.SelectionSet, v *model.DeploymentEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeploymentEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDeploymentKey2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐDeploymentKey(ctx context.Context, sel ast.SelectionSet, v model.DeploymentKey) graphql.Marshaler {
@@ -32263,21 +31318,31 @@ func (ec *executionContext) marshalNRun2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbacke
 	return ec._Run(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSearchConnection2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchConnection(ctx context.Context, sel ast.SelectionSet, v model.SearchConnection) graphql.Marshaler {
-	return ec._SearchConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNSearchList2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchList(ctx context.Context, sel ast.SelectionSet, v model.SearchList) graphql.Marshaler {
+	return ec._SearchList(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSearchConnection2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchConnection(ctx context.Context, sel ast.SelectionSet, v *model.SearchConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNSearchList2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchList(ctx context.Context, sel ast.SelectionSet, v *model.SearchList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._SearchConnection(ctx, sel, v)
+	return ec._SearchList(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SearchEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNSearchNode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchNode(ctx context.Context, sel ast.SelectionSet, v model.SearchNode) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SearchNode(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSearchNode2ᚕgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.SearchNode) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -32301,7 +31366,7 @@ func (ec *executionContext) marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconso
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSearchEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNSearchNode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchNode(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -32319,26 +31384,6 @@ func (ec *executionContext) marshalNSearchEdge2ᚕᚖgithubᚗcomᚋnaisᚋconso
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalNSearchEdge2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchEdge(ctx context.Context, sel ast.SelectionSet, v *model.SearchEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SearchEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSearchNode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSearchNode(ctx context.Context, sel ast.SelectionSet, v model.SearchNode) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SearchNode(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNSortOrder2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (model.SortOrder, error) {
@@ -33209,22 +32254,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, v interface{}) (*scalar.Cursor, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(scalar.Cursor)
-	err := res.UnmarshalGQLContext(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOCursor2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐCursor(ctx context.Context, sel ast.SelectionSet, v *scalar.Cursor) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return graphql.WrapContextMarshaler(ctx, v)
-}
-
 func (ec *executionContext) unmarshalODate2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋscalarᚐDate(ctx context.Context, v interface{}) (*scalar.Date, error) {
 	if v == nil {
 		return nil, nil
@@ -33270,13 +32299,6 @@ func (ec *executionContext) unmarshalOLogSubscriptionInput2ᚖgithubᚗcomᚋnai
 	}
 	res, err := ec.unmarshalInputLogSubscriptionInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalONode2githubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐNode(ctx context.Context, sel ast.SelectionSet, v model.Node) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Node(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOOrderBy2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐOrderBy(ctx context.Context, v interface{}) (*model.OrderBy, error) {
@@ -33437,11 +32459,11 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOVulnerabilityList2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilityList(ctx context.Context, sel ast.SelectionSet, v *model.VulnerabilityList) graphql.Marshaler {
+func (ec *executionContext) marshalOVulnerability2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerability(ctx context.Context, sel ast.SelectionSet, v *model.Vulnerability) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._VulnerabilityList(ctx, sel, v)
+	return ec._Vulnerability(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOVulnerabilitySummary2ᚖgithubᚗcomᚋnaisᚋconsoleᚑbackendᚋinternalᚋgraphᚋmodelᚐVulnerabilitySummary(ctx context.Context, sel ast.SelectionSet, v *model.VulnerabilitySummary) graphql.Marshaler {

@@ -1,18 +1,14 @@
 type DeployInfo {
-    deployer: String!
-    timestamp: Time
-    commitSha: String!
-    url: String!
-    history(
-        first: Int
-        last: Int
-        after: Cursor
-        before: Cursor
-    ): DeploymentResponse! @goField(forceResolver: true)
+  deployer: String!
+  timestamp: Time
+  commitSha: String!
+  url: String!
+  history(offset: Int, limit: Int): DeploymentResponse!
+    @goField(forceResolver: true)
 }
 
-union DeploymentResponse = DeploymentConnection | Error
+union DeploymentResponse = DeploymentList | Error
 
 type Error {
-    message: String!
+  message: String!
 }
