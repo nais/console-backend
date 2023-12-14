@@ -61,5 +61,7 @@ func (r *Resolver) App() AppResolver { return &appResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type appResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	appResolver   struct{ *Resolver }
+	queryResolver struct{ *Resolver }
+)

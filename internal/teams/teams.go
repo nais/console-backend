@@ -145,7 +145,6 @@ func (c *client) Search(ctx context.Context, query string, filter *model.SearchF
 	return edges
 }
 
-
 // GetTeam get a team by the team slug
 func (c *client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
 	c.updateTeams(ctx)
@@ -292,7 +291,6 @@ func (c *client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 	return respBody.Data.UserByEmail.Teams, nil
 }
 
-
 // GetSelf gets a user by token
 func (c *client) GetSelf(ctx context.Context) (*User, error) {
 	query := `query {
@@ -425,8 +423,8 @@ func toModelTeams(teams []Team) []*model.Team {
 	models := make([]*model.Team, 0)
 	for _, team := range teams {
 		models = append(models, &model.Team{
-			ID:           scalar.TeamIdent(team.Slug),
-			Slug:         team.Slug,
+			ID:   scalar.TeamIdent(team.Slug),
+			Slug: team.Slug,
 		})
 	}
 	return models

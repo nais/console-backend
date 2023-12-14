@@ -9,20 +9,19 @@ import (
 func deployToModel(deploys []hookd.Deploy) []*model.Deployment {
 	ret := make([]*model.Deployment, 0)
 
-
 	for _, deploy := range deploys {
 		deploy := deploy
 		ret = append(ret, &model.Deployment{
-				ID:        scalar.DeploymentIdent(deploy.DeploymentInfo.ID),
-				Statuses:  mapStatuses(deploy.Statuses),
-				Resources: mapResources(deploy.Resources),
-				Team: model.Team{
-					Slug: deploy.DeploymentInfo.Team,
-					ID:   scalar.TeamIdent(deploy.DeploymentInfo.Team),
-				},
-				Env:        deploy.DeploymentInfo.Cluster,
-				Created:    deploy.DeploymentInfo.Created,
-				Repository: deploy.DeploymentInfo.GithubRepository,
+			ID:        scalar.DeploymentIdent(deploy.DeploymentInfo.ID),
+			Statuses:  mapStatuses(deploy.Statuses),
+			Resources: mapResources(deploy.Resources),
+			Team: model.Team{
+				Slug: deploy.DeploymentInfo.Team,
+				ID:   scalar.TeamIdent(deploy.DeploymentInfo.Team),
+			},
+			Env:        deploy.DeploymentInfo.Cluster,
+			Created:    deploy.DeploymentInfo.Created,
+			Repository: deploy.DeploymentInfo.GithubRepository,
 		})
 
 	}
