@@ -62,13 +62,16 @@ local:
 test:
 	go test ./... -v
 
-check: staticcheck vulncheck
+check: staticcheck vulncheck deadcode
 
 staticcheck:
 	go run honnef.co/go/tools/cmd/staticcheck ./...
 
 vulncheck:
 	go run golang.org/x/vuln/cmd/govulncheck ./...
+
+deadcode:
+	go run golang.org/x/tools/cmd/deadcode -test ./...
 
 fmt:
 	go run mvdan.cc/gofumpt -w ./

@@ -89,10 +89,6 @@ func TeamIdent(id string) Ident {
 	return newIdent(id, IdentTypeTeam)
 }
 
-func UserIdent(id string) Ident {
-	return newIdent(id, IdentTypeUser)
-}
-
 func DeploymentIdent(id string) Ident {
 	return newIdent(id, IdentTypeDeployment)
 }
