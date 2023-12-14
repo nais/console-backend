@@ -23,6 +23,11 @@ resolver:
 autobind:
   - "github.com/nais/console-backend/internal/graph/model"
 
+federation:
+  filename: internal/graph/federation.go
+  package: graph
+  version: 2
+
 # Optional: turn on to exclude the gqlgen version in the generated file notice. No effect if `omit_gqlgen_file_notice` is true.
 omit_gqlgen_version_in_file_notice: true
 
@@ -77,6 +82,3 @@ models:
 
 # Setting this to false will generate type instances for required struct fields, and type pointers for optional fields
 struct_fields_always_pointers: false
-
-# Setting this to true will generate type instances for required lists, and type pointers for optional lists
-omit_slice_element_pointers: true

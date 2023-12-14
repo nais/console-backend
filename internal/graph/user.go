@@ -16,7 +16,7 @@ func userTeamEdges(teams []t.TeamMembership, p *model.Pagination) []model.TeamEd
 			Cursor: scalar.Cursor{Offset: start + i},
 			Node: model.Team{
 				ID:           scalar.TeamIdent(team.Team.Slug),
-				Name:         team.Team.Slug,
+				Slug:         team.Team.Slug,
 				Description:  team.Team.Purpose,
 				SlackChannel: team.Team.SlackChannel,
 				SlackAlertsChannels: func(t []t.SlackAlertsChannel) []model.SlackAlertsChannel {

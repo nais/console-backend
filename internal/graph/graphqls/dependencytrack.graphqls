@@ -17,18 +17,8 @@ extend enum OrderByField {
   SEVERITY_UNASSIGNED
 }
 
-type VulnerabilitiesConnection implements Connection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [VulnerabilitiesEdge!]!
-}
 
-type VulnerabilitiesEdge implements Edge {
-  cursor: Cursor!
-  node: VulnerabilitiesNode!
-}
-
-type VulnerabilitiesNode implements Node {
+type Vulnerability {
   id: ID!
   appName: String!
   env: String!

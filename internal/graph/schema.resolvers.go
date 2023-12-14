@@ -12,22 +12,6 @@ import (
 	"github.com/nais/console-backend/internal/graph/scalar"
 )
 
-// From is the resolver for the from field.
-func (r *pageInfoResolver) From(ctx context.Context, obj *model.PageInfo) (int, error) {
-	if obj.StartCursor == nil {
-		return 0, nil
-	}
-	return obj.StartCursor.Offset + 1, nil
-}
-
-// To is the resolver for the to field.
-func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, error) {
-	if obj.EndCursor == nil {
-		return 0, nil
-	}
-	return obj.EndCursor.Offset + 1, nil
-}
-
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id scalar.Ident) (model.Node, error) {
 	switch id.Type {
@@ -47,21 +31,24 @@ func (r *queryResolver) Node(ctx context.Context, id scalar.Ident) (model.Node, 
 	return nil, fmt.Errorf("unsupported type %q in node query", id.Type)
 }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-// PageInfo returns PageInfoResolver implementation.
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *pageInfoResolver) From(ctx context.Context, obj *model.PageInfo) (int, error) {
+	if obj.StartCursor == nil {
+		return 0, nil
+	}
+	return obj.StartCursor.Offset + 1, nil
+}
+func (r *pageInfoResolver) To(ctx context.Context, obj *model.PageInfo) (int, error) {
+	if obj.EndCursor == nil {
+		return 0, nil
+	}
+	return obj.EndCursor.Offset + 1, nil
+}
 func (r *Resolver) PageInfo() PageInfoResolver { return &pageInfoResolver{r} }
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-// Subscription returns SubscriptionResolver implementation.
-func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
-
-type (
-	mutationResolver     struct{ *Resolver }
-	pageInfoResolver     struct{ *Resolver }
-	queryResolver        struct{ *Resolver }
-	subscriptionResolver struct{ *Resolver }
-)
+type pageInfoResolver struct{ *Resolver }

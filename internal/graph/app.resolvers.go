@@ -14,7 +14,7 @@ import (
 )
 
 // Instances is the resolver for the instances field.
-func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]model.Instance, error) {
+func (r *appResolver) Instances(ctx context.Context, obj *model.App) ([]*model.Instance, error) {
 	instances, err := r.k8sClient.Instances(ctx, obj.GQLVars.Team, obj.Env.Name, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting instances from Kubernetes: %w", err)
@@ -47,7 +47,7 @@ func (r *appResolver) Team(ctx context.Context, obj *model.App) (*model.Team, er
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
-func (r *appResolver) Vulnerabilities(ctx context.Context, obj *model.App) (*model.VulnerabilitiesNode, error) {
+func (r *appResolver) Vulnerabilities(ctx context.Context, obj *model.App) (*model.VulnerabilityList, error) {
 	return r.dependencyTrackClient.VulnerabilitySummary(ctx, &dependencytrack.AppInstance{Env: obj.Env.Name, Team: obj.GQLVars.Team, App: obj.Name, Image: obj.Image})
 }
 
@@ -63,4 +63,8 @@ func (r *queryResolver) App(ctx context.Context, name string, team string, env s
 // App returns AppResolver implementation.
 func (r *Resolver) App() AppResolver { return &appResolver{r} }
 
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
 type appResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

@@ -71,24 +71,24 @@ type ACL struct {
 }
 
 type App struct {
-	ID              scalar.Ident         `json:"id"`
-	Name            string               `json:"name"`
-	Image           string               `json:"image"`
-	DeployInfo      DeployInfo           `json:"deployInfo"`
-	Env             Env                  `json:"env"`
-	Ingresses       []string             `json:"ingresses"`
-	Instances       []Instance           `json:"instances"`
-	AccessPolicy    AccessPolicy         `json:"accessPolicy"`
-	Resources       Resources            `json:"resources"`
-	AutoScaling     AutoScaling          `json:"autoScaling"`
-	Storage         []Storage            `json:"storage"`
-	Variables       []Variable           `json:"variables"`
-	Authz           []Authz              `json:"authz"`
-	Manifest        string               `json:"manifest"`
-	Team            Team                 `json:"team"`
-	AppState        AppState             `json:"appState"`
-	Vulnerabilities *VulnerabilitiesNode `json:"vulnerabilities,omitempty"`
-	GQLVars         AppGQLVars           `json:"-"`
+	ID              scalar.Ident       `json:"id"`
+	Name            string             `json:"name"`
+	Image           string             `json:"image"`
+	DeployInfo      DeployInfo         `json:"deployInfo"`
+	Env             Env                `json:"env"`
+	Ingresses       []string           `json:"ingresses"`
+	Instances       []*Instance        `json:"instances"`
+	AccessPolicy    AccessPolicy       `json:"accessPolicy"`
+	Resources       Resources          `json:"resources"`
+	AutoScaling     AutoScaling        `json:"autoScaling"`
+	Storage         []Storage          `json:"storage"`
+	Variables       []*Variable        `json:"variables"`
+	Authz           []Authz            `json:"authz"`
+	Manifest        string             `json:"manifest"`
+	Team            Team               `json:"team"`
+	AppState        AppState           `json:"appState"`
+	Vulnerabilities *VulnerabilityList `json:"vulnerabilities,omitempty"`
+	GQLVars         AppGQLVars         `json:"-"`
 }
 
 func (App) IsNode() {}
@@ -98,32 +98,6 @@ func (this App) GetID() scalar.Ident { return this.ID }
 
 func (App) IsSearchNode() {}
 
-type AppConnection struct {
-	TotalCount int       `json:"totalCount"`
-	PageInfo   PageInfo  `json:"pageInfo"`
-	Edges      []AppEdge `json:"edges"`
-}
-
-func (AppConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this AppConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this AppConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this AppConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
 // App cost type.
 type AppCost struct {
 	// The name of the application.
@@ -131,18 +105,13 @@ type AppCost struct {
 	// The sum of all cost entries for the application in euros.
 	Sum float64 `json:"sum"`
 	// A list of cost entries for the application.
-	Cost []CostEntry `json:"cost"`
+	Cost []*CostEntry `json:"cost"`
 }
 
-type AppEdge struct {
-	Cursor scalar.Cursor `json:"cursor"`
-	Node   App           `json:"node"`
+type AppList struct {
+	Nodes    []*App   `json:"nodes"`
+	PageInfo PageInfo `json:"pageInfo"`
 }
-
-func (AppEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this AppEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type AppState struct {
 	State  State        `json:"state"`
@@ -219,7 +188,7 @@ func (this Bucket) GetName() string { return this.Name }
 
 type Claims struct {
 	Extra  []string `json:"extra"`
-	Groups []Group  `json:"groups"`
+	Groups []*Group `json:"groups"`
 }
 
 type Consume struct {
@@ -246,17 +215,7 @@ type CostSeries struct {
 	// The sum of all daily costs in the series for this cost type in euros.
 	Sum float64 `json:"sum"`
 	// The cost data.
-	Data []CostEntry `json:"data"`
-}
-
-// Input for creating a new team.
-type CreateTeamInput struct {
-	// Team slug. After creation, this value can not be changed.
-	Name string `json:"name"`
-	// Team purpose.
-	Description string `json:"description"`
-	// Specify the Slack channel for the team.
-	SlackChannel string `json:"slackChannel"`
+	Data []*CostEntry `json:"data"`
 }
 
 // Current resource utilization type.
@@ -274,13 +233,13 @@ type DailyCost struct {
 	// The sum of all costs in the cost series in euros.
 	Sum float64 `json:"sum"`
 	// The cost series.
-	Series []CostSeries `json:"series"`
+	Series []*CostSeries `json:"series"`
 }
 
 type Database struct {
-	EnvVarPrefix string         `json:"envVarPrefix"`
-	Name         string         `json:"name"`
-	Users        []DatabaseUser `json:"users"`
+	EnvVarPrefix string          `json:"envVarPrefix"`
+	Name         string          `json:"name"`
+	Users        []*DatabaseUser `json:"users"`
 }
 
 type DatabaseUser struct {
@@ -297,19 +256,19 @@ type DeployInfo struct {
 }
 
 type Deployment struct {
-	ID         scalar.Ident         `json:"id"`
-	Team       Team                 `json:"team"`
-	Resources  []DeploymentResource `json:"resources"`
-	Env        string               `json:"env"`
-	Statuses   []DeploymentStatus   `json:"statuses"`
-	Created    time.Time            `json:"created"`
-	Repository string               `json:"repository"`
+	ID         scalar.Ident          `json:"id"`
+	Team       Team                  `json:"team"`
+	Resources  []*DeploymentResource `json:"resources"`
+	Env        string                `json:"env"`
+	Statuses   []*DeploymentStatus   `json:"statuses"`
+	Created    time.Time             `json:"created"`
+	Repository string                `json:"repository"`
 }
 
 type DeploymentConnection struct {
-	TotalCount int              `json:"totalCount"`
-	PageInfo   PageInfo         `json:"pageInfo"`
-	Edges      []DeploymentEdge `json:"edges"`
+	TotalCount int               `json:"totalCount"`
+	PageInfo   PageInfo          `json:"pageInfo"`
+	Edges      []*DeploymentEdge `json:"edges"`
 }
 
 func (DeploymentConnection) IsConnection() {}
@@ -360,6 +319,11 @@ func (DeploymentKey) IsNode() {}
 
 // The unique ID of an object.
 func (this DeploymentKey) GetID() scalar.Ident { return this.ID }
+
+type DeploymentList struct {
+	Nodes    []*Deployment `json:"nodes"`
+	PageInfo PageInfo      `json:"pageInfo"`
+}
 
 type DeploymentResource struct {
 	ID        scalar.Ident `json:"id"`
@@ -417,7 +381,7 @@ type EnvCost struct {
 	// The sum of all app costs for the environment in euros.
 	Sum float64 `json:"sum"`
 	// A list of app costs in the environment.
-	Apps []AppCost `json:"apps"`
+	Apps []*AppCost `json:"apps"`
 }
 
 // Env cost filter input type.
@@ -437,17 +401,17 @@ type Error struct {
 func (Error) IsDeploymentResponse() {}
 
 type Expose struct {
-	AllowedIntegrations []string   `json:"allowedIntegrations"`
-	AtMaxAge            int        `json:"atMaxAge"`
-	Consumers           []Consumer `json:"consumers"`
-	Enabled             bool       `json:"enabled"`
-	Name                string     `json:"name"`
-	Product             string     `json:"product"`
+	AllowedIntegrations []string    `json:"allowedIntegrations"`
+	AtMaxAge            int         `json:"atMaxAge"`
+	Consumers           []*Consumer `json:"consumers"`
+	Enabled             bool        `json:"enabled"`
+	Name                string      `json:"name"`
+	Product             string      `json:"product"`
 }
 
 type External struct {
-	Host  string `json:"host"`
-	Ports []Port `json:"ports"`
+	Host  string  `json:"host"`
+	Ports []*Port `json:"ports"`
 }
 
 type FailedRunError struct {
@@ -465,65 +429,6 @@ type Flag struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
-
-// GCP project type.
-type GcpProject struct {
-	// The unique identifier of the GCP project.
-	ID string `json:"id"`
-	// The name of the GCP project.
-	Name string `json:"name"`
-	// The environment for the GCP project.
-	Environment string `json:"environment"`
-}
-
-// GitHub repository type.
-type GithubRepository struct {
-	// The name of the GitHub repository.
-	Name string `json:"name"`
-}
-
-// GitHub repository connection type.
-type GithubRepositoryConnection struct {
-	// The total count of available GitHub repositories.
-	TotalCount int `json:"totalCount"`
-	// Pagination information.
-	PageInfo PageInfo `json:"pageInfo"`
-	// A list of GitHub repository edges.
-	Edges []GithubRepositoryEdge `json:"edges"`
-}
-
-func (GithubRepositoryConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this GithubRepositoryConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this GithubRepositoryConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this GithubRepositoryConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
-// GitHub repository edge type.
-type GithubRepositoryEdge struct {
-	// A cursor for use in pagination.
-	Cursor scalar.Cursor `json:"cursor"`
-	// The GitHub repository at the end of the edge.
-	Node GithubRepository `json:"node"`
-}
-
-func (GithubRepositoryEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this GithubRepositoryEdge) GetCursor() scalar.Cursor { return this.Cursor }
 
 type Group struct {
 	ID string `json:"id"`
@@ -553,7 +458,7 @@ type IDPortenSidecar struct {
 }
 
 type Inbound struct {
-	Rules []Rule `json:"rules"`
+	Rules []*Rule `json:"rules"`
 }
 
 type InboundAccessError struct {
@@ -619,9 +524,9 @@ type JobsStatus struct {
 
 type Kafka struct {
 	// The kafka pool name
-	Name    string  `json:"name"`
-	Streams bool    `json:"streams"`
-	Topics  []Topic `json:"topics"`
+	Name    string   `json:"name"`
+	Streams bool     `json:"streams"`
+	Topics  []*Topic `json:"topics"`
 }
 
 func (Kafka) IsStorage()           {}
@@ -659,8 +564,8 @@ type Maskinporten struct {
 func (Maskinporten) IsAuthz() {}
 
 type MaskinportenScope struct {
-	Consumes []Consume `json:"consumes"`
-	Exposes  []Expose  `json:"exposes"`
+	Consumes []*Consume `json:"consumes"`
+	Exposes  []*Expose  `json:"exposes"`
 }
 
 // Montly cost type.
@@ -668,7 +573,7 @@ type MonthlyCost struct {
 	// Sum for all months in the series in euros.
 	Sum float64 `json:"sum"`
 	// A list of monthly cost entries.
-	Cost []CostEntry `json:"cost"`
+	Cost []*CostEntry `json:"cost"`
 }
 
 // Monthly cost filter input type.
@@ -687,7 +592,7 @@ type NaisJob struct {
 	DeployInfo   DeployInfo     `json:"deployInfo"`
 	Env          Env            `json:"env"`
 	Image        string         `json:"image"`
-	Runs         []Run          `json:"runs"`
+	Runs         []*Run         `json:"runs"`
 	Manifest     string         `json:"manifest"`
 	Name         string         `json:"name"`
 	Resources    Resources      `json:"resources"`
@@ -710,9 +615,9 @@ func (this NaisJob) GetID() scalar.Ident { return this.ID }
 func (NaisJob) IsSearchNode() {}
 
 type NaisJobConnection struct {
-	TotalCount int           `json:"totalCount"`
-	PageInfo   PageInfo      `json:"pageInfo"`
-	Edges      []NaisJobEdge `json:"edges"`
+	TotalCount int            `json:"totalCount"`
+	PageInfo   PageInfo       `json:"pageInfo"`
+	Edges      []*NaisJobEdge `json:"edges"`
 }
 
 func (NaisJobConnection) IsConnection() {}
@@ -744,6 +649,11 @@ func (NaisJobEdge) IsEdge() {}
 
 // A cursor for use in pagination.
 func (this NaisJobEdge) GetCursor() scalar.Cursor { return this.Cursor }
+
+type NaisJobList struct {
+	Nodes    []*NaisJob `json:"nodes"`
+	PageInfo PageInfo   `json:"pageInfo"`
+}
 
 type NewInstancesFailingError struct {
 	Revision         string     `json:"revision"`
@@ -780,8 +690,8 @@ type OrderBy struct {
 }
 
 type Outbound struct {
-	Rules    []Rule     `json:"rules"`
-	External []External `json:"external"`
+	Rules    []*Rule     `json:"rules"`
+	External []*External `json:"external"`
 }
 
 type OutboundAccessError struct {
@@ -794,18 +704,10 @@ func (OutboundAccessError) IsStateError()             {}
 func (this OutboundAccessError) GetRevision() string  { return this.Revision }
 func (this OutboundAccessError) GetLevel() ErrorLevel { return this.Level }
 
-// PageInfo is a type that contains pagination information in a Relay style.
 type PageInfo struct {
-	// When paginating forwards, are there more items?
-	HasNextPage bool `json:"hasNextPage"`
-	// When paginating backwards, are there more items?
+	TotalCount      int  `json:"totalCount"`
+	HasNextPage     bool `json:"hasNextPage"`
 	HasPreviousPage bool `json:"hasPreviousPage"`
-	// A cursor corresponding to the first node in the connection.
-	StartCursor *scalar.Cursor `json:"startCursor,omitempty"`
-	// A cursor corresponding to the last node in the connection.
-	EndCursor *scalar.Cursor `json:"endCursor,omitempty"`
-	From      int            `json:"from"`
-	To        int            `json:"to"`
 }
 
 type Port struct {
@@ -856,9 +758,9 @@ type ResourceUtilizationDateRange struct {
 // Resource utilization for app type.
 type ResourceUtilizationForApp struct {
 	// CPU resource utilization data for the environment.
-	CPU []ResourceUtilization `json:"cpu"`
+	CPU []*ResourceUtilization `json:"cpu"`
 	// Memory resource utilization data for the environment.
-	Memory []ResourceUtilization `json:"memory"`
+	Memory []*ResourceUtilization `json:"memory"`
 }
 
 // Resource utilization for env type.
@@ -866,9 +768,9 @@ type ResourceUtilizationForEnv struct {
 	// Name of the environment.
 	Env string `json:"env"`
 	// CPU resource utilization data for the environment.
-	CPU []ResourceUtilization `json:"cpu"`
+	CPU []*ResourceUtilization `json:"cpu"`
 	// Memory resource utilization data for the environment.
-	Memory []ResourceUtilization `json:"memory"`
+	Memory []*ResourceUtilization `json:"memory"`
 }
 
 // Resource utilization overage cost for team type.
@@ -878,9 +780,9 @@ type ResourceUtilizationOverageForTeam struct {
 	// Timestamp used for the calculated values.
 	Timestamp time.Time `json:"timestamp"`
 	// List of CPU overage data for all apps.
-	CPU []AppWithResourceUtilizationOverage `json:"cpu"`
+	CPU []*AppWithResourceUtilizationOverage `json:"cpu"`
 	// List of memory overage data for all apps.
-	Memory []AppWithResourceUtilizationOverage `json:"memory"`
+	Memory []*AppWithResourceUtilizationOverage `json:"memory"`
 }
 
 // Resource utilization trend type.
@@ -932,9 +834,9 @@ func (Run) IsNode() {}
 func (this Run) GetID() scalar.Ident { return this.ID }
 
 type SearchConnection struct {
-	TotalCount int          `json:"totalCount"`
-	PageInfo   PageInfo     `json:"pageInfo"`
-	Edges      []SearchEdge `json:"edges"`
+	TotalCount int           `json:"totalCount"`
+	PageInfo   PageInfo      `json:"pageInfo"`
+	Edges      []*SearchEdge `json:"edges"`
 }
 
 func (SearchConnection) IsConnection() {}
@@ -978,23 +880,15 @@ type Sidecar struct {
 	Resources            Resources `json:"resources"`
 }
 
-// Slack alerts channel type.
-type SlackAlertsChannel struct {
-	// The name of the Slack alerts channel.
-	Name string `json:"name"`
-	// The environment for the Slack alerts channel.
-	Env string `json:"env"`
-}
-
 type SQLInstance struct {
 	AutoBackupHour      int         `json:"autoBackupHour"`
 	CascadingDelete     bool        `json:"cascadingDelete"`
 	Collation           string      `json:"collation"`
-	Databases           []Database  `json:"databases"`
+	Databases           []*Database `json:"databases"`
 	DiskAutoresize      bool        `json:"diskAutoresize"`
 	DiskSize            int         `json:"diskSize"`
 	DiskType            string      `json:"diskType"`
-	Flags               []Flag      `json:"flags"`
+	Flags               []*Flag     `json:"flags"`
 	HighAvailability    bool        `json:"highAvailability"`
 	Insights            Insights    `json:"insights"`
 	Maintenance         Maintenance `json:"maintenance"`
@@ -1008,151 +902,33 @@ type SQLInstance struct {
 func (SQLInstance) IsStorage()           {}
 func (this SQLInstance) GetName() string { return this.Name }
 
-// Team type.
 type Team struct {
 	// The unique identifier of the team.
 	ID scalar.Ident `json:"id"`
-	// The name of the team.
-	Name string `json:"name"`
-	// The description of the team.
-	Description string `json:"description"`
+	// The unique slug of the team.
+	Slug string `json:"slug"`
 	// The status of the team.
 	Status TeamStatus `json:"status"`
-	// Team members.
-	Members TeamMemberConnection `json:"members"`
 	// The NAIS applications owned by the team.
-	Apps AppConnection `json:"apps"`
-	// The NAIS jobs owned by the team.
-	Naisjobs NaisJobConnection `json:"naisjobs"`
-	// The GitHub repositories that the team has access to.
-	GithubRepositories GithubRepositoryConnection `json:"githubRepositories"`
-	// The main Slack channel for the team.
-	SlackChannel string `json:"slackChannel"`
-	// Slack alerts channels for the team.
-	SlackAlertsChannels []SlackAlertsChannel `json:"slackAlertsChannels"`
-	GcpProjects         []GcpProject         `json:"gcpProjects"`
-	// The deployments of the team's applications.
-	Deployments DeploymentConnection `json:"deployments"`
+	Apps AppList `json:"apps"`
 	// The deploy key of the team.
 	DeployKey DeploymentKey `json:"deployKey"`
+	// The NAIS jobs owned by the team.
+	Naisjobs NaisJobList `json:"naisjobs"`
+	// The deployments of the team's applications.
+	Deployments DeploymentList `json:"deployments"`
 	// Whether or not the viewer is a member of the team.
 	ViewerIsMember bool `json:"viewerIsMember"`
 	// Whether or not the viewer is an administrator of the team.
 	ViewerIsAdmin bool `json:"viewerIsAdmin"`
 	// The vulnerabilities for the team's applications.
-	Vulnerabilities        VulnerabilitiesConnection `json:"vulnerabilities"`
-	VulnerabilitiesSummary VulnerabilitySummary      `json:"vulnerabilitiesSummary"`
+	Vulnerabilities        VulnerabilityList    `json:"vulnerabilities"`
+	VulnerabilitiesSummary VulnerabilitySummary `json:"vulnerabilitiesSummary"`
 }
 
 func (Team) IsSearchNode() {}
 
-func (Team) IsNode() {}
-
-// The unique ID of an object.
-func (this Team) GetID() scalar.Ident { return this.ID }
-
-// Team connection type.
-type TeamConnection struct {
-	// The total count of available teams.
-	TotalCount int `json:"totalCount"`
-	// Pagination information.
-	PageInfo PageInfo `json:"pageInfo"`
-	// A list of team edges.
-	Edges []TeamEdge `json:"edges"`
-}
-
-func (TeamConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this TeamConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this TeamConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this TeamConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
-// Team edge type.
-type TeamEdge struct {
-	// A cursor for use in pagination.
-	Cursor scalar.Cursor `json:"cursor"`
-	// The team at the end of the edge.
-	Node Team `json:"node"`
-}
-
-func (TeamEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this TeamEdge) GetCursor() scalar.Cursor { return this.Cursor }
-
-// Team member type.
-type TeamMember struct {
-	// The unique identifier of the team member.
-	ID scalar.Ident `json:"id"`
-	// The name of the team member.
-	Name string `json:"name"`
-	// The email of the team member.
-	Email string `json:"email"`
-	// The role of the team member.
-	Role TeamRole `json:"role"`
-}
-
-func (TeamMember) IsNode() {}
-
-// The unique ID of an object.
-func (this TeamMember) GetID() scalar.Ident { return this.ID }
-
-// Team member connection type.
-type TeamMemberConnection struct {
-	// The total count of available team members.
-	TotalCount int `json:"totalCount"`
-	// Pagination information.
-	PageInfo PageInfo `json:"pageInfo"`
-	// A list of team member edges.
-	Edges []TeamMemberEdge `json:"edges"`
-}
-
-func (TeamMemberConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this TeamMemberConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this TeamMemberConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this TeamMemberConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
-// Team member edge type.
-type TeamMemberEdge struct {
-	// A cursor for use in pagination.
-	Cursor scalar.Cursor `json:"cursor"`
-	// The team member at the end of the edge.
-	Node TeamMember `json:"node"`
-}
-
-func (TeamMemberEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this TeamMemberEdge) GetCursor() scalar.Cursor { return this.Cursor }
+func (Team) IsEntity() {}
 
 // Team status.
 type TeamStatus struct {
@@ -1168,67 +944,15 @@ func (TokenX) IsAuthz() {}
 
 type Topic struct {
 	Name string `json:"name"`
-	ACL  []ACL  `json:"acl"`
+	ACL  []*ACL `json:"acl"`
 }
-
-type User struct {
-	// The unique identifier for the user.
-	ID scalar.Ident `json:"id"`
-	// The user's full name.
-	Name string `json:"name"`
-	// The user's email address.
-	Email string `json:"email"`
-	// Teams that the user is a member and/or owner of.
-	Teams TeamConnection `json:"teams"`
-}
-
-func (User) IsNode() {}
-
-// The unique ID of an object.
-func (this User) GetID() scalar.Ident { return this.ID }
 
 type Variable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
-type VulnerabilitiesConnection struct {
-	TotalCount int                   `json:"totalCount"`
-	PageInfo   PageInfo              `json:"pageInfo"`
-	Edges      []VulnerabilitiesEdge `json:"edges"`
-}
-
-func (VulnerabilitiesConnection) IsConnection() {}
-
-// The total count of items in the connection.
-func (this VulnerabilitiesConnection) GetTotalCount() int { return this.TotalCount }
-
-// Pagination information.
-func (this VulnerabilitiesConnection) GetPageInfo() PageInfo { return this.PageInfo }
-
-// A list of edges.
-func (this VulnerabilitiesConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-
-type VulnerabilitiesEdge struct {
-	Cursor scalar.Cursor       `json:"cursor"`
-	Node   VulnerabilitiesNode `json:"node"`
-}
-
-func (VulnerabilitiesEdge) IsEdge() {}
-
-// A cursor for use in pagination.
-func (this VulnerabilitiesEdge) GetCursor() scalar.Cursor { return this.Cursor }
-
-type VulnerabilitiesNode struct {
+type Vulnerability struct {
 	ID           scalar.Ident          `json:"id"`
 	AppName      string                `json:"appName"`
 	Env          string                `json:"env"`
@@ -1237,10 +961,10 @@ type VulnerabilitiesNode struct {
 	HasBom       bool                  `json:"hasBom"`
 }
 
-func (VulnerabilitiesNode) IsNode() {}
-
-// The unique ID of an object.
-func (this VulnerabilitiesNode) GetID() scalar.Ident { return this.ID }
+type VulnerabilityList struct {
+	Nodes    []*Vulnerability `json:"nodes"`
+	PageInfo PageInfo         `json:"pageInfo"`
+}
 
 type VulnerabilitySummary struct {
 	Total      int `json:"total"`
@@ -1581,49 +1305,5 @@ func (e *State) UnmarshalGQL(v interface{}) error {
 }
 
 func (e State) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-// Team member roles.
-type TeamRole string
-
-const (
-	// A regular team member.
-	TeamRoleMember TeamRole = "MEMBER"
-	// A team owner/administrator.
-	TeamRoleOwner TeamRole = "OWNER"
-)
-
-var AllTeamRole = []TeamRole{
-	TeamRoleMember,
-	TeamRoleOwner,
-}
-
-func (e TeamRole) IsValid() bool {
-	switch e {
-	case TeamRoleMember, TeamRoleOwner:
-		return true
-	}
-	return false
-}
-
-func (e TeamRole) String() string {
-	return string(e)
-}
-
-func (e *TeamRole) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = TeamRole(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid TeamRole", str)
-	}
-	return nil
-}
-
-func (e TeamRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

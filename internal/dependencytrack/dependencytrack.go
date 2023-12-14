@@ -67,15 +67,15 @@ func (c *Client) WithClient(client dependencytrack.Client) *Client {
 	return c
 }
 
-func (c *Client) VulnerabilitySummary(ctx context.Context, app *AppInstance) (*model.VulnerabilitiesNode, error) {
+func (c *Client) VulnerabilitySummary(ctx context.Context, app *AppInstance) (*model.Vulnerability, error) {
 	return c.findingsForApp(ctx, app)
 }
 
-func (c *Client) GetVulnerabilities(ctx context.Context, apps []*AppInstance) ([]*model.VulnerabilitiesNode, error) {
+func (c *Client) GetVulnerabilities(ctx context.Context, apps []*AppInstance) ([]*model.Vulnerability, error) {
 	var wg sync.WaitGroup
 	now := time.Now()
 
-	nodes := make([]*model.VulnerabilitiesNode, 0)
+	nodes := make([]*model.Vulnerability, 0)
 	for _, a := range apps {
 		wg.Add(1)
 		go func(app *AppInstance) {
@@ -98,12 +98,12 @@ func (c *Client) GetVulnerabilities(ctx context.Context, apps []*AppInstance) ([
 	return nodes, nil
 }
 
-func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.VulnerabilitiesNode, error) {
+func (c *Client) findingsForApp(ctx context.Context, app *AppInstance) (*model.Vulnerability, error) {
 	if v, ok := c.cache.Get(app.ID()); ok {
-		return v.(*model.VulnerabilitiesNode), nil
+		return v.(*model.Vulnerability), nil
 	}
 
-	v := &model.VulnerabilitiesNode{
+	v := &model.Vulnerability{
 		ID:      scalar.VulnerabilitiesIdent(app.ID()),
 		AppName: app.App,
 		Env:     app.Env,

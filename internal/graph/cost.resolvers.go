@@ -160,7 +160,7 @@ func (r *queryResolver) MonthlyCost(ctx context.Context, filter model.MonthlyCos
 }
 
 // EnvCost is the resolver for the envCost field.
-func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]model.EnvCost, error) {
+func (r *queryResolver) EnvCost(ctx context.Context, filter model.EnvCostFilter) ([]*model.EnvCost, error) {
 	err := ValidateDateInterval(filter.From, filter.To)
 	if err != nil {
 		return nil, err

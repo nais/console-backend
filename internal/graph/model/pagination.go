@@ -1,78 +1,37 @@
 package model
 
-import (
-	"fmt"
-
-	"github.com/nais/console-backend/internal/graph/scalar"
-)
-
 type Pagination struct {
-	first  *int
-	last   *int
-	after  *scalar.Cursor
-	before *scalar.Cursor
+	Offset int
+	Limit  int
 }
 
-func NewPagination(first, last *int, after, before *scalar.Cursor) (*Pagination, error) {
-	if first != nil && last != nil {
-		return nil, fmt.Errorf("using both `first` and `last` with pagination is not supported")
+func NewPagination(offset, limit *int) *Pagination {
+	off := 0
+	lim := 20
+	if offset != nil && *offset > 0 {
+		off = *offset
 	}
+	if limit != nil && *limit > 0 {
+		lim = *limit
+	}
+
 	return &Pagination{
-		first:  first,
-		last:   last,
-		after:  after,
-		before: before,
-	}, nil
+		Offset: off,
+		Limit:  lim,
+	}
 }
 
-func (p *Pagination) ForSlice(length int) (start, end int) {
-	length -= 1
-	if p.before != nil {
-		start = p.before.Offset - p.Last()
-		end = p.before.Offset
-	} else {
-		start = p.After().Offset + 1
-		end = start + p.First()
+func PaginatedSlice[T any](slice []T, p *Pagination) ([]T, PageInfo) {
+	if len(slice) < p.Offset {
+		return make([]T, 0), PageInfo{
+			HasNextPage:     false,
+			HasPreviousPage: p.Offset > 0,
+			TotalCount:      len(slice),
+		}
 	}
-
-	if start > length {
-		start = length
+	return slice[p.Offset : p.Offset+p.Limit], PageInfo{
+		HasNextPage:     len(slice) > p.Offset+p.Limit,
+		HasPreviousPage: p.Offset > 0,
+		TotalCount:      len(slice),
 	}
-
-	if start < 0 {
-		start = 0
-	}
-
-	if end < 0 {
-		end = 0
-	}
-	if end > length {
-		end = length + 1
-	}
-	return start, end
-}
-
-func (p *Pagination) First() int {
-	if p.first == nil {
-		return 10
-	}
-	return *p.first
-}
-
-func (p *Pagination) Last() int {
-	if p.last == nil {
-		return 10
-	}
-	return *p.last
-}
-
-func (p *Pagination) After() *scalar.Cursor {
-	if p.after == nil {
-		return &scalar.Cursor{Offset: -1}
-	}
-	return p.after
-}
-
-func (p *Pagination) Before() *scalar.Cursor {
-	return p.before
 }

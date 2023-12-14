@@ -1,14 +1,7 @@
-"The query root for the console-backend GraphQL API."
-type Query {
+extend type Query {
   "Fetches an object given its ID."
   node("The ID of an object." id: ID!): Node
 }
-
-"The root query for implementing GraphQL mutations."
-type Mutation
-
-"The root subscription type for implementing GraphQL subscriptions."
-type Subscription
 
 "Node interface."
 interface Node {
@@ -34,22 +27,10 @@ interface Edge {
   cursor: Cursor!
 }
 
-"PageInfo is a type that contains pagination information in a Relay style."
 type PageInfo {
-  "When paginating forwards, are there more items?"
+  totalCount: Int!
   hasNextPage: Boolean!
-
-  "When paginating backwards, are there more items?"
   hasPreviousPage: Boolean!
-
-  "A cursor corresponding to the first node in the connection."
-  startCursor: Cursor
-
-  "A cursor corresponding to the last node in the connection."
-  endCursor: Cursor
-
-  from: Int! @goField(forceResolver: true)
-  to: Int! @goField(forceResolver: true)
 }
 
 type Env implements Node {

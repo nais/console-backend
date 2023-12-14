@@ -75,12 +75,10 @@ type TeamUser struct {
 type Client interface {
 	Search(ctx context.Context, query string, filter *model.SearchFilter) []*search.Result
 	GetTeam(ctx context.Context, teamSlug string) (*model.Team, error)
-	CreateTeam(ctx context.Context, team model.CreateTeamInput) (*model.Team, error)
 	GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error)
 	GetTeamMembers(ctx context.Context, teamSlug string) ([]Member, error)
 	GetTeams(ctx context.Context) ([]Team, error)
 	GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error)
-	GetUserByID(ctx context.Context, id string) (*model.User, error)
 	GetUser(ctx context.Context, email string) (*User, error)
 	GetSelf(ctx context.Context) (*User, error)
 	TeamExists(ctx context.Context, teamSlug string) bool
@@ -116,7 +114,7 @@ func (c *client) TeamExists(ctx context.Context, teamSlug string) bool {
 	defer c.lock.RUnlock()
 
 	for _, team := range c.teams {
-		if team.Name == teamSlug {
+		if team.Slug == teamSlug {
 			return true
 		}
 	}
@@ -135,7 +133,7 @@ func (c *client) Search(ctx context.Context, query string, filter *model.SearchF
 
 	edges := make([]*search.Result, 0)
 	for _, team := range c.teams {
-		rank := search.Match(query, team.Name)
+		rank := search.Match(query, team.Slug)
 		if rank == -1 {
 			continue
 		}
@@ -147,45 +145,6 @@ func (c *client) Search(ctx context.Context, query string, filter *model.SearchF
 	return edges
 }
 
-// CreateTeam creates a new team
-func (c *client) CreateTeam(ctx context.Context, team model.CreateTeamInput) (*model.Team, error) {
-	query := `mutation ($team: CreateTeamInput!) {
-		createTeam(input: $team) {
-			slug
-			purpose
-			slackChannel
-		}
-	}`
-	vars := map[string]any{
-		"team": map[string]any{
-			"slug":         team.Name,
-			"purpose":      team.Description,
-			"slackChannel": team.SlackChannel,
-		},
-	}
-
-	respBody := struct {
-		Data struct {
-			Team *Team `json:"createTeam"`
-		} `json:"data"`
-		Errors []map[string]any `json:"errors"`
-	}{}
-
-	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
-		return nil, c.error(ctx, err, "querying teams to create team")
-	}
-
-	if len(respBody.Errors) > 0 {
-		return nil, fmt.Errorf("team not created: %s", team.Name)
-	}
-
-	return &model.Team{
-		ID:           scalar.TeamIdent(respBody.Data.Team.Slug),
-		Name:         respBody.Data.Team.Slug,
-		Description:  respBody.Data.Team.Purpose,
-		SlackChannel: respBody.Data.Team.SlackChannel,
-	}, nil
-}
 
 // GetTeam get a team by the team slug
 func (c *client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, error) {
@@ -194,7 +153,7 @@ func (c *client) GetTeam(ctx context.Context, teamSlug string) (*model.Team, err
 	defer c.lock.RUnlock()
 
 	for _, team := range c.teams {
-		if team.Name == teamSlug {
+		if team.Slug == teamSlug {
 			return team, nil
 		}
 	}
@@ -333,39 +292,6 @@ func (c *client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 	return respBody.Data.UserByEmail.Teams, nil
 }
 
-func (c *client) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	query := `query ($id: UUID!) {
-		user(id: $id) {
-			name
-			email
-		}
-	}`
-
-	vars := map[string]any{
-		"id": id,
-	}
-
-	respBody := struct {
-		Data struct {
-			UserByID *struct{ Name, Email string } `json:"user"`
-		} `json:"data"`
-		Errors []map[string]any `json:"errors"`
-	}{}
-
-	if err := c.teamsQuery(ctx, query, vars, &respBody); err != nil {
-		return nil, c.error(ctx, err, "querying teams for user")
-	}
-
-	if respBody.Data.UserByID == nil {
-		return nil, fmt.Errorf("user %s not found", id)
-	}
-
-	return &model.User{
-		ID:    scalar.UserIdent(id),
-		Name:  respBody.Data.UserByID.Name,
-		Email: respBody.Data.UserByID.Email,
-	}, nil
-}
 
 // GetSelf gets a user by token
 func (c *client) GetSelf(ctx context.Context) (*User, error) {
@@ -500,30 +426,7 @@ func toModelTeams(teams []Team) []*model.Team {
 	for _, team := range teams {
 		models = append(models, &model.Team{
 			ID:           scalar.TeamIdent(team.Slug),
-			Name:         team.Slug,
-			Description:  team.Purpose,
-			SlackChannel: team.SlackChannel,
-			SlackAlertsChannels: func(channels []SlackAlertsChannel) []model.SlackAlertsChannel {
-				models := make([]model.SlackAlertsChannel, 0)
-				for _, ch := range channels {
-					models = append(models, model.SlackAlertsChannel{
-						Env:  ch.Environment,
-						Name: ch.ChannelName,
-					})
-				}
-				return models
-			}(team.SlackAlertsChannels),
-			GcpProjects: func(projects []GcpProject) []model.GcpProject {
-				models := make([]model.GcpProject, 0)
-				for _, project := range projects {
-					models = append(models, model.GcpProject{
-						ID:          project.ProjectID,
-						Name:        project.ProjectName,
-						Environment: project.Environment,
-					})
-				}
-				return models
-			}(team.ReconcilerState.GcpProjects),
+			Slug:         team.Slug,
 		})
 	}
 	return models

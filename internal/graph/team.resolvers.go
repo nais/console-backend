@@ -11,17 +11,11 @@ import (
 
 	"github.com/nais/console-backend/internal/auth"
 	"github.com/nais/console-backend/internal/dependencytrack"
-	"github.com/nais/console-backend/internal/graph/apierror"
 	"github.com/nais/console-backend/internal/graph/model"
 	"github.com/nais/console-backend/internal/graph/model/vulnerabilities"
 	"github.com/nais/console-backend/internal/graph/scalar"
 	"github.com/nais/console-backend/internal/hookd"
 )
-
-// CreateTeam is the resolver for the createTeam field.
-func (r *mutationResolver) CreateTeam(ctx context.Context, input model.CreateTeamInput) (*model.Team, error) {
-	return r.teamsClient.CreateTeam(ctx, input)
-}
 
 // ChangeDeployKey is the resolver for the changeDeployKey field.
 func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*model.DeploymentKey, error) {
@@ -41,64 +35,14 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 	}, nil
 }
 
-// Teams is the resolver for the teams field.
-func (r *queryResolver) Teams(ctx context.Context, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamConnection, error) {
-	teams, err := r.teamsClient.GetTeams(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("getting teams from Teams: %w", err)
-	}
-
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	e := teamEdges(teams, pagination)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(e) > 0 {
-		startCursor = &e[0].Cursor
-		endCursor = &e[len(e)-1].Cursor
-	}
-
-	hasNext := len(teams) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.TeamConnection{
-		TotalCount: len(teams),
-		Edges:      e,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
-	}, nil
-}
-
-// Team is the resolver for the team field.
-func (r *queryResolver) Team(ctx context.Context, name string) (*model.Team, error) {
-	team, err := r.teamsClient.GetTeam(ctx, name)
-	if err != nil {
-		return nil, apierror.ErrTeamNotFound
-	}
-
-	return team, nil
-}
-
 // Status is the resolver for the status field.
 func (r *teamResolver) Status(ctx context.Context, obj *model.Team) (*model.TeamStatus, error) {
-	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	apps, err := r.k8sClient.Apps(ctx, obj.Slug)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
 
-	jobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
+	jobs, err := r.k8sClient.NaisJobs(ctx, obj.Slug)
 	if err != nil {
 		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
 	}
@@ -128,49 +72,9 @@ func (r *teamResolver) Status(ctx context.Context, obj *model.Team) (*model.Team
 	}, nil
 }
 
-// Members is the resolver for the members field.
-func (r *teamResolver) Members(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor) (*model.TeamMemberConnection, error) {
-	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
-	if err != nil {
-		return nil, fmt.Errorf("getting members from Teams: %w", err)
-	}
-
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	edges := memberEdges(members, pagination)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
-	}
-
-	hasNext := len(members) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.TeamMemberConnection{
-		TotalCount: len(members),
-		Edges:      edges,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
-	}, nil
-}
-
 // Apps is the resolver for the apps field.
-func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.AppConnection, error) {
-	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, offset *int, limit *int, orderBy *model.OrderBy) (*model.AppList, error) {
+	apps, err := r.k8sClient.Apps(ctx, obj.Slug)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
@@ -220,42 +124,40 @@ func (r *teamResolver) Apps(ctx context.Context, obj *model.Team, first *int, la
 			})
 		}
 	}
-	pagination, err := model.NewPagination(first, last, after, before)
+	pagination := model.NewPagination(offset, limit)
+	apps, pageInfo := model.PaginatedSlice(apps, pagination)
+	for _, app := range apps {
+		app.GQLVars = model.AppGQLVars{Team: obj.Slug}
+	}
+
+	return &model.AppList{
+		Nodes:    apps,
+		PageInfo: pageInfo,
+	}, nil
+}
+
+// DeployKey is the resolver for the deployKey field.
+func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error) {
+	if !r.hasAccess(ctx, obj.Slug) {
+		return nil, fmt.Errorf("access denied")
+	}
+
+	key, err := r.hookdClient.DeployKey(ctx, obj.Slug)
 	if err != nil {
-		return nil, err
-	}
-	edges := appEdges(apps, obj.Name, pagination)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
+		return nil, fmt.Errorf("getting deploy key from Hookd: %w", err)
 	}
 
-	hasNext := len(apps) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.AppConnection{
-		TotalCount: len(apps),
-		Edges:      edges,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
+	return &model.DeploymentKey{
+		ID:      scalar.DeployKeyIdent(obj.Slug),
+		Key:     key.Key,
+		Created: key.Created,
+		Expires: key.Expires,
 	}, nil
 }
 
 // Naisjobs is the resolver for the naisjobs field.
-func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.NaisJobConnection, error) {
-	naisjobs, err := r.k8sClient.NaisJobs(ctx, obj.Name)
+func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, offset *int, limit *int, orderBy *model.OrderBy) (*model.NaisJobList, error) {
+	naisjobs, err := r.k8sClient.NaisJobs(ctx, obj.Slug)
 	if err != nil {
 		return nil, fmt.Errorf("getting naisjobs from Kubernetes: %w", err)
 	}
@@ -307,141 +209,35 @@ func (r *teamResolver) Naisjobs(ctx context.Context, obj *model.Team, first *int
 		}
 	}
 
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	edges := naisJobEdges(naisjobs, obj.Name, pagination)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
+	pagination := model.NewPagination(offset, limit)
+	jobs, pageInfo := model.PaginatedSlice(naisjobs, pagination)
+	for _, job := range jobs {
+		job.GQLVars = model.NaisJobGQLVars{Team: obj.Slug}
 	}
 
-	hasNext := len(naisjobs) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.NaisJobConnection{
-		TotalCount: len(naisjobs),
-		Edges:      edges,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
-	}, nil
-}
-
-// GithubRepositories is the resolver for the githubRepositories field.
-func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, first *int, after *scalar.Cursor) (*model.GithubRepositoryConnection, error) {
-	if first == nil {
-		first = new(int)
-		*first = 10
-	}
-	if after == nil {
-		after = &scalar.Cursor{Offset: 0}
-	}
-
-	repos, err := r.teamsClient.GetGithubRepositories(ctx, obj.Name)
-	if err != nil {
-		return nil, fmt.Errorf("getting teams from Teams: %w", err)
-	}
-	if *first > len(repos) {
-		*first = len(repos)
-	}
-
-	edges := githubRepositoryEdges(repos, *first, after.Offset)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
-	}
-
-	return &model.GithubRepositoryConnection{
-		TotalCount: len(repos),
-		Edges:      edges,
-		PageInfo: model.PageInfo{
-			HasNextPage:     len(repos) > *first+after.Offset,
-			HasPreviousPage: after.Offset > 0,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
+	return &model.NaisJobList{
+		Nodes:    jobs,
+		PageInfo: pageInfo,
 	}, nil
 }
 
 // Deployments is the resolver for the deployments field.
-func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error) {
-	if limit == nil {
-		limit = new(int)
-		*limit = 10
-	}
+func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, offset *int, limit *int) (*model.DeploymentList, error) {
+	pagination := model.NewPagination(offset, limit)
 
-	deploys, err := r.hookdClient.Deployments(ctx, hookd.WithTeam(obj.Name), hookd.WithLimit(*limit))
+	deploys, err := r.hookdClient.Deployments(ctx, hookd.WithTeam(obj.Slug), hookd.WithLimit(pagination.Limit))
 	if err != nil {
 		return nil, fmt.Errorf("getting deploys from Hookd: %w", err)
 	}
 
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	edges := deployEdges(deploys, pagination)
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
-	}
-
-	hasNext := len(deploys) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.DeploymentConnection{
-		TotalCount: len(deploys),
-		Edges:      edges,
+	return &model.DeploymentList{
+		Nodes: deployToModel(deploys),
 		PageInfo: model.PageInfo{
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
+			HasNextPage:     len(deploys) >= pagination.Limit,
+			HasPreviousPage: pagination.Offset > 0,
+			TotalCount:      0,
 		},
-	}, nil
-}
-
-// DeployKey is the resolver for the deployKey field.
-func (r *teamResolver) DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error) {
-	if !r.hasAccess(ctx, obj.Name) {
-		return nil, fmt.Errorf("access denied")
 	}
-
-	key, err := r.hookdClient.DeployKey(ctx, obj.Name)
-	if err != nil {
-		return nil, fmt.Errorf("getting deploy key from Hookd: %w", err)
-	}
-
-	return &model.DeploymentKey{
-		ID:      scalar.DeployKeyIdent(obj.Name),
-		Key:     key.Key,
-		Created: key.Created,
-		Expires: key.Expires,
-	}, nil
 }
 
 // ViewerIsMember is the resolver for the viewerIsMember field.
@@ -451,7 +247,7 @@ func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (boo
 		return false, fmt.Errorf("getting email from context: %w", err)
 	}
 
-	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
+	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Slug)
 	if err != nil {
 		return false, fmt.Errorf("getting teams from Teams: %w", err)
 	}
@@ -474,7 +270,7 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 		return false, fmt.Errorf("getting email from context: %w", err)
 	}
 
-	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Name)
+	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Slug)
 	if err != nil {
 		return false, fmt.Errorf("getting members from Teams: %w", err)
 	}
@@ -490,8 +286,8 @@ func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool
 }
 
 // Vulnerabilities is the resolver for the vulnerabilities field.
-func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, orderBy *model.OrderBy) (*model.VulnerabilitiesConnection, error) {
-	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, offset *int, limit *int, orderBy *model.OrderBy) (*model.VulnerabilityList, error) {
+	apps, err := r.k8sClient.Apps(ctx, obj.Slug)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
@@ -502,7 +298,7 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 			Env:   app.Env.Name,
 			App:   app.Name,
 			Image: app.Image,
-			Team:  obj.Name,
+			Team:  obj.Slug,
 		})
 	}
 
@@ -515,50 +311,21 @@ func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, fir
 		vulnerabilities.Sort(nodes, orderBy.Field, orderBy.Direction)
 	}
 
-	pagination, err := model.NewPagination(first, last, after, before)
-	if err != nil {
-		return nil, err
-	}
-	edges := make([]model.VulnerabilitiesEdge, 0)
-	start, end := pagination.ForSlice(len(nodes))
+	pagination := model.NewPagination(offset, limit)
+	v, pi := model.PaginatedSlice(nodes, pagination)
 
-	for i, n := range nodes[start:end] {
-		edges = append(edges, model.VulnerabilitiesEdge{
-			Cursor: scalar.Cursor{Offset: start + i},
-			Node:   *n,
-		})
-	}
-
-	var startCursor *scalar.Cursor
-	var endCursor *scalar.Cursor
-	if len(edges) > 0 {
-		startCursor = &edges[0].Cursor
-		endCursor = &edges[len(edges)-1].Cursor
-	}
-
-	hasNext := len(nodes) > pagination.First()+pagination.After().Offset+1
-	hasPrevious := pagination.After().Offset > 0
-
-	if pagination.Before() != nil && startCursor != nil {
-		hasNext = true
-		hasPrevious = startCursor.Offset > 0
-	}
-
-	return &model.VulnerabilitiesConnection{
-		TotalCount: len(nodes),
-		Edges:      edges,
-		PageInfo: model.PageInfo{
-			HasNextPage:     hasNext,
-			HasPreviousPage: hasPrevious,
-			StartCursor:     startCursor,
-			EndCursor:       endCursor,
-		},
+	
+	
+	
+	return &model.VulnerabilityList{
+		Nodes:    v,
+		PageInfo: pi,
 	}, nil
 }
 
 // VulnerabilitiesSummary is the resolver for the vulnerabilitiesSummary field.
 func (r *teamResolver) VulnerabilitiesSummary(ctx context.Context, obj *model.Team) (*model.VulnerabilitySummary, error) {
-	apps, err := r.k8sClient.Apps(ctx, obj.Name)
+	apps, err := r.k8sClient.Apps(ctx, obj.Slug)
 	if err != nil {
 		return nil, fmt.Errorf("getting apps from Kubernetes: %w", err)
 	}
@@ -569,7 +336,7 @@ func (r *teamResolver) VulnerabilitiesSummary(ctx context.Context, obj *model.Te
 			Env:   app.Env.Name,
 			App:   app.Name,
 			Image: app.Image,
-			Team:  obj.Name,
+			Team:  obj.Slug,
 		})
 	}
 
@@ -608,7 +375,13 @@ func (r *teamResolver) VulnerabilitiesSummary(ctx context.Context, obj *model.Te
 	return retVal, nil
 }
 
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
-type teamResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	teamResolver     struct{ *Resolver }
+)

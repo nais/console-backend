@@ -63,7 +63,7 @@ func (r *queryResolver) ResourceUtilizationOverageForTeam(ctx context.Context, t
 }
 
 // ResourceUtilizationForTeam is the resolver for the resourceUtilizationForTeam field.
-func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]model.ResourceUtilizationForEnv, error) {
+func (r *queryResolver) ResourceUtilizationForTeam(ctx context.Context, team string, from *scalar.Date, to *scalar.Date) ([]*model.ResourceUtilizationForEnv, error) {
 	now := time.Now().Truncate(24 * time.Hour).UTC()
 	if to == nil {
 		d := scalar.NewDate(now)

@@ -81,9 +81,9 @@ func TestClient_Search(t *testing.T) {
 		team2, _ := results[1].Node.(*model.Team)
 		team3, _ := results[2].Node.(*model.Team)
 
-		assert.Equal(t, "foo-team", team1.Name)
-		assert.Equal(t, "team-foo", team2.Name)
-		assert.Equal(t, "team-foo-bar", team3.Name)
+		assert.Equal(t, "foo-team", team1.Slug)
+		assert.Equal(t, "team-foo", team2.Slug)
+		assert.Equal(t, "team-foo-bar", team3.Slug)
 	})
 }
 
@@ -118,7 +118,7 @@ func TestClient_GetTeam(t *testing.T) {
 			New(config.Teams{Token: apiToken, Endpoint: teamsBackend.URL}, false, errorsMeter(t), log).
 			GetTeam(ctx, "team-2")
 
-		assert.Equal(t, "team-2", team.Name)
+		assert.Equal(t, "team-2", team.Slug)
 		assert.NoError(t, err, err)
 	})
 }
