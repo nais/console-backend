@@ -29,6 +29,15 @@ func PaginatedSlice[T any](slice []T, p *Pagination) ([]T, PageInfo) {
 			TotalCount:      len(slice),
 		}
 	}
+
+	if len(slice) < p.Offset+p.Limit {
+		return slice[p.Offset:], PageInfo{
+			HasNextPage:     false,
+			HasPreviousPage: p.Offset > 0,
+			TotalCount:      len(slice),
+		}
+	}
+
 	return slice[p.Offset : p.Offset+p.Limit], PageInfo{
 		HasNextPage:     len(slice) > p.Offset+p.Limit,
 		HasPreviousPage: p.Offset > 0,

@@ -6,14 +6,15 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/nais/console-backend/internal/graph/model"
 )
 
 // FindTeamBySlug is the resolver for the findTeamBySlug field.
 func (r *entityResolver) FindTeamBySlug(ctx context.Context, slug string) (*model.Team, error) {
-	panic(fmt.Errorf("not implemented: FindTeamBySlug - findTeamBySlug"))
+	return &model.Team{
+		Slug: slug,
+	}, nil
 }
 
 // Entity returns EntityResolver implementation.
