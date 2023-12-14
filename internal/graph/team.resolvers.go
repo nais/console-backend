@@ -39,11 +39,17 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 
 // AuthorizeRepository is the resolver for the authorizeRepository field.
 func (r *mutationResolver) AuthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.Team, error) {
+	if !r.hasAccess(ctx, team) {
+		return nil, fmt.Errorf("access denied")
+	}
 	return r.teamsClient.AuthorizeRepository(ctx, authorization, team, repository)
 }
 
 // DeauthorizeRepository is the resolver for the deauthorizeRepository field.
 func (r *mutationResolver) DeauthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.Team, error) {
+	if !r.hasAccess(ctx, team) {
+		return nil, fmt.Errorf("access denied")
+	}
 	return r.teamsClient.DeauthorizeRepository(ctx, authorization, team, repository)
 }
 
