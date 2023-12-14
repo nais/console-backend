@@ -12,17 +12,6 @@ extend type Query {
   ): NaisJob!
 }
 
-type NaisJobConnection {
-  totalCount: Int!
-  pageInfo: PageInfo!
-  edges: [NaisJobEdge!]!
-}
-
-type NaisJobEdge {
-  cursor: Cursor!
-  node: NaisJob!
-}
-
 type Run {
   id: ID!
   name: String!

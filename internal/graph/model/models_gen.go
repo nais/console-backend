@@ -528,17 +528,6 @@ type NaisJob struct {
 
 func (NaisJob) IsSearchNode() {}
 
-type NaisJobConnection struct {
-	TotalCount int            `json:"totalCount"`
-	PageInfo   PageInfo       `json:"pageInfo"`
-	Edges      []*NaisJobEdge `json:"edges"`
-}
-
-type NaisJobEdge struct {
-	Cursor scalar.Cursor `json:"cursor"`
-	Node   NaisJob       `json:"node"`
-}
-
 type NaisJobList struct {
 	Nodes    []*NaisJob `json:"nodes"`
 	PageInfo PageInfo   `json:"pageInfo"`
