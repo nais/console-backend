@@ -27,27 +27,27 @@ extend type Mutation {
 
   "Authorize a team to perform an action from a GitHub repository."
   authorizeRepository(
-      "The action to authorize."
-      authorization: RepositoryAuthorization!
+    "The action to authorize."
+    authorization: RepositoryAuthorization!
 
-      "The team to authorize the action for."
-      team: String!
+    "The team to authorize the action for."
+    team: String!
 
-      "Name of the repository, with the org prefix, for instance 'org/repo'."
-      repository: String!
-  ): Team!
+    "Name of the repository, with the org prefix, for instance 'org/repo'."
+    repository: String!
+  ): GithubRepository!
 
   "Deauthorize an action from a team."
   deauthorizeRepository(
-      "The action to deauthorize."
-      authorization: RepositoryAuthorization!
+    "The action to deauthorize."
+    authorization: RepositoryAuthorization!
 
-      "The team to deauthorize the action for."
-      team: String!
+    "The team to deauthorize the action for."
+    team: String!
 
-      "Name of the repository, with the org prefix, for instance 'org/repo'."
-      repository: String!
-  ): Team!
+    "Name of the repository, with the org prefix, for instance 'org/repo'."
+    repository: String!
+  ): GithubRepository!
 }
 
 extend enum OrderByField {
@@ -291,6 +291,8 @@ type GithubRepositoryEdge implements Edge {
 
 "GitHub repository type."
 type GithubRepository {
+  id: ID!
+
   "The name of the GitHub repository."
   name: String!
 

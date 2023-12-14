@@ -92,7 +92,7 @@ func memberEdges(members []t.Member, p *model.Pagination) []model.TeamMemberEdge
 	return edges
 }
 
-func githubRepositoryEdges(repos []t.GitHubRepository, p *model.Pagination) []model.GithubRepositoryEdge {
+func githubRepositoryEdges(repos []t.GitHubRepository, slug string, p *model.Pagination) []model.GithubRepositoryEdge {
 	edges := make([]model.GithubRepositoryEdge, 0)
 	start, end := p.ForSlice(len(repos))
 
@@ -101,6 +101,7 @@ func githubRepositoryEdges(repos []t.GitHubRepository, p *model.Pagination) []mo
 		edges = append(edges, model.GithubRepositoryEdge{
 			Cursor: scalar.Cursor{Offset: start + i},
 			Node: model.GithubRepository{
+				ID:             scalar.Ident{ID: slug + "/" + repo.Name, Type: "githubRepository"},
 				Name:           repo.Name,
 				Archived:       repo.Archived,
 				Permissions:    mapPermissions(repo.Permissions),

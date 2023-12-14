@@ -38,7 +38,7 @@ func (r *mutationResolver) ChangeDeployKey(ctx context.Context, team string) (*m
 }
 
 // AuthorizeRepository is the resolver for the authorizeRepository field.
-func (r *mutationResolver) AuthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.Team, error) {
+func (r *mutationResolver) AuthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.GithubRepository, error) {
 	if !r.hasAccess(ctx, team) {
 		return nil, fmt.Errorf("access denied")
 	}
@@ -46,7 +46,7 @@ func (r *mutationResolver) AuthorizeRepository(ctx context.Context, authorizatio
 }
 
 // DeauthorizeRepository is the resolver for the deauthorizeRepository field.
-func (r *mutationResolver) DeauthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.Team, error) {
+func (r *mutationResolver) DeauthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.GithubRepository, error) {
 	if !r.hasAccess(ctx, team) {
 		return nil, fmt.Errorf("access denied")
 	}
@@ -376,7 +376,7 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 	if err != nil {
 		return nil, err
 	}
-	edges := githubRepositoryEdges(repos, pagination)
+	edges := githubRepositoryEdges(repos, obj.Name, pagination)
 
 	var startCursor *scalar.Cursor
 	var endCursor *scalar.Cursor

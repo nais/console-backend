@@ -468,6 +468,7 @@ type GcpProject struct {
 
 // GitHub repository type.
 type GithubRepository struct {
+	ID scalar.Ident `json:"id"`
 	// The name of the GitHub repository.
 	Name string `json:"name"`
 	// The authorizations for the GitHub repository.
