@@ -230,18 +230,20 @@ func (c *client) GetTeamMembers(ctx context.Context, teamSlug string) ([]Member,
 func (c *client) GetTeams(ctx context.Context) ([]Team, error) {
 	query := `query {
 		teams {
-			slug
-			purpose
-			slackChannel
-			slackAlertsChannels {
-				channelName
-				environment
-			}
-			reconcilerState {
-				gcpProjects {
-					projectId
-					projectName
+			nodes {
+				slug
+				purpose
+				slackChannel
+				slackAlertsChannels {
+					channelName
 					environment
+				}
+				reconcilerState {
+					gcpProjects {
+						projectId
+						projectName
+						environment
+					}
 				}
 			}
 		}
@@ -249,7 +251,9 @@ func (c *client) GetTeams(ctx context.Context) ([]Team, error) {
 
 	respBody := struct {
 		Data struct {
-			Teams []Team `json:"teams"`
+			Teams struct {
+				Nodes []Team `json:"nodes"`
+			} `json:"teams"`
 		} `json:"data"`
 		Errors []map[string]any `json:"errors"`
 	}{}
@@ -258,7 +262,7 @@ func (c *client) GetTeams(ctx context.Context) ([]Team, error) {
 		return nil, c.error(ctx, err, "querying teams for teams")
 	}
 
-	return respBody.Data.Teams, nil
+	return respBody.Data.Teams.Nodes, nil
 }
 
 func (c *client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembership, error) {
@@ -294,7 +298,7 @@ func (c *client) GetTeamsForUser(ctx context.Context, email string) ([]TeamMembe
 // GetSelf gets a user by token
 func (c *client) GetSelf(ctx context.Context) (*User, error) {
 	query := `query {
-	
+
 		me {
 			... on User {
 			name
