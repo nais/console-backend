@@ -623,8 +623,6 @@ type ComplexityRoot struct {
 		Naisjobs               func(childComplexity int, offset *int, limit *int, orderBy *model.OrderBy) int
 		Slug                   func(childComplexity int) int
 		Status                 func(childComplexity int) int
-		ViewerIsAdmin          func(childComplexity int) int
-		ViewerIsMember         func(childComplexity int) int
 		Vulnerabilities        func(childComplexity int, offset *int, limit *int, orderBy *model.OrderBy) int
 		VulnerabilitiesSummary func(childComplexity int) int
 	}
@@ -727,8 +725,6 @@ type TeamResolver interface {
 	DeployKey(ctx context.Context, obj *model.Team) (*model.DeploymentKey, error)
 	Naisjobs(ctx context.Context, obj *model.Team, offset *int, limit *int, orderBy *model.OrderBy) (*model.NaisJobList, error)
 	Deployments(ctx context.Context, obj *model.Team, offset *int, limit *int) (*model.DeploymentList, error)
-	ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error)
-	ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error)
 	Vulnerabilities(ctx context.Context, obj *model.Team, offset *int, limit *int, orderBy *model.OrderBy) (*model.VulnerabilityList, error)
 	VulnerabilitiesSummary(ctx context.Context, obj *model.Team) (*model.VulnerabilitySummary, error)
 }
@@ -3105,20 +3101,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Team.Status(childComplexity), true
 
-	case "Team.viewerIsAdmin":
-		if e.complexity.Team.ViewerIsAdmin == nil {
-			break
-		}
-
-		return e.complexity.Team.ViewerIsAdmin(childComplexity), true
-
-	case "Team.viewerIsMember":
-		if e.complexity.Team.ViewerIsMember == nil {
-			break
-		}
-
-		return e.complexity.Team.ViewerIsMember(childComplexity), true
-
 	case "Team.vulnerabilities":
 		if e.complexity.Team.Vulnerabilities == nil {
 			break
@@ -5166,10 +5148,6 @@ func (ec *executionContext) fieldContext_App_team(ctx context.Context, field gra
 				return ec.fieldContext_Team_naisjobs(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
-			case "viewerIsMember":
-				return ec.fieldContext_Team_viewerIsMember(ctx, field)
-			case "viewerIsAdmin":
-				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
 			case "vulnerabilitiesSummary":
@@ -8159,10 +8137,6 @@ func (ec *executionContext) fieldContext_Deployment_team(ctx context.Context, fi
 				return ec.fieldContext_Team_naisjobs(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
-			case "viewerIsMember":
-				return ec.fieldContext_Team_viewerIsMember(ctx, field)
-			case "viewerIsAdmin":
-				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
 			case "vulnerabilitiesSummary":
@@ -9592,10 +9566,6 @@ func (ec *executionContext) fieldContext_Entity_findTeamBySlug(ctx context.Conte
 				return ec.fieldContext_Team_naisjobs(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
-			case "viewerIsMember":
-				return ec.fieldContext_Team_viewerIsMember(ctx, field)
-			case "viewerIsAdmin":
-				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
 			case "vulnerabilitiesSummary":
@@ -13583,10 +13553,6 @@ func (ec *executionContext) fieldContext_NaisJob_team(ctx context.Context, field
 				return ec.fieldContext_Team_naisjobs(ctx, field)
 			case "deployments":
 				return ec.fieldContext_Team_deployments(ctx, field)
-			case "viewerIsMember":
-				return ec.fieldContext_Team_viewerIsMember(ctx, field)
-			case "viewerIsAdmin":
-				return ec.fieldContext_Team_viewerIsAdmin(ctx, field)
 			case "vulnerabilities":
 				return ec.fieldContext_Team_vulnerabilities(ctx, field)
 			case "vulnerabilitiesSummary":
@@ -19570,94 +19536,6 @@ func (ec *executionContext) fieldContext_Team_deployments(ctx context.Context, f
 	if fc.Args, err = ec.field_Team_deployments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Team_viewerIsMember(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Team_viewerIsMember(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().ViewerIsMember(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Team_viewerIsMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Team",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Team_viewerIsAdmin(ctx context.Context, field graphql.CollectedField, obj *model.Team) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Team_viewerIsAdmin(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().ViewerIsAdmin(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Team_viewerIsAdmin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Team",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
 	}
 	return fc, nil
 }
@@ -28120,78 +27998,6 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Team_deployments(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "viewerIsMember":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Team_viewerIsMember(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "viewerIsAdmin":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Team_viewerIsAdmin(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

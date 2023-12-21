@@ -240,51 +240,6 @@ func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, offset 
 	}, nil
 }
 
-// ViewerIsMember is the resolver for the viewerIsMember field.
-func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error) {
-	email, err := auth.GetEmail(ctx)
-	if err != nil {
-		return false, fmt.Errorf("getting email from context: %w", err)
-	}
-
-	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Slug)
-	if err != nil {
-		return false, fmt.Errorf("getting teams from Teams: %w", err)
-	}
-
-	for _, m := range members {
-		if strings.EqualFold(m.User.Email, email) {
-			if m.Role == "OWNER" || m.Role == "MEMBER" {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
-}
-
-// ViewerIsAdmin is the resolver for the viewerIsAdmin field.
-func (r *teamResolver) ViewerIsAdmin(ctx context.Context, obj *model.Team) (bool, error) {
-	email, err := auth.GetEmail(ctx)
-	if err != nil {
-		return false, fmt.Errorf("getting email from context: %w", err)
-	}
-
-	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Slug)
-	if err != nil {
-		return false, fmt.Errorf("getting members from Teams: %w", err)
-	}
-
-	for _, m := range members {
-		if strings.EqualFold(m.User.Email, email) {
-			if m.Role == "OWNER" {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
-}
-
 // Vulnerabilities is the resolver for the vulnerabilities field.
 func (r *teamResolver) Vulnerabilities(ctx context.Context, obj *model.Team, offset *int, limit *int, orderBy *model.OrderBy) (*model.VulnerabilityList, error) {
 	apps, err := r.k8sClient.Apps(ctx, obj.Slug)
@@ -382,3 +337,31 @@ type (
 	mutationResolver struct{ *Resolver }
 	teamResolver     struct{ *Resolver }
 )
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *teamResolver) ViewerIsMember(ctx context.Context, obj *model.Team) (bool, error) {
+	email, err := auth.GetEmail(ctx)
+	if err != nil {
+		return false, fmt.Errorf("getting email from context: %w", err)
+	}
+
+	members, err := r.teamsClient.GetTeamMembers(ctx, obj.Slug)
+	if err != nil {
+		return false, fmt.Errorf("getting teams from Teams: %w", err)
+	}
+
+	for _, m := range members {
+		if strings.EqualFold(m.User.Email, email) {
+			if m.Role == "OWNER" || m.Role == "MEMBER" {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}

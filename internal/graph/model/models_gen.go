@@ -758,10 +758,6 @@ type Team struct {
 	Naisjobs NaisJobList `json:"naisjobs"`
 	// The deployments of the team's applications.
 	Deployments DeploymentList `json:"deployments"`
-	// Whether or not the viewer is a member of the team.
-	ViewerIsMember bool `json:"viewerIsMember"`
-	// Whether or not the viewer is an administrator of the team.
-	ViewerIsAdmin bool `json:"viewerIsAdmin"`
 	// The vulnerabilities for the team's applications.
 	Vulnerabilities        VulnerabilityList    `json:"vulnerabilities"`
 	VulnerabilitiesSummary VulnerabilitySummary `json:"vulnerabilitiesSummary"`

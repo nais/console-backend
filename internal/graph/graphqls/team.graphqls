@@ -51,12 +51,6 @@ extend type Team @key(fields: "slug") {
     limit: Int
   ): DeploymentList! @goField(forceResolver: true)
 
-  "Whether or not the viewer is a member of the team."
-  viewerIsMember: Boolean! @goField(forceResolver: true)
-
-  "Whether or not the viewer is an administrator of the team."
-  viewerIsAdmin: Boolean! @goField(forceResolver: true)
-
   "The vulnerabilities for the team's applications."
   vulnerabilities(
     "Returns the first n entries from the list."
