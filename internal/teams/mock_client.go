@@ -24,6 +24,120 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
+// AuthorizeRepository provides a mock function with given fields: ctx, authorization, team, repository
+func (_m *MockClient) AuthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.GithubRepository, error) {
+	ret := _m.Called(ctx, authorization, team, repository)
+
+	var r0 *model.GithubRepository
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.RepositoryAuthorization, string, string) (*model.GithubRepository, error)); ok {
+		return rf(ctx, authorization, team, repository)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.RepositoryAuthorization, string, string) *model.GithubRepository); ok {
+		r0 = rf(ctx, authorization, team, repository)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.GithubRepository)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.RepositoryAuthorization, string, string) error); ok {
+		r1 = rf(ctx, authorization, team, repository)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_AuthorizeRepository_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AuthorizeRepository'
+type MockClient_AuthorizeRepository_Call struct {
+	*mock.Call
+}
+
+// AuthorizeRepository is a helper method to define mock.On call
+//   - ctx context.Context
+//   - authorization model.RepositoryAuthorization
+//   - team string
+//   - repository string
+func (_e *MockClient_Expecter) AuthorizeRepository(ctx interface{}, authorization interface{}, team interface{}, repository interface{}) *MockClient_AuthorizeRepository_Call {
+	return &MockClient_AuthorizeRepository_Call{Call: _e.mock.On("AuthorizeRepository", ctx, authorization, team, repository)}
+}
+
+func (_c *MockClient_AuthorizeRepository_Call) Run(run func(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string)) *MockClient_AuthorizeRepository_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(model.RepositoryAuthorization), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_AuthorizeRepository_Call) Return(_a0 *model.GithubRepository, _a1 error) *MockClient_AuthorizeRepository_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_AuthorizeRepository_Call) RunAndReturn(run func(context.Context, model.RepositoryAuthorization, string, string) (*model.GithubRepository, error)) *MockClient_AuthorizeRepository_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeauthorizeRepository provides a mock function with given fields: ctx, authorization, team, repository
+func (_m *MockClient) DeauthorizeRepository(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string) (*model.GithubRepository, error) {
+	ret := _m.Called(ctx, authorization, team, repository)
+
+	var r0 *model.GithubRepository
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.RepositoryAuthorization, string, string) (*model.GithubRepository, error)); ok {
+		return rf(ctx, authorization, team, repository)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, model.RepositoryAuthorization, string, string) *model.GithubRepository); ok {
+		r0 = rf(ctx, authorization, team, repository)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.GithubRepository)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, model.RepositoryAuthorization, string, string) error); ok {
+		r1 = rf(ctx, authorization, team, repository)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_DeauthorizeRepository_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeauthorizeRepository'
+type MockClient_DeauthorizeRepository_Call struct {
+	*mock.Call
+}
+
+// DeauthorizeRepository is a helper method to define mock.On call
+//   - ctx context.Context
+//   - authorization model.RepositoryAuthorization
+//   - team string
+//   - repository string
+func (_e *MockClient_Expecter) DeauthorizeRepository(ctx interface{}, authorization interface{}, team interface{}, repository interface{}) *MockClient_DeauthorizeRepository_Call {
+	return &MockClient_DeauthorizeRepository_Call{Call: _e.mock.On("DeauthorizeRepository", ctx, authorization, team, repository)}
+}
+
+func (_c *MockClient_DeauthorizeRepository_Call) Run(run func(ctx context.Context, authorization model.RepositoryAuthorization, team string, repository string)) *MockClient_DeauthorizeRepository_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(model.RepositoryAuthorization), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_DeauthorizeRepository_Call) Return(_a0 *model.GithubRepository, _a1 error) *MockClient_DeauthorizeRepository_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_DeauthorizeRepository_Call) RunAndReturn(run func(context.Context, model.RepositoryAuthorization, string, string) (*model.GithubRepository, error)) *MockClient_DeauthorizeRepository_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetGithubRepositories provides a mock function with given fields: ctx, teamSlug
 func (_m *MockClient) GetGithubRepositories(ctx context.Context, teamSlug string) ([]GitHubRepository, error) {
 	ret := _m.Called(ctx, teamSlug)

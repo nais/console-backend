@@ -363,6 +363,12 @@ func checkNoZeroTrust(env string, rule *model.Rule) bool {
 		return true
 	}
 
+	if rule.Application == "azure-token-generator" && rule.Cluster == "dev-gcp" && rule.Namespace == "aura" {
+		rule.MutualExplanation = "NO_ZERO_TRUST"
+		rule.Mutual = true
+		return true
+	}
+
 	return false
 }
 
