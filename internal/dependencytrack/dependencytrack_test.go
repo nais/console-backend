@@ -2,7 +2,10 @@ package dependencytrack
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/nais/console-backend/internal/config"
@@ -126,6 +129,66 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 		v, err := c.GetVulnerabilities(ctx, tc.input)
 		tc.assert(t, v, err)
 	}
+}
+
+func TestClient_VulnerabilitySummary2(t *testing.T) {
+	log := logrus.New().WithField("test", "dependencytrack")
+	cfg := config.DependencyTrack{}
+	mock := NewMockInternalClient(t)
+	c := New(cfg, log).WithClient(mock)
+
+	s, err := os.ReadFile("testdata/ka-farsken.json")
+	assert.NoError(t, err)
+	var f []*dependencytrack.Finding
+	err = json.Unmarshal(s, &f)
+	sum := c.createSummary2(f, true)
+	assert.NoError(t, err)
+	assert.Equal(t, 260, sum.Total)
+	assert.Equal(t, 7, sum.Critical)
+	assert.Equal(t, 33, sum.High)
+	assert.Equal(t, 24, sum.Medium)
+	assert.Equal(t, 4, sum.Low)
+	assert.Equal(t, 159, sum.Unassigned)
+	fmt.Printf("%+v\n", sum)
+
+	s, err = os.ReadFile("testdata/sms-manager.json")
+	assert.NoError(t, err)
+	err = json.Unmarshal(s, &f)
+	assert.NoError(t, err)
+	sum = c.createSummary2(f, true)
+	assert.Equal(t, 70, sum.Total)
+	assert.Equal(t, 0, sum.Critical)
+	assert.Equal(t, 1, sum.High)
+	assert.Equal(t, 0, sum.Medium)
+	assert.Equal(t, 2, sum.Low)
+	assert.Equal(t, 66, sum.Unassigned)
+	fmt.Printf("%+v\n", sum)
+
+	s, err = os.ReadFile("testdata/tpsws.json")
+	assert.NoError(t, err)
+	err = json.Unmarshal(s, &f)
+	assert.NoError(t, err)
+	sum = c.createSummary2(f, true)
+	assert.Equal(t, 257, sum.Total)
+	assert.Equal(t, 41, sum.Critical)
+	assert.Equal(t, 102, sum.High)
+	assert.Equal(t, 53, sum.Medium)
+	assert.Equal(t, 7, sum.Low)
+	assert.Equal(t, 0, sum.Unassigned)
+	fmt.Printf("%+v\n", sum)
+
+	s, err = os.ReadFile("testdata/dp-oppslag-vedtak.json")
+	assert.NoError(t, err)
+	err = json.Unmarshal(s, &f)
+	assert.NoError(t, err)
+	sum = c.createSummary2(f, true)
+	assert.Equal(t, 116, sum.Total)
+	assert.Equal(t, 20, sum.Critical)
+	assert.Equal(t, 49, sum.High)
+	assert.Equal(t, 20, sum.Medium)
+	assert.Equal(t, 4, sum.Low)
+	assert.Equal(t, 0, sum.Unassigned)
+	fmt.Printf("%+v\n", sum)
 }
 
 func TestClient_VulnerabilitySummary(t *testing.T) {

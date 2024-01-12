@@ -1563,13 +1563,13 @@ func (_c *MockInternalClient_UpdateProjectInfo_Call) RunAndReturn(run func(conte
 	return _c
 }
 
-// UploadProject provides a mock function with given fields: ctx, name, version, bom
-func (_m *MockInternalClient) UploadProject(ctx context.Context, name string, version string, bom []byte) error {
-	ret := _m.Called(ctx, name, version, bom)
+// UploadProject provides a mock function with given fields: ctx, name, version, parentUuid, autoCreate, bom
+func (_m *MockInternalClient) UploadProject(ctx context.Context, name string, version string, parentUuid string, autoCreate bool, bom []byte) error {
+	ret := _m.Called(ctx, name, version, parentUuid, autoCreate, bom)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []byte) error); ok {
-		r0 = rf(ctx, name, version, bom)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, bool, []byte) error); ok {
+		r0 = rf(ctx, name, version, parentUuid, autoCreate, bom)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1586,14 +1586,16 @@ type MockInternalClient_UploadProject_Call struct {
 //   - ctx context.Context
 //   - name string
 //   - version string
+//   - parentUuid string
+//   - autoCreate bool
 //   - bom []byte
-func (_e *MockInternalClient_Expecter) UploadProject(ctx interface{}, name interface{}, version interface{}, bom interface{}) *MockInternalClient_UploadProject_Call {
-	return &MockInternalClient_UploadProject_Call{Call: _e.mock.On("UploadProject", ctx, name, version, bom)}
+func (_e *MockInternalClient_Expecter) UploadProject(ctx interface{}, name interface{}, version interface{}, parentUuid interface{}, autoCreate interface{}, bom interface{}) *MockInternalClient_UploadProject_Call {
+	return &MockInternalClient_UploadProject_Call{Call: _e.mock.On("UploadProject", ctx, name, version, parentUuid, autoCreate, bom)}
 }
 
-func (_c *MockInternalClient_UploadProject_Call) Run(run func(ctx context.Context, name string, version string, bom []byte)) *MockInternalClient_UploadProject_Call {
+func (_c *MockInternalClient_UploadProject_Call) Run(run func(ctx context.Context, name string, version string, parentUuid string, autoCreate bool, bom []byte)) *MockInternalClient_UploadProject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]byte))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(bool), args[5].([]byte))
 	})
 	return _c
 }
@@ -1603,7 +1605,7 @@ func (_c *MockInternalClient_UploadProject_Call) Return(_a0 error) *MockInternal
 	return _c
 }
 
-func (_c *MockInternalClient_UploadProject_Call) RunAndReturn(run func(context.Context, string, string, []byte) error) *MockInternalClient_UploadProject_Call {
+func (_c *MockInternalClient_UploadProject_Call) RunAndReturn(run func(context.Context, string, string, string, bool, []byte) error) *MockInternalClient_UploadProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
