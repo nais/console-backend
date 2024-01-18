@@ -131,7 +131,7 @@ func TestClient_GetVulnerabilities(t *testing.T) {
 	}
 }
 
-func TestClient_VulnerabilitySummary2(t *testing.T) {
+func TestClient_CreateSummary(t *testing.T) {
 	log := logrus.New().WithField("test", "dependencytrack")
 	cfg := config.DependencyTrack{}
 	mock := NewMockInternalClient(t)
