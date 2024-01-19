@@ -185,7 +185,7 @@ type Team implements Node {
   "Slack alerts channels for the team."
   slackAlertsChannels: [SlackAlertsChannel!]!
 
-  gcpProjects: [GcpProject!]!
+  gcpProjects: [GcpProject!]! @goField(forceResolver: true)
 
   "The deployments of the team's applications."
   deployments(
