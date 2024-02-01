@@ -406,6 +406,18 @@ func (r *teamResolver) GithubRepositories(ctx context.Context, obj *model.Team, 
 	}, nil
 }
 
+// GcpProjects is the resolver for the gcpProjects field.
+func (r *teamResolver) GcpProjects(ctx context.Context, obj *model.Team) ([]model.GcpProject, error) {
+	ret := []model.GcpProject{}
+	for _, p := range obj.GcpProjects {
+		if p.ID == "" {
+			continue
+		}
+		ret = append(ret, p)
+	}
+	return ret, nil
+}
+
 // Deployments is the resolver for the deployments field.
 func (r *teamResolver) Deployments(ctx context.Context, obj *model.Team, first *int, last *int, after *scalar.Cursor, before *scalar.Cursor, limit *int) (*model.DeploymentConnection, error) {
 	if limit == nil {
