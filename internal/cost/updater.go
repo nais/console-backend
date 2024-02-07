@@ -17,7 +17,7 @@ import (
 const (
 	YYYYMMDD        = "2006-01-02"
 	UpsertBatchSize = 100000
-	daysToFetch     = 5
+	daysToFetch     = 7
 )
 
 // bigQueryCostTableRow is a struct that represents a row in the BigQuery table
